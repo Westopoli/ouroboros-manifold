@@ -61,7 +61,7 @@ If a scene prints "Could not find type" errors, the folder has not been imported
 
 ## 1. Now building
 
-Next (Westley 2026-10-30): H-023 unit-scale comparison scene and his tuning session; it blocks the simulation lab (H-008 rewrite, catalogue, runs). H-024 match replay vs snapshots prototype runs alongside; it blocks only the snapshot ruling.
+Next (Westley 2026-10-30): H-023 unit-scale comparison scene and his tuning session; it blocks the simulation lab (H-008 rewrite, catalogue, runs). H-024 match replay vs snapshots prototype runs alongside; it blocks only the snapshot ruling. H-028 stable beta build stands beside H-023 (Westley 2026-10-30).
 
 Branches only; main gets a piece only through the merge gate. Method rev 2 (`plans/retro_2026-10-10/README.md`): a Sonnet Dispatcher runs the programme, the Architect is on call by brief, every lane lands a skeleton with a shot before it fans out.
 

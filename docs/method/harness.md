@@ -26,6 +26,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-025 | "Layouts are mass-produced from the recorded rules, each with a 3D shot and a predicted verdict, and Westley approves or denies each one with feedback; only approved layouts reach the lab." | Tested | `docs/stories/H-025.md` |
 | H-026 | "`wt.py new --branch <b>` fails with an empty \"git worktree add failed:\" when a finished worktree still has that branch checked out; it should say so (`branch <b> is checked out in <path>`) and, for a finished tree, offer `wt.py reap` or detach (found 2026-10-30 by the H-023 builder)." | Ready | none yet (`wt-branch-flag`) |
 | H-027 | "`desktop-test-import`: a fresh worktree needs `godot --import` before a desktop (.py qa) story test passes, and that import leaves .import and .uid noise that pre_gate rejects; pre_gate (or play.sh --check) should run the import in a scratch copy or accept the import's outputs as build outputs (found 2026-10-30 landing H-023; the clerk used a second tree with .godot copied in)." | Ready | none yet |
+| H-028 | "a working, stable, beta version of the game always available for me to open and mess around with." | Spec'd, waits on the window diagnosis | `docs/stories/H-028.md` |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
 
