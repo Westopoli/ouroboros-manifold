@@ -47,7 +47,8 @@ PAIRS = [(16, 16), (16, 32), (32, 16)]
 PAIRS_ARG = "16:16,16:32,32:16"
 SEED = 1  # fixture choice; the story gives no batch seed
 ROLES = ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]  # scripts/skilllab/engine.py:16
-RULE_IDS = ["R1", "R2", "R3", "R4", "R5", "R6"]  # R6 is round two
+RULE_IDS = ["R1", "R2", "R3", "R4", "R5"]
+ALL_RULE_IDS = RULE_IDS + ["R6"]  # R6 is round two
 TOP_KEYS = {"id", "situation", "landscape", "seed", "predict", "predict_why", "verdict", "feedback", "side_a", "side_b"}
 SIDE_KEYS = {"headcount", "units"}
 UNIT_KEYS = {"role", "x", "y", "facing", "layer"}
@@ -128,7 +129,7 @@ def test_rules_toml_is_the_closed_list_r1_to_r6():
     """H-025 "Rules live in rules.toml (closed list, machine-checkable): R1 ... R5"; ROUND TWO "rule R6 (new, `rules.toml`)": the list is R1 to R6.
     Re-pinned from R1 to R5 by the round-two writer (the story added R6)."""
     text = (CAT / "rules.toml").read_text()
-    assert all(re.search(r"\b%s\b" % r, text) for r in RULE_IDS), "rules.toml lacks one of %s" % RULE_IDS
+    assert all(re.search(r"\b%s\b" % r, text) for r in ALL_RULE_IDS), "rules.toml lacks one of %s" % ALL_RULE_IDS
     assert not re.search(r"\bR(?!1\b|2\b|3\b|4\b|5\b|6\b)\d+\b", text), "rules.toml names a rule beyond R1 to R6"
 
 
@@ -167,11 +168,11 @@ def test_layout_key_lists(batch):
     out, _ = batch
     for p in _need36(out):
         d = _load_toml(p)
-        assert set(d) - {"features"} == TOP_KEYS, "%s keys: %s" % (p.name, sorted(d))  # round two adds the optional `features`
+        assert set(d) - {"features", "defender"} == TOP_KEYS, "%s keys: %s" % (p.name, sorted(d))  # round two adds `features` and `defender`
         for s in ("side_a", "side_b"):
             assert set(d[s]) == SIDE_KEYS, "%s %s keys: %s" % (p.name, s, sorted(d[s]))
             for u in d[s]["units"]:
-                assert set(u) == UNIT_KEYS, "%s %s unit keys: %s" % (p.name, s, sorted(u))
+                assert set(u) - {"range"} == UNIT_KEYS, "%s %s unit keys: %s" % (p.name, s, sorted(u))  # round two adds `range`
 
 
 def test_layout_value_types_and_closed_values(batch):
@@ -265,9 +266,7 @@ def _mutations():
         d["side_a"]["headcount"] = len(d["side_a"]["units"]) + 1
     def r5(d):
         d["side_a"]["units"][0]["role"] = "Wizard"
-    def r6(d):  # ROUND TWO: the layout is a chokepoint (the first of the batch) and loses its feature
-        d.pop("features", None)
-    return {"R1": r1, "R2": r2, "R3": r3, "R4": r4, "R5": r5, "R6": r6}
+    return {"R1": r1, "R2": r2, "R3": r3, "R4": r4, "R5": r5}
 
 
 @pytest.mark.parametrize("rule", RULE_IDS)
@@ -352,292 +351,397 @@ def test_review_apply_writes_toml_and_json_and_denied_lists_it(small):
     assert not any(i in d.stdout for i in (ids[0], ids[1], ids[3])), "denied lists a layout that was not denied"
 
 
+
 # ================================================================ ROUND TWO (2026-10-31)
-# Quoted from the story's "Round two" section, word for word where a number or a key is pinned:
-#   "Layout format gains `[[features]]`, each `kind`, `x`, `y`, plus the kind's geometry, from the H-023 stage's values (DRAFT until H-023 locks them):
-#    `chokepoint` (two walls with `gap` 200 wu, `radius` 600), `vantage` (a raised disc `radius` 700, `height_band` 1), `cover` (two to four obstacle boxes
-#    `w` 120 `h` 60), `objective` (capture ring `radius` 300), `staging` (a marked square), `transit` (a route polyline and a destination marker),
-#    `flank_route` (a polyline), `hazard_anchor` (a disc `radius` 500, drawn as a hazard), `slope` (a band 600 wu long joining two height bands, R-001-06),
-#    `city` (footprint disc `radius` 400 with a 3 by 3 building grid), `trap` (a pocket of walls with one mouth), `open_field` (no feature)."
-#   "writes `predict_why` naming the feature, and rule R6 (new, `rules.toml`) requires every layout except `open_field` to carry its situation's feature
-#    and every unit to stand off its walls by the collision radius."
-#   "Batch two is 12 pictures again, one per situation kind, on `small_flat` and `small_tiered` only, with headcounts spread 8 to 64 a side."
-# The story gives no key for a feature's other geometry (wall list, polyline points, destination, building grid, box list), so those are searched for
-# anywhere inside the feature entry (nested dicts and lists), never by an invented key name.
+# Pinned from the story's "Round two" and "Round two format" sections (rulings 1 to 7), word for word where a key or number is given:
+#   "Layout format gains `[[features]]`, each `kind`, `x`, `y`, plus the kind's geometry"; R6 "requires every layout except `open_field` to carry its situation's
+#    feature and every unit to stand off its walls by the collision radius"; "`--plant R6` ... writes a layout whose situation is not `open_field` with the
+#    `features` list removed (and, as a second mutation, with the feature's `kind` swapped for another)"; "Rectangles everywhere are `{x, y, w, h}` axis-aligned
+#    about their centre"; "R6's standoff: a unit's centre lies outside every rectangle of `walls`, `boxes` and `buildings` expanded by the collision radius 15
+#    (ALG-68); discs and routes impose no standoff"; batch two "twelve layouts, one per situation kind, in the order of DRAFT-situation-kinds; headcount pairs
+#    (A:B) ... 16:32, 24:24, 8:8, 32:32, 8:64, 64:8, 48:12, 12:48, 40:56, 64:64, 16:16, 32:16"; "`vantage`, `slope`, `flank_route` on `small_tiered`; the rest on
+#    `small_flat`"; "`produce.py --batch two` ... a grid with pitch 40 wu"; "Layout file: `defender` (`"A"` or `"B"` ...; `open_field` has `defender = ""`), and
+#    per unit row `range` (float, world units, from the sim roster through `scripts/skilllab/engine.py` `om_unit_profile_attack_range`)";
+#    "Vantage: a unit whose centre is inside the vantage disc stands on layer `height_band`; outside, layer 0".
+# Every number is a story DRAFT (Architect, 5% rule); no test here widens one. Floats are compared to 0.02 because layouts round coordinates to 0.01.
 
-GLYPH_MIN_PX = 14  # DRAFT-glyph-min-px 14 (story, Round two)
-R2_PAIRS = [(8, 8), (64, 64), (8, 64), (64, 8)]  # fixture choice inside the story's "headcounts spread 8 to 64 a side"; the story gives no batch-two pair list
-R2_PAIRS_ARG = "8:8,64:64,8:64,64:8"
-R2_PRESETS = {"small_flat", "small_tiered"}
-# kind -> {key: number} the story pins (backticked keys only)
-KIND_NUMBERS = {"chokepoint": {"gap": 200, "radius": 600}, "vantage": {"radius": 700, "height_band": 1}, "objective": {"radius": 300},
-                "hazard_anchor": {"radius": 500}, "city": {"radius": 400}}
-COLLISION_RADIUS = 15  # OM_UNIT_COLLISION_RADIUS, csrc/om_constants.h:581 (the standoff R6 names)
+GLYPH_MIN_PX = 14  # DRAFT-glyph-min-px 14
+B2_PAIRS = [(16, 32), (24, 24), (8, 8), (32, 32), (8, 64), (64, 8), (48, 12), (12, 48), (40, 56), (64, 64), (16, 16), (32, 16)]  # DRAFT-batch2-headcounts
+B2_TIERED = {"vantage", "slope", "flank_route"}
+COLLISION_RADIUS = 15  # OM_UNIT_COLLISION_RADIUS (control test_control_collision_radius_is_fifteen)
+GRID_PITCH = 40.0  # ruling 5
+TOL = 0.02
 
 
-def _walk(node):
-    """Every dict and list reachable inside node, node first."""
-    yield node
-    if isinstance(node, dict):
-        for v in node.values():
-            yield from _walk(v)
-    elif isinstance(node, list):
-        for v in node:
-            yield from _walk(v)
-
-
-def _values_of(feature: dict, key: str):
-    return [d[key] for d in _walk(feature) if isinstance(d, dict) and key in d]
-
-
-def _feats(layout: dict, kind: str):
-    return [f for f in layout.get("features", []) if f.get("kind") == kind]
-
-
-def _glyph_below_min(px) -> bool:
-    return not (isinstance(px, (int, float)) and px >= GLYPH_MIN_PX)
+def _cli_two(out: Path, plant: str | None = None, seed: int = SEED):
+    cmd = [sys.executable, "-m", PRODUCE, "--batch", "two", "--out", str(out), "--seed", str(seed)]
+    if plant:
+        cmd += ["--plant", plant]
+    return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=600)
 
 
 @pytest.fixture(scope="module")
 def batch_two(tmp_path_factory):
     out = tmp_path_factory.mktemp("batch_two")
-    r = _cli(out, "all", R2_PAIRS_ARG)
-    return out, r
+    return out, _cli_two(out)
 
 
-def _r2_layouts(out: Path):
-    """The layouts the producer wrote for the fixture pairs (a pair it rejected is missing here and is reported by the feasibility test below)."""
+def _b2(batch_two_fixture):
+    out, r = batch_two_fixture
     files = _layouts(out)
-    assert files, "the producer wrote no round-two layout"
+    assert files, "`produce.py --batch two` wrote no layout (rc=%s): %s" % (r.returncode, r.stderr[-300:].strip().replace("\n", " | "))
     return [_load_toml(p) for p in files]
+
+
+def _feat(d: dict, kind: str | None = None):
+    fs = [f for f in d.get("features", []) if f.get("kind") == (kind or d["situation"])]
+    assert len(fs) == 1, "%s (%s): %d %s features in %s" % (d["id"], d["situation"], len(fs), kind or d["situation"], d.get("features"))
+    return fs[0]
+
+
+def _rects(d: dict):
+    """Every wall, box and building rectangle {x, y, w, h} of the layout's features (the R6 stand-off set)."""
+    return [r for f in d.get("features", []) for key in ("walls", "boxes", "buildings") for r in f.get(key, [])]
+
+
+def _inside_expanded(ux, uy, r, pad) -> bool:
+    return abs(ux - r["x"]) < r["w"] / 2 + pad and abs(uy - r["y"]) < r["h"] / 2 + pad
+
+
+def _near(a, b) -> bool:
+    return abs(a - b) <= TOL
 
 
 # ---------------------------------------------------------------- ROUND TWO positive controls (green today)
 
-def test_control_round_two_r1_to_r5_still_pass_a_layout_that_carries_features(tmp_path):
-    """H-025 Round two "positive control the batch-one rules R1 to R5 still pass on a round-two layout". CONTROL: a toy open_field layout carrying an
-    empty `features` list is accepted by check_layout with no R1 to R5 violation, and a unit outside the bounds is still R1; green on the round-one tree,
-    so a red R6 test below is the missing rule, not a broken fixture."""
+def test_control_round_two_r1_to_r5_still_pass_a_layout_that_carries_the_new_keys():
+    """H-025 Round two "positive control the batch-one rules R1 to R5 still pass on a round-two layout". CONTROL: a toy open_field layout with the round-two
+    keys (`defender` "", per-unit `range`, no `features` key) is accepted by check_layout with no R1 to R5 violation, and a unit outside the bounds is still R1;
+    green on the round-one tree, so a red R6 test below is the missing rule, not a broken fixture."""
     from scripts.skilllab.catalogue.produce import check_layout
     presets, rules = _load_toml(CAT / "presets.toml"), _load_toml(CAT / "rules.toml")
-    units = lambda x0, face: [{"role": "Raider", "x": x0 + 40.0 * i, "y": 2000.0, "facing": face, "layer": 0} for i in range(8)]
+    units = lambda x0, face: [{"role": "Raider", "x": x0 + 40.0 * i, "y": 2000.0, "facing": face, "layer": 0, "range": 200.0} for i in range(8)]
     d = {"id": "L-0001", "situation": "open_field", "landscape": "small_flat", "seed": 1, "predict": "draw", "predict_why": "even", "verdict": "", "feedback": "",
-         "features": [], "side_a": {"headcount": 8, "units": units(500.0, 0.0)}, "side_b": {"headcount": 8, "units": units(3000.0, 3.1416)}}
+         "defender": "", "side_a": {"headcount": 8, "units": units(500.0, 0.0)}, "side_b": {"headcount": 8, "units": units(3000.0, 3.1416)}}
     assert check_layout(d, presets, rules) == []
     d["side_a"]["units"][0]["x"] = 1.0e9
     assert "R1" in check_layout(d, presets, rules)
 
 
-def test_control_round_two_glyph_detector_and_walker():
-    """H-025 Round two "DRAFT-glyph-min-px 14". CONTROL: the detector used below rejects 13 and None and accepts 14; the nested-key walker finds a key
-    inside a nested feature."""
-    assert _glyph_below_min(13) and _glyph_below_min(None) and not _glyph_below_min(14) and not _glyph_below_min(14.5)
-    assert _values_of({"kind": "cover", "boxes": [{"w": 120, "h": 60}, {"w": 120, "h": 60}]}, "w") == [120, 120]
+def test_control_round_two_stand_off_helper_and_roster_ranges():
+    """H-025 Round two "stand off its walls by the collision radius 15". CONTROL: the rectangle test used below calls a unit 14 from a 100 by 50 rectangle's
+    edge inside and 16 outside; the sim roster (engine.py, read through om_unit_profile_attack_range as ruling 6 says) gives every roster role a range above 0."""
+    r = {"x": 0.0, "y": 0.0, "w": 100.0, "h": 50.0}
+    assert _inside_expanded(64.0, 0.0, r, COLLISION_RADIUS) and not _inside_expanded(66.0, 0.0, r, COLLISION_RADIUS)
+    assert _inside_expanded(0.0, 39.0, r, COLLISION_RADIUS) and not _inside_expanded(0.0, 41.0, r, COLLISION_RADIUS)
+    from scripts.skilllab.engine import Engine
+    e = Engine()
+    w = e.new_world(1)
+    assert all(e.type_stats(w, e.type_id(role))["attack_range"] > 0 for role in ROLES)
 
 
-# ---------------------------------------------------------------- ROUND TWO: rule R6
+# ---------------------------------------------------------------- ROUND TWO: rule R6 and its plant
 
-def test_rules_toml_carries_r6_with_the_collision_radius_standoff():
-    """H-025 Round two "rule R6 (new, `rules.toml`) requires every layout except `open_field` to carry its situation's feature and every unit to stand off
-    its walls by the collision radius". rules.toml has an [R6] table with a text; the stand-off number is the collision radius 15 (control above: header is 15)."""
+def test_rules_toml_carries_r6():
+    """H-025 Round two "rule R6 (new, `rules.toml`) requires every layout except `open_field` to carry its situation's feature and every unit to stand off its
+    walls by the collision radius": an [R6] table with a text naming the feature and the walls."""
     rules = _load_toml(CAT / "rules.toml")
     assert "R6" in rules, "rules.toml has no [R6]; tables: %s" % sorted(rules)
-    assert isinstance(rules["R6"].get("text"), str) and rules["R6"]["text"].strip()
-    assert "feature" in rules["R6"]["text"] and "wall" in rules["R6"]["text"], "R6 text does not name the feature and the walls: %r" % rules["R6"]["text"]
+    text = rules["R6"].get("text", "")
+    assert isinstance(text, str) and "feature" in text and "wall" in text, "R6 text does not name the feature and the walls: %r" % text
 
 
-def test_check_layout_r6_names_a_missing_feature_and_a_wrong_feature(batch_two):
-    """H-025 Round two "rule R6 ... requires every layout except `open_field` to carry its situation's feature". A valid chokepoint layout that loses its
-    `features` returns R6; one whose feature is another kind returns R6; an open_field layout with no feature returns no R6 (CONTROL)."""
-    out, _ = batch_two
+def test_check_layout_r6_names_a_missing_feature_a_swapped_kind_and_spares_open_field(batch_two):
+    """H-025 Round two ruling 3 "`features` list removed (and, as a second mutation, with the feature's `kind` swapped for another)" and R6 "every layout except
+    `open_field`". A valid chokepoint layout loses its `features`: R6; its feature kind is swapped for vantage: R6; the batch's open_field layout (no `features`
+    key) returns no R6 (CONTROL)."""
     from scripts.skilllab.catalogue.produce import check_layout
     presets, rules = _load_toml(CAT / "presets.toml"), _load_toml(CAT / "rules.toml")
-    layouts = _r2_layouts(out)
+    layouts = _b2(batch_two)
     choke = next(d for d in layouts if d["situation"] == "chokepoint")
     assert check_layout(choke, presets, rules) == []
-    gone = dict(choke)
+    gone = json.loads(json.dumps(choke))
     gone.pop("features", None)
     assert "R6" in check_layout(gone, presets, rules), "a chokepoint without its feature is not R6"
-    wrong = dict(choke, features=[dict(f, kind="vantage") for f in choke.get("features", [])] or [{"kind": "vantage", "x": 2000.0, "y": 2000.0}])
-    assert "R6" in check_layout(wrong, presets, rules), "a chokepoint carrying only a vantage feature is not R6"
+    swapped = json.loads(json.dumps(choke))
+    for f in swapped["features"]:
+        f["kind"] = "vantage"
+    assert "R6" in check_layout(swapped, presets, rules), "a chokepoint carrying only a vantage-kind feature is not R6"
     openf = next(d for d in layouts if d["situation"] == "open_field")
-    bare = dict(openf)
-    bare.pop("features", None)
-    assert "R6" not in check_layout(bare, presets, rules), "open_field must not need a feature"
+    assert "features" not in openf and "R6" not in check_layout(openf, presets, rules)
 
 
-def test_check_layout_r6_names_a_unit_standing_on_a_cover_box(batch_two):
-    """H-025 Round two "every unit to stand off its walls by the collision radius". A cover layout (valid) with one unit moved onto an obstacle box's
-    (x, y) returns R6; works whether the story's box x, y is its centre or its corner (a unit there is inside or on the box either way)."""
-    out, _ = batch_two
+@pytest.mark.parametrize("kind,group", [("chokepoint", "walls"), ("cover", "boxes"), ("city", "buildings"), ("trap", "walls")])
+def test_check_layout_r6_stand_off_from_walls_boxes_and_buildings(batch_two, kind, group):
+    """H-025 Round two ruling 4 "R6's standoff: a unit's centre lies outside every rectangle of `walls`, `boxes` and `buildings` expanded by the collision
+    radius 15". In a valid layout one unit is moved to 14 wu outside the first rectangle's edge (inside the expanded rectangle): R6; to 16 wu outside: no R6
+    (CONTROL, the same layout one step further out)."""
     from scripts.skilllab.catalogue.produce import check_layout
     presets, rules = _load_toml(CAT / "presets.toml"), _load_toml(CAT / "rules.toml")
-    cover = next(d for d in _r2_layouts(out) if d["situation"] == "cover")
-    assert check_layout(cover, presets, rules) == []
-    feats = _feats(cover, "cover")
-    boxes = [(b.get("x", f["x"]), b.get("y", f["y"])) for f in feats for b in _walk(f) if isinstance(b, dict) and "w" in b and "h" in b]
-    assert boxes, "the cover layout carries no obstacle box (an entry with w and h): %s" % feats
-    bad = json.loads(json.dumps(cover))
-    bad["side_a"]["units"][0]["x"], bad["side_a"]["units"][0]["y"] = float(boxes[0][0]), float(boxes[0][1])
-    assert "R6" in check_layout(bad, presets, rules), "a unit on an obstacle box is not R6"
+    d = next(d for d in _b2(batch_two) if d["situation"] == kind)
+    assert check_layout(d, presets, rules) == []
+    r = _feat(d)[group][0]
+    for gap, want in ((14.0, True), (16.0, False)):
+        bad = json.loads(json.dumps(d))
+        u = bad["side_a"]["units"][0]
+        u["x"], u["y"] = r["x"] + r["w"] / 2 + gap, r["y"]
+        assert ("R6" in check_layout(bad, presets, rules)) is want, "%s: unit %s wu off a %s rectangle, R6 expected %s" % (kind, gap, group, want)
 
 
-@pytest.mark.parametrize("rule", ["R6"])
-def test_plant_r6_is_rejected_with_reject_line_and_no_file(tmp_path, rule):
-    """H-025 "`--plant <rule id>` makes the producer emit one extra layout that breaks that rule on purpose (the positive control): the test asserts the
-    REJECT line names it and no file for it exists", applied to the new rule R6 (Round two: "every detector ships a positive control")."""
-    r = _cli(tmp_path, "chokepoint", "16:16", plant=rule)
-    assert r.returncode == 2, "--plant %s: rc=%s stderr tail: %s" % (rule, r.returncode, r.stderr[-400:])
+def test_plant_r6_writes_no_file_and_names_r6_on_stderr(tmp_path):
+    """H-025 "`--plant <rule id>` makes the producer emit one extra layout that breaks that rule on purpose (the positive control): the test asserts the REJECT
+    line names it and no file for it exists", for R6 (ruling 3): exit 2, a REJECT line naming R6, no file for a rejected id, the twelve valid layouts written."""
+    r = _cli_two(tmp_path, plant="R6")
+    assert r.returncode == 2, "--batch two --plant R6: rc=%s stderr tail: %s" % (r.returncode, r.stderr[-400:])
     hits = REJECT_RE.findall(r.stderr)
-    assert any(rid == rule for _, rid in hits), "--plant %s: no REJECT line naming it; stderr: %s" % (rule, r.stderr[-400:])
+    assert any(rid == "R6" for _, rid in hits), "no REJECT line naming R6; stderr: %s" % r.stderr[-400:]
     for lid, _ in hits:
         assert not (tmp_path / (lid + ".toml")).exists() and not (tmp_path / (lid + ".json")).exists(), "rejected %s was written" % lid
-    assert len(_layouts(tmp_path)) == 1
+    assert len(_layouts(tmp_path)) == 12
 
 
-# ---------------------------------------------------------------- ROUND TWO: the layout carries landscape geometry
+# ---------------------------------------------------------------- ROUND TWO: batch two
 
-def test_every_round_two_layout_exits_zero_and_passes_check_layout(batch_two):
-    """H-025 Round two "headcounts spread 8 to 64 a side"; "positive control the batch-one rules R1 to R5 still pass on a round-two layout". The producer
-    writes every situation at pairs 8:8, 64:64, 8:64 and 64:8 with exit 0, no REJECT, and check_layout (R1 to R6) returns [] for each."""
+def test_batch_two_writes_twelve_valid_layouts_in_situation_order(batch_two):
+    """H-025 Round two ruling 5 "twelve layouts, one per situation kind, in the order of DRAFT-situation-kinds" by `produce.py --batch two`: exit 0, no REJECT,
+    ids L-0001 to L-0012 in an empty directory with the situation list in DRAFT-situation-kinds order, and check_layout (R1 to R6) returns [] for each."""
     out, r = batch_two
     from scripts.skilllab.catalogue.produce import check_layout
-    assert r.returncode == 0, "producer CLI rc=%s stderr tail: %s" % (r.returncode, r.stderr[-600:])
+    assert r.returncode == 0, "`--batch two` rc=%s stderr tail: %s" % (r.returncode, r.stderr[-600:])
     assert "REJECT" not in r.stderr, r.stderr[-600:]
-    assert len(_layouts(out)) == len(SITUATIONS) * len(R2_PAIRS), "wrote %d TOML files, want %d" % (len(_layouts(out)), len(SITUATIONS) * len(R2_PAIRS))
+    files = _layouts(out)
+    assert [p.stem for p in files] == ["L-%04d" % i for i in range(1, 13)], [p.stem for p in files]
+    layouts = [_load_toml(p) for p in files]
+    assert [d["situation"] for d in layouts] == SITUATIONS
     presets, rules = _load_toml(CAT / "presets.toml"), _load_toml(CAT / "rules.toml")
-    bad = {d["id"]: check_layout(d, presets, rules) for d in _r2_layouts(out)}
+    bad = {d["id"]: check_layout(d, presets, rules) for d in layouts}
     assert not {k: v for k, v in bad.items() if v}, "violations: %s" % {k: v for k, v in bad.items() if v}
 
 
-def test_headcounts_stay_inside_eight_to_sixty_four(batch_two):
-    """H-025 Round two "headcounts spread 8 to 64 a side"; every layout of the fixture pairs has the pair's headcounts and as many unit rows."""
-    out, _ = batch_two
-    seen = {}
-    for d in _r2_layouts(out):
-        assert 8 <= d["side_a"]["headcount"] <= 64 and 8 <= d["side_b"]["headcount"] <= 64
-        assert d["side_a"]["headcount"] == len(d["side_a"]["units"]) and d["side_b"]["headcount"] == len(d["side_b"]["units"])
-        seen.setdefault(d["situation"], []).append((d["side_a"]["headcount"], d["side_b"]["headcount"]))
-    assert set(seen) <= set(SITUATIONS)
-    assert all(set(v) <= set(R2_PAIRS) for v in seen.values()), seen
+def test_batch_two_headcount_pairs_and_presets(batch_two):
+    """H-025 Round two ruling 5 "headcount pairs (A:B) in the same order DRAFT-batch2-headcounts: 16:32, 24:24, 8:8, 32:32, 8:64, 64:8, 48:12, 12:48, 40:56, 64:64,
+    16:16, 32:16"; "`vantage`, `slope`, `flank_route` on `small_tiered`; the rest on `small_flat`" (so no large preset)."""
+    layouts = _b2(batch_two)
+    assert [(d["side_a"]["headcount"], d["side_b"]["headcount"]) for d in layouts] == B2_PAIRS
+    assert all(d["side_a"]["headcount"] == len(d["side_a"]["units"]) and d["side_b"]["headcount"] == len(d["side_b"]["units"]) for d in layouts)
+    assert {d["situation"]: d["landscape"] for d in layouts} == {k: ("small_tiered" if k in B2_TIERED else "small_flat") for k in SITUATIONS}
 
 
-def test_batch_two_lands_on_small_flat_and_small_tiered_only(batch_two):
-    """H-025 Round two "Batch two is 12 pictures again, one per situation kind, on `small_flat` and `small_tiered` only"; "presets.toml (no change to
-    bounds)": the four presets still exist unchanged, and no layout uses a large preset."""
-    out, _ = batch_two
-    presets = _load_toml(CAT / "presets.toml")
-    assert presets["small_flat"]["width"] == presets["small_tiered"]["width"] == 4000 and presets["large_flat"]["width"] == 12000
-    used = {(d["situation"], d["landscape"]) for d in _r2_layouts(out)}
-    assert {l for _, l in used} <= R2_PRESETS, "layouts on presets outside small_flat/small_tiered: %s" % sorted(u for u in used if u[1] not in R2_PRESETS)
+def test_batch_two_layout_keys(batch_two):
+    """H-025 Round two ruling 6 "Layout file: `defender` ..., and per unit row `range`", ruling 4 "`open_field`: no `features` key". Every batch-two layout has the
+    round-one keys plus `defender`, plus `features` unless it is open_field; every unit row has the round-one keys plus `range` (a float)."""
+    for d in _b2(batch_two):
+        want = TOP_KEYS | {"defender"} | (set() if d["situation"] == "open_field" else {"features"})
+        assert set(d) == want, "%s (%s) keys %s, want %s" % (d["id"], d["situation"], sorted(d), sorted(want))
+        for u in _all_units(d):
+            assert set(u) == UNIT_KEYS | {"range"} and isinstance(u["range"], float), (d["id"], u)
 
 
-def test_every_situation_except_open_field_carries_its_feature(batch_two):
-    """H-025 Round two "Layout format gains `[[features]]`, each `kind`, `x`, `y`, plus the kind's geometry"; "(`open_field` (no feature))". Every layout of
-    a situation other than open_field has a `features` list holding an entry whose kind is the situation, each entry with kind (str), x and y (numbers) inside
-    the preset's bounds; open_field has none."""
-    out, _ = batch_two
-    presets = _load_toml(CAT / "presets.toml")
-    for d in _r2_layouts(out):
-        feats = d.get("features")
+def test_defender_is_a_side_letter_and_open_field_has_none(batch_two):
+    """H-025 Round two ruling 6 "`defender` (`"A"` or `"B"`, the side placed on or behind the feature; `open_field` has `defender = ""`)"; ruling 5 "chokepoint gets
+    16:32: the holder is the smaller side": the batch's chokepoint (16:32) has defender "A"."""
+    for d in _b2(batch_two):
         if d["situation"] == "open_field":
-            assert not feats, "%s: open_field carries a feature: %s" % (d["id"], feats)
-            continue
-        assert isinstance(feats, list) and feats, "%s (%s) has no `features` list; keys %s" % (d["id"], d["situation"], sorted(d))
-        assert all({"kind", "x", "y"} <= set(f) for f in feats), "%s: a feature lacks kind, x or y: %s" % (d["id"], feats[:2])
-        assert d["situation"] in {f["kind"] for f in feats}, "%s: no %s feature among %s" % (d["id"], d["situation"], [f["kind"] for f in feats])
-        p = presets[d["landscape"]]
-        for f in feats:
-            assert isinstance(f["x"], (int, float)) and isinstance(f["y"], (int, float)) and f["kind"] in SITUATIONS
-            assert 0 <= f["x"] <= p["width"] and 0 <= f["y"] <= p["height"], "%s: feature %s outside the preset" % (d["id"], f)
+            assert d["defender"] == "", d["id"]
+        else:
+            assert d["defender"] in ("A", "B"), "%s (%s) defender %r" % (d["id"], d["situation"], d.get("defender"))
+        if d["situation"] == "chokepoint":
+            assert d["defender"] == "A", "the chokepoint holder is the smaller side (A, 16 against 32); defender %r" % d["defender"]
+
+
+def test_unit_range_is_the_sim_rosters_attack_range(batch_two):
+    """H-025 Round two ruling 6 "per unit row `range` (float, world units, from the sim roster through `scripts/skilllab/engine.py`
+    `om_unit_profile_attack_range`, read at produce time ...)": every unit's range equals the roster's attack_range for its role."""
+    from scripts.skilllab.engine import Engine
+    e = Engine()
+    w = e.new_world(1)
+    want = {role: e.type_stats(w, e.type_id(role))["attack_range"] for role in ROLES}
+    for d in _b2(batch_two):
+        for u in _all_units(d):
+            assert abs(u["range"] - want[u["role"]]) < 1e-6, "%s: %s range %r, roster says %r" % (d["id"], u["role"], u["range"], want[u["role"]])
+
+
+def test_batch_two_sides_are_grids_of_pitch_forty(batch_two):
+    """H-025 Round two ruling 5 "a side's block is a grid with pitch 40 wu": within a side no two units are closer than 40 and every unit has a same-side
+    neighbour at exactly 40 (to rounding)."""
+    for d in _b2(batch_two):
+        for s in ("side_a", "side_b"):
+            us = d[s]["units"]
+            for i, a in enumerate(us):
+                near = min(math.hypot(a["x"] - b["x"], a["y"] - b["y"]) for j, b in enumerate(us) if j != i)
+                assert abs(near - GRID_PITCH) <= 0.05, "%s %s unit %d: nearest same-side unit is %.2f wu away, the grid pitch is 40" % (d["id"], s, i, near)
 
 
 def test_features_in_toml_and_json_are_the_same(batch_two):
-    """H-025 "a sibling <id>.json with the same content (Godot reads JSON)", with the Round two `[[features]]` table in both files."""
+    """H-025 "a sibling <id>.json with the same content (Godot reads JSON)", with the Round two `[[features]]` tables and nested rectangle and point lists in both."""
     out, _ = batch_two
-    for p in _layouts(out):
+    files = _layouts(out)
+    assert files
+    for p in files:
         assert json.loads(p.with_suffix(".json").read_text()) == _load_toml(p), "%s: TOML and JSON differ" % p.name
-    assert any(_load_toml(p).get("features") for p in _layouts(out)), "no layout carries a features table"
+    assert any(_load_toml(p).get("features") for p in files), "no layout carries a features table"
 
 
-def test_feature_geometry_numbers_the_story_pins(batch_two):
-    """H-025 Round two geometry, the backticked keys and numbers: chokepoint `gap` 200 `radius` 600; vantage `radius` 700 `height_band` 1; cover boxes `w` 120
-    `h` 60, two to four of them; objective `radius` 300; hazard_anchor `radius` 500; city `radius` 400. DRAFT until H-023 locks them."""
-    out, _ = batch_two
-    for d in _r2_layouts(out):
-        k = d["situation"]
-        feats = _feats(d, k)
-        if k in KIND_NUMBERS:
-            assert feats, "%s: no %s feature" % (d["id"], k)
-            for key, want in KIND_NUMBERS[k].items():
-                got = [v for f in feats for v in _values_of(f, key)]
-                assert got and all(v == want for v in got), "%s (%s): `%s` is %s, the story says %s" % (d["id"], k, key, got, want)
-        if k == "cover":
-            boxes = [b for f in feats for b in _walk(f) if isinstance(b, dict) and "w" in b and "h" in b]
-            assert 2 <= len(boxes) <= 4, "%s: %d obstacle boxes, the story says two to four" % (d["id"], len(boxes))
-            assert all(b["w"] == 120 and b["h"] == 60 for b in boxes), "%s: box sizes %s, the story says w 120 h 60" % (d["id"], [(b["w"], b["h"]) for b in boxes])
+def test_every_feature_has_kind_x_y_and_the_situations_feature_is_present(batch_two):
+    """H-025 Round two ruling 4 "Every entry has `kind`, `x`, `y` (centre, floats, world units)"; R6 "carry its situation's feature". Each non-open_field layout has
+    exactly one feature of its situation's kind; centre inside the preset's bounds."""
+    presets = _load_toml(CAT / "presets.toml")
+    for d in _b2(batch_two):
+        if d["situation"] == "open_field":
+            continue
+        assert isinstance(d.get("features"), list) and d["features"], "%s (%s) has no `features` list" % (d["id"], d["situation"])
+        for f in d["features"]:
+            assert {"kind", "x", "y"} <= set(f) and isinstance(f["x"], float) and isinstance(f["y"], float), (d["id"], f)
+            p = presets[d["landscape"]]
+            assert 0 <= f["x"] <= p["width"] and 0 <= f["y"] <= p["height"], (d["id"], f)
+        _feat(d)
 
 
-def test_polyline_features_carry_a_route_of_points(batch_two):
-    """H-025 Round two "`transit` (a route polyline and a destination marker)", "`flank_route` (a polyline)": the feature holds a list of at least two points
-    (each a [x, y] pair or a dict with x and y). Key names are the builder's; the story gives none."""
-    out, _ = batch_two
-    point = lambda p: (isinstance(p, dict) and {"x", "y"} <= set(p)) or (isinstance(p, list) and len(p) == 2 and all(isinstance(v, (int, float)) for v in p))
-    for d in _r2_layouts(out):
-        if d["situation"] in ("transit", "flank_route"):
-            feats = _feats(d, d["situation"])
-            assert feats, "%s: no %s feature" % (d["id"], d["situation"])
-            lines = [n for f in feats for n in _walk(f) if isinstance(n, list) and len(n) >= 2 and all(point(p) for p in n)]
-            assert lines, "%s (%s): no polyline of two or more points in %s" % (d["id"], d["situation"], feats)
+def _geometry_chokepoint(f):
+    assert f["gap"] == 200 and f["radius"] == 600
+    assert len(f["walls"]) == 2 and all(w["w"] == 200 and w["h"] == 500 for w in f["walls"]), f["walls"]
+    centres = sorted((w["x"], w["y"]) for w in f["walls"])
+    want = sorted([(f["x"], f["y"] - 350.0), (f["x"], f["y"] + 350.0)])  # y +- (gap/2 + h/2)
+    assert all(_near(a[0], b[0]) and _near(a[1], b[1]) for a, b in zip(centres, want)), "wall centres %s, want %s" % (centres, want)
 
 
-def test_city_carries_a_three_by_three_building_grid(batch_two):
-    """H-025 Round two "`city` (footprint disc `radius` 400 with a 3 by 3 building grid)": the city feature holds nine buildings (a list of nine entries) or a
-    grid size of 3 (`grid` as 3 or [3, 3]); key names are the builder's."""
-    out, _ = batch_two
-    for d in _r2_layouts(out):
-        if d["situation"] == "city":
-            feats = _feats(d, "city")
-            assert feats, "%s: no city feature" % d["id"]
-            nine = any(isinstance(n, list) and len(n) == 9 for f in feats for n in _walk(f))
-            grid = any(k.lower().startswith("grid") and v in (3, [3, 3]) for f in feats for n in _walk(f) if isinstance(n, dict) for k, v in n.items())
-            assert nine or grid, "%s: city feature has no nine buildings and no 3 by 3 grid: %s" % (d["id"], feats)
+def _geometry_vantage(f):
+    assert f["radius"] == 700 and f["height_band"] == 1
+
+
+def _geometry_cover(f):
+    assert 2 <= len(f["boxes"]) <= 4, "%d boxes" % len(f["boxes"])
+    assert all(b["w"] == 120 and b["h"] == 60 for b in f["boxes"]), f["boxes"]
+    assert all(math.hypot(b["x"] - f["x"], b["y"] - f["y"]) <= 300 + TOL for b in f["boxes"]), "a box centre is beyond DRAFT-cover-spread 300"
+
+
+def _geometry_objective(f):
+    assert f["radius"] == 300
+
+
+def _geometry_staging(f):
+    assert f["size"] == 600
+
+
+def _geometry_transit(f):
+    pts = f["points"]
+    assert 2 <= len(pts) <= 4 and all(isinstance(p, list) and len(p) == 2 for p in pts), pts
+    assert _near(pts[0][0], f["x"]) and _near(pts[0][1], f["y"]), "the route must start at the feature centre"
+    assert set(f["dest"]) == {"x", "y"} and _near(f["dest"]["x"], pts[-1][0]) and _near(f["dest"]["y"], pts[-1][1]), "dest %s is not the last point %s" % (f["dest"], pts[-1])
+
+
+def _geometry_flank_route(f):
+    pts = f["points"]
+    assert 3 <= len(pts) <= 5 and all(isinstance(p, list) and len(p) == 2 for p in pts), pts
+
+
+def _geometry_hazard_anchor(f):
+    assert f["radius"] == 500
+
+
+def _geometry_slope(f):
+    assert f["length"] == 600 and f["width"] == 200 and f["from_band"] == 0 and f["to_band"] == 1
+    assert isinstance(f["heading"], float)
+
+
+def _geometry_city(f):
+    assert f["radius"] == 400 and len(f["buildings"]) == 9
+    assert all(b["w"] == 100 and b["h"] == 100 for b in f["buildings"]), f["buildings"]
+    want = sorted((f["x"] + i * 250.0, f["y"] + j * 250.0) for i in (-1, 0, 1) for j in (-1, 0, 1))  # DRAFT-city-pitch 250
+    got = sorted((b["x"], b["y"]) for b in f["buildings"])
+    assert all(_near(a[0], b[0]) and _near(a[1], b[1]) for a, b in zip(got, want)), "building centres %s, want %s" % (got, want)
+
+
+def _geometry_trap(f):
+    walls, m = f["walls"], f["mouth"]
+    assert len(walls) == 3 and isinstance(m, float)
+    q = m / (math.pi / 2)
+    assert abs(q - round(q)) < 1e-3, "mouth %r is not a multiple of pi/2, so the rectangles cannot stay axis-aligned" % m
+    dims = sorted(tuple(sorted((w["w"], w["h"]))) for w in walls)
+    assert dims == [(200, 800), (200, 800), (200, 1000)], "wall sizes %s: want two sides 200 by 800 and a back wall 1000 by 200" % dims
+    back = next(w for w in walls if tuple(sorted((w["w"], w["h"]))) == (200, 1000))
+    assert _near(back["x"], f["x"] - 500 * math.cos(m)) and _near(back["y"], f["y"] - 500 * math.sin(m)), "back wall %s is not 500 wu behind the mouth heading %s" % (back, m)
+    sides = sorted((w["x"], w["y"]) for w in walls if w is not back)
+    want = sorted([(f["x"] + 400 * math.sin(m), f["y"] - 400 * math.cos(m)), (f["x"] - 400 * math.sin(m), f["y"] + 400 * math.cos(m))])
+    assert all(_near(a[0], b[0]) and _near(a[1], b[1]) for a, b in zip(sides, want)), "side walls %s, want %s" % (sides, want)
+
+
+GEOMETRY = {k: v for k, v in list(globals().items()) if k.startswith("_geometry_")}
+
+
+@pytest.mark.parametrize("kind", [k for k in SITUATIONS if k != "open_field"])
+def test_feature_geometry_per_kind(batch_two, kind):
+    """H-025 Round two ruling 4, the per-kind schema and numbers: chokepoint `gap` 200 `radius` 600 `walls` two 200 by 500 at (x, y +- 350); vantage `radius` 700
+    `height_band` 1; cover `boxes` two to four 120 by 60 within 300 of the centre; objective `radius` 300; staging `size` 600; transit `points` two to four from the
+    centre and `dest` = the last point; flank_route `points` three to five; hazard_anchor `radius` 500; slope `length` 600 `width` 200 `heading` `from_band` 0
+    `to_band` 1; city `radius` 400 and nine 100 by 100 `buildings` at pitch 250; trap `walls` three (two 200 by 800 sides at 400, a 1000 by 200 back wall 500 behind)
+    and `mouth`."""
+    d = next(d for d in _b2(batch_two) if d["situation"] == kind)
+    GEOMETRY["_geometry_" + kind](_feat(d))
+
+
+def test_units_stand_off_every_wall_box_and_building(batch_two):
+    """H-025 Round two ruling 4 R6 stand-off, checked here without check_layout so the producer is not its own oracle: no unit's centre inside any wall, box or
+    building rectangle expanded by 15; at least one rectangle exists in the batch (so the check can fail)."""
+    layouts = _b2(batch_two)
+    assert sum(len(_rects(d)) for d in layouts) > 0, "no layout carries a wall, box or building rectangle"
+    for d in layouts:
+        for u in _all_units(d):
+            for r in _rects(d):
+                assert not _inside_expanded(u["x"], u["y"], r, COLLISION_RADIUS), "%s (%s): unit at (%s, %s) is inside rectangle %s plus 15" % (d["id"], d["situation"], u["x"], u["y"], r)
 
 
 def test_predict_why_names_the_feature(batch_two):
-    """H-025 Round two "writes `predict_why` naming the feature": for every layout with a feature, predict_why contains the feature kind, as written or with
-    its underscore as a space, or the kind's first word (flank, hazard)."""
-    out, _ = batch_two
-    for d in _r2_layouts(out):
+    """H-025 Round two "writes `predict_why` naming the feature": for every layout with a feature, predict_why contains the feature kind, as written or with its
+    underscore as a space, or the kind's first word (flank, hazard)."""
+    for d in _b2(batch_two):
         if d["situation"] == "open_field":
             continue
         kind = d["situation"]
         names = {kind, kind.replace("_", " "), kind.split("_")[0]}
-        why = d["predict_why"].lower()
-        assert any(n in why for n in names), "%s: predict_why %r does not name the %s feature" % (d["id"], d["predict_why"], kind)
+        assert any(n in d["predict_why"].lower() for n in names), "%s: predict_why %r does not name the %s feature" % (d["id"], d["predict_why"], kind)
 
 
-# ---------------------------------------------------------------- ROUND TWO: terrain tiers, not stacked planes
-
-def test_raised_features_sit_on_a_tiered_preset_and_the_vantage_units_stand_on_its_band(batch_two):
-    """H-025 Round two "a landscape's `layers` is the number of height bands on the land, drawn as terrain tiers joined by slopes (R-001-06, R-001-07: a walker
-    has exactly one layer with ground under it at any point)". A vantage (`height_band` 1) and a slope (joins two height bands) need a preset with more than
-    one band; every vantage unit standing inside the disc is on layer `height_band`, every unit outside it on layer 0; a flat preset has one band, so its
-    units are all on layer 0."""
-    out, _ = batch_two
+def test_terrain_tiers_and_the_vantage_layer_rule(batch_two):
+    """H-025 Round two "a landscape's `layers` is the number of height bands ... a walker has exactly one layer with ground under it at any point" and ruling 2
+    "a unit whose centre is inside the vantage disc stands on layer `height_band`; outside, layer 0". Vantage and slope sit on a preset with more than one band; a
+    one-band preset has every unit on layer 0; in the vantage layout inside the disc means layer `height_band`, outside means layer 0."""
     presets = _load_toml(CAT / "presets.toml")
-    for d in _r2_layouts(out):
+    for d in _b2(batch_two):
         layers = presets[d["landscape"]]["layers"]
         units = _all_units(d)
         if d["situation"] in ("vantage", "slope"):
             assert layers >= 2, "%s: a %s on %s, which has %d height band" % (d["id"], d["situation"], d["landscape"], layers)
         if layers == 1:
-            assert all(u["layer"] == 0 for u in units), "%s: layer above 0 on a one-band preset" % d["id"]
+            assert all(u["layer"] == 0 for u in units), "%s: a unit above layer 0 on a one-band preset" % d["id"]
         if d["situation"] == "vantage":
-            assert _feats(d, "vantage"), "%s: no vantage feature" % d["id"]
-            f = _feats(d, "vantage")[0]
+            f = _feat(d)
             for u in units:
                 inside = math.hypot(u["x"] - f["x"], u["y"] - f["y"]) < f["radius"]
                 want = f["height_band"] if inside else 0
                 assert u["layer"] == want, "%s: unit at (%s, %s) is %s the vantage disc but on layer %s, want %s" % (
                     d["id"], u["x"], u["y"], "inside" if inside else "outside", u["layer"], want)
+
+
+def test_control_round_two_geometry_checks_accept_a_feature_built_from_the_ruling():
+    """H-025 Round two ruling 4. CONTROL (green today): features written by hand straight from the ruling's schema pass the per-kind checks used above, the trap
+    both as written (mouth pi/2) and rotated a quarter turn (mouth 0, sizes swapped), and a wrong number fails them; so a red per-kind test is the producer's."""
+    x, y = 2000.0, 2000.0
+    rect = lambda cx, cy, w, h: {"x": cx, "y": cy, "w": w, "h": h}
+    good = {
+        "chokepoint": {"gap": 200, "radius": 600, "walls": [rect(x, y - 350, 200, 500), rect(x, y + 350, 200, 500)]},
+        "vantage": {"radius": 700, "height_band": 1},
+        "cover": {"boxes": [rect(x + 100, y, 120, 60), rect(x - 100, y, 120, 60)]},
+        "objective": {"radius": 300}, "staging": {"size": 600},
+        "transit": {"points": [[x, y], [x + 300.0, y + 100.0]], "dest": {"x": x + 300.0, "y": y + 100.0}},
+        "flank_route": {"points": [[x, y], [x + 1.0, y + 2.0], [x + 3.0, y + 4.0]]},
+        "hazard_anchor": {"radius": 500},
+        "slope": {"length": 600, "width": 200, "heading": 0.5, "from_band": 0, "to_band": 1},
+        "city": {"radius": 400, "buildings": [rect(x + i * 250.0, y + j * 250.0, 100, 100) for i in (-1, 0, 1) for j in (-1, 0, 1)]},
+        "trap": {"mouth": math.pi / 2, "walls": [rect(x - 400, y, 200, 800), rect(x + 400, y, 200, 800), rect(x, y - 500, 1000, 200)]},
+    }
+    for kind, g in good.items():
+        GEOMETRY["_geometry_" + kind](dict(g, kind=kind, x=x, y=y))
+    GEOMETRY["_geometry_trap"](dict(kind="trap", x=x, y=y, mouth=0.0, walls=[rect(x, y - 400, 800, 200), rect(x, y + 400, 800, 200), rect(x - 500, y, 200, 1000)]))
+    with pytest.raises(AssertionError):
+        GEOMETRY["_geometry_objective"](dict(good["objective"], radius=301))
