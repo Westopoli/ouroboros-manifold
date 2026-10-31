@@ -4,8 +4,8 @@ landscape = "small_flat"
 seed = 1021649
 predict = "A"
 predict_why = "Side A sits in three separated clusters and side B is one mass in the open, so position outweighs numbers."
-verdict = ""
-feedback = ""
+verdict = "deny"
+feedback = "No cover obstacles drawn; units unreadable at this distance."
 
 [side_a]
 headcount = 16

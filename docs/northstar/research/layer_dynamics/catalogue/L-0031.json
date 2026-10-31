@@ -5,8 +5,8 @@
   "seed": 1101705,
   "predict": "A",
   "predict_why": "Side A shows a small bait and keeps two wings on either side of it, so the ambush outweighs numbers.",
-  "verdict": "",
-  "feedback": "",
+  "verdict": "deny",
+  "feedback": "No trap geometry drawn (nothing to spring it); clusters on an empty field.",
   "side_a": {
     "headcount": 16,
     "units": [

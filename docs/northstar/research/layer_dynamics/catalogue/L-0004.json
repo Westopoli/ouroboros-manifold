@@ -5,8 +5,8 @@
   "seed": 1011642,
   "predict": "B",
   "predict_why": "Side B stands on the layer above side A and sees down onto it, so position outweighs numbers.",
-  "verdict": "",
-  "feedback": "",
+  "verdict": "deny",
+  "feedback": "No vantage drawn: three stacked planes on a flat field; a ground era has one walkable layer at any point (R-001-07), high ground is terrain, not a plane.",
   "side_a": {
     "headcount": 16,
     "units": [

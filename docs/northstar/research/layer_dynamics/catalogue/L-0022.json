@@ -5,8 +5,8 @@
   "seed": 1071684,
   "predict": "B",
   "predict_why": "Side B stands as a ring that cannot be flanked and side A has one front to push, so position outweighs numbers.",
-  "verdict": "",
-  "feedback": "",
+  "verdict": "deny",
+  "feedback": "No hazard drawn; the ring of units stands around nothing.",
   "side_a": {
     "headcount": 16,
     "units": [
