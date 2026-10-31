@@ -35,7 +35,7 @@ from test_spec_provenance import EPIC_TEXT, LEDGER_TEXT, PASSING_SPEC, REGISTER_
 REPO = Path(__file__).resolve().parent.parent.parent
 SCRIPT = REPO / "scripts" / "specfactory" / "pre_gate.sh"
 
-LINE_RE = re.compile(r"^PRE_GATE (noise|gate|tests|pins|provenance|verdict) (OK|REJECT|WARN)\b")
+LINE_RE = re.compile(r"^PRE_GATE (noise|gate|tests|story|pins|provenance|verdict) (OK|REJECT|WARN)\b")
 
 PASSING_TEST = "def test_ok():\n    assert 1 + 1 == 2\n"
 FAILING_TEST = "def test_bad():\n    assert 1 + 1 == 3\n"
@@ -132,6 +132,15 @@ def test_control_format_regex_matches_hand_written_lines():
     assert not LINE_RE.match("GATE make OK")
 
 
+def test_control_format_regex_accepts_story_line_and_rejects_old_spelling():
+    """H-032 control: LINE_RE takes the `story` step and still refuses the PREGATE spelling and a verdict-less pins line."""
+    assert LINE_RE.match("PRE_GATE story OK 1 paths")
+    assert not LINE_RE.match("PREGATE story OK 1 paths")
+    assert not LINE_RE.match("PREGATE pins OK skipped: no csrc change")
+    assert not LINE_RE.match("PRE_GATE pins skipped: no csrc change")
+    assert LINE_RE.match("PRE_GATE pins OK skipped: no csrc change")
+
+
 # ---- the script ---------------------------------------------------------------
 
 def test_script_exists():
@@ -168,6 +177,25 @@ def test_clean_repo_ok_stub_passes_through(tmp_path):
     args = (tmp_path / "gate_args.txt").read_text().splitlines()
     assert args == ["--revert", str(repo), "base", "P-1"]
     assert (tmp_path / "gate_pieces.txt").read_text() == str(pieces)
+
+
+def test_story_id_prints_story_line_and_every_line_has_the_prefix(tmp_path):
+    """H-032: "Every line pre_gate.sh prints starts `PRE_GATE <step>`, as its header says". A story file in the
+    toy repo (Machine lines: Flag harness, Tests naming its stub test) and its id as the piece id make
+    `PRE_GATE story OK <n> paths` print; every non-`GATE ` line then matches LINE_RE (DEC-pregate-line-prefix-2026-10-31,
+    ruling A: the no-csrc pins skip is `PRE_GATE pins OK skipped: no csrc change`)."""
+    story = ("# H-990: stub\n\n## Machine lines\n\nFlag: harness\nTests: tests/test_stub_h990.py\n")
+    repo = _make_repo(tmp_path, head_add={"docs/stories/H-990.md": story,
+                                          "tests/test_stub_h990.py": PASSING_TEST})
+    pieces = _pieces(tmp_path, ["H-990"])
+    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0), pieces="H-990",
+               env_extra={"MERGE_GATE_PIECES": str(pieces), "PRE_GATE_PYTHON": sys.executable})
+    out = _lines(res)
+    assert "PRE_GATE story OK 1 paths" in out, res.stdout + res.stderr
+    bad = [l for l in out if not (l.startswith("GATE ") or LINE_RE.match(l))]
+    assert not bad, bad
+    assert out[-1] == "PRE_GATE verdict OK"
+    assert res.returncode == 0
 
 
 def test_reject_stub_is_gate_reject(tmp_path):
