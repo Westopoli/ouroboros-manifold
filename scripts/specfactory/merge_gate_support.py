@@ -822,8 +822,11 @@ def _store_candidate_result(merge_root: Path, harness_sha: str, cand_sha: str, s
     _store_cached_baseline(path, harness_sha, cand_sha, suite_key, result, input_hash)
 
 
-def seed_cache(candidate_dir: Path, merge_root: Path) -> str:
-    """A15: after the push, copy candidate_results/<sha>.json to the baseline cache when origin/main is that sha."""
+def seed_cache(candidate_dir: Path, merge_root: Path, gated: str | None = None) -> str:
+    """A15, H-016: after the push, copy candidate_results/<gated>.json to baseline_cache/<HEAD>.json when origin/main
+    is HEAD and <gated> is an ancestor of origin/main. <gated> defaults to the second parent of a merge HEAD, else HEAD
+    (the gate stores a candidate's suite results under the gated sha, not under the merge commit).
+    See also: docs/northstar/plans/2026-10-29-layered-gate-spec.md section 9 issue 7"""
     def rev(ref: str) -> str | None:
         r = subprocess.run(["git", "rev-parse", "--verify", "-q", ref], cwd=str(candidate_dir),
                            capture_output=True, text=True)
@@ -831,13 +834,19 @@ def seed_cache(candidate_dir: Path, merge_root: Path) -> str:
     sha, main = rev("HEAD"), rev("origin/main")
     if sha is None or sha != main:
         return f"seed-cache: skipped origin/main {main} is not HEAD {sha}"
-    src = Path(merge_root) / "candidate_results" / f"{sha}.json"
+    gated = gated or rev("HEAD^2") or sha
+    anc = subprocess.run(["git", "merge-base", "--is-ancestor", gated, "origin/main"],
+                         cwd=str(candidate_dir), capture_output=True, text=True)
+    if anc.returncode != 0:
+        return f"seed-cache: skipped gated {gated} is not an ancestor of origin/main"
+    src = Path(merge_root) / "candidate_results" / f"{gated}.json"
     if not src.exists():
-        return f"seed-cache: skipped no candidate_results for {sha}"
+        return f"seed-cache: skipped no candidate_results for {gated}"
     dst = _baseline_cache_path(Path(merge_root), sha)
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(src, dst)
-    return f"seed-cache: seeded {sha}"
+    n = len(json.loads(src.read_text()).get("suites", {}))
+    return f"seed-cache: seeded {n} suites from {gated} for {sha}"
 
 
 _STRACE_PID = re.compile(r"^\s*(?:\[pid\s+(\d+)\]|(\d+))?\s*")
@@ -1573,6 +1582,8 @@ def main(argv: list[str]) -> int:
     sd = sub.add_parser("seed-cache")
     sd.add_argument("candidate_dir")
     sd.add_argument("--merge-root", required=True)
+    sd.add_argument("--gated", default=None,
+                    help="sha whose candidate_results to seed from; default the second parent of a merge HEAD, else HEAD")
 
     args = ap.parse_args(argv)
     # A15: stage runs must not leave __pycache__ in a tree whose committed state is hashed (a records
@@ -1643,7 +1654,7 @@ def main(argv: list[str]) -> int:
         print(f"WARN {acceptance_warn_detail(args.piece_id, resolved, green, ids, red)}")
         return 0
     elif args.cmd == "seed-cache":
-        print(seed_cache(Path(args.candidate_dir), Path(args.merge_root)))
+        print(seed_cache(Path(args.candidate_dir), Path(args.merge_root), args.gated))
         return 0
     elif args.cmd == "prune-evidence":
         for d in prune_evidence():
