@@ -1013,3 +1013,37 @@ def test_westley_folder_files_are_not_a_footprint(tmp_path):
     _git(repo, "commit", "-q", "-m", "westley copy")
     ok, detail = mgs.footprint_check(repo, "HEAD~1", "B1", pieces_path=pieces)
     assert ok is True, detail
+
+
+# ---------------------------------------------------------------- H-029 pieces-code-retire (absence) --
+# H-029: "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone."
+# Ruling DEC-combined-ids-retired-2026-10-30: the gate takes one story id per landing and a red acceptance id
+# rejects, so the pieces-based helpers are dead code. footprint_check, _load_pieces, piece_controls and their
+# --pieces flags stay (H-030).
+
+SUPPORT = str(REPO / "scripts" / "specfactory" / "merge_gate_support.py")
+
+
+@pytest.mark.parametrize("name", ["undertest_warn", "acceptance_ids"])
+def test_h029_module_has_no_dead_pieces_helper(name):
+    """H-029: 'delete `undertest_warn` (lines 481 to 530), `acceptance_ids` (532 to 557)'; the module has no
+    such attribute once the builder has deleted it."""
+    assert not hasattr(mgs, name), f"merge_gate_support.{name} still exists (H-029 deletes it)"
+
+
+@pytest.mark.parametrize("cmd", ["acceptance-verdict", "acceptance-ids", "undertest"])
+def test_h029_removed_subcommand_is_an_invalid_choice(cmd):
+    """H-029: 'python3 merge_gate_support.py acceptance-verdict --help, acceptance-ids --help and undertest
+    --help each exit non-zero with an "invalid choice" message.'"""
+    r = subprocess.run([sys.executable, SUPPORT, cmd, "--help"], capture_output=True, text=True)
+    assert r.returncode != 0, f"{cmd} --help exited 0; the sub-command still exists:\n{r.stdout}"
+    assert "invalid choice" in r.stderr, r.stderr
+
+
+def test_positive_control_h029_story_acceptance_help_exits_zero():
+    """H-029 positive control: 'python3 merge_gate_support.py story-acceptance --help exits 0' (the live story
+    sub-command). Green today and after: a red absence test above means the sub-command is still there, not
+    that this invocation is broken."""
+    r = subprocess.run([sys.executable, SUPPORT, "story-acceptance", "--help"], capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "usage" in r.stdout.lower(), r.stdout

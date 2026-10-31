@@ -478,84 +478,6 @@ def symbol_ownership_check(candidate_dir: Path, base_ref: str, *,
     return True, "OK" if defs else "OK (no om_* definitions in diff)"
 
 
-def undertest_warn(candidate_dir: Path, base_ref: str, piece_id: str, *,
-                    pieces_path: Path = DEFAULT_PIECES, cap: int = 10) -> list[str]:
-    """WARN-only lines for the gate's undertest_check step (decision 8: "as
-    WARN rows only. block only on lines a named rule owns" -- no rule-
-    ownership table exists yet, so nothing here ever blocks). Runs
-    undertest_check.mutate_diff over the FIRST added/changed om_* function
-    the diff defines inside the piece's own module, against the piece's
-    acceptance ids -- one function, capped mutants, to keep this bounded;
-    shadow_fixture is not run here at all, since it needs a hand-authored
-    perturbation (which literal to change, and the recomputed expected
-    value) per test that cannot be derived generically from a diff alone.
-    Any failure (build error, function not in this diff, timeout) is itself
-    reported as a WARN, never raised -- this step can never reject."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    import undertest_check as utc  # noqa: E402
-
-    pieces = _load_pieces(pieces_path)
-    resolved_id = resolve_piece_id(piece_id, pieces)
-    piece = pieces.get(resolved_id)
-    if piece is None:
-        return [f"undertest_check skipped: unknown piece id {piece_id!r}"]
-    acceptance = [a for a in (piece.get("acceptance") or []) if a.endswith(".py") or "::" in a]
-    if not acceptance:
-        return ["undertest_check skipped: no pytest acceptance ids on this piece"]
-
-    owns = set(piece.get("owns", []) or [])
-    try:
-        defs = _diff_added_definitions(candidate_dir, base_ref)
-    except RuntimeError as exc:
-        return [f"undertest_check skipped: {exc}"]
-    own_defs = [(f, s) for f, s in defs if f in owns]
-    if not own_defs:
-        return ["undertest_check skipped: no new/changed om_* definition in this piece's own owns"]
-
-    file_path, symbol = own_defs[0]
-    try:
-        result = utc.mutate_diff(base_ref, "HEAD", file_path, symbol, acceptance,
-                                  project=candidate_dir, cap=cap)
-    except Exception as exc:  # noqa: BLE001 -- advisory only, never blocks the gate
-        return [f"undertest_check skipped ({symbol}): {exc}"]
-
-    if result["verdict"] == "UNDER_TESTED":
-        lines = [f"undertest_check UNDER_TESTED {symbol} in {file_path}: "
-                 f"{result['survived']}/{result['total_mutants']} mutants survived"]
-        for s in result["survivors"][:5]:
-            lines.append(f"  survivor: line {s['line']} {s['mutation']}: {s['text']!r}")
-        return lines
-    return [f"undertest_check OK {symbol} in {file_path}: "
-            f"{result['killed']}/{result['total_mutants']} mutants killed"]
-
-
-def acceptance_ids(piece_id: str, *, pieces_path: Path = DEFAULT_PIECES) -> tuple[list[str], list[str]]:
-    """(pytest_ids, godot_ids) for a piece's acceptance list. A pytest id is
-    anything pytest can collect directly (a `.py` path, a `::`-qualified node
-    id, or one of the three bare directory names the gate already runs
-    whole) -- the exact filter merge_gate.sh's step 7 used inline before this
-    function existed. A `.gd` id is a Godot test script, run through
-    scripts/run_godot_tests.sh instead: pytest cannot collect it, so before
-    this split it was silently never run for a client piece (C2, C7) whose
-    acceptance is entirely Godot tests (2026-09-22 defect)."""
-    pieces = _load_pieces(pieces_path)
-    pytest_ids: list[str] = []
-    godot_ids: list[str] = []
-    # A comma list (the slow tier's window) is the union of its pieces' acceptance, first occurrence kept.
-    for one in (p.strip() for p in piece_id.split(",") if p.strip()):
-        piece = pieces.get(resolve_piece_id(one, pieces))
-        if piece is None:
-            continue
-        for a in piece.get("acceptance") or []:
-            if a.endswith(".gd"):
-                if a not in godot_ids:
-                    godot_ids.append(a)
-            elif a.endswith(".py") or "::" in a or a in ("tests/transport", "tests/qa/t1", "tests/csim"):
-                if a not in pytest_ids:
-                    pytest_ids.append(a)
-    return pytest_ids, godot_ids
-
-
 def story_controls(acceptance: list[str], project: Path) -> list[Path]:
     """piece_controls over a plain acceptance list (the story file's Tests paths)."""
     epics = {m.group(1) for a in acceptance for m in [re.search(r"test_E(\d+)_", a)] if m}
@@ -1497,10 +1419,6 @@ def main(argv: list[str]) -> int:
     sl.add_argument("--signatures", default=str(DEFAULT_SIGNATURES))
     sl.add_argument("--symbol-modules", default=str(DEFAULT_SYMBOL_MODULES))
 
-    ai = sub.add_parser("acceptance-ids")
-    ai.add_argument("piece_id")
-    ai.add_argument("--pieces", default=str(DEFAULT_PIECES))
-
     pt = sub.add_parser("playthrough")
     pt.add_argument("candidate_dir")
     pt.add_argument("base_ref")
@@ -1538,13 +1456,6 @@ def main(argv: list[str]) -> int:
     fr.add_argument("--python", default=sr.DEFAULT_PYTHON)
     fr.add_argument("--timeout", type=int, default=600)
 
-    ut = sub.add_parser("undertest")
-    ut.add_argument("candidate_dir")
-    ut.add_argument("base_ref")
-    ut.add_argument("piece_id")
-    ut.add_argument("--pieces", default=str(DEFAULT_PIECES))
-    ut.add_argument("--cap", type=int, default=10)
-
     cl = sub.add_parser("control-liveness")
     cl.add_argument("project")
     cl.add_argument("piece_ids")
@@ -1556,13 +1467,6 @@ def main(argv: list[str]) -> int:
     pc = sub.add_parser("placeholder-controls")
     pc.add_argument("project")
     pc.add_argument("--placeholders", default=str(DEFAULT_PLACEHOLDERS))
-
-    av = sub.add_parser("acceptance-verdict")
-    av.add_argument("piece_id")
-    av.add_argument("--pieces", default=str(DEFAULT_PIECES))
-    av.add_argument("--ids-file", required=True)
-    av.add_argument("--pytest-log")
-    av.add_argument("--godot-log")
 
     rg = sub.add_parser("regression")
     rg.add_argument("candidate_dir")
@@ -1620,13 +1524,6 @@ def main(argv: list[str]) -> int:
                              symbol_modules_path=Path(args.symbol_modules)):
             print(f)
         return 0
-    elif args.cmd == "acceptance-ids":
-        pytest_ids, godot_ids = acceptance_ids(args.piece_id, pieces_path=Path(args.pieces))
-        for i in pytest_ids:
-            print(f"PY {i}")
-        for i in godot_ids:
-            print(f"GD {i}")
-        return 0
     elif args.cmd == "symbols":
         ok, detail = symbol_ownership_check(Path(args.candidate_dir), args.base_ref,
                                              signatures_path=Path(args.signatures),
@@ -1639,20 +1536,6 @@ def main(argv: list[str]) -> int:
         project = Path(args.project)
         ok, detail = sig_check(project, Path(args.table) if args.table
                                else project / "docs/northstar/spec_factory/signatures.toml")
-    elif args.cmd == "acceptance-verdict":
-        pieces = _load_pieces(Path(args.pieces))
-        resolved = is_increment(args.piece_id, pieces)
-        if resolved is None:
-            print("REJECT")
-            return 1
-        ids = [line.strip() for line in Path(args.ids_file).read_text().splitlines() if line.strip()]
-        if args.pytest_log:
-            _passed, _failed, failing = sr.parse_pytest(Path(args.pytest_log).read_text())
-            green, red = partition_pytest_ids(ids, failing)
-        else:
-            green, red = partition_godot_ids(ids, Path(args.godot_log).read_text())
-        print(f"WARN {acceptance_warn_detail(args.piece_id, resolved, green, ids, red)}")
-        return 0
     elif args.cmd == "seed-cache":
         print(seed_cache(Path(args.candidate_dir), Path(args.merge_root), args.gated))
         return 0
@@ -1686,12 +1569,6 @@ def main(argv: list[str]) -> int:
                                      timeout=args.timeout)
         print(f"{'WARN' if passed else 'REJECT'} {detail}")
         return 0 if passed else 1
-    elif args.cmd == "undertest":
-        lines = undertest_warn(Path(args.candidate_dir), args.base_ref, args.piece_id,
-                                pieces_path=Path(args.pieces), cap=args.cap)
-        for line in lines:
-            print(f"WARN {line}")
-        return 0
     else:
         ok, detail, _report = regression_check(Path(args.candidate_dir), args.base_ref, args.test_args,
                                                  python_exe=args.python, timeout=args.timeout,
