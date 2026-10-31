@@ -1,7 +1,8 @@
 #!/bin/bash
 # Slow-tier sweep of origin/main: worktree, merge_gate.sh --tier slow over the Land ids since the last PASS/BASE row,
-# sweeps.md row + empty `Sweep` commit pushed under records.lock. Takes no gate.lock (a sweep and a landing gate run at once).
+# sweeps.md row + empty `Sweep` commit pushed under records.lock; an early reject (no result file) still writes its row, `early <stage>` in the last column. Takes no gate.lock (a sweep and a landing gate run at once).
 # See also: docs/stories/H-014.md, docs/northstar/plans/2026-10-29-layered-gate-spec.md sections 4, 8 B2 and B3.
+# See also: docs/stories/H-034.md (row on early reject), docs/stories/H-021.md.
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
@@ -31,12 +32,13 @@ LOG="$WT/../sweep-$STAMP.gate.log"
     bash "$HERE/merge_gate.sh" --tier slow "$WT" "$BASE" "$IDS" ) > "$LOG" 2>&1
 RC=$?
 RESULT="$(dirname "$WT")/candidate_results/$SHA.json"
-if [[ $RC -gt 1 || ! -f "$RESULT" ]]; then
+# An early reject (rc 1) exits before the gate stores a result file: its row is built from the log (H-034). No `GATE ` line, or rc > 1, is a harness error.
+if [[ $RC -gt 1 ]] || ! grep -q '^GATE ' "$LOG"; then
     echo "sweep: gate rc $RC, result $RESULT missing or harness error; no row written" >&2
     exit 1
 fi
 
-IFS='|' read -r VERDICT NEW N < <(python3 - "$LOG" "$RESULT" "$RC" "$HERE" <<'PY'
+IFS='|' read -r VERDICT NEW N EARLY < <(python3 - "$LOG" "$RESULT" "$RC" "$HERE" <<'PY'
 import json, re, sys
 from pathlib import Path
 log, result, rc, here = sys.argv[1], sys.argv[2], int(sys.argv[3]), Path(sys.argv[4])
@@ -47,22 +49,33 @@ for name in ("lane_plays_known_red.txt", "playthrough_known_red.txt", "gd_tests_
         for part in line.split("#")[0].split(" :: "):
             known += [x.strip() for x in part.split(",") if x.strip()]
 is_known = lambda t: any(t.startswith(k) for k in known)
-new, bare, seen = [], 0, 0
+new, bare, seen, ids_log, bare_log, stage = [], 0, 0, [], 0, ""
 for line in Path(log).read_text(errors="replace").splitlines():
     m = re.match(r"GATE (\S+) REJECT(.*)", line)
     if not m:
         continue
+    if m.group(1) == "early_exit":
+        continue
     seen += 1
+    stage = stage or m.group(1)
+    found = [i for i in re.findall(r"FAILED (\S+)", m.group(2)) + re.findall(r"'([^']+)'", m.group(2)) if not is_known(i)]
+    ids_log += found
+    bare_log += 0 if found else 1
     listed = "new failures" in m.group(2)
     ids = [i for i in re.findall(r"'([^']+)'", m.group(2)) if not is_known(i)] if listed else []
     new += ids
     bare += 0 if listed else 1
 new = sorted(set(new))
-red = sorted({i for s in json.loads(Path(result).read_text()).get("suites", {}).values()
-              for i in s.get("failing_ids", []) if not is_known(i)})
+early = not Path(result).exists()
+if early:
+    new = red = sorted(set(ids_log))
+else:
+    red = sorted({i for s in json.loads(Path(result).read_text()).get("suites", {}).values()
+                  for i in s.get("failing_ids", []) if not is_known(i)})
 Path(str(log) + ".red").write_text("".join(i + "\n" for i in red))
 reject = new or bare or (rc == 1 and not seen)
-print("REJECT" if reject else "PASS", ",".join(new) or "none", len(red), sep="|")
+n_red = len(red) + (bare_log if early else 0)
+print("REJECT" if reject else "PASS", ",".join(new) or "none", n_red, ("early " + stage).strip() if early else "", sep="|")
 PY
 )
 [[ -n "$VERDICT" ]] || { echo "sweep: verdict parse failed" >&2; exit 1; }
@@ -70,6 +83,7 @@ PY
 DATE=$(date -u +%Y-%m-%d)
 LISTREL=docs/northstar/plans/push/sweeps/$DATE-$SHA.txt
 if [[ "$N" -gt 20 ]]; then REDCOL=$LISTREL; else REDCOL=$(paste -sd, "$LOG.red" | sed 's/,/, /g'); fi
+[[ -n "$EARLY" ]] && REDCOL=$EARLY  # no result file: the last column names the rejecting stage, the ids are in the .red sidecar
 
 exec 9>>"$PUSHDIR/records.lock" 2>/dev/null || { mkdir -p "$PUSHDIR"; exec 9>>"$PUSHDIR/records.lock"; }
 flock -w 3600 9 || { echo "sweep: records.lock timeout" >&2; exit 1; }
