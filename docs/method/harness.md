@@ -30,7 +30,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-031 | "A launched scene is proved visible the way Westley sees it: the window is mapped on his desktop and a real capture of the screen shows it, or the proof says unproven." | First piece landed 60479600; round two (capture, Wayland no-display rule) Ready | `docs/stories/H-031.md` |
 | H-032 | "Every line pre_gate.sh prints starts `PRE_GATE <step>`, as its header says, so the pre-gate's own clean-repo test is green on main again." | Tested | `docs/stories/H-032.md` |
 | H-033 | "The nightly play files what it found as harness rows on a branch every night; a finding never dies in the timer's journal." | Tested | `docs/stories/H-033.md` |
-| H-034 | "A sweep that cannot finish still writes its row, so a red or broken sweep shows in the status and never passes as silence." | Ready | `docs/stories/H-034.md` |
+| H-034 | "A sweep that cannot finish still writes its row, so a red or broken sweep shows in the status and never passes as silence." | Tested | `docs/stories/H-034.md` |
 | H-035 | "A test that launches Godot runs against an imported tree in the gate, wherever the test file lives, so a fresh sweep tree never fails on a missing import cache." | Ready | `docs/stories/H-035.md` |
 | H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | none yet |
