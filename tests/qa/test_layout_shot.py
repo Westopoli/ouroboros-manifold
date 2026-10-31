@@ -270,9 +270,9 @@ def test_qa_state_glyph_px_is_at_least_the_minimum_when_the_camera_has_backed_of
 
 
 @pytest.mark.parametrize("name,features,defender,bbox", [
-    # units: x 600 to 3280 (3000 + 7 * 40), y 1900 to 1980; the objective disc adds x 1500 to 2100, y 1700 to 2300
+    # units: x 600 to 3280 (3000 + 7 * 40), y 1900 to 1940 (1900 + 40 * (i % 2)); the objective disc adds x 1500 to 2100, y 1700 to 2300
     ("objective", [TOY_OBJECTIVE], "A", [600.0, 1700.0, 3280.0, 2300.0]),
-    ("open_field", None, "", [600.0, 1900.0, 3280.0, 1980.0]),
+    ("open_field", None, "", [600.0, 1900.0, 3280.0, 1940.0]),
 ])
 def test_qa_state_camera_frames_units_and_features_with_a_fifteen_percent_margin(tmp_path, monkeypatch, name, features, defender, bbox):
     """H-025 Round two "the camera frames the bounding box of all units and features plus a 15% margin, never the whole land piece"; ruling 6 "`camera` ({`bbox`:
