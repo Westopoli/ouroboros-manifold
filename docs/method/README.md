@@ -37,6 +37,9 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 | Builder rounds before escalation | 3 | Architect |
 | DRAFT-play-window-s | 60 s for the window to appear | Architect |
 | DRAFT-play-settle-s | 10 s after the window before `qa_state()` is read | Architect |
+| DRAFT-play-resolution | 1920x1080, the launch always passes `--windowed --resolution` | Architect, H-031 |
+| DRAFT-play-min-fps | 30 fps on the Wayland window check | Architect, H-031 |
+| DRAFT-play-fps-s | 3 consecutive seconds at DRAFT-play-min-fps | Architect, H-031 |
 | DRAFT-pregate-pins-timeout-s | 600 s for the pre-gate csrc pins step (build plus pinned csim files) | Westley, 2026-10-29 layered-gate spec section 9 |
 | DRAFT-token-report-tolerance | 3 points on shares, 5% on calls and tokens, for the 2026-10-29 fixture | Architect, DEC-token-report-day-2026-10-30 |
 | Agent context stop | 120k per builder, test writer or clerk; 60k for the on-call architect agent | method rev 2 |

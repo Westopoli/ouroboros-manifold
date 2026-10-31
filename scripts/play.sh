@@ -5,6 +5,9 @@ set -uo pipefail
 GODOT="$HOME/.local/bin/godot.real"
 WINDOW_S=60   # DRAFT-play-window-s
 SETTLE_S=10   # DRAFT-play-settle-s
+RESOLUTION=1920x1080   # DRAFT-play-resolution
+MIN_FPS=30    # DRAFT-play-min-fps
+FPS_S=3       # DRAFT-play-fps-s: consecutive seconds at MIN_FPS
 scene=""; seed=""; story=""; tree=""; check=0; dry=0; keep=0; extra=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -55,7 +58,11 @@ fi
 # DEC-play-check-scratch-userdir-2026-10-30: --check runs Godot under a scratch XDG_DATA_HOME so a stored profile cannot change the scene reached.
 # See also: scripts/specfactory/merge_gate.sh FINDING-ambient-user-dir
 envp=""; [[ $check -eq 1 ]] && envp="XDG_DATA_HOME=$tree/xdg "
-launch="${envp}$GODOT --path $tree${scene:+ $scene}"
+# H-031: Xwayland leaves the window unmapped, so a Wayland session launches the Wayland driver; always windowed.
+# See also: docs/stories/H-031.md
+wayland=0; dflags="--windowed --resolution $RESOLUTION"
+[[ -n "${WAYLAND_DISPLAY:-}" ]] && { wayland=1; dflags="--display-driver wayland $dflags"; }
+launch="${envp}$GODOT --path $tree $dflags${scene:+ $scene}"
 build="cd $tree && scripts/build_pipe_linux.sh"
 # 8. Dry run
 if [[ $dry -eq 1 ]]; then
@@ -96,28 +103,51 @@ if [[ $check -eq 1 ]]; then
 fi
 log="$tree/.play.log"
 [[ $check -eq 1 ]] && mkdir -p "$tree/xdg"
-setsid nohup ${envp:+env "${envp% }"} "$GODOT" --path "$tree" ${scene:+"$scene"} -- "${extra[@]}" >"$log" 2>&1 &
+pflag=(); [[ $wayland -eq 1 ]] && pflag=(--print-fps)
+setsid nohup ${envp:+env "${envp% }"} "$GODOT" --path "$tree" $dflags "${pflag[@]}" ${scene:+"$scene"} -- "${extra[@]}" >"$log" 2>&1 &
 gpid=$!
 
-# 6. Window
-t=0
-until xdotool search --name Ouroboros >/dev/null 2>&1; do
-  if [[ $t -ge $WINDOW_S ]]; then
-    echo "PLAY REJECT no window after ${WINDOW_S}s"; tail -20 "$log"; exit 2
-  fi
-  sleep 1; t=$((t+1))
-done
-echo "PLAY window ${t}s"
-
-# 7. Check
-if [[ $check -eq 1 ]]; then
-  sleep "$SETTLE_S"
-  got=$(python3 -c '
+# qa_scene <port>: the scene the QA daemon reports, empty when it does not answer.
+qa_scene() {
+  python3 -c '
 import json,socket,sys
 s=socket.create_connection(("127.0.0.1",int(sys.argv[1])),timeout=10)
 s.sendall(b"[\"state\"]\n"); b=b""
 while not b.endswith(b"\n"): b+=s.recv(65536)
-print(json.loads(b)["result"]["scene"])' "$port")
+print(json.loads(b)["result"]["scene"])' "$1" 2>/dev/null
+}
+
+# 6. Window
+t=0
+if [[ $wayland -eq 1 ]]; then
+  # No X window under the Wayland driver: qa_state answers (with --check) and the last FPS_S fps lines are all >= MIN_FPS.
+  until { [[ $check -eq 0 ]] || [[ -n "$(qa_scene "$port")" ]]; } &&
+        [[ $(grep -oE 'FPS: *[0-9]+' "$log" | tail -n "$FPS_S" | awk -v m="$MIN_FPS" '$NF>=m' | wc -l) -eq $FPS_S ]]; do
+    if [[ $t -ge $WINDOW_S ]]; then
+      echo "PLAY REJECT wayland window: no qa_state or under ${MIN_FPS} fps for ${FPS_S}s after ${WINDOW_S}s"; tail -20 "$log"; exit 2
+    fi
+    sleep 1; t=$((t+1))
+  done
+  echo "PLAY window ${t}s wayland"
+else
+  # X11: xdotool finds the window by name and xwininfo reports it IsViewable (Xwayland leaves it IsUnMapped).
+  state=""
+  until wid=$(xdotool search --name Ouroboros 2>/dev/null | head -1); [[ -n "$wid" ]] &&
+        state=$(xwininfo -id "$wid" 2>/dev/null | sed -n 's/.*Map State: *//p') && [[ "$state" == IsViewable ]]; do
+    if [[ $t -ge $WINDOW_S ]]; then
+      if [[ -n "$wid" ]]; then echo "PLAY REJECT window unmapped ${state:-unknown}"
+      else echo "PLAY REJECT no window after ${WINDOW_S}s"; fi
+      tail -20 "$log"; exit 2
+    fi
+    sleep 1; t=$((t+1))
+  done
+  echo "PLAY window ${t}s"
+fi
+
+# 7. Check
+if [[ $check -eq 1 ]]; then
+  sleep "$SETTLE_S"
+  got=$(qa_scene "$port")
   kill "$gpid" 2>/dev/null
   want="${scene:-$(sed -n 's/^run\/main_scene="\(.*\)"/\1/p' "$tree/project.godot")}"
   if [[ "$got" == "$want" ]]; then echo "PLAY scene $got reached"; else echo "PLAY REJECT scene $got wanted $want"; exit 3; fi
