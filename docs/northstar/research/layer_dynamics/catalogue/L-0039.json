@@ -1,0 +1,176 @@
+{
+  "id": "L-0039",
+  "situation": "cover",
+  "landscape": "small_flat",
+  "seed": 1020833,
+  "predict": "A",
+  "predict_why": "Side A shoots from behind the cover boxes at side B crossing open ground, so position outweighs numbers.",
+  "verdict": "",
+  "feedback": "",
+  "defender": "A",
+  "side_a": {
+    "headcount": 8,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 2210.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2210.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2210.0,
+        "y": 1960.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2250.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2250.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2250.0,
+        "y": 1960.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2290.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2290.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 1200.0
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 8,
+    "units": [
+      {
+        "role": "Bastion",
+        "x": 1040.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 800.0
+      },
+      {
+        "role": "Bastion",
+        "x": 1040.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 800.0
+      },
+      {
+        "role": "Bastion",
+        "x": 1040.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 800.0
+      },
+      {
+        "role": "Warden",
+        "x": 1000.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 1000.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 1000.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Bombard",
+        "x": 960.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 960.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      }
+    ]
+  },
+  "features": [
+    {
+      "kind": "cover",
+      "x": 2000.0,
+      "y": 2000.0,
+      "boxes": [
+        {
+          "x": 1950.0,
+          "y": 1800.0,
+          "w": 120,
+          "h": 60
+        },
+        {
+          "x": 1950.0,
+          "y": 2000.0,
+          "w": 120,
+          "h": 60
+        },
+        {
+          "x": 1950.0,
+          "y": 2200.0,
+          "w": 120,
+          "h": 60
+        }
+      ]
+    }
+  ]
+}

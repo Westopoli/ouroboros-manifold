@@ -1,10 +1,13 @@
 """H-025 layout catalogue producer: mass-produces layouts from the recorded rules (rules.toml) on the stage presets (presets.toml).
 
-CLI: python3 -m scripts.skilllab.catalogue.produce --out <dir> --situations <comma list or all> --pairs <"16:16,16:32,32:16"> --seed <int> [--plant <rule id>]
+CLI: python3 -m scripts.skilllab.catalogue.produce --out <dir> --seed <int> [--batch two|one] [--situations <comma list or all>] [--pairs <"16:32,24:24">] [--plant <rule id>]
+--batch two (the default, H-025 round two) writes the twelve recipes with landscape features; --situations and --pairs are optional and honoured when given.
+--batch one keeps the round-one recipes for history only: batch one is denied (DEC-catalogue-batch1-denied-2026-10-31) and its layouts carry no features, so R6 rejects them.
 Every number here that the story does not give is a named DRAFT; Westley rules. Nothing is deduced from a produced layout (DEC-lab-placeholders-no-deductions-2026-10-30).
 """
 import argparse
 import copy
+import functools
 import json
 import math
 import random
@@ -21,7 +24,8 @@ EDGE_OUTNUMBER = 2  # DRAFT-edge-outnumber-ratio: the side with the positional e
 # DRAFT-role-mixes: front to back, one mix per side per layout
 MIXES = [("Vanguard", "Raider"), ("Bastion", "Warden", "Bombard"), ("Vanguard", "Interceptor", "Bombard"), ("Raider", "Interceptor"),
          ("Warden", "Vanguard", "Bombard")]
-PLANT_RULES = ["R1", "R2", "R3", "R4", "R5"]
+PLANT_RULES = ["R1", "R2", "R3", "R4", "R5", "R6"]
+ONE_PAIRS = [(16, 16), (16, 32), (32, 16)]  # DRAFT-batch-one, history flag only
 
 
 def _load(name):
@@ -64,6 +68,16 @@ def _violations(layout, presets, rules):
             d = math.hypot(a["x"] - b["x"], a["y"] - b["y"])
             if d < gap:
                 out.append(("R2", "%s unit %d and %s unit %d are %.1f apart" % (sa, ia, sb, ib, d)))
+    kind, feats = layout.get("situation"), layout.get("features", [])
+    if kind != "open_field" and not any(f.get("kind") == kind for f in feats):
+        out.append(("R6", "%s layout carries no %s feature" % (kind, kind)))
+    pad = rules["R6"]["standoff"]
+    rects = [r for f in feats for key in ("walls", "boxes", "buildings") for r in f.get(key, [])]
+    for side, i, u in units:
+        for r in rects:
+            if abs(u["x"] - r["x"]) < r["w"] / 2 + pad and abs(u["y"] - r["y"]) < r["h"] / 2 + pad:
+                out.append(("R6", "%s unit %d at (%s, %s) is inside a wall, box or building plus %s" % (side, i, u["x"], u["y"], pad)))
+                break
     return out
 
 
@@ -184,8 +198,20 @@ RECIPES = {
 
 # ---------------------------------------------------------------- one layout
 
+@functools.cache
+def _roster_ranges():
+    """{role: attack range in world units} from the sim roster, read through scripts/skilllab/engine.py (om_unit_profile_attack_range) at produce time."""
+    from scripts.skilllab.engine import Engine
+    e = Engine()
+    w = e.new_world(1)
+    try:
+        return {r: float(e.type_stats(w, e.type_id(r))["attack_range"]) for r in rules()["R5"]["roles"]}
+    finally:
+        e.free_world(w)
+
+
 def _round_unit(x, y, f, layer, role):
-    return {"role": role, "x": round(float(x), 2), "y": round(float(y), 2), "facing": round(float(f), 4), "layer": int(layer)}
+    return {"role": role, "x": round(float(x), 2), "y": round(float(y), 2), "facing": round(float(f), 4), "layer": int(layer), "range": _roster_ranges()[role]}
 
 
 def _roles(group, mix):
@@ -193,7 +219,7 @@ def _roles(group, mix):
     return [mix[min(i // chunk, len(mix) - 1)] for i in range(len(group))]
 
 
-def _predict(kind, edge, holder, na, nb):
+def _predict(kind, edge, holder, na, nb, template):
     """(prediction, one sentence). Positioning decides unless outnumbered more than EDGE_OUTNUMBER to one."""
     n = {"A": na, "B": nb}
     other = "B" if holder == "A" else "A"
@@ -203,10 +229,10 @@ def _predict(kind, edge, holder, na, nb):
         big = "A" if na > nb else "B"
         return big, "Neither side holds a positional edge in %s, so side %s wins on numbers." % (kind, big)
     edge_side = holder if edge == "holder" else other
-    why = RECIPES[kind][3].format(h=holder, t=other)
+    why = template.format(h=holder, t=other)
     low = "B" if edge_side == "A" else "A"
     if n[low] > EDGE_OUTNUMBER * n[edge_side]:
-        return low, "Side %s outnumbers the side with the edge by more than %d to one." % (low, EDGE_OUTNUMBER)
+        return low, "Side %s outnumbers the side with the %s edge by more than %d to one." % (low, kind.replace("_", " "), EDGE_OUTNUMBER)
     return edge_side, why
 
 
@@ -227,12 +253,162 @@ def _layout(kind, na, nb, seed, presets):
                     x, f = p["width"] - x, math.atan2(math.sin(math.pi - f), math.cos(math.pi - f))
                 units.append(_round_unit(x, y, f, lay, role))
         sides[letter] = {"headcount": len(units), "units": units}
-    predict, why = _predict(kind, edge, holder, na, nb)
+    predict, why = _predict(kind, edge, holder, na, nb, RECIPES[kind][3])
     return {"id": "", "situation": kind, "landscape": preset_name, "seed": seed, "predict": predict, "predict_why": why, "verdict": "", "feedback": "",
-            "side_a": sides["A"], "side_b": sides["B"]}
+            "defender": holder, "side_a": sides["A"], "side_b": sides["B"]}
+
+
+# ---------------------------------------------------------------- batch two (H-025 round two): recipes with landscape features
+
+# DRAFT-batch2-headcounts (A:B), in the order of DRAFT-situation-kinds
+B2_PAIRS = dict(zip(SITUATIONS, [(16, 32), (24, 24), (8, 8), (32, 32), (8, 64), (64, 8), (48, 12), (12, 48), (40, 56), (64, 64), (16, 16), (32, 16)]))
+WALL_THICKNESS = 200  # DRAFT-wall-thickness, wu
+STAGING_SIZE = 600  # DRAFT-staging-size, wu
+SLOPE_WIDTH = 200  # DRAFT-slope-width, wu
+CITY_PITCH = 250  # DRAFT-city-pitch, wu
+MOUTH = round(math.pi / 2, 6)  # the trap's open side is +y; the pocket is written as axis-aligned rectangles, never a rotation field
+
+
+def _grid(n, cx, cy, facing):
+    """A side's block, centred on (cx, cy): rows = ceil(sqrt(n)) along the facing, pitch PITCH, the last row left-aligned. [(x, y, facing)]."""
+    rows = math.ceil(math.sqrt(n))
+    cols = math.ceil(n / rows)
+    c, s = math.cos(facing), math.sin(facing)
+    out = []
+    for i in range(n):
+        r, k = divmod(i, cols)
+        fwd, lat = ((rows - 1) / 2 - r) * PITCH, (k - (cols - 1) / 2) * PITCH
+        out.append((cx + fwd * c - lat * s, cy + fwd * s + lat * c, facing))
+    return out
+
+
+def _rect(x, y, w, h):
+    return {"x": round(float(x), 2), "y": round(float(y), 2), "w": w, "h": h}
+
+
+def _feature(kind, x, y, **geometry):
+    return dict({"kind": kind, "x": round(float(x), 2), "y": round(float(y), 2)}, **geometry)
+
+
+# Each recipe: (cx, cy) the land's centre -> (feature or None, defender block, attacker block); a block is (cx, cy, facing).
+# The defender stands on or behind the feature, the attacker approaches from the mouth or the far side; open_field has no feature, defender block = side A.
+def _b2_chokepoint(cx, cy):
+    gap, radius, h = 200, 600, 500  # h = radius - gap / 2
+    off = gap / 2 + h / 2
+    f = _feature("chokepoint", cx, cy, gap=gap, radius=radius, walls=[_rect(cx, cy - off, WALL_THICKNESS, h), _rect(cx, cy + off, WALL_THICKNESS, h)])
+    return f, (cx + 500, cy, math.pi), (cx - 900, cy, 0.0)
+
+
+def _b2_vantage(cx, cy):
+    return _feature("vantage", cx, cy, radius=700, height_band=1), (cx + 100, cy, math.pi), (cx - 1100, cy, 0.0)
+
+
+def _b2_cover(cx, cy):
+    boxes = [_rect(cx - 50, cy + dy, 120, 60) for dy in (-200, 0, 200)]  # centres within DRAFT-cover-spread 300 of the feature centre
+    return _feature("cover", cx, cy, boxes=boxes), (cx + 250, cy, math.pi), (cx - 1000, cy, 0.0)
+
+
+def _b2_objective(cx, cy):
+    return _feature("objective", cx, cy, radius=300), (cx, cy, math.pi), (cx - 1000, cy, 0.0)
+
+
+def _b2_staging(cx, cy):
+    return _feature("staging", cx + 1000, cy, size=STAGING_SIZE), (cx + 1000, cy, math.pi), (cx - 1000, cy, 0.0)
+
+
+def _b2_transit(cx, cy):
+    pts = [[round(cx - 1300, 2), round(cy, 2)], [round(cx - 300, 2), round(cy, 2)], [round(cx + 700, 2), round(cy, 2)]]
+    f = _feature("transit", cx - 1300, cy, points=pts, dest={"x": pts[-1][0], "y": pts[-1][1]})
+    return f, (cx - 300, cy + 800, -math.pi / 2), (cx - 1300, cy, 0.0)
+
+
+def _b2_flank_route(cx, cy):
+    pts = [[round(cx + dx, 2), round(cy + dy, 2)] for dx, dy in ((-1100, 0), (-500, 1200), (700, 1300), (1000, 500))]
+    return _feature("flank_route", cx - 1100, cy, points=pts), (cx + 1000, cy, math.pi), (cx - 1100, cy, 0.0)
+
+
+def _b2_hazard_anchor(cx, cy):
+    return _feature("hazard_anchor", cx + 300, cy, radius=500), (cx + 1100, cy, math.pi), (cx - 1100, cy, 0.0)
+
+
+def _b2_slope(cx, cy):
+    f = _feature("slope", cx, cy, length=600, width=SLOPE_WIDTH, heading=0.0, from_band=0, to_band=1)
+    return f, (cx + 600, cy, math.pi), (cx - 900, cy, 0.0)
+
+
+def _b2_city(cx, cy):
+    buildings = [_rect(cx + i * CITY_PITCH, cy + j * CITY_PITCH, 100, 100) for i in (-1, 0, 1) for j in (-1, 0, 1)]
+    return _feature("city", cx, cy, radius=400, buildings=buildings), (cx + 600, cy, math.pi), (cx - 900, cy, 0.0)
+
+
+def _b2_trap(cx, cy):
+    walls = [_rect(cx - 400, cy, 200, 800), _rect(cx + 400, cy, 200, 800), _rect(cx, cy - 500, 1000, 200)]  # a U about the centre, open on the +y side
+    return _feature("trap", cx, cy, mouth=MOUTH, walls=walls), (cx, cy, MOUTH), (cx, cy + 1400, -math.pi / 2)
+
+
+def _b2_open_field(cx, cy):
+    return None, (cx - 800, cy, 0.0), (cx + 800, cy, math.pi)
+
+
+# situation -> (preset, who holds the positional edge, builder, the reason in a sentence naming the feature; {h} defender letter, {t} other side letter)
+# DRAFT-situation-recipes: placements and edges are Architect drafts for the review page.
+RECIPES2 = {
+    "chokepoint": ("small_flat", "holder", _b2_chokepoint, "Side {h} holds the chokepoint walls and side {t} must funnel through the narrow gap, so position outweighs numbers."),
+    "vantage": ("small_tiered", "holder", _b2_vantage, "Side {h} stands on the vantage rise above side {t} and sees down onto it, so position outweighs numbers."),
+    "cover": ("small_flat", "holder", _b2_cover, "Side {h} shoots from behind the cover boxes at side {t} crossing open ground, so position outweighs numbers."),
+    "objective": ("small_flat", "none", _b2_objective, ""),
+    "staging": ("small_flat", "none", _b2_staging, ""),
+    "transit": ("small_flat", "holder", _b2_transit, "Side {h} waits off the flank of side {t}'s transit column, so the one at rest outweighs numbers."),
+    "flank_route": ("small_tiered", "attacker", _b2_flank_route, "Side {t} swings round the flank route onto side {h}'s flank, so position outweighs numbers."),
+    "hazard_anchor": ("small_flat", "holder", _b2_hazard_anchor, "Side {h} sits behind the hazard anchor and side {t} must go round it, so position outweighs numbers."),
+    "slope": ("small_tiered", "holder", _b2_slope, "Side {h} holds the top of the slope and fires down it at side {t}, so position outweighs numbers."),
+    "city": ("small_flat", "holder", _b2_city, "Side {h} holds the ground behind the city buildings and side {t} must cross open ground to reach it, so position outweighs numbers."),
+    "trap": ("small_flat", "holder", _b2_trap, "Side {h} waits inside the trap pocket and side {t} must enter by its one mouth, so the ambush outweighs numbers."),
+    "open_field": ("small_flat", "none", _b2_open_field, ""),
+}
+
+
+def _layer2(kind, feat, x, y, is_defender):
+    """R-001-07: one walkable layer at a point. Vantage: inside the disc is its height_band, outside is 0 (ruling 2); slope: the defender stands on the upper band."""
+    if kind == "vantage":
+        return feat["height_band"] if math.hypot(x - feat["x"], y - feat["y"]) < feat["radius"] else 0
+    return feat["to_band"] if kind == "slope" and is_defender else 0
+
+
+def _layout2(kind, na, nb, seed, presets):
+    rng = random.Random(seed)
+    preset_name, edge, builder, template = RECIPES2[kind]
+    p = presets[preset_name]
+    feat, dblock, ablock = builder(p["width"] / 2, p["height"] / 2)
+    if kind == "open_field":
+        defender = ""
+    elif kind == "chokepoint":  # the holder is the smaller side, which is the point of the situation
+        defender = "A" if na < nb else "B" if nb < na else rng.choice(["A", "B"])
+    else:
+        defender = rng.choice(["A", "B"])
+    sides = {}
+    for letter, n in (("A", na), ("B", nb)):
+        is_def = letter == defender or (kind == "open_field" and letter == "A")
+        mix = rng.choice(MIXES)
+        grid = _grid(n, *(dblock if is_def else ablock))
+        units = []
+        for (x, y, f), role in zip(grid, _roles(grid, mix)):
+            x, y = round(x, 2), round(y, 2)
+            units.append(_round_unit(x, y, f, _layer2(kind, feat, x, y, letter == defender), role))
+        sides[letter] = {"headcount": len(units), "units": units}
+    if kind == "open_field":
+        predict, why = _predict(kind, edge, "A", na, nb, template)
+    else:
+        predict, why = _predict(kind, edge, defender, na, nb, template)
+    layout = {"id": "", "situation": kind, "landscape": preset_name, "seed": seed, "predict": predict, "predict_why": why, "verdict": "", "feedback": "",
+              "defender": defender, "side_a": sides["A"], "side_b": sides["B"]}
+    if feat is not None:
+        layout["features"] = [feat]
+    return layout
 
 
 def _plant(layout, rule, presets):
+    """Layouts that break one rule on purpose (the positive control); R6 plants two mutations."""
     d = copy.deepcopy(layout)
     a = d["side_a"]["units"]
     if rule == "R1":
@@ -245,7 +421,13 @@ def _plant(layout, rule, presets):
         d["side_a"]["headcount"] += 1
     elif rule == "R5":
         a[0]["role"] = "Wizard"
-    return d
+    elif rule == "R6":
+        swapped = copy.deepcopy(d)
+        for f in swapped["features"]:
+            f["kind"] = "vantage" if f["kind"] != "vantage" else "cover"
+        d.pop("features")
+        return [d, swapped]
+    return [d]
 
 
 # ---------------------------------------------------------------- files
@@ -254,15 +436,30 @@ def _q(s):
     return json.dumps(s)
 
 
+def _tv(v):
+    """A TOML value for a bool, number, string, list or inline table."""
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return repr(v)
+    if isinstance(v, str):
+        return _q(v)
+    if isinstance(v, list):
+        return "[" + ", ".join(_tv(i) for i in v) + "]"
+    return "{" + ", ".join("%s = %s" % (k, _tv(x)) for k, x in v.items()) + "}"
+
+
 def dump_toml(layout):
     lines = ["id = %s" % _q(layout["id"]), "situation = %s" % _q(layout["situation"]), "landscape = %s" % _q(layout["landscape"]),
              "seed = %d" % layout["seed"], "predict = %s" % _q(layout["predict"]), "predict_why = %s" % _q(layout["predict_why"]),
-             "verdict = %s" % _q(layout["verdict"]), "feedback = %s" % _q(layout["feedback"])]
+             "verdict = %s" % _q(layout["verdict"]), "feedback = %s" % _q(layout["feedback"]), "defender = %s" % _q(layout["defender"])]
     for side in ("side_a", "side_b"):
         lines += ["", "[%s]" % side, "headcount = %d" % layout[side]["headcount"]]
         for u in layout[side]["units"]:
             lines += ["", "[[%s.units]]" % side, "role = %s" % _q(u["role"]), "x = %r" % u["x"], "y = %r" % u["y"], "facing = %r" % u["facing"],
-                      "layer = %d" % u["layer"]]
+                      "layer = %d" % u["layer"], "range = %r" % u["range"]]
+    for f in layout.get("features", []):
+        lines += ["", "[[features]]"] + ["%s = %s" % (k, _tv(v)) for k, v in f.items()]
     return "\n".join(lines) + "\n"
 
 
@@ -279,15 +476,17 @@ def _next_number(out):
     return max(nums, default=0) + 1
 
 
-def _run(situations, pairs, seed, out, plant=None):
-    """(paths written, layouts rejected). REJECT lines go to stderr."""
+def _run(jobs, seed, out, plant=None, batch="two"):
+    """jobs: [(situation, headcount A, headcount B)]. (paths written, layouts rejected). REJECT lines go to stderr."""
     pre, rul = presets(), rules()
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     number = _next_number(out)
-    built = [_layout(kind, na, nb, seed * 1_000_003 + SITUATIONS.index(kind) * 10_007 + na * 101 + nb, pre) for kind in situations for na, nb in pairs]
+    build = _layout2 if batch == "two" else _layout
+    built = [build(kind, na, nb, seed * 1_000_003 + SITUATIONS.index(kind) * 10_007 + na * 101 + nb, pre) for kind, na, nb in jobs]
     if plant and built:
-        built.append(_plant(built[0], plant, pre))
+        source = next((l for l in built if l["situation"] != "open_field"), built[0])
+        built += _plant(source, plant, pre)
     written, rejected = [], 0
     for layout in built:
         layout["id"] = "L-%04d" % number
@@ -303,24 +502,31 @@ def _run(situations, pairs, seed, out, plant=None):
 
 
 def produce(situations, pairs, seed, out):
-    """One layout per situation per pair, deterministic from the seed; the TOML paths written."""
-    return _run(situations, pairs, seed, out)[0]
+    """One layout per situation per pair (batch two recipes), deterministic from the seed; the TOML paths written."""
+    return _run([(k, na, nb) for k in situations for na, nb in pairs], seed, out)[0]
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python3 -m scripts.skilllab.catalogue.produce")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--situations", required=True, help="comma list or all")
-    ap.add_argument("--pairs", required=True, help='e.g. "16:16,16:32,32:16"')
     ap.add_argument("--seed", type=int, required=True)
-    ap.add_argument("--plant", choices=PLANT_RULES, help="also emit one layout that breaks this rule (the positive control)")
+    ap.add_argument("--batch", choices=["one", "two"], default="two", help="two (default): the round-two recipes; one: round one, kept for history")
+    ap.add_argument("--situations", help="comma list or all (default all)")
+    ap.add_argument("--pairs", help='e.g. "16:32,24:24" (default: batch two\'s pair for each situation, batch one\'s three pairs)')
+    ap.add_argument("--plant", choices=PLANT_RULES, help="also emit layouts that break this rule (the positive control)")
     a = ap.parse_args(argv)
-    situations = SITUATIONS if a.situations == "all" else a.situations.split(",")
+    situations = SITUATIONS if a.situations in (None, "all") else a.situations.split(",")
     unknown = [s for s in situations if s not in SITUATIONS]
     if unknown:
         ap.error("unknown situation kinds: %s" % unknown)
-    pairs = [tuple(int(v) for v in p.split(":")) for p in a.pairs.split(",")]
-    _, rejected = _run(situations, pairs, a.seed, a.out, a.plant)
+    if a.pairs:
+        pairs = [tuple(int(v) for v in p.split(":")) for p in a.pairs.split(",")]
+        jobs = [(k, na, nb) for k in situations for na, nb in pairs]
+    elif a.batch == "two":
+        jobs = [(k,) + B2_PAIRS[k] for k in situations]
+    else:
+        jobs = [(k, na, nb) for k in situations for na, nb in ONE_PAIRS]
+    _, rejected = _run(jobs, a.seed, a.out, a.plant, a.batch)
     return 2 if rejected else 0
 
 
