@@ -1,0 +1,350 @@
+id = "L-0003"
+situation = "chokepoint"
+landscape = "small_flat"
+seed = 1003251
+predict = "A"
+predict_why = "Side A holds the arc around the choke and side B must come through it in two files, so position outweighs numbers."
+verdict = ""
+feedback = ""
+
+[side_a]
+headcount = 32
+
+[[side_a.units]]
+role = "Raider"
+x = 1491.1
+y = 1980.01
+facing = 0.0393
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1491.1
+y = 2019.99
+facing = -0.0393
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1494.23
+y = 1940.14
+facing = 0.1178
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1494.23
+y = 2059.86
+facing = -0.1178
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1500.49
+y = 1900.64
+facing = 0.1963
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1500.49
+y = 2099.36
+facing = -0.1963
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1509.83
+y = 1861.76
+facing = 0.2749
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1509.83
+y = 2138.24
+facing = -0.2749
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1522.18
+y = 1823.72
+facing = 0.3534
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1522.18
+y = 2176.28
+facing = -0.3534
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1537.49
+y = 1786.78
+facing = 0.432
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1537.49
+y = 2213.22
+facing = -0.432
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1555.64
+y = 1751.15
+facing = 0.5105
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1555.64
+y = 2248.85
+facing = -0.5105
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1576.54
+y = 1717.05
+facing = 0.589
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1576.54
+y = 2282.95
+facing = -0.589
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1600.04
+y = 1684.7
+facing = 0.6676
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1600.04
+y = 2315.3
+facing = -0.6676
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1626.01
+y = 1654.29
+facing = 0.7461
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1626.01
+y = 2345.71
+facing = -0.7461
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1654.29
+y = 1626.01
+facing = 0.8247
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1654.29
+y = 2373.99
+facing = -0.8247
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1684.7
+y = 1600.04
+facing = 0.9032
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1684.7
+y = 2399.96
+facing = -0.9032
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1717.05
+y = 1576.54
+facing = 0.9817
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1717.05
+y = 2423.46
+facing = -0.9817
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1751.15
+y = 1555.64
+facing = 1.0603
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1751.15
+y = 2444.36
+facing = -1.0603
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1786.78
+y = 1537.49
+facing = 1.1388
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1786.78
+y = 2462.51
+facing = -1.1388
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1823.72
+y = 1522.18
+facing = 1.2174
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1823.72
+y = 2477.82
+facing = -1.2174
+layer = 0
+
+[side_b]
+headcount = 16
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3000.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3000.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3040.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3040.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3080.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3080.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3120.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3120.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3160.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3160.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3200.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3200.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3240.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3240.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3280.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3280.0
+y = 2020.0
+facing = 3.1416
+layer = 0

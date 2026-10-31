@@ -1,0 +1,350 @@
+id = "L-0002"
+situation = "chokepoint"
+landscape = "small_flat"
+seed = 1001651
+predict = "B"
+predict_why = "Side B holds the arc around the choke and side A must come through it in two files, so position outweighs numbers."
+verdict = ""
+feedback = ""
+
+[side_a]
+headcount = 16
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1000.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1000.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 960.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 960.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 920.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 920.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 880.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 880.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 840.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 840.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 800.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 800.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 760.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 760.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 720.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 720.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[side_b]
+headcount = 32
+
+[[side_b.units]]
+role = "Bastion"
+x = 2508.9
+y = 1980.01
+facing = 3.1023
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2508.9
+y = 2019.99
+facing = 3.1809
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2505.77
+y = 1940.14
+facing = 3.0238
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2505.77
+y = 2059.86
+facing = 3.2594
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2499.51
+y = 1900.64
+facing = 2.9452
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2499.51
+y = 2099.36
+facing = 3.3379
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2490.17
+y = 1861.76
+facing = 2.8667
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2490.17
+y = 2138.24
+facing = 3.4165
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2477.82
+y = 1823.72
+facing = 2.7882
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2477.82
+y = 2176.28
+facing = 3.495
+layer = 0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2462.51
+y = 1786.78
+facing = 2.7096
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2462.51
+y = 2213.22
+facing = 3.5736
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2444.36
+y = 1751.15
+facing = 2.6311
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2444.36
+y = 2248.85
+facing = 3.6521
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2423.46
+y = 1717.05
+facing = 2.5525
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2423.46
+y = 2282.95
+facing = 3.7306
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2399.96
+y = 1684.7
+facing = 2.474
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2399.96
+y = 2315.3
+facing = 3.8092
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2373.99
+y = 1654.29
+facing = 2.3955
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2373.99
+y = 2345.71
+facing = 3.8877
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2345.71
+y = 1626.01
+facing = 2.3169
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 2345.71
+y = 2373.99
+facing = 3.9663
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2315.3
+y = 1600.04
+facing = 2.2384
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2315.3
+y = 2399.96
+facing = 4.0448
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2282.95
+y = 1576.54
+facing = 2.1598
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2282.95
+y = 2423.46
+facing = 4.1233
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2248.85
+y = 1555.64
+facing = 2.0813
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2248.85
+y = 2444.36
+facing = 4.2019
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2213.22
+y = 1537.49
+facing = 2.0028
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2213.22
+y = 2462.51
+facing = 4.2804
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2176.28
+y = 1522.18
+facing = 1.9242
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2176.28
+y = 2477.82
+facing = 4.359
+layer = 0

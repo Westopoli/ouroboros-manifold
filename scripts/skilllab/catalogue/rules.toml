@@ -1,0 +1,20 @@
+# H-025 layout rules, the closed list R1 to R5. check_layout in produce.py reads the numbers below.
+
+[R1]
+text = "every unit inside the preset's bounds"
+
+[R2]
+text = "no two units closer than min_spacing world units (two radii of OM_UNIT_COLLISION_RADIUS 15, ALG-68, csrc/om_constants.h:581)"
+min_spacing = 30
+
+[R3]
+text = "every layer below the preset's layer count"
+
+[R4]
+text = "each side's headcount within min to max and equal to its unit row count"
+min = 8
+max = 256
+
+[R5]
+text = "roles from the roster at scripts/skilllab/engine.py:16"
+roles = ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]

@@ -1,0 +1,238 @@
+id = "L-0031"
+situation = "trap"
+landscape = "small_flat"
+seed = 1101705
+predict = "A"
+predict_why = "Side A shows a small bait and keeps two wings on either side of it, so the ambush outweighs numbers."
+verdict = ""
+feedback = ""
+
+[side_a]
+headcount = 16
+
+[[side_a.units]]
+role = "Bastion"
+x = 2200.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bastion"
+x = 2200.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 2160.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 2160.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1489.52
+y = 1225.91
+facing = 0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1520.0
+y = 1200.0
+facing = 0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 1550.48
+y = 1174.09
+facing = 0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 1463.62
+y = 1195.43
+facing = 0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1494.09
+y = 1169.52
+facing = 0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1524.57
+y = 1143.62
+facing = 0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1550.48
+y = 2825.91
+facing = -0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1520.0
+y = 2800.0
+facing = -0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 1489.52
+y = 2774.09
+facing = -0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 1524.57
+y = 2856.38
+facing = -0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1494.09
+y = 2830.48
+facing = -0.8663
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1463.62
+y = 2804.57
+facing = -0.8663
+layer = 0
+
+[side_b]
+headcount = 16
+
+[[side_b.units]]
+role = "Raider"
+x = 3200.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Raider"
+x = 3200.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Raider"
+x = 3200.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Raider"
+x = 3200.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Raider"
+x = 3240.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Raider"
+x = 3240.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Raider"
+x = 3240.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Raider"
+x = 3240.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3280.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3280.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3280.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3280.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3320.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3320.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3320.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 3320.0
+y = 2060.0
+facing = 3.1416
+layer = 0

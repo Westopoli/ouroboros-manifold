@@ -1,0 +1,356 @@
+{
+  "id": "L-0036",
+  "situation": "open_field",
+  "landscape": "large_flat",
+  "seed": 1113328,
+  "predict": "A",
+  "predict_why": "Neither side holds a positional edge in open_field, so side A wins on numbers.",
+  "verdict": "",
+  "feedback": "",
+  "side_a": {
+    "headcount": 32,
+    "units": [
+      {
+        "role": "Bastion",
+        "x": 3000.0,
+        "y": 6100.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 3000.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 3000.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 3000.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 3000.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 3000.0,
+        "y": 5900.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 2960.0,
+        "y": 6100.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 2960.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 2960.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 2960.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bastion",
+        "x": 2960.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2960.0,
+        "y": 5900.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2920.0,
+        "y": 6100.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2920.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2920.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2920.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2920.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2920.0,
+        "y": 5900.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2880.0,
+        "y": 6100.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2880.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2880.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2880.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2880.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2880.0,
+        "y": 5900.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2840.0,
+        "y": 6100.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2840.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2840.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2840.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2840.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2840.0,
+        "y": 5900.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2800.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2800.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 16,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 9000.0,
+        "y": 5940.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9000.0,
+        "y": 5980.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9000.0,
+        "y": 6020.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9000.0,
+        "y": 6060.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9040.0,
+        "y": 5940.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9040.0,
+        "y": 5980.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9040.0,
+        "y": 6020.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9040.0,
+        "y": 6060.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 9080.0,
+        "y": 5940.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 9080.0,
+        "y": 5980.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 9080.0,
+        "y": 6020.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 9080.0,
+        "y": 6060.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 9120.0,
+        "y": 5940.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 9120.0,
+        "y": 5980.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 9120.0,
+        "y": 6020.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 9120.0,
+        "y": 6060.0,
+        "facing": 3.1416,
+        "layer": 0
+      }
+    ]
+  }
+}

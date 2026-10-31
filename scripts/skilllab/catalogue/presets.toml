@@ -1,0 +1,23 @@
+# H-025 stage presets, the closed list of landscapes. Each is a land piece: bounds in world units (x 0 to width, y 0 to height) and a layer count.
+# DRAFT-preset-bounds: widths 4000 and 12000 are the canvases the ground scenes use (scripts/skilllab/ground/scenes_ground.py CANVAS notes);
+# DRAFT-preset-layers: 1, 3 and 5 layers, 5 being the engine's layer count (docs/architecture.md terrain_dump layer_floors_wu). Westley rules; no layout is final before H-023.
+
+[small_flat]
+width = 4000
+height = 4000
+layers = 1
+
+[small_tiered]
+width = 4000
+height = 4000
+layers = 3
+
+[large_flat]
+width = 12000
+height = 12000
+layers = 1
+
+[large_tiered]
+width = 12000
+height = 12000
+layers = 5
