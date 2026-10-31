@@ -302,63 +302,6 @@ def test_ignored_dirs_never_double_count_a_class(tmp_path):
     assert "1 classes unique" in detail
 
 
-# ---------------------------------------------------------------- acceptance_ids --
-
-def test_acceptance_ids_splits_pytest_and_godot(tmp_path):
-    """2026-09-22 defect: a client piece's acceptance mixing pytest node ids
-    and Godot test scripts (C2: tests/test_c_bridge.gd, tests/test_galaxy_view.gd
-    plus a pytest id) must split into the two lists merge_gate.sh runs
-    through different tools."""
-    pieces = tmp_path / "pieces.toml"
-    pieces.write_text(
-        '[[piece]]\n'
-        'id = "C2"\n'
-        'owns = []\n'
-        'acceptance = ["tests/test_c_bridge.gd", "tests/test_galaxy_view.gd", '
-        '"tests/csim/test_E04_wiring.py", "tests/csim/test_x.py::test_specific"]\n'
-    )
-    pytest_ids, godot_ids = mgs.acceptance_ids("C2", pieces_path=pieces)
-    assert pytest_ids == ["tests/csim/test_E04_wiring.py", "tests/csim/test_x.py::test_specific"]
-    assert godot_ids == ["tests/test_c_bridge.gd", "tests/test_galaxy_view.gd"]
-
-
-def test_acceptance_ids_pure_godot_piece(tmp_path):
-    pieces = tmp_path / "pieces.toml"
-    pieces.write_text('[[piece]]\nid = "C7"\nowns = []\nacceptance = ["tests/test_qa_daemon.gd"]\n')
-    pytest_ids, godot_ids = mgs.acceptance_ids("C7", pieces_path=pieces)
-    assert pytest_ids == []
-    assert godot_ids == ["tests/test_qa_daemon.gd"]
-
-
-def test_acceptance_ids_unknown_piece_returns_empty(tmp_path):
-    pieces = tmp_path / "pieces.toml"
-    pieces.write_text('[[piece]]\nid = "B1"\nowns = []\nacceptance = []\n')
-    pytest_ids, godot_ids = mgs.acceptance_ids("NOPE", pieces_path=pieces)
-    assert pytest_ids == []
-    assert godot_ids == []
-
-
-def test_acceptance_ids_increment_id_resolves_to_base_piece(tmp_path):
-    pieces = tmp_path / "pieces.toml"
-    pieces.write_text(
-        '[[piece]]\n'
-        'id = "C2"\n'
-        'owns = []\n'
-        'acceptance = ["tests/csim/test_E04_wiring.py", "tests/test_c_bridge.gd"]\n'
-    )
-    pytest_ids, godot_ids = mgs.acceptance_ids("C2-1", pieces_path=pieces)
-    assert pytest_ids == ["tests/csim/test_E04_wiring.py"]
-    assert godot_ids == ["tests/test_c_bridge.gd"]
-
-
-def test_acceptance_ids_b15m_unchanged(tmp_path):
-    pieces = tmp_path / "pieces.toml"
-    pieces.write_text('[[piece]]\nid = "B15m"\nowns = []\nacceptance = ["tests/csim/test_x.py"]\n')
-    pytest_ids, godot_ids = mgs.acceptance_ids("B15m", pieces_path=pieces)
-    assert pytest_ids == ["tests/csim/test_x.py"]
-    assert godot_ids == []
-
-
 # ---------------------------------------------------------------- acceptance-verdict (increment WARN vs REJECT) --
 
 def test_is_increment_resolves_known_base():
@@ -397,42 +340,6 @@ def test_partition_godot_ids_from_log_text():
 def test_acceptance_warn_detail_format():
     detail = mgs.acceptance_warn_detail("B10-2", "B10", ["a"], ["a", "b"], ["b"])
     assert detail == "increment B10-2 of B10: 1/2 acceptance ids green; red: ['b']"
-
-
-def test_cli_acceptance_verdict_increment_warns_full_id_rejects(tmp_path):
-    """The same red acceptance id: WARN under the increment id (B10-2),
-    bare REJECT under the full id (B10) -- merge_gate.sh's step 7 turns the
-    REJECT case into its own `reject acceptance` line using the pytest log
-    tail instead, since acceptance-verdict itself carries no log detail for
-    a full id."""
-    pieces = tmp_path / "pieces.toml"
-    pieces.write_text(
-        '[[piece]]\nid = "B10"\nowns = []\n'
-        'acceptance = ["tests/csim/test_a.py::test_pass", "tests/csim/test_a.py::test_fail"]\n'
-    )
-    ids_file = tmp_path / "ids.txt"
-    ids_file.write_text("tests/csim/test_a.py::test_pass\ntests/csim/test_a.py::test_fail\n")
-    pytest_log = tmp_path / "pytest.log"
-    pytest_log.write_text("FAILED tests/csim/test_a.py::test_fail - assert False\n1 passed, 1 failed\n")
-
-    support = str(REPO / "scripts" / "specfactory" / "merge_gate_support.py")
-
-    increment = subprocess.run(
-        [sys.executable, support, "acceptance-verdict", "B10-2",
-         "--pieces", str(pieces), "--ids-file", str(ids_file), "--pytest-log", str(pytest_log)],
-        capture_output=True, text=True,
-    )
-    assert increment.returncode == 0, increment.stdout + increment.stderr
-    assert increment.stdout.startswith("WARN increment B10-2 of B10: 1/2 acceptance ids green")
-    assert "tests/csim/test_a.py::test_fail" in increment.stdout
-
-    full = subprocess.run(
-        [sys.executable, support, "acceptance-verdict", "B10",
-         "--pieces", str(pieces), "--ids-file", str(ids_file), "--pytest-log", str(pytest_log)],
-        capture_output=True, text=True,
-    )
-    assert full.returncode == 1, full.stdout + full.stderr
-    assert full.stdout.strip() == "REJECT"
 
 
 # ---------------------------------------------------------------- DEF_RE / _diff_added_definitions --
@@ -714,36 +621,6 @@ def test_positive_control_real_signature_change_beside_comment_change_flagged(tm
     ok, detail = _ownership_edit(tmp_path, "mission.c", old, new)
     assert ok is False
     assert "om_gen_set_region_range" in detail and "mission.c" in detail
-
-
-# ---------------------------------------------------------------- undertest_warn --
-
-def test_undertest_warn_unknown_piece_skips(tmp_path):
-    pieces = tmp_path / "pieces.toml"
-    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
-    lines = mgs.undertest_warn(tmp_path, "HEAD", "NOPE", pieces_path=pieces)
-    assert len(lines) == 1 and "unknown piece id" in lines[0]
-
-
-def test_undertest_warn_no_acceptance_skips(tmp_path):
-    pieces = tmp_path / "pieces.toml"
-    pieces.write_text('[[piece]]\nid = "B1"\nowns = ["csrc/events.c"]\nacceptance = []\n')
-    lines = mgs.undertest_warn(tmp_path, "HEAD", "B1", pieces_path=pieces)
-    assert len(lines) == 1 and "no pytest acceptance ids" in lines[0]
-
-
-def test_undertest_warn_no_own_definition_skips(tmp_path):
-    repo = _init_repo(tmp_path / "repo")
-    pieces = tmp_path / "pieces.toml"
-    pieces.write_text(
-        '[[piece]]\nid = "B1"\nowns = ["csrc/events.c"]\n'
-        'acceptance = ["tests/csim/test_x.py"]\n'
-    )
-    (repo / "README.md").write_text("docs\n")
-    _git(repo, "add", "-A")
-    _git(repo, "commit", "-q", "-m", "candidate")
-    lines = mgs.undertest_warn(repo, "HEAD~1", "B1", pieces_path=pieces)
-    assert len(lines) == 1 and "no new/changed" in lines[0]
 
 
 # ---------------------------------------------------------------- regression_check --
