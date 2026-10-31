@@ -21,7 +21,10 @@ const SIDE_COLOURS := {"A": Color(0.2, 0.6, 1.0), "B": Color(1.0, 0.3, 0.3)}
 const GLYPH_MIN_PX := 14.0  # DRAFT-glyph-min-px (story)
 const GLYPH_MARGIN := 1.1  # DRAFT-shot-glyph-margin: glyphs are scaled to 1.1 x the minimum so pixel rounding never lands under it
 const CAMERA_MARGIN := 0.15  # story: 15% of the box's larger extent on each side
-const BAND_HEIGHT_WU := 60.0  # DRAFT-shot-band-height-wu: drawn height of one tier, a drawing number only
+const BAND_HEIGHT_WU := 120.0  # DRAFT-shot-band-height-wu: drawn height of one tier, a drawing number only (was 60; a vantage rise read as a flat overlay)
+const GLYPH_LIFT_WU := 8.0  # DRAFT-shot-glyph-lift-wu: the glyphs float above every translucent overlay so a tint never washes a side colour
+const DEST_RADIUS_WU := 90.0  # DRAFT-shot-dest-radius-wu: the transit destination marker
+const DEST_COLOUR := Color(1.0, 1.0, 1.0)
 const RAMP_WU := 200.0  # DRAFT-shot-ramp-wu: the slope that joins a vantage rise to the ground
 const LIFT_WU := 4.0  # DRAFT-shot-lift-wu: overlays float this far over the ground mesh so they do not z-fight
 const WALL_HEIGHT_WU := 80.0  # DRAFT-shot-wall-height-wu
@@ -38,7 +41,8 @@ const FEATURE_COLOURS := {
 	"chokepoint": Color(0.95, 0.75, 0.2), "vantage": Color(0.95, 0.55, 0.15), "cover": Color(0.75, 0.55, 0.35), "objective": Color(1.0, 0.95, 0.2),
 	"staging": Color(0.9, 0.9, 0.9), "transit": Color(0.3, 0.9, 0.95), "flank_route": Color(0.95, 0.3, 0.95), "hazard_anchor": Color(0.75, 0.45, 0.9),
 	"slope": Color(0.95, 0.55, 0.15), "city": Color(0.7, 0.7, 0.75), "trap": Color(0.85, 0.35, 0.15)}
-const TIER_COLOURS := [Color(0, 0, 0, 0), Color(1.0, 0.85, 0.3, 0.30), Color(0.4, 0.9, 0.9, 0.30)]
+const TIER_COLOURS := [Color(0, 0, 0, 0), Color(1.0, 0.85, 0.3, 0.35), Color(0.4, 0.9, 0.9, 0.35)]
+const RAMP_COLOUR := Color(0.85, 0.4, 0.1, 0.45)  # DRAFT-shot-ramp-colour: the slope between two tiers
 
 var _layout: Dictionary = {}
 var _terrain: Dictionary = {}
@@ -81,6 +85,8 @@ func _ready() -> void:
 	ground.add_layer(scene3d)
 	var frame_units := _collect_units()
 	units3d.set_units(frame_units, _terrain, floors, [])
+	for u in frame_units:
+		units3d.unit_node(int(u["id"])).position.y += GLYPH_LIFT_WU
 	_add_tier_tint(scene3d)
 	for f in _features:
 		_add_feature(scene3d, f)
@@ -140,29 +146,33 @@ func _tiered_terrain(width: int, height: int, floors: Array) -> Dictionary:
 	return {"cells_w": w, "cells_h": h, "heights": heights, "bands": bands, "walkable": walk, "layer_floors_wu": floors, "flyer_types": []}
 
 
-## A translucent tint over the cells on a raised tier, so a tier reads against the ground it joins.
+## A translucent tint over the raised ground: a full tier in its band colour, the slope that joins it in RAMP_COLOUR, so a tier reads as a stepped rise.
 func _add_tier_tint(parent: Node3D) -> void:
 	var w := int(_terrain["cells_w"])
 	var h := int(_terrain["cells_h"])
-	var bands: PackedByteArray = _terrain["bands"]
-	var by_band := {}
+	var heights: PackedInt32Array = _terrain["heights"]
+	var step := BAND_HEIGHT_WU * 100.0
+	var by_class := {}
 	for j in h - 1:
 		for i in w - 1:
-			var b := mini(mini(bands[j * w + i], bands[j * w + i + 1]), mini(bands[(j + 1) * w + i], bands[(j + 1) * w + i + 1]))
-			if b > 1:
-				if not by_band.has(b):
-					by_band[b] = SurfaceTool.new()
-					by_band[b].begin(Mesh.PRIMITIVE_TRIANGLES)
-				var st: SurfaceTool = by_band[b]
-				var p := [Vector2i(i, j), Vector2i(i + 1, j), Vector2i(i + 1, j + 1), Vector2i(i, j), Vector2i(i + 1, j + 1), Vector2i(i, j + 1)]
-				for c: Vector2i in p:
-					var x: float = (c.x + 0.5) * CELL_WU
-					var y: float = (c.y + 0.5) * CELL_WU
-					st.add_vertex(Vector3(x, GroundPick.height_at(_terrain, x, y) + LIFT_WU, y))
-	for b in by_band:
+			var low := mini(mini(heights[j * w + i], heights[j * w + i + 1]), mini(heights[(j + 1) * w + i], heights[(j + 1) * w + i + 1]))
+			var frac := low / step
+			if frac <= 0.02:
+				continue
+			var cls := int(floor(frac + 0.02))  # 0 = a slope, 1 and up = a full tier
+			if not by_class.has(cls):
+				by_class[cls] = SurfaceTool.new()
+				by_class[cls].begin(Mesh.PRIMITIVE_TRIANGLES)
+			var st: SurfaceTool = by_class[cls]
+			var p := [Vector2i(i, j), Vector2i(i + 1, j), Vector2i(i + 1, j + 1), Vector2i(i, j), Vector2i(i + 1, j + 1), Vector2i(i, j + 1)]
+			for c: Vector2i in p:
+				var x: float = (c.x + 0.5) * CELL_WU
+				var y: float = (c.y + 0.5) * CELL_WU
+				st.add_vertex(Vector3(x, GroundPick.height_at(_terrain, x, y) + LIFT_WU, y))
+	for cls in by_class:
 		var mi := MeshInstance3D.new()
-		mi.mesh = (by_band[b] as SurfaceTool).commit()
-		mi.material_override = _unshaded(TIER_COLOURS[mini(b - 1, TIER_COLOURS.size() - 1)])
+		mi.mesh = (by_class[cls] as SurfaceTool).commit()
+		mi.material_override = _unshaded(RAMP_COLOUR if cls == 0 else TIER_COLOURS[mini(cls, TIER_COLOURS.size() - 1)])
 		parent.add_child(mi)
 
 
@@ -305,16 +315,9 @@ func _route(parent: Node3D, points: Array, colour: Color) -> void:
 	parent.add_child(mi)
 
 
-func _marker(parent: Node3D, at: Vector2, colour: Color) -> void:
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = 12.0
-	mesh.bottom_radius = 12.0
-	mesh.height = 160.0
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.material_override = _unshaded(colour)
-	mi.position = _at(at.x, at.y, 80.0)
-	parent.add_child(mi)
+## The transit destination: a filled white disc and ring, distinct from the route's colour.
+func _marker(parent: Node3D, at: Vector2) -> void:
+	_disc(parent, at, DEST_RADIUS_WU, DEST_COLOUR)
 
 
 func _add_feature(parent: Node3D, f: Dictionary) -> void:
@@ -332,7 +335,10 @@ func _add_feature(parent: Node3D, f: Dictionary) -> void:
 			for r in f["buildings"]:
 				_box(parent, r, BUILDING_HEIGHT_WU, colour)
 			_disc(parent, centre, float(f["radius"]), colour)
-		"vantage", "objective", "hazard_anchor":
+		"vantage":  # the raised tier itself is the fill (terrain heights and the tier tint); its top edge and the foot of its slope are outlined
+			parent.add_child(_ring(centre, float(f["radius"]), colour))
+			parent.add_child(_ring(centre, float(f["radius"]) + RAMP_WU, RAMP_COLOUR))
+		"objective", "hazard_anchor":
 			_disc(parent, centre, float(f["radius"]), colour)
 		"staging":
 			var half := float(f["size"]) * 0.5
@@ -344,7 +350,7 @@ func _add_feature(parent: Node3D, f: Dictionary) -> void:
 					[centre.x - half, centre.y + half], [centre.x - half, centre.y - half]], Color(colour.r, colour.g, colour.b, 0.6))
 		"transit":
 			_route(parent, f["points"], colour)
-			_marker(parent, Vector2(float(f["dest"]["x"]), float(f["dest"]["y"])), colour)
+			_marker(parent, Vector2(float(f["dest"]["x"]), float(f["dest"]["y"])))
 		"flank_route":
 			_route(parent, f["points"], colour)
 		"slope":
@@ -506,12 +512,21 @@ func _add_feature_labels(ground: Node) -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	for f in _features:
-		var at: Vector2 = ground.to_screen(float(f["x"]), float(f["y"]))
-		var l := _label(String(f["kind"]).replace("_", " ").to_upper(), Color.WHITE, LABEL_FONT)
-		l.add_theme_color_override("font_outline_color", Color.BLACK)
-		l.add_theme_constant_override("outline_size", 8)
-		l.position = at + Vector2(-60.0, -70.0)
-		layer.add_child(l)
+		var anchor := Vector2(float(f["x"]), float(f["y"]))
+		var pts: Array = f.get("points", [])
+		if pts.size() >= 2:  # a route starts under a side's block, so its label sits mid-way along the first leg
+			anchor = (Vector2(pts[0][0], pts[0][1]) + Vector2(pts[1][0], pts[1][1])) * 0.5
+		_add_label_at(layer, ground, anchor, String(f["kind"]).replace("_", " ").to_upper())
+		if f.has("dest"):
+			_add_label_at(layer, ground, Vector2(float(f["dest"]["x"]), float(f["dest"]["y"])), "DESTINATION")
+
+
+func _add_label_at(layer: CanvasLayer, ground: Node, world: Vector2, text: String) -> void:
+	var l := _label(text, Color.WHITE, LABEL_FONT)
+	l.add_theme_color_override("font_outline_color", Color.BLACK)
+	l.add_theme_constant_override("outline_size", 8)
+	l.position = ground.to_screen(world.x, world.y) + Vector2(-60.0, -70.0)
+	layer.add_child(l)
 
 
 func _label(text: String, colour: Color, size: int) -> Label:
