@@ -177,13 +177,13 @@ TOY_RANGES = {"Vanguard": 90.0, "Raider": 60.0, "Interceptor": 150.0, "Warden": 
 TOY_OBJECTIVE = {"kind": "objective", "x": 1800.0, "y": 2000.0, "radius": 300}
 
 
-def _toy_layout(path: Path, kind: str, features, defender: str) -> Path:
+def _toy_layout(path: Path, kind: str, features, defender: str, landscape: str = "small_flat") -> Path:
     """8 against 8 on small_flat, units 40 wu apart (R2 spacing), the sides 2400 wu apart, so the framed box is wide and the camera must back off."""
     def side(x0, face):
         roles = ["Vanguard", "Raider", "Interceptor", "Warden", "Bombard", "Bastion", "Vanguard", "Raider"]
         return {"headcount": 8, "units": [{"role": r, "x": x0 + 40.0 * i, "y": 1900.0 + 40.0 * (i % 2), "facing": face, "layer": 0, "range": TOY_RANGES[r]}
                                            for i, r in enumerate(roles)]}
-    d = {"id": "L-9001", "situation": kind, "landscape": "small_flat", "seed": 1, "predict": "A", "predict_why": "toy fixture", "verdict": "", "feedback": "",
+    d = {"id": "L-9001", "situation": kind, "landscape": landscape, "seed": 1, "predict": "A", "predict_why": "toy fixture", "verdict": "", "feedback": "",
          "defender": defender, "side_a": side(600.0, 0.0), "side_b": side(3000.0, 3.1416)}
     if features is not None:
         d["features"] = features
@@ -191,8 +191,8 @@ def _toy_layout(path: Path, kind: str, features, defender: str) -> Path:
     return path
 
 
-def _scene_state(tmp_path, monkeypatch, kind, features, defender):
-    layout = _toy_layout(tmp_path / "toy.json", kind, features, defender)
+def _scene_state(tmp_path, monkeypatch, kind, features, defender, landscape="small_flat"):
+    layout = _toy_layout(tmp_path / "toy.json", kind, features, defender, landscape)
     monkeypatch.setenv("OM_LAYOUT", str(layout))
     monkeypatch.delenv("OM_SHOT_OUT", raising=False)
     g = ShotGame(qa_port=pick_free_port(), seed=1)
@@ -284,3 +284,21 @@ def test_qa_state_camera_frames_units_and_features_with_a_fifteen_percent_margin
     assert set(cam) == {"bbox", "margin"}, "camera keys %s" % sorted(cam)
     assert cam["margin"] == 0.15
     assert len(cam["bbox"]) == 4 and all(abs(float(a) - b) <= DRAFT_GEOMETRY_EPS for a, b in zip(cam["bbox"], bbox)), "camera bbox %s, want %s" % (cam["bbox"], bbox)
+
+
+TOY_FLANK = {"kind": "flank_route", "x": 1800.0, "y": 2000.0, "points": [[1200.0, 1900.0], [1200.0, 2800.0], [2400.0, 2800.0], [2400.0, 1900.0]],
+             "ridge": {"x": 1800.0, "y": 2000.0, "w": 300, "h": 1400}, "height_band": 1}
+
+
+def test_qa_state_flank_route_with_a_ridge(tmp_path, monkeypatch):
+    """H-025 third ruling 11 "`flank_route` carries ... a `ridge` rectangle `{x, y, w, h}` on `height_band` 1 ..., drawn as a raised tier": a toy flank_route layout on
+    small_tiered reports `features` as the one {kind, x, y} entry (the ridge is part of that entry, not a second one) and a `camera` bbox that contains every unit and the
+    ridge rectangle (x 1650 to 1950, y 1300 to 2700), since ruling 6 puts the bbox "over units and feature rectangles and discs"; `layers_visible` stays false."""
+    qa, _ = _scene_state(tmp_path, monkeypatch, "flank_route", [TOY_FLANK], "A", "small_tiered")
+    _need(qa, "features", "camera")
+    assert [(f["kind"], float(f["x"]), float(f["y"])) for f in qa["features"]] == [("flank_route", 1800.0, 2000.0)], qa["features"]
+    x0, y0, x1, y1 = (float(v) for v in qa["camera"]["bbox"])
+    e = DRAFT_GEOMETRY_EPS
+    assert x0 <= 600.0 + e and x1 >= 3280.0 - e, "camera bbox x %s to %s misses the units (600 to 3280)" % (x0, x1)
+    assert y0 <= 1300.0 + e and y1 >= 2700.0 - e, "camera bbox y %s to %s misses the ridge (1300 to 2700)" % (y0, y1)
+    assert qa["layers_visible"] is False

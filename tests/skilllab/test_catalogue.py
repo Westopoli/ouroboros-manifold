@@ -268,8 +268,25 @@ def _feat(d: dict, kind: str | None = None):
 
 
 def _rects(d: dict):
-    """Every wall, box and building rectangle {x, y, w, h} of the layout's features (the R6 stand-off set)."""
-    return [r for f in d.get("features", []) for key in ("walls", "boxes", "buildings") for r in f.get(key, [])]
+    """Every wall, box, building and ridge rectangle {x, y, w, h} of the layout's features (the R6 stand-off set; third ruling 11 adds the flank_route `ridge`)."""
+    out = [r for f in d.get("features", []) for key in ("walls", "boxes", "buildings") for r in f.get(key, [])]
+    return out + [f["ridge"] for f in d.get("features", []) if isinstance(f.get("ridge"), dict)]
+
+
+def _segment_hits_rect(p, q, r) -> bool:
+    """True when the segment p-q touches the axis-aligned rectangle r {x, y, w, h} (slab clipping)."""
+    lo, hi = 0.0, 1.0
+    for a, b, c, half in ((p[0], q[0], r["x"], r["w"] / 2), (p[1], q[1], r["y"], r["h"] / 2)):
+        d = b - a
+        if abs(d) < 1e-12:
+            if abs(a - c) > half:
+                return False
+            continue
+        t0, t1 = sorted(((c - half - a) / d, (c + half - a) / d))
+        lo, hi = max(lo, t0), min(hi, t1)
+        if lo > hi:
+            return False
+    return True
 
 
 def _inside_expanded(ux, uy, r, pad) -> bool:
@@ -339,16 +356,17 @@ def test_check_layout_r6_names_a_missing_feature_a_swapped_kind_and_spares_open_
     assert "features" not in openf and "R6" not in check_layout(openf, presets, rules)
 
 
-@pytest.mark.parametrize("kind,group", [("chokepoint", "walls"), ("cover", "boxes"), ("city", "buildings"), ("trap", "walls")])
+@pytest.mark.parametrize("kind,group", [("chokepoint", "walls"), ("cover", "boxes"), ("city", "buildings"), ("trap", "walls"), ("flank_route", "ridge")])
 def test_check_layout_r6_stand_off_from_walls_boxes_and_buildings(batch_two, kind, group):
     """H-025 Round two ruling 4 "R6's standoff: a unit's centre lies outside every rectangle of `walls`, `boxes` and `buildings` expanded by the collision
-    radius 15". In a valid layout one unit is moved to 14 wu outside the first rectangle's edge (inside the expanded rectangle): R6; to 16 wu outside: no R6
-    (CONTROL, the same layout one step further out)."""
+    radius 15"; third ruling 11 "R6 standoff applies to the ridge" (flank_route). In a valid layout one unit is moved to 14 wu outside the first rectangle's edge
+    (inside the expanded rectangle): R6; to 16 wu outside: no R6 (CONTROL, the same layout one step further out)."""
     from scripts.skilllab.catalogue.produce import check_layout
     presets, rules = _load_toml(CAT / "presets.toml"), _load_toml(CAT / "rules.toml")
     d = next(d for d in _b2(batch_two) if d["situation"] == kind)
     assert check_layout(d, presets, rules) == []
-    r = _feat(d)[group][0]
+    r = _feat(d)[group]
+    r = r if isinstance(r, dict) else r[0]  # `ridge` is one rectangle, the others are lists
     for gap, want in ((14.0, True), (16.0, False)):
         bad = json.loads(json.dumps(d))
         u = bad["side_a"]["units"][0]
@@ -499,8 +517,17 @@ def _geometry_transit(f):
 
 
 def _geometry_flank_route(f):
+    """Third ruling 11: `points` three to five; a `ridge` rectangle {x, y, w, h} 300 by 1400 on height_band 1 (the key may sit on the ridge or on the feature: the
+    story does not say which); the polyline touches no part of the ridge and passes beyond exactly one of its ends (the long axis, y for h 1400)."""
     pts = f["points"]
     assert 3 <= len(pts) <= 5 and all(isinstance(p, list) and len(p) == 2 for p in pts), pts
+    r = f["ridge"]
+    assert isinstance(r, dict) and {"x", "y", "w", "h"} <= set(r), "ridge %s" % r
+    assert r["w"] == 300 and r["h"] == 1400, "ridge size %s by %s, the story says 300 by 1400" % (r["w"], r["h"])
+    assert r.get("height_band", f.get("height_band")) == 1, "the ridge is not on height_band 1 (ridge %s, feature key %s)" % (r.get("height_band"), f.get("height_band"))
+    assert not any(_segment_hits_rect(a, b, r) for a, b in zip(pts, pts[1:])), "a route segment crosses the ridge"
+    beyond = {1 if p[1] > r["y"] else -1 for p in pts if abs(p[1] - r["y"]) > r["h"] / 2}
+    assert len(beyond) == 1, "the route must pass around exactly one end of the ridge; points beyond the ends: %s" % sorted(beyond)
 
 
 def _geometry_hazard_anchor(f):
@@ -541,7 +568,7 @@ GEOMETRY = {k: v for k, v in list(globals().items()) if k.startswith("_geometry_
 def test_feature_geometry_per_kind(batch_two, kind):
     """H-025 Round two ruling 4, the per-kind schema and numbers: chokepoint `gap` 200 `radius` 600 `walls` two 200 by 500 at (x, y +- 350); vantage `radius` 700
     `height_band` 1; cover `boxes` two to four 120 by 60 within 300 of the centre; objective `radius` 300; staging `size` 600; transit `points` two to four from the
-    centre and `dest` = the last point; flank_route `points` three to five; hazard_anchor `radius` 500; slope `length` 600 `width` 200 `heading` `from_band` 0
+    centre and `dest` = the last point; flank_route `points` three to five and a `ridge` 300 by 1400 on height_band 1 the route goes round one end of (third ruling 11); hazard_anchor `radius` 500; slope `length` 600 `width` 200 `heading` `from_band` 0
     `to_band` 1; city `radius` 400 and nine 100 by 100 `buildings` at pitch 250; trap `walls` three (two 200 by 800 sides at 400, a 1000 by 200 back wall 500 behind)
     and `mouth`."""
     d = next(d for d in _b2(batch_two) if d["situation"] == kind)
@@ -573,12 +600,13 @@ def test_predict_why_names_the_feature(batch_two):
 def test_terrain_tiers_and_the_vantage_layer_rule(batch_two):
     """H-025 Round two "a landscape's `layers` is the number of height bands ... a walker has exactly one layer with ground under it at any point" and ruling 2
     "a unit whose centre is inside the vantage disc stands on layer `height_band`; outside, layer 0". Vantage and slope sit on a preset with more than one band; a
-    one-band preset has every unit on layer 0; in the vantage layout inside the disc means layer `height_band`, outside means layer 0."""
+    one-band preset has every unit on layer 0; in the vantage layout inside the disc means layer `height_band`, outside means layer 0. Third ruling 11: the flank_route
+    also sits on a preset with more than one band (the ridge is on band 1)."""
     presets = _load_toml(CAT / "presets.toml")
     for d in _b2(batch_two):
         layers = presets[d["landscape"]]["layers"]
         units = _all_units(d)
-        if d["situation"] in ("vantage", "slope"):
+        if d["situation"] in ("vantage", "slope", "flank_route"):
             assert layers >= 2, "%s: a %s on %s, which has %d height band" % (d["id"], d["situation"], d["landscape"], layers)
         if layers == 1:
             assert all(u["layer"] == 0 for u in units), "%s: a unit above layer 0 on a one-band preset" % d["id"]
@@ -602,7 +630,7 @@ def test_control_round_two_geometry_checks_accept_a_feature_built_from_the_rulin
         "cover": {"boxes": [rect(x + 100, y, 120, 60), rect(x - 100, y, 120, 60)]},
         "objective": {"radius": 300}, "staging": {"size": 600},
         "transit": {"points": [[x, y], [x + 300.0, y + 100.0]], "dest": {"x": x + 300.0, "y": y + 100.0}},
-        "flank_route": {"points": [[x, y], [x + 1.0, y + 2.0], [x + 3.0, y + 4.0]]},
+        "flank_route": {"points": [[x - 500.0, y], [x - 500.0, y + 800.0], [x + 500.0, y + 800.0], [x + 500.0, y]], "ridge": rect(x, y, 300, 1400), "height_band": 1},
         "hazard_anchor": {"radius": 500},
         "slope": {"length": 600, "width": 200, "heading": 0.5, "from_band": 0, "to_band": 1},
         "city": {"radius": 400, "buildings": [rect(x + i * 250.0, y + j * 250.0, 100, 100) for i in (-1, 0, 1) for j in (-1, 0, 1)]},
@@ -613,6 +641,10 @@ def test_control_round_two_geometry_checks_accept_a_feature_built_from_the_rulin
     GEOMETRY["_geometry_trap"](dict(kind="trap", x=x, y=y, mouth=0.0, walls=[rect(x, y - 400, 800, 200), rect(x, y + 400, 800, 200), rect(x - 500, y, 200, 1000)]))
     with pytest.raises(AssertionError):
         GEOMETRY["_geometry_objective"](dict(good["objective"], radius=301))
+    cut = dict(good["flank_route"], points=[[x - 500.0, y], [x + 500.0, y]])  # straight through the ridge
+    with pytest.raises(AssertionError):
+        GEOMETRY["_geometry_flank_route"](dict(cut, kind="flank_route", x=x, y=y))
+    assert _segment_hits_rect([0, 0], [10, 10], rect(5, 5, 2, 2)) and not _segment_hits_rect([0, 0], [10, 0], rect(5, 5, 2, 2))
 
 
 # ---------------------------------------------------------------- ROUND TWO, second rulings 8: batch one's tests retired, the rule detectors ported to batch two
@@ -662,3 +694,62 @@ def test_batch_two_independent_rule_check_r2_r4_r5(batch_two):
         for i, a in enumerate(us):
             for b in us[i + 1:]:
                 assert math.hypot(a["x"] - b["x"], a["y"] - b["y"]) >= MIN_SPACING, "%s: two units closer than %d" % (d["id"], MIN_SPACING)
+
+
+# ---------------------------------------------------------------- ROUND TWO, third rulings 11 and 12
+
+def test_flank_route_ridge_is_between_the_sides_on_a_raised_tier(batch_two):
+    """H-025 third ruling 11 "`flank_route` carries the thing the route goes around: a `ridge` rectangle `{x, y, w, h}` on `height_band` 1 (DRAFT `w` 300, `h` 1400,
+    centred between the two sides on the direct line) ... Stays on `small_tiered`. R6 standoff applies to the ridge". The ridge centre projects strictly between the two
+    sides' unit centroids on the line joining them; the band it is on exists on the preset (band 1 below the preset's layer count); no unit stands inside it."""
+    presets = _load_toml(CAT / "presets.toml")
+    d = next(d for d in _b2(batch_two) if d["situation"] == "flank_route")
+    assert d["landscape"] == "small_tiered"
+    f = _feat(d)
+    assert isinstance(f.get("ridge"), dict), "the flank_route feature has no `ridge` rectangle; keys %s" % sorted(f)
+    r = f["ridge"]
+    assert r.get("height_band", f.get("height_band")) < presets[d["landscape"]]["layers"]
+    cen = lambda side: (sum(u["x"] for u in d[side]["units"]) / len(d[side]["units"]), sum(u["y"] for u in d[side]["units"]) / len(d[side]["units"]))
+    (ax, ay), (bx, by) = cen("side_a"), cen("side_b")
+    t = ((r["x"] - ax) * (bx - ax) + (r["y"] - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2)
+    assert 0.0 < t < 1.0, "the ridge centre is not between the sides (position %.2f along the line from side A to side B)" % t
+    assert not any(abs(u["x"] - r["x"]) < r["w"] / 2 and abs(u["y"] - r["y"]) < r["h"] / 2 for u in _all_units(d)), "a unit stands inside the ridge"
+
+
+def _round_one_files(out: Path):
+    """A toy round-one layout as batch one wrote it: no `defender`, no `features`, no per-unit `range`."""
+    units = [{"role": "Raider", "x": 1000.0 + 40.0 * i, "y": 2000.0, "facing": 0.0, "layer": 0} for i in range(8)]
+    other = [dict(u, x=3000.0 + 40.0 * i, facing=3.1416) for i, u in enumerate(units)]
+    d = {"id": "L-0001", "situation": "open_field", "landscape": "small_flat", "seed": 1, "predict": "draw", "predict_why": "even", "verdict": "", "feedback": "",
+         "side_a": {"headcount": 8, "units": units}, "side_b": {"headcount": 8, "units": other}}
+    lines = ['id = "L-0001"', 'situation = "open_field"', 'landscape = "small_flat"', "seed = 1", 'predict = "draw"', 'predict_why = "even"', 'verdict = ""', 'feedback = ""']
+    for side in ("side_a", "side_b"):
+        lines += ["", "[%s]" % side, "headcount = 8"]
+        for u in d[side]["units"]:
+            lines += ["", "[[%s.units]]" % side, 'role = "Raider"', "x = %r" % u["x"], "y = %r" % u["y"], "facing = %r" % u["facing"], "layer = 0"]
+    (out / "L-0001.toml").write_text("\n".join(lines) + "\n")
+    (out / "L-0001.json").write_text(json.dumps(d, indent=2) + "\n")
+
+
+def test_control_round_two_toy_round_one_file_has_no_defender(tmp_path):
+    """H-025 third ruling 12. CONTROL (green today): the toy round-one layout used below is valid TOML and JSON with equal content and has no `defender`, `features`
+    or `range`, as the 36 round-one files; so a red apply test is the writer's, not the fixture's."""
+    _round_one_files(tmp_path)
+    t, j = _load_toml(tmp_path / "L-0001.toml"), json.loads((tmp_path / "L-0001.json").read_text())
+    assert t == j and "defender" not in t and "features" not in t and "range" not in t["side_a"]["units"][0]
+
+
+def test_review_apply_works_on_a_round_one_file_and_writes_an_empty_defender(tmp_path):
+    """H-025 third ruling 12 "`write_layout` (produce.py `dump_toml`) tolerates a layout without `defender` (round-one files) by writing `defender = ""` ... a test that
+    applies a verdict to a round-one file": `review.py apply` on a layout without `defender` exits 0 (no KeyError), prints `APPLIED L-0001 deny`, writes `verdict` and
+    `feedback` into the TOML and JSON, and leaves `defender = ""` in both (TOML and JSON keep the same content)."""
+    _round_one_files(tmp_path)
+    verdicts = tmp_path / "verdicts.md"
+    verdicts.write_text("| id | verdict | feedback |\n|---|---|---|\n| L-0001 | deny | batch one is denied |\n")
+    r = _review("apply", "--dir", tmp_path, "--verdicts", verdicts)
+    assert r.returncode == 0, "review apply on a round-one file: rc=%s stderr tail: %s" % (r.returncode, r.stderr[-300:])
+    assert re.search(r"^APPLIED L-0001 deny\s*$", r.stdout, re.M), r.stdout[-300:]
+    t, j = _load_toml(tmp_path / "L-0001.toml"), json.loads((tmp_path / "L-0001.json").read_text())
+    assert t["verdict"] == "deny" and j["verdict"] == "deny" and t["feedback"] == "batch one is denied"
+    assert t["defender"] == "" and j["defender"] == "", "defender %r in TOML, %r in JSON" % (t.get("defender"), j.get("defender"))
+    assert t == j
