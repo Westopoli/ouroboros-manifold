@@ -111,7 +111,7 @@ class FightResult:
     firing: list              # [(tick, able0, able1), ...]
     firing_unit_seconds: tuple
     winner: Optional[str] = None   # the surviving side ("side0" | "side1"); None for draw and cap
-    trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive), ...] when Setup.trace, else None
+    trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive, layer, unit_type), ...] when Setup.trace, else None
     steps_fired: tuple = ()   # ((step_index, tick), ...) in firing order
     weighted_unit_seconds: tuple = (0.0, 0.0)   # the type-weighted count, whole fight
     states: Optional[list] = field(default_factory=list)   # [(tick, unit, code), ...] at sample ticks when Setup.states, [] when off

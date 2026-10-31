@@ -7,6 +7,7 @@ from scripts.skilllab.contract import OPENING_WINDOW_TICKS, REENGAGE_MOVED_WU, R
 from scripts.skilllab.firing import count_able, count_weighted, states
 from scripts.skilllab.formations import place
 from scripts.skilllab.timeline import Timeline, first_anchors, validate
+from scripts.skilllab.trace_rows import validate_trace
 
 FIRST_CUSTOM_TYPE_ID = 100
 SLOT_RADIUS = 440
@@ -333,10 +334,10 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
         for u in all_ids:
             if hp[u] > 0:
                 x, y = engine.unit_pos(w, u)
-                last[u] = (x, y, engine.unit_facing(w, u))
-                trace.append((tick, u, x, y, engine.unit_target(w, u), last[u][2], True))
+                last[u] = (x, y, engine.unit_facing(w, u), int(engine.unit_layer(w, u)), int(engine.unit_type(w, u)))
+                trace.append((tick, u, x, y, engine.unit_target(w, u), last[u][2], True, last[u][3], last[u][4]))
             else:
-                trace.append((tick, u, last[u][0], last[u][1], 0, last[u][2], False))
+                trace.append((tick, u, last[u][0], last[u][1], 0, last[u][2], False, last[u][3], last[u][4]))
 
     def sample():
         firing.append((tick,) + tuple(count_able(engine, w, side_ids[0], side_ids[1], arc)))
@@ -383,6 +384,8 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
         if tick % setup.sample_every == 0:
             sample()
 
+    if trace is not None:
+        validate_trace(trace)
     strength = tuple(_strength(hp, side_ids[s], start_hp, heads[s]) for s in (0, 1))
     seconds = tuple(sum(row[1 + s] for row in firing) * setup.sample_every / TICKS_PER_SECOND for s in (0, 1))
     wsec = tuple(sum(row[1 + s] for row in weighted) * setup.sample_every / TICKS_PER_SECOND for s in (0, 1))
