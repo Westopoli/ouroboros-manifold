@@ -42,6 +42,7 @@ const FEATURE_COLOURS := {
 	"staging": Color(0.9, 0.9, 0.9), "transit": Color(0.3, 0.9, 0.95), "flank_route": Color(0.95, 0.3, 0.95), "hazard_anchor": Color(0.75, 0.45, 0.9),
 	"slope": Color(0.95, 0.55, 0.15), "city": Color(0.7, 0.7, 0.75), "trap": Color(0.85, 0.35, 0.15)}
 const TIER_COLOURS := [Color(0, 0, 0, 0), Color(1.0, 0.85, 0.3, 0.35), Color(0.4, 0.9, 0.9, 0.35)]
+const LEGEND_LIGHTEN := 0.8  # DRAFT-shot-legend-lighten: a feature's legend line is its colour mixed this far to white, so it reads on the dark panel
 const RAMP_COLOUR := Color(0.85, 0.4, 0.1, 0.45)  # DRAFT-shot-ramp-colour: the slope between two tiers
 
 var _layout: Dictionary = {}
@@ -120,6 +121,10 @@ func _tier_at(x: float, y: float) -> float:
 		if f["kind"] == "vantage":
 			var d := Vector2(x - cx, y - cy).length()
 			best = maxf(best, float(f["height_band"]) * clampf((float(f["radius"]) + RAMP_WU - d) / RAMP_WU, 0.0, 1.0))
+		elif f.has("ridge"):  # a flank_route's ridge: the rectangle is the plateau, a ramp of RAMP_WU runs down from its edge
+			var r: Dictionary = f["ridge"]
+			var out := Vector2(maxf(absf(x - float(r["x"])) - float(r["w"]) * 0.5, 0.0), maxf(absf(y - float(r["y"])) - float(r["h"]) * 0.5, 0.0))
+			best = maxf(best, float(f.get("height_band", 1)) * clampf((RAMP_WU - out.length()) / RAMP_WU, 0.0, 1.0))
 		elif f["kind"] == "slope":
 			var heading := float(f["heading"])
 			var s := (x - cx) * cos(heading) + (y - cy) * sin(heading)
@@ -271,6 +276,17 @@ func _ring(centre: Vector2, radius: float, colour: Color) -> MeshInstance3D:
 	return _line(pts, colour)
 
 
+func _rect_outline(r: Dictionary, grow: float, colour: Color) -> MeshInstance3D:
+	var hw := float(r["w"]) * 0.5 + grow
+	var hh := float(r["h"]) * 0.5 + grow
+	var cx := float(r["x"])
+	var cy := float(r["y"])
+	var pts := PackedVector3Array()
+	for c in [Vector2(-hw, -hh), Vector2(hw, -hh), Vector2(hw, hh), Vector2(-hw, hh), Vector2(-hw, -hh)]:
+		pts.append(_at(cx + c.x, cy + c.y, LIFT_WU))
+	return _line(pts, colour)
+
+
 func _box(parent: Node3D, r: Dictionary, height: float, colour: Color) -> void:
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(float(r["w"]), height, float(r["h"]))
@@ -353,6 +369,9 @@ func _add_feature(parent: Node3D, f: Dictionary) -> void:
 			_marker(parent, Vector2(float(f["dest"]["x"]), float(f["dest"]["y"])))
 		"flank_route":
 			_route(parent, f["points"], colour)
+			var r: Dictionary = f["ridge"]  # the raised tier itself is the fill; its top edge and the foot of its slope are outlined
+			parent.add_child(_rect_outline(r, 0.0, colour))
+			parent.add_child(_rect_outline(r, RAMP_WU, RAMP_COLOUR))
 		"slope":
 			_slope_strip(parent, f, colour)
 
@@ -397,6 +416,10 @@ func _feature_points(f: Dictionary) -> Array:
 			pts.append(c + s)
 	for p in f.get("points", []):
 		pts.append(Vector2(p[0], p[1]))
+	if f.has("ridge"):
+		var rr: Dictionary = f["ridge"]
+		for s in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+			pts.append(Vector2(float(rr["x"]) + s.x * float(rr["w"]) * 0.5, float(rr["y"]) + s.y * float(rr["h"]) * 0.5))
 	if kind == "slope":
 		var dir := Vector2(cos(float(f["heading"])), sin(float(f["heading"])))
 		for a in [-0.5, 0.5]:
@@ -487,7 +510,7 @@ func _add_legend() -> Control:
 	for f in _features:
 		var line := "feature: %s" % f["kind"]
 		_legend_lines.append(line)
-		box.add_child(_label(line, FEATURE_COLOURS.get(String(f["kind"]), Color.WHITE), LEGEND_FONT))
+		box.add_child(_label(line, Color(FEATURE_COLOURS.get(String(f["kind"]), Color.WHITE)).lerp(Color.WHITE, LEGEND_LIGHTEN), LEGEND_FONT))
 	for r in _ranges:
 		var role := String(r["role"])
 		var text := "%s: range %d wu" % [role, int(round(float(r["range"])))] if float(r["range"]) > 0.0 else "%s: no range" % role

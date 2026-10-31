@@ -72,7 +72,7 @@ def _violations(layout, presets, rules):
     if kind != "open_field" and not any(f.get("kind") == kind for f in feats):
         out.append(("R6", "%s layout carries no %s feature" % (kind, kind)))
     pad = rules["R6"]["standoff"]
-    rects = [r for f in feats for key in ("walls", "boxes", "buildings") for r in f.get(key, [])]
+    rects = [r for f in feats for key in ("walls", "boxes", "buildings") for r in f.get(key, [])] + [f["ridge"] for f in feats if "ridge" in f]
     for side, i, u in units:
         for r in rects:
             if abs(u["x"] - r["x"]) < r["w"] / 2 + pad and abs(u["y"] - r["y"]) < r["h"] / 2 + pad:
@@ -266,6 +266,8 @@ WALL_THICKNESS = 200  # DRAFT-wall-thickness, wu
 STAGING_SIZE = 600  # DRAFT-staging-size, wu
 SLOPE_WIDTH = 200  # DRAFT-slope-width, wu
 CITY_PITCH = 250  # DRAFT-city-pitch, wu
+RIDGE_W = 300  # DRAFT-ridge-w, wu
+RIDGE_H = 1400  # DRAFT-ridge-h, wu
 MOUTH = round(math.pi / 2, 6)  # the trap's open side is +y; the pocket is written as axis-aligned rectangles, never a rotation field
 
 
@@ -324,7 +326,8 @@ def _b2_transit(cx, cy):
 
 def _b2_flank_route(cx, cy):
     pts = [[round(cx + dx, 2), round(cy + dy, 2)] for dx, dy in ((-1100, 0), (-500, 1200), (700, 1300), (1000, 500))]
-    return _feature("flank_route", cx - 1100, cy, points=pts), (cx + 1000, cy, math.pi), (cx - 1100, cy, 0.0)
+    ridge = _rect((cx - 1100 + cx + 1000) / 2, cy, RIDGE_W, RIDGE_H)  # centred between the sides on the direct line; the route goes round its +y end
+    return _feature("flank_route", cx - 1100, cy, points=pts, ridge=ridge, height_band=1), (cx + 1000, cy, math.pi), (cx - 1100, cy, 0.0)
 
 
 def _b2_hazard_anchor(cx, cy):
@@ -452,12 +455,12 @@ def _tv(v):
 def dump_toml(layout):
     lines = ["id = %s" % _q(layout["id"]), "situation = %s" % _q(layout["situation"]), "landscape = %s" % _q(layout["landscape"]),
              "seed = %d" % layout["seed"], "predict = %s" % _q(layout["predict"]), "predict_why = %s" % _q(layout["predict_why"]),
-             "verdict = %s" % _q(layout["verdict"]), "feedback = %s" % _q(layout["feedback"]), "defender = %s" % _q(layout["defender"])]
+             "verdict = %s" % _q(layout["verdict"]), "feedback = %s" % _q(layout["feedback"]), "defender = %s" % _q(layout.get("defender", ""))]
     for side in ("side_a", "side_b"):
         lines += ["", "[%s]" % side, "headcount = %d" % layout[side]["headcount"]]
         for u in layout[side]["units"]:
             lines += ["", "[[%s.units]]" % side, "role = %s" % _q(u["role"]), "x = %r" % u["x"], "y = %r" % u["y"], "facing = %r" % u["facing"],
-                      "layer = %d" % u["layer"], "range = %r" % u["range"]]
+                      "layer = %d" % u["layer"]] + (["range = %r" % u["range"]] if "range" in u else [])  # a round-one row has no range, and none is invented
     for f in layout.get("features", []):
         lines += ["", "[[features]]"] + ["%s = %s" % (k, _tv(v)) for k, v in f.items()]
     return "\n".join(lines) + "\n"
@@ -465,6 +468,7 @@ def dump_toml(layout):
 
 def write_layout(layout, out):
     """Write <id>.toml and <id>.json beside each other; the TOML path."""
+    layout.setdefault("defender", "")  # a round-one file has none
     toml_path = Path(out) / (layout["id"] + ".toml")
     toml_path.write_text(dump_toml(layout))
     toml_path.with_suffix(".json").write_text(json.dumps(layout, indent=2) + "\n")
