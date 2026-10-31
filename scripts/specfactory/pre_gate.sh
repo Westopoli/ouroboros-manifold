@@ -9,9 +9,9 @@
 # Steps: (1) noise (.uid / .import files in status or deleted .import in the
 # diff), (2) gate (merge_gate.sh --revert, output passed through verbatim),
 # (3) tests (each given .py / pytest id or .gd file), (4) pins (rule pins of the
-# diff's tests). H-006: no owner-row or provenance step; `PREGATE story OK <n> paths` names the story's Tests paths,
+# diff's tests); H-017 adds `PREGATE pins skipped|OK|REJECT` after the tests step. H-006: no owner-row or provenance step; `PREGATE story OK <n> paths` names the story's Tests paths,
 # which run as the piece's tests when none are given.
-# Never takes ~/Projects/om-push/gate.lock, never pushes, never writes in <wt>.
+# Never takes ~/Projects/om-push/gate.lock, never pushes, never writes in <wt> (but the csrc pins step builds pipe/ouroboros_pipe there).
 #
 # See also: merge_gate.sh --revert
 set -uo pipefail
@@ -123,6 +123,37 @@ else
             echo "PRE_GATE tests OK $t: $last"
         fi
     done
+fi
+
+# ---- (3b) csrc pins ----------------------------------------------------------
+# HARNESS-pregate-pins (H-017): a csrc/ change in the diff builds pipe/ouroboros_pipe and runs the csim files
+# that carry pinned values, so a moved golden rejects here and not in a full gate. The list is grep-derived.
+# Writes pipe/ouroboros_pipe in <wt> (the build output). DRAFT-pregate-pins-timeout-s 600 bounds build and run.
+# See also: docs/northstar/plans/2026-10-29-layered-gate-spec.md section 9, docs/stories/H-017.md
+if ! git -C "$WT" diff --name-only "$BASE"...HEAD 2>/dev/null | grep -q '^csrc/'; then
+    echo "PREGATE pins skipped: no csrc change"
+else
+    mapfile -t pin_files < <(git -C "$WT" grep -l -E 'PINNED_FULL|FLYER_SECTIONS|GOLDEN_|save_sha256' -- tests/csim)
+    plog="$OUT/pregate_pins.log"
+    if (( ${#pin_files[@]} == 0 )); then
+        echo "PREGATE pins REJECT no pinned csim files found"
+        REJECTED=1
+    elif ! (cd "$WT" && timeout 600 make pipe/ouroboros_pipe) >"$plog" 2>&1; then
+        echo "PREGATE pins REJECT pipe/ouroboros_pipe build failed: $(tail -n 1 "$plog")"
+        REJECTED=1
+    else
+        (cd "$WT" && PYTHONDONTWRITEBYTECODE=1 timeout 600 "$VENV_PYTHON" -m pytest "${pin_files[@]}" -q --tb=no -rfE -p no:cacheprovider) >"$plog" 2>&1
+        prc=$?
+        if (( prc == 124 )); then
+            echo "PREGATE pins REJECT timeout 600 s"
+            REJECTED=1
+        elif (( prc != 0 )); then
+            echo "PREGATE pins REJECT $(awk '/^(FAILED|ERROR) /{print $2}' "$plog" | paste -sd' ')"
+            REJECTED=1
+        else
+            echo "PREGATE pins OK $(grep -Eo '[0-9]+ passed' "$plog" | tail -n 1 | cut -d' ' -f1) tests"
+        fi
+    fi
 fi
 
 # ---- (4) pins ----------------------------------------------------------------
