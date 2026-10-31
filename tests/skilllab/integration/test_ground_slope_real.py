@@ -88,7 +88,7 @@ def test_the_attackers_walk_towards_the_holders_point_before_contact(library):
     px, py = s.point
 
     def mean_dist(tick):
-        rows = [(x, y) for (t, u, x, y, _tg, _f, alive) in r.trace if t == tick and u in side0 and alive]
+        rows = [(x, y) for (t, u, x, y, _tg, _f, alive, _layer, _utype) in r.trace if t == tick and u in side0 and alive]
         assert rows, "no living attacker at tick %d" % tick
         return sum(((x - px) ** 2 + (y - py) ** 2) ** 0.5 for x, y in rows) / len(rows)
 
