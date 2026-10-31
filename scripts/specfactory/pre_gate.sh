@@ -9,7 +9,7 @@
 # Steps: (1) noise (.uid / .import files in status or deleted .import in the
 # diff), (2) gate (merge_gate.sh --revert, output passed through verbatim),
 # (3) tests (each given .py / pytest id or .gd file), (4) pins (rule pins of the
-# diff's tests); H-017 adds `PREGATE pins skipped|OK|REJECT` after the tests step. H-006: no owner-row or provenance step; `PREGATE story OK <n> paths` names the story's Tests paths,
+# diff's tests); H-017 adds `PRE_GATE pins OK skipped|OK|REJECT` after the tests step. H-006: no owner-row or provenance step; `PRE_GATE story OK <n> paths` names the story's Tests paths,
 # which run as the piece's tests when none are given.
 # Never takes ~/Projects/om-push/gate.lock, never pushes, never writes in <wt> (but the csrc pins step builds pipe/ouroboros_pipe there).
 #
@@ -99,7 +99,7 @@ STORY_FILE="$WT/docs/stories/${PIECES%%,*}.md"
 if [[ -f "$STORY_FILE" ]]; then
     mapfile -t story_tests < <("$VENV_PYTHON" -c 'import sys; sys.path.insert(0, sys.argv[1]); import merge_gate_support as m; print(*m.story_tests(sys.argv[2]), sep="\n")' "$HERE" "$STORY_FILE")
     [[ "${story_tests[0]:-}" == "" ]] && story_tests=()
-    echo "PREGATE story OK ${#story_tests[@]} paths"
+    echo "PRE_GATE story OK ${#story_tests[@]} paths"
     (( $# == 0 )) && set -- ${story_tests[@]+"${story_tests[@]}"}
 fi
 if (( $# == 0 )); then
@@ -131,27 +131,27 @@ fi
 # Writes pipe/ouroboros_pipe in <wt> (the build output). DRAFT-pregate-pins-timeout-s 600 bounds build and run.
 # See also: docs/northstar/plans/2026-10-29-layered-gate-spec.md section 9, docs/stories/H-017.md
 if ! git -C "$WT" diff --name-only "$BASE"...HEAD 2>/dev/null | grep -q '^csrc/'; then
-    echo "PREGATE pins skipped: no csrc change"
+    echo "PRE_GATE pins OK skipped: no csrc change"
 else
     mapfile -t pin_files < <(git -C "$WT" grep -l -E 'PINNED_FULL|FLYER_SECTIONS|GOLDEN_|save_sha256' -- tests/csim)
     plog="$OUT/pregate_pins.log"
     if (( ${#pin_files[@]} == 0 )); then
-        echo "PREGATE pins REJECT no pinned csim files found"
+        echo "PRE_GATE pins REJECT no pinned csim files found"
         REJECTED=1
     elif ! (cd "$WT" && timeout 600 make pipe/ouroboros_pipe) >"$plog" 2>&1; then
-        echo "PREGATE pins REJECT pipe/ouroboros_pipe build failed: $(tail -n 1 "$plog")"
+        echo "PRE_GATE pins REJECT pipe/ouroboros_pipe build failed: $(tail -n 1 "$plog")"
         REJECTED=1
     else
         (cd "$WT" && PYTHONDONTWRITEBYTECODE=1 timeout 600 "$VENV_PYTHON" -m pytest "${pin_files[@]}" -q --tb=no -rfE -p no:cacheprovider) >"$plog" 2>&1
         prc=$?
         if (( prc == 124 )); then
-            echo "PREGATE pins REJECT timeout 600 s"
+            echo "PRE_GATE pins REJECT timeout 600 s"
             REJECTED=1
         elif (( prc != 0 )); then
-            echo "PREGATE pins REJECT $(awk '/^(FAILED|ERROR) /{print $2}' "$plog" | paste -sd' ')"
+            echo "PRE_GATE pins REJECT $(awk '/^(FAILED|ERROR) /{print $2}' "$plog" | paste -sd' ')"
             REJECTED=1
         else
-            echo "PREGATE pins OK $(grep -Eo '[0-9]+ passed' "$plog" | tail -n 1 | cut -d' ' -f1) tests"
+            echo "PRE_GATE pins OK $(grep -Eo '[0-9]+ passed' "$plog" | tail -n 1 | cut -d' ' -f1) tests"
         fi
     fi
 fi
