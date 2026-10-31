@@ -1,3 +1,4 @@
+# Rule pins: R-001-06@9f9051, R-001-07@8f31c3
 # spec: docs/stories/H-025.md (layout-catalogue-producer), DEC-lab-catalogue-mass-produced-2026-10-30
 """H-025 layout catalogue producer and review queue.
 
