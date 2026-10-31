@@ -28,7 +28,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-027 | "`desktop-test-import`: a fresh worktree needs `godot --import` before a desktop (.py qa) story test passes, and that import leaves .import and .uid noise that pre_gate rejects; pre_gate (or play.sh --check) should run the import in a scratch copy or accept the import's outputs as build outputs (found 2026-10-30 landing H-023; the clerk used a second tree with .godot copied in)." | Ready | none yet |
 | H-028 | "a working, stable, beta version of the game always available for me to open and mess around with." | Held behind H-031 | `docs/stories/H-028.md` |
 | H-031 | "A launched scene is proved visible the way Westley sees it: the window is mapped on his desktop and a real capture of the screen shows it, or the proof says unproven." | Ready (first piece: play.sh flags and window check) | `docs/stories/H-031.md` |
-| H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Ready | `docs/stories/H-029.md` |
+| H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
