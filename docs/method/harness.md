@@ -15,7 +15,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-014 | "The full suite runs on main by itself after three landings, two hours, or nightly, and writes its row; I never ask for a sweep." | Tested | `docs/stories/H-014.md` |
 | H-015 | "A red sweep finds the landing that broke it by bisecting and reverts it with a Finding trailer." | Spec'd | `docs/stories/H-015.md` |
 | H-016 | "The cache seed after a push actually seeds: it reads the candidate results stored under the gated sha." | Tested | `docs/stories/H-016.md` |
-| H-017 | "A change under csrc runs the pinned csim tests before the push." | Tested | `docs/stories/H-017.md` |
+| H-017 | "A change under csrc runs the pinned csim tests before the push." | Tested | `docs/stories/H-017.md`; pins step exercised by the builder's real-tree run only; first csrc landing proves it |
 | H-018 | "The pins warning tells stale pins from never-pinned tests." | Spec'd | `docs/stories/H-018.md` |
 | H-019 | "The gate's cache hits on a docs-only merge because each suite declares only what it reads." | Spec'd | `docs/stories/H-019.md` |
 | H-020 | "The gate's own toy-repo tests carry a story file like every real candidate, so a sweep of main is green again, and the landing that fixes a red sweep's tests may pass the sweep check it is fixing." | Tested | `docs/stories/H-020.md` |
@@ -28,7 +28,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-027 | "`desktop-test-import`: a fresh worktree needs `godot --import` before a desktop (.py qa) story test passes, and that import leaves .import and .uid noise that pre_gate rejects; pre_gate (or play.sh --check) should run the import in a scratch copy or accept the import's outputs as build outputs (found 2026-10-30 landing H-023; the clerk used a second tree with .godot copied in)." | Ready | none yet |
 | H-028 | "a working, stable, beta version of the game always available for me to open and mess around with." | Held behind H-031 | `docs/stories/H-028.md` |
 | H-031 | "A launched scene is proved visible the way Westley sees it: the window is mapped on his desktop and a real capture of the screen shows it, or the proof says unproven." | Ready (first piece: play.sh flags and window check) | `docs/stories/H-031.md` |
-| H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Ready | `docs/stories/H-029.md` |
+| H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
