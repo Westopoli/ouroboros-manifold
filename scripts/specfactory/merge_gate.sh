@@ -520,6 +520,9 @@ GODOT_COUNT="$(echo "$GODOT_IDS" | grep -c . || true)"
 # (2026-09-22, C8's test_flow_spine.py failed in the gate while green in an
 # imported checkout). Importing once here, before either acceptance step
 # runs, fixes that; a csim-only piece has neither id shape and pays nothing.
+# H-035: any tests/qa/ id, and any id whose file mentions daemon_client or
+# GodotGame, also imports (a tests/qa/test_*.py outside desktop/ launched
+# Godot on a fresh tree and failed the same way; see H-027).
 NEED_GODOT_IMPORT=0
 VENV_LINK_MADE=0
 if [[ -n "$GODOT_IDS" ]]; then
@@ -527,7 +530,9 @@ if [[ -n "$GODOT_IDS" ]]; then
 fi
 while IFS= read -r ACCEPT_ID_LINE; do
     [[ -z "$ACCEPT_ID_LINE" ]] && continue
-    if [[ "$ACCEPT_ID_LINE" == tests/qa/desktop/* ]]; then
+    ACCEPT_ID_FILE="${ACCEPT_ID_LINE%%::*}"
+    if [[ "$ACCEPT_ID_LINE" == tests/qa/* ]] \
+        || grep -qE 'daemon_client|GodotGame' "$CANDIDATE/$ACCEPT_ID_FILE" 2>/dev/null; then
         NEED_GODOT_IMPORT=1
     fi
 done <<< "$ACCEPT_IDS"
