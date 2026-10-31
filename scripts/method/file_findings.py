@@ -20,9 +20,11 @@ def main(argv):
     words = [l[8:].strip() for l in log.read_text().splitlines() if l.startswith("FINDING ")]
     if not words:
         return 0
-    repo = doc.resolve().parent
     branch = f"s/H-nightly-{date}"
     if push:
+        # H-033: repo root via git, not doc.parent (docs/method/ made `add` miss the path)
+        repo = Path(subprocess.run(["git", "-C", str(doc.resolve().parent), "rev-parse", "--show-toplevel"],
+                                   check=True, capture_output=True, text=True).stdout.strip()).resolve()
         git = lambda *a: subprocess.run(["git", "-C", str(repo), *a], check=True)
         git("fetch", "-q", "origin")
         git("checkout", "-q", "-B", branch, "origin/main")
@@ -39,7 +41,7 @@ def main(argv):
     lines[last + 1:last + 1] = [rows]
     doc.write_text("".join(lines))
     if push:
-        git("add", str(doc))
+        git("add", str(doc.resolve().relative_to(repo)))
         git("commit", "-q", "-m", f"H-nightly {date}: {len(words)} finding(s) filed for triage")
         git("push", "-q", "origin", f"HEAD:{branch}")
     return 0
