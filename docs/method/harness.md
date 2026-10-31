@@ -14,7 +14,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-008 | "The simulation lab finds where the lines cross; it is finished when the crossings are documented." | Spec'd, waits on Westley's read | `docs/stories/H-008.md` |
 | H-014 | "The full suite runs on main by itself after three landings, two hours, or nightly, and writes its row; I never ask for a sweep." | Tested | `docs/stories/H-014.md` |
 | H-015 | "A red sweep finds the landing that broke it by bisecting and reverts it with a Finding trailer." | Spec'd | `docs/stories/H-015.md` |
-| H-016 | "A landing of two stories at once runs both stories' tests, and the cache seed after a push actually seeds." | Spec'd | `docs/stories/H-016.md` |
+| H-016 | "The cache seed after a push actually seeds: it reads the candidate results stored under the gated sha." | Spec'd | `docs/stories/H-016.md` |
 | H-017 | "A change under csrc runs the pinned csim tests before the push." | Spec'd | `docs/stories/H-017.md` |
 | H-018 | "The pins warning tells stale pins from never-pinned tests." | Spec'd | `docs/stories/H-018.md` |
 | H-019 | "The gate's cache hits on a docs-only merge because each suite declares only what it reads." | Spec'd | `docs/stories/H-019.md` |
@@ -27,6 +27,8 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-026 | "`wt.py new --branch <b>` fails with an empty \"git worktree add failed:\" when a finished worktree still has that branch checked out; it should say so (`branch <b> is checked out in <path>`) and, for a finished tree, offer `wt.py reap` or detach (found 2026-10-30 by the H-023 builder)." | Ready | none yet (`wt-branch-flag`) |
 | H-027 | "`desktop-test-import`: a fresh worktree needs `godot --import` before a desktop (.py qa) story test passes, and that import leaves .import and .uid noise that pre_gate rejects; pre_gate (or play.sh --check) should run the import in a scratch copy or accept the import's outputs as build outputs (found 2026-10-30 landing H-023; the clerk used a second tree with .godot copied in)." | Ready | none yet |
 | H-028 | "a working, stable, beta version of the game always available for me to open and mess around with." | Spec'd, waits on the window diagnosis | `docs/stories/H-028.md` |
+| H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Ready | `docs/stories/H-029.md` |
+| H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
 
