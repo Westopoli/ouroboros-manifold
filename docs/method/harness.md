@@ -21,8 +21,9 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-020 | "The gate's own toy-repo tests carry a story file like every real candidate, so a sweep of main is green again, and the landing that fixes a red sweep's tests may pass the sweep check it is fixing." | Tested | `docs/stories/H-020.md` |
 | H-021 | "A red sweep row never blocks the next sweep: the slow tier reports the row as a warning and runs the suite that can replace it." | Tested | `docs/stories/H-021.md` |
 | H-022 | "The csim xdist gate tests carry a story file and the tier they mean, like the rest of the toy gates." | Tested | `docs/stories/H-022.md` |
-| H-023 | "a prototype to show unit scale in comparison to several 'strategic positions', with metrics for me to be able to understand how big each individual unit will be relative to other landscape pieces and buildings/cities and strategic positions, before we run the simulation engine with locked in unit scales." | Spec'd, waits on Westley (positions, era) | `docs/stories/H-023.md` |
-| H-024 | "a prototype full fidelity 60fps visual of a match vs what the screenshots at a specific configuration look like, then when I see the comparison I can effectively rule on timing" | Spec'd, waits on Westley (placeholder layouts) | `docs/stories/H-024.md` |
+| H-023 | "a prototype to show unit scale in comparison to several 'strategic positions', with metrics for me to be able to understand how big each individual unit will be relative to other landscape pieces and buildings/cities and strategic positions, before we run the simulation engine with locked in unit scales." | Spec'd | `docs/stories/H-023.md` |
+| H-024 | "a prototype full fidelity 60fps visual of a match vs what the screenshots at a specific configuration look like, then when I see the comparison I can effectively rule on timing" | Spec'd | `docs/stories/H-024.md` |
+| H-025 | "Layouts are mass-produced from the recorded rules, each with a 3D shot and a predicted verdict, and Westley approves or denies each one with feedback; only approved layouts reach the lab." | Spec'd | `docs/stories/H-025.md` |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
 
