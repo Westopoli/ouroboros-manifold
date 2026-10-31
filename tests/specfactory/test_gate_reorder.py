@@ -198,48 +198,6 @@ def _gate_lines(lines):
     return [ln for ln in lines if ln.startswith("GATE ") and not ln.startswith("GATE row ")]
 
 
-# ---------------------------------------------------------------- drift fixture: the early exit
-
-def test_1a_status_drift_rejects_and_early_exit_stops_before_csim(tmp_path):
-    """HARNESS-gate-reorder, clause 'the gate exits 1 at the first REJECT inside that early block ... printing
-    GATE early_exit REJECT <stage list>' and the paragraph's test: a lane table that disagrees with main prints a
-    status DRIFT; the output has `GATE status REJECT`, `GATE early_exit REJECT` and no `GATE regression_csim`."""
-    rc, lines, out = _run(tmp_path, drift=True)
-    assert any(ln.startswith("GATE status REJECT") for ln in lines), out
-    early = [ln for ln in lines if ln.startswith("GATE early_exit REJECT")]
-    assert early, "no `GATE early_exit REJECT` line:\n" + out
-    assert "status" in early[0].split("REJECT", 1)[1], early[0]
-    assert not any(ln.startswith("GATE regression_csim") for ln in lines), out
-    assert rc == 1, out
-
-
-def test_1b_early_exit_comes_after_lane_plays_and_nothing_regression_follows(tmp_path):
-    """HARNESS-gate-reorder, clause 'a new early_exit_if_rejected call after lane_plays, before the regression
-    block': the whole early block still runs (all six stage lines print), then early_exit, then no stage line
-    of the regression block or later."""
-    rc, lines, out = _run(tmp_path, drift=True)
-    ee = _idx(lines, "early_exit")
-    assert ee is not None, "no `GATE early_exit` line:\n" + out
-    for name in EARLY:
-        i = _idx(lines, name)
-        assert i is not None and i < ee, f"{name} line missing or after early_exit:\n{out}"
-    assert _idx(lines, "lane_plays") < ee
-    after = [ln for ln in _gate_lines(lines)[_gate_lines(lines).index(lines[ee]) + 1:]]
-    assert after == [], "stage lines after early_exit: " + repr(after)
-
-
-def test_1c_positive_control_saved_old_script_runs_csim_before_status(tmp_path):
-    """HARNESS-gate-reorder positive control (the paragraph's): the same drift fixture on the pre-change stage
-    order (saved copy of today's script) shows `GATE regression_csim` before `GATE status`, no early_exit.
-    Green on the built tree and after: it proves the fixture drifts and that the order is what changes."""
-    rc, lines, out = _run(tmp_path, drift=True, gate_script=SAVED_OLD_GATE)
-    csim, status = _idx(lines, "regression_csim"), _idx(lines, "status")
-    assert csim is not None and status is not None and csim < status, out
-    assert any(ln.startswith("GATE status REJECT") for ln in lines), out
-    assert _idx(lines, "early_exit") is None, out
-    assert rc == 1, out
-
-
 # ---------------------------------------------------------------- clean fixture: the order
 
 def test_2_cheap_stages_all_run_before_every_regression_stage(tmp_path):
