@@ -75,11 +75,12 @@ def cmd_check(args):
         if bad and (only is None or named):
             rejects += bad
         elif bad:
-            warns.append(f"outside:{len(bad)}")
-    outside = sum(int(w.split(":")[1]) for w in warns if w.startswith("outside:"))
+            warns.append(f"outside:{sum(' stale ' in b for b in bad)}:{sum(' missing ' in b for b in bad)}")
+    found = [w.split(":")[1:] for w in warns if w.startswith("outside:")]
+    stale, missing = sum(int(f[0]) for f in found), sum(int(f[1]) for f in found)
     out = rejects + sorted(w for w in warns if not w.startswith("outside:"))
-    if outside:
-        out.append(f"PINS WARN {outside} stale outside the diff")
+    if stale or missing:
+        out.append(f"PINS WARN {stale} stale, {missing} missing outside the diff")
     print("\n".join(out) if out else f"PINS OK {len(files)} files {sum(map(len, files.values()))} ids")
     return 1 if rejects else 0
 
