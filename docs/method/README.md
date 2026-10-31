@@ -37,7 +37,7 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 | Builder rounds before escalation | 3 | Architect |
 | DRAFT-play-window-s | 60 s for the window to appear | Architect |
 | DRAFT-play-settle-s | 10 s after the window before `qa_state()` is read | Architect |
-| DRAFT-play-resolution | 1920x1080, the launch always passes `--windowed --resolution` | Architect, H-031 |
+| DRAFT-play-resolution | 1919x1080, the launch always passes `--windowed --resolution`; not 1920x1080, which equals the project viewport and presents only the splash (DEC-display-fault-measured-2026-10-31) | Architect, H-031 |
 | DRAFT-play-min-fps | 30 fps on the Wayland window check | Architect, H-031 |
 | DRAFT-play-fps-s | 3 consecutive seconds at DRAFT-play-min-fps | Architect, H-031 |
 | DRAFT-pregate-pins-timeout-s | 600 s for the pre-gate csrc pins step (build plus pinned csim files) | Westley, 2026-10-29 layered-gate spec section 9 |
