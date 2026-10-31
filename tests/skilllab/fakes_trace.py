@@ -3,6 +3,7 @@
 New Engine methods these tests fix (the harness must supply them; scripts/skilllab/engine.py comes later):
   unit_target(w, u)      -> int    the unit id it is aiming at, 0 for none (om_unit_get_target)
   unit_facing(w, u)      -> float  radians (om_unit_get_facing)
+  unit_type(w, u)        -> int    the unit's type id (om_unit_get_unit_type); the fake gives 0. unit_layer is FakeEngine's own.
   param_id(name)         -> int    the library's own enum value of an `OM_TP_*` name; ValueError if unknown
   get_param(w, param)    -> float  (om_tactical_get_param)
   set_param(w, param, v) -> None   ValueError when the library refuses it (om_tactical_set_param returns -1)
@@ -58,6 +59,10 @@ class TraceFakeEngine(FakeEngine):
     def unit_facing(self, w, u):
         self.calls.append(("unit_facing", w, u))
         return self.facings.get(u, 0.0)
+
+    def unit_type(self, w, u):
+        self.calls.append(("unit_type", w, u))
+        return 0
 
     def param_id(self, name):
         self.calls.append(("param_id", name))

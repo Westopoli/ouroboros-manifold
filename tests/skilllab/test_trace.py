@@ -5,7 +5,7 @@
 Contract these tests fix (the implementation under scripts/skilllab comes later):
   Setup.trace: bool = False       opt-in; the default records nothing and reads nothing extra from the library.
   FightResult.trace: list | None  None when Setup.trace is False; else one tuple per unit per recorded tick,
-                                  (tick, unit, x, y, target, facing, alive), the library's own unit ids,
+                                  (tick, unit, x, y, target, facing, alive, layer, unit_type), the library's own unit ids,
                                   target = the unit id aimed at (0 none), facing in radians, alive a bool.
   Recorded ticks are 0 (after orders, before the first step) through result.ticks, every tick; sample_every
   (the firing samples) does not thin it. Entries are ordered by tick, then by unit id (side and group do not
@@ -99,7 +99,7 @@ def test_one_entry_per_unit_per_recorded_tick():
     ticks = by_tick(result.trace)
     assert sorted(ticks) == list(range(result.ticks + 1))
     assert all(sorted(e[1] for e in v) == ids for v in ticks.values())
-    assert all(len(e) == 7 for e in result.trace)
+    assert all(len(e) == 9 for e in result.trace)
 
 
 def test_sample_every_does_not_thin_the_trace():
@@ -139,11 +139,11 @@ def test_values_are_read_from_the_library_after_each_step():
     result, fake = run(S(), script=script)
     spawn = {u: (x, y) for (u, _t, _f, x, y, _l) in fake.spawn_log()}
     ticks = by_tick(result.trace)
-    for (_t, u, x, y, target, facing, alive) in ticks[0]:
+    for (_t, u, x, y, target, facing, alive, _layer, _utype) in ticks[0]:
         assert (x, y) == spawn[u] and target == 0 and facing == 0.0 and alive is True
     for t in range(1, result.ticks + 1):
         k = t - 1
-        for (tick, u, x, y, target, facing, alive) in ticks[t]:
+        for (tick, u, x, y, target, facing, alive, _layer, _utype) in ticks[t]:
             assert (tick, x, y, target, facing, alive) == (
                 t, 100.0 * u + k, -5.0 * u + 0.5 * k, (u + k) % 4, 0.25 * k + u, True)
 
