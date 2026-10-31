@@ -42,7 +42,7 @@ INTERFACES SHARED BY THE BUILDER AND THESE TESTS (fixed in full; the tests are t
 4. Subcommand: `merge_gate_support.py seed-cache <candidate_dir> --merge-root <root>`. In candidate_dir,
    sha = `git rev-parse HEAD`, main = `git rev-parse origin/main`. When equal and
    candidate_results/<sha>.json exists, copy it byte for byte to the baseline cache path of that sha
-   (_baseline_cache_path) and print `seed-cache: seeded <sha>`. Otherwise copy nothing and print
+   (_baseline_cache_path) and print `seed-cache: seeded <n> suites from <gated> for <HEAD>` (H-016; was `seed-cache: seeded <sha>`). Otherwise copy nothing and print
    `seed-cache: skipped <reason>` (reason is free text). Exit code 0 in both cases.
 
 5. Output lines of `merge_gate_support.py regression <cand> <base_ref> <suite> --merge-root <root>`:
@@ -147,16 +147,16 @@ def _runs(mark: Path) -> int:
     return len(mark.read_text().splitlines()) if mark.exists() else 0
 
 
-def _stage(repo, base_ref, root, harness: Path | None = None, extra_env=None):
+def _stage(repo, base_ref, root, harness: Path | None = None, extra_env=None, suite=SUITE):
     """One `regression` stage as merge_gate.sh invokes it (junit off, as the existing cache tests do)."""
     support = (harness or SPECFACTORY) / "merge_gate_support.py"
-    return subprocess.run([PY, str(support), "regression", str(repo), base_ref, SUITE, "--python", PY,
+    return subprocess.run([PY, str(support), "regression", str(repo), base_ref, suite, "--python", PY,
                            "--no-junit", "--merge-root", str(root)],
                           capture_output=True, text=True, env=_env(extra_env), timeout=300)
 
 
-def _seed(repo, root):
-    return subprocess.run([PY, str(SUPPORT), "seed-cache", str(repo), "--merge-root", str(root)],
+def _seed(repo, root, *extra):
+    return subprocess.run([PY, str(SUPPORT), "seed-cache", str(repo), "--merge-root", str(root), *extra],
                           capture_output=True, text=True, env=_env(), timeout=120)
 
 
@@ -232,7 +232,7 @@ def test_P_seed_cache_copies_candidate_results_when_origin_main_equals_the_gated
     assert _stage(repo, m, root).returncode == 0
     _git(repo, "update-ref", "refs/remotes/origin/main", x)
     r = _seed(repo, root)
-    assert r.returncode == 0 and f"seed-cache: seeded {x}" in r.stdout, r.stdout + r.stderr
+    assert r.returncode == 0 and f"seed-cache: seeded 1 suites from {x} for {x}" in r.stdout, r.stdout + r.stderr
     assert (root / "baseline_cache" / f"{x}.json").read_bytes() == (root / "candidate_results" / f"{x}.json").read_bytes()
 
 
@@ -282,7 +282,7 @@ def test_P_fixture_gate_run_seeds_the_cache_and_the_next_run_reads_it(tmp_path):
     root = tmp_path / "root"
     assert _stage(repo, m, root).returncode == 0
     _git(repo, "update-ref", "refs/remotes/origin/main", x)
-    assert f"seed-cache: seeded {x}" in _seed(repo, root).stdout
+    assert f"seed-cache: seeded 1 suites from {x} for {x}" in _seed(repo, root).stdout
     before = _runs(mark)
     _commit(repo, "next landing", {"src/mod.py": "X = 3\n"})
     nxt = _stage(repo, x, root)
@@ -298,13 +298,160 @@ def test_A15_records_commit_between_gate_and_next_landing_still_hits_the_seeded_
     root = tmp_path / "root"
     assert _stage(repo, m, root).returncode == 0
     _git(repo, "update-ref", "refs/remotes/origin/main", x)
-    assert f"seed-cache: seeded {x}" in _seed(repo, root).stdout
+    assert f"seed-cache: seeded 1 suites from {x} for {x}" in _seed(repo, root).stdout
     rec = _commit(repo, "records", {"docs/README.md": "r1\n"})
     before = _runs(mark)
     _commit(repo, "next landing", {"src/mod.py": "X = 3\n"})
     nxt = _stage(repo, rec, root)
     assert nxt.returncode == 0 and f"baseline: cached {rec}" in nxt.stdout, nxt.stdout + nxt.stderr
     assert _runs(mark) - before == 1
+
+
+# ------------------------------------------------------------------ H-016: seed from the gated sha (issue 7)
+# Spec: docs/northstar/plans/2026-10-29-layered-gate-spec.md section 9 issue 7 (HARNESS-gate-cache-seed).
+# Tests, word for word: "seeding from a `--no-ff` merge commit whose second parent has a candidate_results file
+# prints the seeded line and `baseline_cache/<HEAD>.json` exists with n suite keys (e); a seed whose gated sha is
+# not an ancestor of origin/main seeds nothing and prints the skipped line (negative control, the F8 rule); an
+# input change between seed and gate prints `baseline: computed` for that suite only (g; positive control that the
+# hash still guards, run with candidate_results removed so the fallback cannot mask it)."
+
+SUITE2 = "tests/u"
+TOML2 = TOML + f'[suites."{SUITE2}"]\npaths = ["tests/u", "lib"]\n'
+
+
+def _two_suite_base(tmp_path: Path):
+    """The _fixture main plus a second declared suite (tests/u reading lib): returns (repo, base sha)."""
+    repo, _m, _mark = _fixture(tmp_path)
+    base = _commit(repo, "second suite", {"tests/u/test_b.py": "def test_b():\n    assert True\n",
+                                          "lib/mod.py": "Y = 1\n", TOML_REL: TOML2})
+    return repo, base
+
+
+def _gated_candidate(tmp_path: Path):
+    """A candidate x on branch `cand` (edits src and lib), both suites gated so candidate_results/<x>.json holds
+    two suite keys. Leaves HEAD on `cand`. Returns (repo, base, x, root)."""
+    repo, base = _two_suite_base(tmp_path)
+    _git(repo, "checkout", "-q", "-b", "cand")
+    x = _commit(repo, "edit src and lib", {"src/mod.py": "X = 2\n", "lib/mod.py": "Y = 2\n"})
+    root = tmp_path / "root"
+    for suite in (SUITE, SUITE2):
+        r = _stage(repo, base, root, suite=suite)
+        assert r.returncode == 0, r.stdout + r.stderr
+    got = json.loads((root / "candidate_results" / f"{x}.json").read_text())
+    assert sorted(got["suites"]) == [SUITE, SUITE2], "premise: candidate_results/<gated>.json holds both suites"
+    return repo, base, x, root
+
+
+def _land_noff(tmp_path: Path):
+    """_gated_candidate, then `git merge --no-ff cand` into main and origin/main = the merge commit H.
+    Returns (repo, base, x, h, root); HEAD is H, its second parent is x."""
+    repo, base, x, root = _gated_candidate(tmp_path)
+    _git(repo, "checkout", "-q", "main")
+    _git(repo, "merge", "-q", "--no-ff", "-m", "land cand", "cand")
+    h = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    assert _git(repo, "rev-parse", "HEAD^2").stdout.strip() == x and h != x, "premise: H is a --no-ff merge of x"
+    _git(repo, "update-ref", "refs/remotes/origin/main", h)
+    return repo, base, x, h, root
+
+
+def test_H016_e_seed_after_a_noff_merge_reads_the_second_parent(tmp_path):
+    """H-016 (e): "seeding from a `--no-ff` merge commit whose second parent has a candidate_results file prints
+    the seeded line and `baseline_cache/<HEAD>.json` exists with n suite keys". No --gated given: for a merge HEAD
+    the gated sha is the second parent. Line proved: `seed-cache: seeded <n> suites from <gated> for <HEAD>`."""
+    repo, _base, x, h, root = _land_noff(tmp_path)
+    assert f"{h}.json" not in _cache_files(root, "baseline_cache"), "premise: nothing seeded yet"
+    r = _seed(repo, root)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert f"seed-cache: seeded 2 suites from {x} for {h}" in r.stdout.splitlines(), r.stdout + r.stderr
+    dst = root / "baseline_cache" / f"{h}.json"
+    assert dst.exists(), "baseline_cache/<HEAD>.json not written"
+    assert sorted(json.loads(dst.read_text())["suites"]) == [SUITE, SUITE2]
+
+
+def test_H016_gated_flag_names_the_sha_when_head_is_not_the_merge(tmp_path):
+    """H-016: "`seed-cache --gated <sha>`; absent, the second parent of a merge HEAD, else HEAD". A records commit
+    R sits on the merge H, origin/main == R; `--gated <x>` seeds baseline_cache/<R>.json from candidate_results/<x>.
+    CONTROL half: without --gated, HEAD R is not a merge and has no candidate_results, so nothing is seeded."""
+    repo, _base, x, h, root = _land_noff(tmp_path)
+    rec = _commit(repo, "records", {"docs/README.md": "r1\n"})
+    _git(repo, "update-ref", "refs/remotes/origin/main", rec)
+    plain = _seed(repo, root)
+    assert plain.returncode == 0 and plain.stdout.startswith("seed-cache: skipped"), plain.stdout + plain.stderr
+    assert f"{rec}.json" not in _cache_files(root, "baseline_cache")
+    r = _seed(repo, root, "--gated", x)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert f"seed-cache: seeded 2 suites from {x} for {rec}" in r.stdout.splitlines(), r.stdout + r.stderr
+    assert (root / "baseline_cache" / f"{rec}.json").exists()
+
+
+def test_H016_control_the_origin_main_equals_head_guard_stays(tmp_path):
+    """H-016: "the `origin/main == HEAD` guard stays". CONTROL, green today: origin/main is one commit past the
+    merge H -> nothing is seeded, exit 0, and the line starts `seed-cache: skipped`."""
+    repo, _base, _x, h, root = _land_noff(tmp_path)
+    ahead = _commit(repo, "records", {"docs/README.md": "r1\n"})
+    _git(repo, "update-ref", "refs/remotes/origin/main", ahead)
+    _git(repo, "checkout", "-q", "--detach", h)
+    r = _seed(repo, root)
+    assert r.returncode == 0 and r.stdout.startswith("seed-cache: skipped"), r.stdout + r.stderr
+    assert f"{h}.json" not in _cache_files(root, "baseline_cache")
+
+
+def test_H016_guard_also_holds_when_gated_is_given(tmp_path):
+    """H-016: "the `origin/main == HEAD` guard stays" with --gated <x> (an ancestor) but origin/main past HEAD:
+    nothing is seeded and the line starts `seed-cache: skipped`."""
+    repo, _base, x, h, root = _land_noff(tmp_path)
+    ahead = _commit(repo, "records", {"docs/README.md": "r1\n"})
+    _git(repo, "update-ref", "refs/remotes/origin/main", ahead)
+    _git(repo, "checkout", "-q", "--detach", h)
+    r = _seed(repo, root, "--gated", x)
+    assert r.returncode == 0 and r.stdout.startswith("seed-cache: skipped"), r.stdout + r.stderr
+    assert f"{h}.json" not in _cache_files(root, "baseline_cache")
+
+
+def test_H016_negative_control_gated_sha_not_an_ancestor_of_origin_main_seeds_nothing(tmp_path):
+    """H-016 negative control (F8 rule): "a seed whose gated sha is not an ancestor of origin/main seeds nothing and
+    prints the skipped line" -> `seed-cache: skipped gated <gated> is not an ancestor of origin/main`, exit 0.
+    The candidate_results file for the gated sha exists and holds both suites, so only the ancestry blocks it.
+    CONTROL half: test_H016_e_* seeds from the same kind of scene when the gated sha is an ancestor."""
+    repo, _base, x, root = _gated_candidate(tmp_path)
+    _git(repo, "checkout", "-q", "main")
+    other = _commit(repo, "main moves without the candidate", {"docs/README.md": "other\n"})
+    _git(repo, "update-ref", "refs/remotes/origin/main", other)
+    assert _git(repo, "merge-base", "--is-ancestor", x, "origin/main", check=False).returncode != 0
+    r = _seed(repo, root, "--gated", x)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert f"seed-cache: skipped gated {x} is not an ancestor of origin/main" in r.stdout.splitlines(), r.stdout
+    assert f"{other}.json" not in _cache_files(root, "baseline_cache"), "nothing may be seeded"
+
+
+def _gate_both_after_an_src_edit(repo, root):
+    """After the seed point: landing z edits src only; the next candidate y (edits src and lib so neither suite
+    skips on unchanged inputs) is gated against base z. Returns {suite: stdout}."""
+    shutil.rmtree(root / "candidate_results")  # no fallback may mask the hash guard
+    z = _commit(repo, "landing z edits src", {"src/mod.py": "X = 3\n"})
+    _commit(repo, "candidate y", {"src/mod.py": "X = 4\n", "lib/mod.py": "Y = 4\n"})
+    return z, {s: _stage(repo, z, root, suite=s) for s in (SUITE, SUITE2)}
+
+
+def test_H016_g_input_change_between_seed_and_gate_computes_that_suite_only(tmp_path):
+    """H-016 (g): "an input change between seed and gate prints `baseline: computed` for that suite only", run
+    with candidate_results removed "so the fallback cannot mask the hash guard". After the seed, z edits src
+    (tests/t's input) and not lib (tests/u's input): tests/t prints `baseline: computed <z>`, tests/u prints
+    `baseline: cached <z>` from baseline_cache/<H>.json."""
+    repo, _base, x, h, root = _land_noff(tmp_path)
+    assert f"seed-cache: seeded 2 suites from {x} for {h}" in _seed(repo, root).stdout
+    z, out = _gate_both_after_an_src_edit(repo, root)
+    assert out[SUITE].returncode == 0 and f"baseline: computed {z}" in out[SUITE].stdout, out[SUITE].stdout + out[SUITE].stderr
+    assert out[SUITE2].returncode == 0 and f"baseline: cached {z}" in out[SUITE2].stdout, out[SUITE2].stdout + out[SUITE2].stderr
+
+
+def test_H016_g_control_without_a_seed_and_without_candidate_results_both_suites_compute(tmp_path):
+    """H-016 (g) CONTROL, green today: the (g) scene with no seed and candidate_results removed -> both suites
+    print `baseline: computed <z>`, so a `cached` in the (g) test can only come from the seeded baseline_cache."""
+    repo, _base, _x, h, root = _land_noff(tmp_path)
+    z, out = _gate_both_after_an_src_edit(repo, root)
+    for suite in (SUITE, SUITE2):
+        assert out[suite].returncode == 0 and f"baseline: computed {z}" in out[suite].stdout, out[suite].stdout + out[suite].stderr
 
 
 # ------------------------------------------------------------------ A15: skip on unchanged inputs

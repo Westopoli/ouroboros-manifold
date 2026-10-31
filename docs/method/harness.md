@@ -14,7 +14,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-008 | "The simulation lab finds where the lines cross; it is finished when the crossings are documented." | Spec'd, waits on Westley's read | `docs/stories/H-008.md` |
 | H-014 | "The full suite runs on main by itself after three landings, two hours, or nightly, and writes its row; I never ask for a sweep." | Tested | `docs/stories/H-014.md` |
 | H-015 | "A red sweep finds the landing that broke it by bisecting and reverts it with a Finding trailer." | Spec'd | `docs/stories/H-015.md` |
-| H-016 | "The cache seed after a push actually seeds: it reads the candidate results stored under the gated sha." | Spec'd | `docs/stories/H-016.md` |
+| H-016 | "The cache seed after a push actually seeds: it reads the candidate results stored under the gated sha." | Tested | `docs/stories/H-016.md` |
 | H-017 | "A change under csrc runs the pinned csim tests before the push." | Tested | `docs/stories/H-017.md` |
 | H-018 | "The pins warning tells stale pins from never-pinned tests." | Spec'd | `docs/stories/H-018.md` |
 | H-019 | "The gate's cache hits on a docs-only merge because each suite declares only what it reads." | Spec'd | `docs/stories/H-019.md` |
