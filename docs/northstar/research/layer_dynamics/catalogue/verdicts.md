@@ -22,3 +22,32 @@ The Architect checked all twelve on 2026-10-31: every picture is a flat green pl
 | L-0028 | deny | Westley: too far zoomed out, nothing discernable, no city, no buildings; five layers shown for a ground era that has one walkable layer at any point. |
 | L-0031 | deny | No trap geometry drawn (nothing to spring it); clusters on an empty field. |
 | L-0034 | deny | Open field is the one situation the flat plane fits, but the units are unreadable at this distance and no ranges are shown; redo with round two's camera and glyphs. |
+
+The other 24 batch-one layouts (denied as a set, same defect):
+
+| id | verdict | feedback |
+|---|---|---|
+| L-0002 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0003 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0005 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0006 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0008 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0009 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0011 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0012 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0014 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0015 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0017 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0018 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0020 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0021 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0023 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0024 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0026 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0027 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0029 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0030 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0032 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0033 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0035 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0036 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |

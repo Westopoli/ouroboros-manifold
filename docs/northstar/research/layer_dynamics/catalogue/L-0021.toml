@@ -4,8 +4,8 @@ landscape = "large_tiered"
 seed = 1063293
 predict = "A"
 predict_why = "Side A sends part of its force round the long way onto side B's flank, so position outweighs numbers."
-verdict = ""
-feedback = ""
+verdict = "deny"
+feedback = "Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format."
 
 [side_a]
 headcount = 32

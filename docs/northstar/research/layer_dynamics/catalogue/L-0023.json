@@ -5,8 +5,8 @@
   "seed": 1071700,
   "predict": "A",
   "predict_why": "Side A stands as a ring that cannot be flanked and side B has one front to push, so position outweighs numbers.",
-  "verdict": "",
-  "feedback": "",
+  "verdict": "deny",
+  "feedback": "Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format.",
   "side_a": {
     "headcount": 16,
     "units": [
