@@ -22,10 +22,9 @@ INTERFACES FIXED HERE (the story leaves them open; the builder reads this file)
   The gate runs with MERGE_GATE_SUITE_TIMEOUT=2400 MERGE_GATE_PLAYTHROUGH_TIMEOUT=2400 MERGE_GATE_PLAY_TIMEOUT=900 and
   MERGE_GATE_PIECES set (rules.md (b), Gate bullet).
 
-POSITIVE CONTROLS (green today): `systemd-analyze verify` of the existing om-method-metrics.timer exits 0; status_check.py
-reads a hand-written PASS row of the fixture as the anchor (`STATUS sweep ... landings ... since the PASS row`).
+POSITIVE CONTROL (green today): `systemd-analyze verify` of the existing om-method-metrics.timer exits 0. (The control that
+pinned status_check.check_sweep was deleted under H-034 Rulings A: H-002 retired it.)
 """
-import datetime
 import fcntl
 import json
 import os
@@ -65,9 +64,12 @@ root="$SWEEP_TEST_WT_ROOT"
 args=("$@"); wt=""
 for ((i=0;i<${#args[@]};i++)); do [[ "${args[i]}" == --tier ]] && wt="${args[i+2]}"; done
 sha=$(git -C "$wt" rev-parse HEAD)
-mkdir -p "$(dirname "$wt")/candidate_results"
-printf '{"main_sha": "%s", "suites": {"regression_csim": {"failing_ids": %s}}}\n' "$sha" "${STUB_GATE_FAILING:-[]}" \
-    > "$(dirname "$wt")/candidate_results/$sha.json"
+# STUB_GATE_NO_RESULT=1: an early reject, which exits before merge_gate_support.py `_store_candidate_result` writes the file
+if [[ -z "${STUB_GATE_NO_RESULT:-}" ]]; then
+    mkdir -p "$(dirname "$wt")/candidate_results"
+    printf '{"main_sha": "%s", "suites": {"regression_csim": {"failing_ids": %s}}}\n' "$sha" "${STUB_GATE_FAILING:-[]}" \
+        > "$(dirname "$wt")/candidate_results/$sha.json"
+fi
 printf '%b' "${STUB_GATE_LINES:-}"
 exit "${STUB_GATE_RC:-0}"
 '''
@@ -128,9 +130,9 @@ def build(tmp: Path, lands=("id1", "id2"), row_extra=""):
                            "sweep": sdir / "sweep.sh"})
 
 
-def run_sweep(fx, *args, lines="", failing="[]", rc=0, timeout=120):
+def run_sweep(fx, *args, lines="", failing="[]", rc=0, timeout=120, result=True):
     env = {**os.environ, "HOME": str(fx.home), "SWEEP_TEST_WT_ROOT": str(fx.wtroot), "STUB_GATE_LINES": lines,
-           "STUB_GATE_FAILING": failing, "STUB_GATE_RC": str(rc),
+           "STUB_GATE_FAILING": failing, "STUB_GATE_RC": str(rc), "STUB_GATE_NO_RESULT": "" if result else "1",
            "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
     assert fx.sweep.exists(), f"missing {SWEEP.relative_to(REPO)}"
     return subprocess.run(["bash", str(fx.sweep), *args], cwd=fx.repo, env=env, capture_output=True, text=True,
@@ -230,6 +232,141 @@ def test_6_absolute_red_list_comes_from_the_stored_result(tmp_path):
     assert any(re.fullmatch(r"Sweep \d{4}-\d{2}-\d{2} (pass|red 3)", s) for s in subjects), subjects
 
 
+# --- H-034 (sweep-row-on-early-reject): an early reject still writes its row ---------------------------------------------
+# Story: "A sweep that cannot finish still writes its row, so a red or broken sweep shows in the status and never passes as
+# silence." DEC-sweep-row-on-early-reject-2026-10-31. An early reject (merge_gate.sh early_exit, rc 1) leaves no
+# candidate_results/<sha>.json; only a log with no `GATE ` line (or rc > 1) is a harness error with no row.
+H034_ID_A = "tests/qa/test_a.py::test_one"
+H034_ID_B = "tests/qa/test_b.py::test_two"
+H034_EARLY = (f"GATE acceptance REJECT   scene returns ... FAILED {H034_ID_A} FAILED {H034_ID_B} ===\\n"
+              "GATE early_exit REJECT acceptance [0.0s]\\n")
+
+
+def _h034_cols(row):
+    """The row split as merge_gate.sh does (awk -F'|'): [0] date, [1] sha, [2] verdict, [3] new, [4] red, [-1] last column."""
+    return [c.strip() for c in row.split("|")[1:-1]]
+
+
+def _h034_red_sidecars(fx):
+    return sorted(fx.wtroot.glob("sweep-*.gate.log.red"))
+
+
+def test_h034_early_reject_without_result_file_writes_a_REJECT_early_row(tmp_path):
+    """H-034 Tests: "a planted gate log holding `GATE acceptance REJECT ... FAILED a::b FAILED c::d` and `GATE early_exit
+    REJECT acceptance` with no result file yields exit 0, a sweeps.md row with verdict `REJECT`, red 2 and `early
+    acceptance` in the last column, and a `.red` sidecar naming the two ids." Red today: sweep.sh exits 1 with `no row
+    written`. Columns as merge_gate.sh 5c-status reads them (awk -F'|': $4 verdict, $6 red, $7 last)."""
+    fx = build(tmp_path)
+    main_sha = git(fx.origin, "rev-parse", "main")
+    r = run_sweep(fx, lines=H034_EARLY, rc=1, result=False)
+    assert r.returncode == 0, r.stderr
+    last = origin_main(fx).rstrip("\n").splitlines()[-1]
+    assert re.fullmatch(rf"\| {TS} \| {main_sha} \| REJECT \| new: [^|]*\| red: 2 \| [^|]*\|", last), last
+    assert _h034_cols(last)[2] == "REJECT" and "early acceptance" in _h034_cols(last)[-1], last
+    side = _h034_red_sidecars(fx)
+    assert len(side) == 1, side
+    assert side[0].read_text().split() == sorted([H034_ID_A, H034_ID_B]), side[0].read_text()
+
+
+def test_h034_early_reject_still_writes_the_red_n_sweep_commit(tmp_path):
+    """H-034 Files: "The `Sweep` commit and the sweeps.md row are written as today (H-014, H-021)": an empty commit
+    `Sweep <date> red 2` follows the row. Red today for the same reason as the row test."""
+    fx = build(tmp_path)
+    main_sha = git(fx.origin, "rev-parse", "main")
+    run_sweep(fx, lines=H034_EARLY, rc=1, result=False)
+    subjects = git(fx.origin, "log", "--format=%H %s", f"{main_sha}..main").splitlines()
+    red = [s for s in subjects if re.fullmatch(r"[0-9a-f]{40} Sweep \d{4}-\d{2}-\d{2} red 2", s)]
+    assert len(red) == 1, subjects
+    assert git(fx.origin, "show", "--format=", "--stat", red[0].split()[0]) == "", "the Sweep commit must be empty"
+
+
+def test_h034_early_reject_row_names_the_first_rejecting_stage(tmp_path):
+    """H-034 Files: `early <stage>` in the last column "naming the first rejecting stage when no result file exists" (the
+    verdict stays exactly `REJECT`, Rulings D): two REJECT stages in log order (story, then acceptance) name `story`."""
+    fx = build(tmp_path)
+    lines = (f"GATE story REJECT no Machine lines in docs/stories/X.md\\n"
+             f"GATE acceptance REJECT ... FAILED {H034_ID_A} ===\\n"
+             "GATE early_exit REJECT story acceptance [0.0s]\\n")
+    r = run_sweep(fx, lines=lines, rc=1, result=False)
+    assert r.returncode == 0, r.stderr
+    last = origin_main(fx).rstrip("\n").splitlines()[-1]
+    cols = _h034_cols(last)
+    assert cols[2] == "REJECT" and "early story" in cols[-1] and "acceptance" not in cols[-1], last
+
+
+def test_h034_bare_early_reject_counts_one_red_per_bare_stage(tmp_path):
+    """H-034 Files: red count = "the number of distinct ids quoted in `GATE <stage> REJECT` lines ... plus one per bare
+    REJECT stage"; the `early_exit` line is the summary of the stage line and counts for nothing. One bare story REJECT:
+    verdict `REJECT`, `early story` in the last column, red 1, an empty `.red` sidecar."""
+    fx = build(tmp_path)
+    lines = "GATE story REJECT no Machine lines in docs/stories/X.md\\nGATE early_exit REJECT story [0.0s]\\n"
+    r = run_sweep(fx, lines=lines, rc=1, result=False)
+    assert r.returncode == 0, r.stderr
+    last = origin_main(fx).rstrip("\n").splitlines()[-1]
+    cols = _h034_cols(last)
+    assert cols[2] == "REJECT" and cols[4] == "red: 1" and "early story" in cols[-1], last
+    side = _h034_red_sidecars(fx)
+    assert len(side) == 1 and side[0].read_text().strip() == "", side
+
+
+def test_h034_red_counts_quoted_ids_and_FAILED_tokens_distinct_and_not_the_early_exit_line(tmp_path):
+    """H-034 Rulings B: "`FAILED <id>` tokens count, quoted ids count, `early_exit` counts for nothing": a story REJECT
+    quoting two ids and an acceptance REJECT with two FAILED tokens, one repeating a quoted id, give red 3 (distinct) and a
+    sidecar of exactly those three ids. Red today: exit 1, no row."""
+    fx = build(tmp_path)
+    lines = ("GATE story REJECT new failures: ['t::q', 't::r']\\n"
+             "GATE acceptance REJECT ... FAILED t::r FAILED t::s ===\\n"
+             "GATE early_exit REJECT story acceptance [0.0s]\\n")
+    r = run_sweep(fx, lines=lines, rc=1, result=False)
+    assert r.returncode == 0, r.stderr
+    last = origin_main(fx).rstrip("\n").splitlines()[-1]
+    assert _h034_cols(last)[4] == "red: 3", last
+    side = _h034_red_sidecars(fx)
+    assert len(side) == 1 and side[0].read_text().split() == ["t::q", "t::r", "t::s"], side
+
+
+def test_h034_control_log_with_no_GATE_line_is_still_a_harness_error(tmp_path):
+    """H-034 negative control, green today: "a log with no `GATE ` line still exits 1 with the harness-error message", no
+    row, nothing pushed."""
+    fx = build(tmp_path)
+    before_sweeps, before_main = origin_main(fx), git(fx.origin, "rev-parse", "main")
+    r = run_sweep(fx, lines="make: *** [all] Error 2\\n", rc=1, result=False)
+    assert r.returncode == 1, (r.returncode, r.stdout, r.stderr)
+    assert "no row written" in r.stderr, r.stderr
+    assert origin_main(fx) == before_sweeps and git(fx.origin, "rev-parse", "main") == before_main, "a harness error pushed"
+
+
+def test_h034_log_with_no_GATE_line_is_a_harness_error_even_with_a_result_file(tmp_path):
+    """H-034 Rulings C: "no `GATE ` line but a result file present" is a harness error too: exit 1 with the harness-error
+    message, no row, nothing pushed. Red today: with the result file planted sweep.sh writes a REJECT row for rc 1."""
+    fx = build(tmp_path)
+    before_sweeps, before_main = origin_main(fx), git(fx.origin, "rev-parse", "main")
+    r = run_sweep(fx, lines="make: *** [all] Error 2\\n", rc=1, result=True)
+    assert r.returncode == 1, (r.returncode, r.stdout, r.stderr)
+    assert "no row written" in r.stderr, r.stderr
+    assert origin_main(fx) == before_sweeps and git(fx.origin, "rev-parse", "main") == before_main, "a harness error pushed"
+
+
+def test_h034_control_rc_above_one_is_still_a_harness_error_even_with_REJECT_lines(tmp_path):
+    """H-034 Files: "rc greater than 1 ... is a harness error (message as today, exit 1)", green today: the early-reject
+    log with rc 2 and no result file writes no row."""
+    fx = build(tmp_path)
+    before_sweeps, before_main = origin_main(fx), git(fx.origin, "rev-parse", "main")
+    r = run_sweep(fx, lines=H034_EARLY, rc=2, result=False)
+    assert r.returncode == 1 and "no row written" in r.stderr, (r.returncode, r.stderr)
+    assert origin_main(fx) == before_sweeps and git(fx.origin, "rev-parse", "main") == before_main, "a harness error pushed"
+
+
+def test_h034_control_rejecting_gate_with_a_result_file_keeps_the_plain_REJECT_verdict(tmp_path):
+    """H-034 Files: "`REJECT` as today otherwise", green today and after: the same REJECT lines with rc 1 and a result file
+    give verdict `REJECT` and no `early` in the last column."""
+    fx = build(tmp_path)
+    r = run_sweep(fx, lines="GATE regression_csim REJECT new failures: ['t::x']\\n", failing="[\"t::x\"]", rc=1)
+    assert r.returncode == 0, r.stderr
+    last = origin_main(fx).rstrip("\n").splitlines()[-1]
+    assert re.search(r"\| REJECT \| new: t::x \|", last) and "early" not in _h034_cols(last)[-1], last
+
+
 # --- (5): the append ---------------------------------------------------------------------------------------------------
 
 def test_5_appended_row_is_last_and_earlier_rows_are_byte_identical(tmp_path):
@@ -284,7 +421,7 @@ def test_9_push_waits_on_records_lock(tmp_path):
     before = git(fx.origin, "rev-parse", "main")
     with open(lock, "w") as fh:
         fcntl.flock(fh, fcntl.LOCK_EX)
-        env = {**os.environ, "HOME": str(fx.home), "SWEEP_TEST_WT_ROOT": str(fx.wtroot), "STUB_GATE_LINES": "",
+        env = {**os.environ, "HOME": str(fx.home), "SWEEP_TEST_WT_ROOT": str(fx.wtroot), "STUB_GATE_LINES": "GATE tier slow OK\\n",
                "STUB_GATE_FAILING": "[]", "STUB_GATE_RC": "0",
                "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
         assert fx.sweep.exists(), "missing scripts/specfactory/sweep.sh"
@@ -330,24 +467,6 @@ def test_control_systemd_analyze_verify_passes_on_the_existing_timer():
         pytest.skip("systemd-analyze not present")
     r = subprocess.run(["systemd-analyze", "verify", str(UNITS / "om-method-metrics.timer")], capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
-
-
-def test_control_status_check_reads_a_hand_written_pass_row_as_the_anchor(tmp_path):
-    """Control for (1) to (3): the row format and anchor the sweep must write are the ones status_check.py reads; a PASS row
-    written by hand is the anchor (`STATUS sweep ... landings ... since the PASS row`)."""
-    fx = build(tmp_path)
-    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M")
-    row = f"| {stamp} | {fx.a} | PASS | new: none | red: 0 | |\n"
-    (fx.repo / SWEEPS_REL).write_text((fx.repo / SWEEPS_REL).read_text() + row)
-    # check_sweep alone: the full CLI also reads the programme, pieces and ledger files a sweep fixture does not carry.
-    code = ("import sys; sys.path.insert(0, sys.argv[1]); import status_check as sc; from pathlib import Path; "
-            "repo = Path(sys.argv[2]); "
-            "[print(f\"STATUS {n} {'WARN' if ok == 'warn' else 'OK' if ok else 'DRIFT'} {d}\") "
-            "for n, ok, d in sc.check_sweep(repo, 'origin/main', repo / sc.D_SWEEPS)]")
-    r = subprocess.run([sys.executable, "-c", code, str(SPEC), str(fx.repo)], capture_output=True, text=True)
-    line = [ln for ln in r.stdout.splitlines() if ln.startswith("STATUS sweep ")]
-    print(line)
-    assert len(line) == 1 and re.search(r"2 landings and [\d.]+ h since the PASS row at " + fx.a[:8], line[0]), (line, r.stderr)
 
 
 # --- DEC-sweep-drift-warn-2026-10-30: the gate's status stage and the sweep rows -----------------------------------------
