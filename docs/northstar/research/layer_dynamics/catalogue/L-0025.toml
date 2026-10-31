@@ -4,8 +4,8 @@ landscape = "small_tiered"
 seed = 1081691
 predict = "A"
 predict_why = "Side A holds two terraces above side B and fires down from both, so position outweighs numbers."
-verdict = ""
-feedback = ""
+verdict = "deny"
+feedback = "No slope or height bands drawn; three planes on a flat field."
 
 [side_a]
 headcount = 16

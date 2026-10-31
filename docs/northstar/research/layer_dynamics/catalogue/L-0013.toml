@@ -4,8 +4,8 @@ landscape = "small_flat"
 seed = 1041663
 predict = "draw"
 predict_why = "Neither side holds a positional edge in staging and the numbers are even."
-verdict = ""
-feedback = ""
+verdict = "deny"
+feedback = "No staging area drawn; two clusters on an empty field."
 
 [side_a]
 headcount = 16

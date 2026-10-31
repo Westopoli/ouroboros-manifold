@@ -5,8 +5,8 @@
   "seed": 1001635,
   "predict": "B",
   "predict_why": "Side B holds the arc around the choke and side A must come through it in two files, so position outweighs numbers.",
-  "verdict": "",
-  "feedback": "",
+  "verdict": "deny",
+  "feedback": "Westley: no chokepoint, a surround of units too far apart to hold; chokepoint is landscape, not formation; unit symbols unreadable at this distance; show unit ranges.",
   "side_a": {
     "headcount": 16,
     "units": [
