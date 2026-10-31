@@ -1,2 +1,3 @@
 # Declared stub .gd files under scenes/** and autoload/** exempt from the gd_reach lint
 # (HARNESS-gdreach). One res-relative path per line, e.g. scenes/foo/bar.gd. Comment lines start with #.
+scenes/proto/layout_shot/layout_shot.gd
