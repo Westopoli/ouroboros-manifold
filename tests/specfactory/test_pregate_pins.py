@@ -107,7 +107,10 @@ def _run(repo: Path, tmp_path: Path) -> subprocess.CompletedProcess:
 
 
 def _pins_lines(res: subprocess.CompletedProcess):
-    return [l for l in res.stdout.splitlines() if l.startswith("PREGATE pins")]
+    # H-032: with the PRE_GATE spelling, step 4's rule-pins line (`PRE_GATE pins OK <n> files <m> ids`) shares the
+    # prefix; it is not the H-017 csrc-pins step, so it is excluded.
+    return [l for l in res.stdout.splitlines()
+            if l.startswith("PRE_GATE pins") and not re.fullmatch(r"PRE_GATE pins OK \d+ files \d+ ids", l)]
 
 
 # ---- positive controls: green today, prove the fixture and the pattern work -------------------
@@ -149,20 +152,20 @@ def test_control_no_csrc_change_pre_gate_exits_zero(tmp_path):
 # ---- the step ---------------------------------------------------------------------------------
 
 def test_no_csrc_change_prints_skipped_line_and_exits_zero(tmp_path):
-    """H-017 / spec section 9: "no csrc change prints `PREGATE pins skipped: no csrc change`" and exits 0."""
+    """H-017 / spec section 9: "no csrc change prints `PRE_GATE pins OK skipped: no csrc change` (ruling A, H-032)" and exits 0."""
     repo = _make_repo(tmp_path, {"readme.txt": "head\n"})
     res = _run(repo, tmp_path)
-    assert _pins_lines(res) == ["PREGATE pins skipped: no csrc change"], res.stdout + res.stderr
+    assert _pins_lines(res) == ["PRE_GATE pins OK skipped: no csrc change"], res.stdout + res.stderr
     assert res.returncode == 0
 
 
 def test_csrc_change_that_moves_a_pin_rejects_naming_the_id(tmp_path):
     """H-017 / spec section 9: "a csrc change that moves a pinned value rejects with the id named" - "a
-    non-zero exit prints `PREGATE pins REJECT <failing ids>` and pre_gate exits non-zero"."""
+    non-zero exit prints `PRE_GATE pins REJECT <failing ids>` and pre_gate exits non-zero"."""
     repo = _make_repo(tmp_path, {"csrc/unit.c": "#define HP 11\n"})
     res = _run(repo, tmp_path)
     lines = _pins_lines(res)
-    assert len(lines) == 1 and lines[0].startswith("PREGATE pins REJECT "), res.stdout + res.stderr
+    assert len(lines) == 1 and lines[0].startswith("PRE_GATE pins REJECT "), res.stdout + res.stderr
     assert "test_pin_hp" in lines[0]
     assert "test_would_fail_if_run" not in res.stdout, "an unpinned csim file was run"
     assert res.stdout.splitlines()[-1] == "PRE_GATE verdict REJECT"
@@ -170,12 +173,12 @@ def test_csrc_change_that_moves_a_pin_rejects_naming_the_id(tmp_path):
 
 
 def test_csrc_change_with_pins_unchanged_prints_ok_n_tests(tmp_path):
-    """H-017 / spec section 9 (positive control): "a csrc change with pins unchanged prints `PREGATE pins OK
+    """H-017 / spec section 9 (positive control): "a csrc change with pins unchanged prints `PRE_GATE pins OK
     <n> tests`"; the stub's 3 tests include one that needs the built pipe/ouroboros_pipe ("build
     `pipe/ouroboros_pipe`") and exclude the unpinned file ("the csim files that carry pinned values")."""
     repo = _make_repo(tmp_path, {"csrc/unit.c": UNIT_C + "/* comment only */\n"})
     res = _run(repo, tmp_path)
-    assert _pins_lines(res) == ["PREGATE pins OK 3 tests"], res.stdout + res.stderr
+    assert _pins_lines(res) == ["PRE_GATE pins OK 3 tests"], res.stdout + res.stderr
     assert res.stdout.splitlines()[-1] == "PRE_GATE verdict OK"
     assert res.returncode == 0
 
@@ -185,6 +188,6 @@ def test_pins_step_runs_after_the_pieces_own_tests(tmp_path):
     repo = _make_repo(tmp_path, {"csrc/unit.c": UNIT_C + "/* comment only */\n"})
     out = _run(repo, tmp_path).stdout.splitlines()
     tests_i = next(i for i, l in enumerate(out) if re.match(r"^PRE_GATE tests ", l))
-    pins_is = [i for i, l in enumerate(out) if l.startswith("PREGATE pins")]
+    pins_is = [i for i, l in enumerate(out) if l.startswith("PRE_GATE pins")]
     assert pins_is, out
     assert tests_i < pins_is[0] < len(out) - 1, out
