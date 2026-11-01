@@ -135,6 +135,10 @@ func _show(i: int) -> void:
 	var res: Dictionary = _fight.get("result", {})
 	if i == _fight_frames.size() - 1:
 		_hud_end.text = "winner %s  predicted %s  %s" % [res.get("winner", ""), res.get("predict", ""), "agree" if res.get("agree", false) else "disagree"]
+		if res.has("end"):  # om-fight-2 only; a v1 file has no end word
+			_hud_end.text += "  end: %s" % res["end"]
+		if res.get("stall", false):
+			_hud_end.text += "  STALL"
 	else:
 		_hud_end.text = ""
 	_hud_end.visible = _hud_end.text != ""
