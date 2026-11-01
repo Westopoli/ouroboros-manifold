@@ -93,14 +93,14 @@ def _check(layout):
 
 def test_control_check_layout_passes_an_existing_catalogue_layout():
     """H-040 part 5 control: `check_layout` on a produced H-025 layout passes, so a red below is the missing converter, not the checker."""
-    with open(LD / "catalogue" / "L-0001.toml", "rb") as f:
+    with open(LD / "catalogue" / "L-0037.toml", "rb") as f:
         layout = tomllib.load(f)
     assert _check(layout) == []
 
 
 def test_control_check_layout_sees_a_broken_layout():
     """H-040 part 5 control (detector): the same layout with side A's headcount off by one is caught as R4."""
-    with open(LD / "catalogue" / "L-0001.toml", "rb") as f:
+    with open(LD / "catalogue" / "L-0037.toml", "rb") as f:
         layout = tomllib.load(f)
     layout["side_a"]["headcount"] += 1
     assert _check(layout) == ["R4"]
