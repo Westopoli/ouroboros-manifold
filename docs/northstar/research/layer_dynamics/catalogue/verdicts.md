@@ -51,3 +51,15 @@ The other 24 batch-one layouts (denied as a set, same defect):
 | L-0033 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
 | L-0035 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
 | L-0036 | deny | Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format. |
+| L-0037 | A | Westley 2026-11-01: "chokepoint: approved" |
+| L-0038 | deny | Westley 2026-11-01: "vantage: is that a single layer? 2x the height on a single layer if that's the case. Show me an updated one." |
+| L-0039 | hold | Westley 2026-11-01: "cover: the placeholders don't really break LOS, do the units see each other through the cracks? Cover can also change size, so what size is this showing?" |
+| L-0040 | hold | Westley 2026-11-01: "objective: what exactly am I approving/disapproving for this one?" |
+| L-0041 | hold | Westley 2026-11-01: "staging: same Q for this one, what exactly am I approving/disapproving? Next time you ask for screenshots, pair the screenshots with a doc that describes what approve/disapproval means for each individual screenshot." |
+| L-0042 | hold | Westley 2026-11-01: "transit: same Q with this one." |
+| L-0043 | deny | Westley 2026-11-01: "flank: a flank comes from behind usually, not from the side, and splitting the forces would lead to a wider available area of attack." |
+| L-0044 | hold | Westley 2026-11-01: "hazard_anchor: same Q for this one." |
+| L-0045 | hold | Westley 2026-11-01: "slope: Same Q as vantage, is that a single layer change?" |
+| L-0046 | deny | Westley 2026-11-01: "city: the city is too uniform, unless what I'm approving/disapproving is very specific. Can units travel between the buildings?" |
+| L-0047 | deny | Westley 2026-11-01: "trap: blue would not put themselves in this situation, a trap is more like 'leading' an enemy force into a much more complicated situation, one where the trapping side has multiple attack points blocking a retreat, and has high ground or better vision on the enemy. What exactly was the point of this screenshot? What am I approving/disapproving?" |
+| L-0048 | hold | Westley 2026-11-01: "Same Q for open_field." |
