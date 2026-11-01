@@ -697,6 +697,10 @@ def test_5_control_a_single_id_of_the_pair_leaves_the_other_acceptance_unrun(tmp
 NEW_RED = "def test_new_red():\n    assert False, 'new red on the candidate'\n"
 
 
+# The H-002 trailer schema: a `Land` commit carries all six or status_check reports land_trailer DRIFT.
+LAND_B1_SIDE = "Land B1 side\n\nStory: B1\nTests: x\nPlay: x\nPlayed: x\nGate: x\nFlag: harness"
+
+
 def _window_with_a_merged_branch(box):
     """M1 -> c1 -> merge(side: s1 carries the new red csim test) -> c3. First-parent shas since M1: c1, mg, c3."""
     def steps(c):
@@ -704,7 +708,7 @@ def _window_with_a_merged_branch(box):
         _git(c, "checkout", "-q", "-b", "side")
         box["s1"] = _commit(c, {"tests/csim/test_new_red.py": NEW_RED}, "s1")
         _git(c, "checkout", "-q", "main")
-        _git(c, "merge", "-q", "--no-ff", "-m", "Land B1 side", "side")
+        _git(c, "merge", "-q", "--no-ff", "-m", LAND_B1_SIDE, "side")
         box["mg"] = _git(c, "rev-parse", "HEAD")
         box["c3"] = _commit(c, {"c3.txt": "3\n"}, "c3")
     return steps
@@ -738,7 +742,7 @@ def test_6_control_the_same_window_without_the_red_test_passes_regression_csim(t
         _git(c, "checkout", "-q", "-b", "side")
         _commit(c, {"tests/csim/test_new_red.py": "def test_new_red():\n    assert True\n"}, "s1")
         _git(c, "checkout", "-q", "main")
-        _git(c, "merge", "-q", "--no-ff", "-m", "Land B1 side", "side")
+        _git(c, "merge", "-q", "--no-ff", "-m", LAND_B1_SIDE, "side")
         _commit(c, {"c3.txt": "3\n"}, "c3")
 
     fx2 = build_gate(tmp2, main_steps=green_steps, pieces=WINDOW_PIECES)
