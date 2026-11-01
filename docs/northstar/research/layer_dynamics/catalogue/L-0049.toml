@@ -7,6 +7,7 @@ predict_why = "DRAFT (Architect to confirm): the two sides are equal in number a
 verdict = ""
 feedback = ""
 defender = ""
+orders = "both_same_point"
 
 [side_a]
 headcount = 16

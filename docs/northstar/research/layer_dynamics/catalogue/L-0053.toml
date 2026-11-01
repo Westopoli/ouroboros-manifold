@@ -7,6 +7,7 @@ predict_why = "DRAFT (Architect to confirm): side A has more Vanguards and nothi
 verdict = ""
 feedback = ""
 defender = ""
+orders = "both_same_point"
 
 [side_a]
 headcount = 64

@@ -456,6 +456,8 @@ def dump_toml(layout):
     lines = ["id = %s" % _q(layout["id"]), "situation = %s" % _q(layout["situation"]), "landscape = %s" % _q(layout["landscape"]),
              "seed = %d" % layout["seed"], "predict = %s" % _q(layout["predict"]), "predict_why = %s" % _q(layout["predict_why"]),
              "verdict = %s" % _q(layout["verdict"]), "feedback = %s" % _q(layout["feedback"]), "defender = %s" % _q(layout.get("defender", ""))]
+    if "orders" in layout:  # H-052: "both_same_point" or "hold:A" / "hold:B"; absent means both_same_point
+        lines.append("orders = %s" % _q(layout["orders"]))
     for side in ("side_a", "side_b"):
         lines += ["", "[%s]" % side, "headcount = %d" % layout[side]["headcount"]]
         for u in layout[side]["units"]:

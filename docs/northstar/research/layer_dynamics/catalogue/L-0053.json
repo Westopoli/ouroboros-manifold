@@ -8,6 +8,7 @@
   "verdict": "",
   "feedback": "",
   "defender": "",
+  "orders": "both_same_point",
   "side_a": {
     "headcount": 64,
     "units": [
