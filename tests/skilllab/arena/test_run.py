@@ -460,7 +460,7 @@ def test_control_not_used_list_is_still_the_trim_reports():
 # the fixtures prepend the line.
 
 ORDERS_SPLIT_A = [(1400.0 + (i % 2) * 40.0, 2000.0 + (i // 2) * 40.0) for i in range(4)] + [(2600.0 + (i % 2) * 40.0, 2000.0 + (i // 2) * 40.0) for i in range(4)]
-ORDERS_SPLIT_B = [(1980.0 + (i % 4) * 40.0, 2900.0 + (i // 4) * 40.0) for i in range(8)]
+ORDERS_SPLIT_B = [(1960.0 + (i % 4) * 40.0, 1980.0 + (i // 4) * 40.0) for i in range(8)]   # already at A's centre: stopped, out of range (DEC-silence-clause-2026-11-01 counts movement)
 SILENCE_TICKS_LOW, SILENCE_TICKS_HIGH = 10 * TICK_RATE, 12 * TICK_RATE   # H-040 "about 10 s": the brief's window 10 s to 12 s; DRAFT-silence-seconds 10
 
 
@@ -510,8 +510,8 @@ def test_control_stall_fixture_is_legal_and_orders_key_is_ignored_by_check_layou
     loaded = tomllib.loads(path.read_text())
     assert loaded["orders"] == "hold:A"
     assert produce.check_layout(loaded, pre, rul) == []
-    assert _near(_centroid_of(layout, "side_a"), (2020.0, 2020.0)) and _near(_centroid_of(layout, "side_b"), (2040.0, 2920.0))
-    assert _near(_midpoint(layout), (2030.0, 2470.0))
+    assert _near(_centroid_of(layout, "side_a"), (2020.0, 2020.0)) and _near(_centroid_of(layout, "side_b"), (2020.0, 2000.0))
+    assert _near(_midpoint(layout), (2020.0, 2010.0))
 
 
 def test_control_engine_standoff_holds_silent_under_hold_and_wipes_under_one_point():
