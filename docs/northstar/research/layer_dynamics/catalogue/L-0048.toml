@@ -1,0 +1,399 @@
+id = "L-0048"
+situation = "open_field"
+landscape = "small_flat"
+seed = 1113328
+predict = "A"
+predict_why = "Neither side holds a positional edge in open_field, so side A wins on numbers."
+verdict = ""
+feedback = ""
+defender = ""
+
+[side_a]
+headcount = 32
+
+[[side_a.units]]
+role = "Bastion"
+x = 1300.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1300.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1300.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1300.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1300.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1300.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1260.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1260.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1260.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1260.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Bastion"
+x = 1260.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1260.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1220.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1220.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1220.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1220.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1220.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1220.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1180.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1180.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1180.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1180.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1180.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1180.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1140.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1140.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1140.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1140.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1140.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1140.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1100.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 1100.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[side_b]
+headcount = 16
+
+[[side_b.units]]
+role = "Bastion"
+x = 2740.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2740.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2740.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2740.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2780.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2780.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Warden"
+x = 2780.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 2780.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 2820.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 2820.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 2820.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 2820.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2860.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2860.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2860.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2860.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+range = 1200.0

@@ -1,0 +1,414 @@
+{
+  "id": "L-0038",
+  "situation": "vantage",
+  "landscape": "small_tiered",
+  "seed": 1012458,
+  "predict": "A",
+  "predict_why": "Side A stands on the vantage rise above side B and sees down onto it, so position outweighs numbers.",
+  "verdict": "",
+  "feedback": "",
+  "defender": "A",
+  "side_a": {
+    "headcount": 24,
+    "units": [
+      {
+        "role": "Warden",
+        "x": 2020.0,
+        "y": 2080.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2020.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2020.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2020.0,
+        "y": 1960.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2020.0,
+        "y": 1920.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2060.0,
+        "y": 2080.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2060.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2060.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 350.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2060.0,
+        "y": 1960.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2060.0,
+        "y": 1920.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2100.0,
+        "y": 2080.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2100.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2100.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2100.0,
+        "y": 1960.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2100.0,
+        "y": 1920.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2140.0,
+        "y": 2080.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 300.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2140.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2140.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2140.0,
+        "y": 1960.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2140.0,
+        "y": 1920.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2180.0,
+        "y": 2080.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2180.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2180.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2180.0,
+        "y": 1960.0,
+        "facing": 3.1416,
+        "layer": 1,
+        "range": 1200.0
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 24,
+    "units": [
+      {
+        "role": "Warden",
+        "x": 980.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 980.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 980.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 980.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 980.0,
+        "y": 2080.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 940.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 940.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 940.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 940.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 940.0,
+        "y": 2080.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 900.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 900.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 900.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 900.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 900.0,
+        "y": 2080.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 860.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Bombard",
+        "x": 860.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 860.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 860.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 860.0,
+        "y": 2080.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 820.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 820.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 820.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 820.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 1200.0
+      }
+    ]
+  },
+  "features": [
+    {
+      "kind": "vantage",
+      "x": 2000.0,
+      "y": 2000.0,
+      "radius": 700,
+      "height_band": 1
+    }
+  ]
+}
