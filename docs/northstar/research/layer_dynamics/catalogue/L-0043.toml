@@ -1,0 +1,503 @@
+id = "L-0043"
+situation = "flank_route"
+landscape = "small_tiered"
+seed = 1064905
+predict = "A"
+predict_why = "Side A swings round the flank route onto side B's flank, so position outweighs numbers."
+verdict = ""
+feedback = ""
+defender = "B"
+
+[side_a]
+headcount = 48
+
+[[side_a.units]]
+role = "Raider"
+x = 1020.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 1020.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 1020.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 1020.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 1020.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 1020.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 1020.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 980.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 980.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 980.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 980.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 980.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 980.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 980.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 940.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 940.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 940.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 940.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 940.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 940.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 940.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 900.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 900.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Raider"
+x = 900.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 900.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 900.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 900.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 900.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 860.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 860.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 860.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 860.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 860.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 860.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 860.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 820.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 820.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 820.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 820.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 820.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 820.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 820.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 780.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 780.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 780.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 780.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 780.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 780.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 250.0
+
+[side_b]
+headcount = 12
+
+[[side_b.units]]
+role = "Bastion"
+x = 2940.0
+y = 2040.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2940.0
+y = 2000.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2940.0
+y = 1960.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 2980.0
+y = 2040.0
+facing = 3.1416
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Warden"
+x = 2980.0
+y = 2000.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 2980.0
+y = 1960.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 3020.0
+y = 2040.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 3020.0
+y = 2000.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3020.0
+y = 1960.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3060.0
+y = 2040.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3060.0
+y = 2000.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3060.0
+y = 1960.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[features]]
+kind = "flank_route"
+x = 900.0
+y = 2000.0
+points = [[900.0, 2000.0], [1500.0, 3200.0], [2700.0, 3300.0], [3000.0, 2500.0]]
+ridge = {x = 1950.0, y = 2000.0, w = 300, h = 1400}
+height_band = 1
