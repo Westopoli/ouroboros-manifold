@@ -267,3 +267,90 @@ def test_page_module_imports_snapshot_read_and_tomllib_only():
     assert {n for n in names if n.startswith("scripts.")} == {"scripts.skilllab.arena.snapshot.read"}
     other = {m.split(".")[0] for m in mods} - {"scripts"} - set(sys.stdlib_module_names)
     assert not other, f"non-standard-library imports: {sorted(other)}"
+
+
+# ---- H-040 "Orders and fight end" / H-052: stall flagging ------------------------------------------------------------------
+# spec: docs/stories/H-040.md "Orders and fight end": "`silence` with both sides alive is a `stall`: ... the page shows the row in a flagged colour with "stall: bring to
+# Westley"". Premises (DRAFT-page-stall-flag: the story gives the words and 'a flagged colour', not the element): the row carries the class token `stall` on some
+# element (like `agree`/`disagree`, the style defines it), and the page text contains `stall: bring to Westley` for a stall and never otherwise. The v2 documents are built
+# inline from `snapshot.example()` and written raw JSON (like the INVALID test); the first assertions say the document validates, so while v2 is missing the test fails
+# for that reason.
+
+def _v2_doc(lid, n, frames, predict, stall):
+    doc = _fight_doc(lid, n, frames, predict)
+    doc["schema"] = "om-fight-2"
+    doc["orders"] = {"mode": "hold_and_attack" if stall else "both_same_point", "point": [120.0, 52.0], "attacker": "B" if stall else None}
+    doc["result"]["end"] = "silence" if stall else "wipe"
+    doc["result"]["stall"] = stall
+    if stall:
+        last = doc["frames"][-1]
+        for row in last["units"]:
+            row["hp"], row["alive"] = 100.0, True
+        last["alive"] = [n, n]
+        doc["result"].update({"survivors": [n, n], "winner": "stall", "agree": False})
+    return doc
+
+
+def _stage_v2(stage, docs):
+    """Write each (stem, doc) as raw JSON beside the fixture's two fights, with stub PNGs and a layout for the stem's layout id."""
+    import json
+    root, out, _ = stage
+    for doc in docs:
+        lid, frames = doc["layout_id"], len(doc["frames"])
+        (root / "layouts" / f"{lid}.toml").write_text(LAYOUT_TOML.format(lid=lid, predict=doc["result"]["predict"], why="WHYV2", n=len(doc["frames"][0]["units"]) // 2))
+        stem = f"{lid}-s1"
+        (out / f"{stem}.fight.json").write_text(json.dumps(doc, sort_keys=True, indent=2) + "\n")
+        (out / stem).mkdir()
+        for i in range(frames):
+            _png(out / stem / f"frame-{i}.png")
+
+
+def test_control_v1_fights_are_not_flagged_as_stalls(stage):
+    """Control, green today: the page of the two v1 example fights carries no `stall` class and no 'stall: bring to Westley', so a flag later comes from the stall rule."""
+    page, _ = _build(stage)
+    cells = _Cells()
+    cells.feed(page)
+    assert not [t for tag, toks in cells.classes for t in toks if t == "stall"]
+    assert "stall: bring to Westley" not in page
+
+
+def test_page_flags_a_stall_fight_with_the_class_and_the_words(stage):
+    """H-040 "Orders and fight end": "the page shows the row in a flagged colour with "stall: bring to Westley"". A v2 stall fight (silence, both sides alive, winner `stall`)
+    is listed with its id, carries the class `stall` (and the style defines `.stall`), and the page says `stall: bring to Westley`."""
+    stall = _v2_doc("L-0201", 2, 3, "A", True)
+    assert snapshot.validate(stall) == [], "the stall fixture must be a valid om-fight-2 document"
+    _stage_v2(stage, [stall])
+    page, _ = _build(stage)
+    cells = _Cells()
+    cells.feed(page)
+    assert "L-0201" in page and "INVALID L-0201" not in page
+    assert [t for tag, toks in cells.classes for t in toks if t == "stall"], "no element carries the class `stall`"
+    assert ".stall" in page, "style does not define the flagged colour"
+    assert "stall: bring to Westley" in page
+
+
+def test_page_does_not_flag_a_wipe_fight(stage):
+    """H-040 "Orders and fight end": only a `silence` end with both sides alive is a stall. A v2 wipe fight is listed (not INVALID) with no `stall` class and no 'stall:
+    bring to Westley' anywhere on the page (the style rule `.stall` is not an element's class)."""
+    wipe = _v2_doc("L-0202", 2, 3, "A", False)
+    assert snapshot.validate(wipe) == [], "the wipe fixture must be a valid om-fight-2 document"
+    _stage_v2(stage, [wipe])
+    page, _ = _build(stage)
+    cells = _Cells()
+    cells.feed(page)
+    assert "L-0202" in page and "INVALID L-0202" not in page
+    assert not [t for tag, toks in cells.classes for t in toks if t == "stall"]
+    assert "stall: bring to Westley" not in page
+
+
+def test_page_flags_only_the_stall_among_a_stall_and_a_wipe(stage):
+    """H-040 "Orders and fight end": with a stall and a wipe on one page, exactly one row is flagged: the class `stall` appears once on an element and the words once."""
+    stall, wipe = _v2_doc("L-0203", 2, 3, "A", True), _v2_doc("L-0204", 2, 3, "A", False)
+    assert snapshot.validate(stall) == [] and snapshot.validate(wipe) == []
+    _stage_v2(stage, [stall, wipe])
+    page, _ = _build(stage)
+    cells = _Cells()
+    cells.feed(page)
+    assert len([t for tag, toks in cells.classes for t in toks if t == "stall"]) == 1
+    assert page.count("stall: bring to Westley") == 1
+    assert page.index("L-0203") < page.index("stall: bring to Westley") < page.index("L-0204")
