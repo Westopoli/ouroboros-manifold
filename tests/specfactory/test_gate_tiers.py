@@ -485,6 +485,10 @@ def test_3_the_tier_line_is_printed_once_and_before_the_first_stage_line(tmp_pat
 
 # ====================================================================== group 4: STATUS sweep
 
+# The six trailers of docs/method/story_loop.md that status_check's land_trailer check requires on a Land commit.
+LAND_TRAILERS = "\n\nStory: P\nTests: tests/t.py\nPlay: none\nPlayed: none\nGate: pass\nFlag: harness\n"
+
+
 def _history(repo, events):
     """events: 'land' (a first-parent --no-ff merge `Land P-n <sha>`), 'plain' (records commit), 'revert' (a plain
     commit subject `Revert ...`), 'merge' (a --no-ff merge whose subject is not `Land `), 'side_land' (a Land merge
@@ -503,7 +507,8 @@ def _history(repo, events):
             _git(repo, "checkout", "-q", "-b", f"br{n}")
             _commit(repo, {f"br/{n}.txt": f"{n}\n"}, f"work {n}")
             _git(repo, "checkout", "-q", "main")
-            subject = f"Land P-{n} {_git(repo, 'rev-parse', f'br{n}')}" if ev == "land" else f"Merge branch br{n}"
+            subject = (f"Land P-{n} {_git(repo, 'rev-parse', f'br{n}')}" + LAND_TRAILERS if ev == "land"
+                       else f"Merge branch br{n}")
             _git(repo, "merge", "-q", "--no-ff", "-m", subject, f"br{n}")
         elif ev == "side_land":
             _git(repo, "checkout", "-q", "-b", f"side{n}")
@@ -511,7 +516,7 @@ def _history(repo, events):
             _git(repo, "checkout", "-q", "-b", f"inner{n}")
             _commit(repo, {f"s/{n}b.txt": "i\n"}, "inner work")
             _git(repo, "checkout", "-q", f"side{n}")
-            _git(repo, "merge", "-q", "--no-ff", "-m", f"Land P-{n} {_git(repo, 'rev-parse', f'inner{n}')}", f"inner{n}")
+            _git(repo, "merge", "-q", "--no-ff", "-m", f"Land P-{n} {_git(repo, 'rev-parse', f'inner{n}')}" + LAND_TRAILERS, f"inner{n}")
             _git(repo, "checkout", "-q", "main")
             _git(repo, "merge", "-q", "--no-ff", "-m", f"Merge branch side{n}", f"side{n}")
     return anchors
@@ -542,10 +547,7 @@ def _status_fixture(tmp_path, events, rows):
     anchors = _history(repo, events)
     _commit(repo, {SWEEPS_REL: SWEEPS_HEADER + "".join(row(anchors) + "\n" for row in rows)}, "records sweeps")
     return subprocess.run(
-        [PY, str(STATUS), "--repo", str(repo), "--base", "main",
-         "--programme", "docs/northstar/plans/2026-10-07-visible-game-programme.md",
-         "--pieces", "docs/northstar/plans/push/pieces.toml", "--stories", "docs/bible/stories.md",
-         "--reviews", "docs/northstar/story_reviews", "--roadmap", "docs/northstar/ROADMAP.md"],
+        [PY, str(STATUS), "--repo", str(repo), "--base", "main"],
         capture_output=True, text=True, cwd=repo, timeout=60)
 
 
