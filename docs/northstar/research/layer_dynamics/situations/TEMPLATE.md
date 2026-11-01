@@ -4,6 +4,9 @@ Stage: 1
 Kind: open_field            (one of: open_field, chokepoint, vantage, cover, objective, staging, transit, flank_route, hazard_anchor, slope, city, trap)
 Field: small_flat           (a preset name from scripts/skilllab/catalogue/presets.toml; small_flat is 4000 x 4000, one layer)
 Predict: A                  (A, B or draw)
+Expected win rate: 0.98     (the better side's probability, your heuristic; see ../heuristics.md)
+Orders: both_same_point     (both_same_point, hold:A or hold:B; see docs/stories/H-052.md)
+Orders point: midpoint      (midpoint, or x y in world units: the exact spot both sides attack-move to)
 Why: Equal roles and equal counts, but A starts closer to the centre and engages first.
 
 ## Sides
