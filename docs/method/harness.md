@@ -41,6 +41,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-042 | Finding (Westley, 2026-11-01, in the H-023 unit-scale match): "HPs constantly resetting and growing". Found, not yet reproduced; a story is written once a Sonnet engineer reproduces it from `scenes/proto/unit_scale/` and names the system. | Found | none yet |
 | H-043 | Finding (Westley, 2026-11-01, same match): "spawn locations right next to each other". Found, not yet reproduced; same path as H-042. | Found | none yet |
 | H-044 | "The method rev 3 metrics tooling (M01 to M24 reports, the token ledger, the weekly timer) is retired with parity rows once Westley rules it dead; until then it runs and its tests stay." | Spec'd (after H-037; Westley 2026-11-01: "repair now, retire later as its own story") | none yet |
+| H-045 | "The landing clerk is told when a sweep of main is due, as the gate card promises: a warning after three landings or two hours since the last green sweep, a drift at twice that; a red sweep row is never a drift." | Ready (harness; lost in H-002; its eighteen tests are already written and red) | `docs/stories/H-045.md` |
 | H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | none yet |
 
