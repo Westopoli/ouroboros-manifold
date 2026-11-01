@@ -1,7 +1,7 @@
 # spec: docs/northstar/plans/2026-10-07-visible-game-spec.md line 444 (piece HARNESS-gate-tiers, lane H), amended by docs/northstar/plans/2026-10-29-layered-gate-spec.md sections 4 and 8
 # Rule pins: none (this piece proves a harness gate, not a bible rule)
 """HARNESS-gate-tiers (lane H, unit 4 of the stack): `merge_gate.sh [--revert] [--tier fast|slow|full]`, the new
-`select-csim` subcommand, the `GATE tier <name>` line, the `sweep` check of status_check.py, the slow tier's union
+`select-csim` subcommand, the `GATE tier <name>` line, the slow tier's union
 diff and base, and the baseline cache that scans `candidate_results/` and keys subset runs by their file list.
 
 Test groups (the paragraph's six, plus the amendment's 7 and 8; the group number is the prefix of each test name):
@@ -9,9 +9,7 @@ Test groups (the paragraph's six, plus the amendment's 7 and 8; the group number
     run never writes the full-suite cache entry.
   2 argument handling: --tier fast|slow|full, usage errors, --revert only with full.
   3 stage sets: fast skips the heavy stages, full is today's list, `GATE tier <name>` once and first.
-  4 `STATUS sweep` in status_check.py: landings counted as first-parent `--no-ff` merges whose subject begins
-    `Land ` (spec section 8 B3, DEC-landing-noff-2026-10-29), hours, the BASE row as anchor (F10), DRIFT at the
-    multiplier; parametrised on the constants below.
+  4 retired: the `STATUS sweep` check left status_check.py under H-002; its tests were retired by H-037.
   5 a slow-tier run with a comma list of ids: acceptance for both, the union-diff stages once.
   6 a slow-tier regression_csim REJECT names every first-parent sha since the base (merge commits included, the
     commits inside a merged branch not).
@@ -21,25 +19,16 @@ Test groups (the paragraph's six, plus the amendment's 7 and 8; the group number
   8 `--tier slow` keeps the positional <base_ref> as the regression base (B1, amendment item f); an empty id list
     prints `skipped: no ids` for the stages that need ids (amendment item g).
 
-CONSTANTS (named drafts of the layered gate spec section 4; Westley's to change): DRAFT-slow-tier-batch 3,
-DRAFT-slow-tier-hours 2, DRAFT-slow-tier-drift-mult 2. The tests derive their counts and ages from the constants
-below, never from a literal.
-
 FIXTURES: the gate runs on the tests/specfactory/test_gate_reorder.py pattern (a candidate repo, a bare origin, a
 gate repo whose scripts/specfactory is this tree's with the noisy lints stubbed); the cache tests on the
 tests/specfactory/test_gate_cache_seed.py pattern (a one-test suite that appends to a marker file).
 
 POSITIVE CONTROLS: a valid `--tier fast` run (group 2); the default run still prints the stages fast skips and
-`--tier full` equals it (3); a quiet sweep check (4); the selection that names the symbol (1); a hit on an entry
+`--tier full` equals it (3); the selection that names the symbol (1); a hit on an entry
 that is an ancestor with rc 0 and an empty-folders miss then hit (7); the slow tier with no `--tier` override
 still rebases the baseline onto origin/main (8). Each is paired with the negative case it guards.
 
 UNSTATED INTERFACE (reported, fixed here so the tests are runnable; the builder follows or the Architect rules):
-  * the date-time cell of a sweeps.md row is `YYYY-MM-DD HH:MM` in UTC (the spec says "date-time UTC" only);
-    SWEEP_TS_FMT below is the single place to change it.
-  * `status_check.py` reads `docs/northstar/plans/push/sweeps.md` relative to --repo, the column order is date-time,
-    main sha, verdict (the section 8 B2 row layout), and the anchor is the last row whose verdict is PASS or BASE.
-  * a quiet check prints `STATUS sweep OK <detail>` (every other check prints one OK line).
   * `select-csim` takes the symbol tables of this repo (the defaults of the `symbols` subcommand): the tests read
     the real tables and pick a C file with two `[symbols]` rows and a C file mapped only by signatures.toml.
 """
@@ -58,7 +47,6 @@ import pytest
 REPO = Path(__file__).resolve().parent.parent.parent
 SPEC_DIR = REPO / "scripts" / "specfactory"
 SUPPORT = SPEC_DIR / "merge_gate_support.py"
-STATUS = SPEC_DIR / "status_check.py"
 sys.path.insert(0, str(SPEC_DIR))
 
 import merge_gate_support as mgs  # noqa: E402
@@ -71,8 +59,7 @@ RUN_TIMEOUT_S = 300
 SIGNATURES = REPO / "docs/northstar/spec_factory/signatures.toml"
 SYMBOL_MODULES = REPO / "docs/northstar/spec_factory/symbol_modules.toml"
 
-# DRAFT-slow-tier-batch, DRAFT-slow-tier-hours, DRAFT-slow-tier-drift-mult (layered gate spec section 4).
-BATCH, HOURS, MULT = 3, 2, 2
+
 SWEEP_TS_FMT = "%Y-%m-%d %H:%M"
 SWEEPS_REL = "docs/northstar/plans/push/sweeps.md"
 SWEEPS_HEADER = ("| Date-time UTC | Main sha | Verdict | New | Red | Red ids |\n"
@@ -483,173 +470,6 @@ def test_3_the_tier_line_is_printed_once_and_before_the_first_stage_line(tmp_pat
     assert gate_lines[0] == f"GATE tier {name}", gate_lines[:3]
 
 
-# ====================================================================== group 4: STATUS sweep
-
-def _history(repo, events):
-    """events: 'land' (a first-parent --no-ff merge `Land P-n <sha>`), 'plain' (records commit), 'revert' (a plain
-    commit subject `Revert ...`), 'merge' (a --no-ff merge whose subject is not `Land `), 'side_land' (a Land merge
-    made on a side branch and merged into main by a non-Land merge, so it is not first-parent), ('anchor', name).
-    Returns {anchor name: sha}."""
-    anchors, n = {}, 0
-    for ev in events:
-        n += 1
-        if isinstance(ev, tuple):
-            anchors[ev[1]] = _git(repo, "rev-parse", "HEAD")
-        elif ev == "plain":
-            _commit(repo, {f"rec/{n}.txt": f"{n}\n"}, f"records {n}")
-        elif ev == "revert":
-            _commit(repo, {f"rec/{n}.txt": f"{n}\n"}, f"Revert \"Land P-{n} abc1234\"")
-        elif ev in ("land", "merge"):
-            _git(repo, "checkout", "-q", "-b", f"br{n}")
-            _commit(repo, {f"br/{n}.txt": f"{n}\n"}, f"work {n}")
-            _git(repo, "checkout", "-q", "main")
-            subject = f"Land P-{n} {_git(repo, 'rev-parse', f'br{n}')}" if ev == "land" else f"Merge branch br{n}"
-            _git(repo, "merge", "-q", "--no-ff", "-m", subject, f"br{n}")
-        elif ev == "side_land":
-            _git(repo, "checkout", "-q", "-b", f"side{n}")
-            _commit(repo, {f"s/{n}.txt": "s\n"}, "side work")
-            _git(repo, "checkout", "-q", "-b", f"inner{n}")
-            _commit(repo, {f"s/{n}b.txt": "i\n"}, "inner work")
-            _git(repo, "checkout", "-q", f"side{n}")
-            _git(repo, "merge", "-q", "--no-ff", "-m", f"Land P-{n} {_git(repo, 'rev-parse', f'inner{n}')}", f"inner{n}")
-            _git(repo, "checkout", "-q", "main")
-            _git(repo, "merge", "-q", "--no-ff", "-m", f"Merge branch side{n}", f"side{n}")
-    return anchors
-
-
-def _status_fixture(tmp_path, events, rows):
-    """A repo on main with the five files status_check reads, the history `events`, and a sweeps.md of `rows`
-    (callables of the anchors dict returning a table row). Returns the run result."""
-    repo = tmp_path / "st"
-    repo.mkdir()
-    _git(repo, "init", "-q", "-b", "main")
-    write_story(repo, "B1")  # H-020
-    _commit(repo, {
-        "README.txt": "base\n",
-        "docs/northstar/plans/2026-10-07-visible-game-programme.md":
-            "| Lane | On main | Next piece | First look | Westley row |\n|---|---|---|---|---|\n"
-            "| A | nothing yet | - | - | - |\n",
-        "docs/northstar/plans/push/pieces.toml":
-            '[[piece]]\nid = "P-FLY"\nowns = ["c.c"]\nowns_glob = []\nacceptance = ["t.py"]\ndepends_on = []\n'
-            'status = { state = "in_flight" }\ntests_pending = true\n',
-        "docs/bible/stories.md": "| Story | Epic | Words | Status | Depth |\n|---|---|---|---|---|\n",
-        "docs/northstar/story_reviews/README.md": "# queue\n",
-        "docs/northstar/ROADMAP.md": "# Roadmap\n\n## 1. Now building\n\n"
-                                     "| Lane | Branch | State | Next |\n|---|---|---|---|\n"
-                                     "| **The visible game programme** "
-                                     "(`docs/northstar/plans/2026-10-07-visible-game-programme.md`) | x | y | z |\n",
-    })
-    anchors = _history(repo, events)
-    _commit(repo, {SWEEPS_REL: SWEEPS_HEADER + "".join(row(anchors) + "\n" for row in rows)}, "records sweeps")
-    return subprocess.run(
-        [PY, str(STATUS), "--repo", str(repo), "--base", "main",
-         "--programme", "docs/northstar/plans/2026-10-07-visible-game-programme.md",
-         "--pieces", "docs/northstar/plans/push/pieces.toml", "--stories", "docs/bible/stories.md",
-         "--reviews", "docs/northstar/story_reviews", "--roadmap", "docs/northstar/ROADMAP.md"],
-        capture_output=True, text=True, cwd=repo, timeout=60)
-
-
-def _row(anchor, verdict, hours_ago=0.0, rest="| new: none | red: 0 | |"):
-    return lambda a: f"| {_ts(hours_ago)} | {a[anchor]} | {verdict} {rest}"
-
-
-def _sweep_line(res):
-    hits = [ln for ln in res.stdout.splitlines() if ln.startswith("STATUS sweep ")]
-    assert len(hits) == 1, f"STATUS sweep lines: {hits!r}\nstdout={res.stdout!r}\nstderr={res.stderr!r}"
-    return hits[0]
-
-
-def test_4_a_current_pass_row_with_no_landings_after_it_stays_quiet(tmp_path):
-    """Group 4 positive control (the check can stay quiet): the last PASS is current and at the tip of main:
-    `STATUS sweep OK`, no WARN, no DRIFT, exit code 0 as far as this check goes."""
-    res = _status_fixture(tmp_path, ["land", ("anchor", "a")], [_row("a", "PASS", 0.1)])
-    assert _sweep_line(res).startswith("STATUS sweep OK"), res.stdout + res.stderr
-
-
-@pytest.mark.parametrize("n,expect", [(BATCH, "OK"), (BATCH + 1, "WARN"), (MULT * BATCH - 1, "WARN"),
-                                      (MULT * BATCH + 1, "DRIFT")])
-def test_4_landings_after_the_last_pass_warn_above_the_batch_and_drift_at_the_multiplier(tmp_path, n, expect):
-    """Group 4 (the paragraph's test 4, parametrised on DRAFT-slow-tier-batch and -drift-mult; Q4 ruled in spec
-    section 8 B3): n `Land ` merges after the last PASS row: n == batch is due but quiet (WARN fires one landing
-    later), batch+1 WARNs, batch*mult+1 is DRIFT. DRIFT makes the exit code 1 as for every check."""
-    res = _status_fixture(tmp_path, ["land", ("anchor", "a")] + ["land"] * n, [_row("a", "PASS", 0.1)])
-    line = _sweep_line(res)
-    assert line.startswith(f"STATUS sweep {expect}"), (n, line)
-    if expect == "DRIFT":
-        assert res.returncode == 1, res.stdout + res.stderr
-    elif expect == "WARN":
-        assert not re.search(r"^STATUS sweep DRIFT", res.stdout, re.M) and res.returncode == 0, res.stdout + res.stderr
-
-
-def test_4_only_first_parent_land_merges_count_as_landings(tmp_path):
-    """Group 4 (spec section 8 B3: 'counts `Land ` merges on a fixture with a branch-lineage merge and ignores a
-    revert commit'): many records commits, revert commits, ordinary branch-lineage merges and a `Land ` merge that
-    is not first-parent count for nothing; the only landing counted is the one first-parent `Land ` merge, so the
-    check is quiet at one landing even with BATCH * MULT other first-parent entries after the anchor."""
-    noise = ["plain", "revert", "merge", "side_land"] * (BATCH * MULT)
-    res = _status_fixture(tmp_path, ["land", ("anchor", "a")] + noise + ["land"], [_row("a", "PASS", 0.1)])
-    assert _sweep_line(res).startswith("STATUS sweep OK"), res.stdout + res.stderr
-
-
-def test_4_control_the_same_noise_plus_enough_land_merges_does_warn(tmp_path):
-    """Group 4 positive control for the noise test: the same noise with BATCH + 1 real `Land ` merges WARNs."""
-    noise = ["plain", "revert", "merge", "side_land"] * (BATCH * MULT)
-    res = _status_fixture(tmp_path, ["land", ("anchor", "a")] + noise + ["land"] * (BATCH + 1),
-                          [_row("a", "PASS", 0.1)])
-    assert _sweep_line(res).startswith("STATUS sweep WARN"), res.stdout + res.stderr
-
-
-@pytest.mark.parametrize("hours", [HOURS * 0.5, HOURS * 1.5, HOURS * MULT + 1])
-def test_4_a_pass_row_with_no_landings_since_it_is_quiet_at_any_age(tmp_path, hours):
-    """Group 4 (DEC-sweep-quiet-2026-10-29, TD-HARNESS-gate-tiers-3): the age check fires only when at least one landing
-    exists since the anchor. Zero landings since the PASS row: no WARN and no DRIFT at any age, and the line reads
-    `STATUS sweep OK 0 landings since <anchor sha>`."""
-    res = _status_fixture(tmp_path, ["land", ("anchor", "a")], [_row("a", "PASS", hours)])
-    line = _sweep_line(res)
-    assert re.match(r"STATUS sweep OK 0 landings since [0-9a-f]{7,40}\b", line), (hours, line)
-    assert res.returncode == 0, res.stdout + res.stderr
-
-
-@pytest.mark.parametrize("hours,expect", [(HOURS * 0.5, "OK"), (HOURS * 1.5, "WARN"), (HOURS * MULT + 1, "DRIFT")])
-def test_4_a_pass_row_older_than_the_hours_limit_warns_and_at_the_multiplier_drifts(tmp_path, hours, expect):
-    """Group 4 (the paragraph's test 4, hours half, parametrised on DRAFT-slow-tier-hours and -drift-mult; corrected by
-    TD-HARNESS-gate-tiers-3 / DEC-sweep-quiet-2026-10-29, the positive control of the quiet rule above): ONE landing
-    since the PASS row, only its age differs: under the limit is OK, over it WARN, over mult times it DRIFT."""
-    res = _status_fixture(tmp_path, ["land", ("anchor", "a"), "land"], [_row("a", "PASS", hours)])
-    assert _sweep_line(res).startswith(f"STATUS sweep {expect}"), (hours, res.stdout)
-
-
-def test_4_the_base_row_is_the_anchor_of_the_first_sweep(tmp_path):
-    """Group 4 (F10, Q7): a sweeps.md holding only a BASE row anchors the count at its sha: landings before the BASE
-    sha do not count (quiet), BATCH + 1 landings after it WARN."""
-    (tmp_path / "q").mkdir()
-    quiet = _status_fixture(tmp_path / "q", ["land"] * (MULT * BATCH + 2) + [("anchor", "b")], [_row("b", "BASE", 0.1)])
-    assert _sweep_line(quiet).startswith("STATUS sweep OK"), quiet.stdout + quiet.stderr
-    (tmp_path / "w").mkdir()
-    warn = _status_fixture(tmp_path / "w", ["land", ("anchor", "b")] + ["land"] * (BATCH + 1), [_row("b", "BASE", 0.1)])
-    assert _sweep_line(warn).startswith("STATUS sweep WARN"), warn.stdout + warn.stderr
-
-
-def test_4_the_last_pass_or_base_row_wins_and_a_reject_row_is_never_the_anchor(tmp_path):
-    """Group 4 (F10): rows BASE at b (old), PASS at a (later), REJECT at c (latest, current). Landings are counted from
-    the PASS sha a, not from b (older) and not from the REJECT row's sha c: BATCH + 1 landings after a WARN even
-    though fewer follow c."""
-    events = ["land", ("anchor", "b"), "land", ("anchor", "a")] + ["land"] * (BATCH + 1) + [("anchor", "c")]
-    rows = [_row("b", "BASE", 30), _row("a", "PASS", 0.5), _row("c", "REJECT", 0.1, "| new: t::x | red: 1 | t::x |")]
-    res = _status_fixture(tmp_path, events, rows)
-    assert _sweep_line(res).startswith("STATUS sweep WARN"), res.stdout + res.stderr
-
-
-def test_4_a_red_sweep_is_never_a_drift(tmp_path):
-    """Group 4 (F10: 'a red sweep is a FINDING row, never a DRIFT'): a current PASS at the tip and a current REJECT
-    row after it with no landings pending: no DRIFT and no WARN."""
-    events = ["land", ("anchor", "a"), ("anchor", "c")]
-    rows = [_row("a", "PASS", 0.5), _row("c", "REJECT", 0.1, "| new: t::x | red: 1 | t::x |")]
-    res = _status_fixture(tmp_path, events, rows)
-    assert _sweep_line(res).startswith("STATUS sweep OK"), res.stdout + res.stderr
-    assert res.returncode == 0, res.stdout + res.stderr
-
-
 # ====================================================================== group 5 and 6: the slow tier's window
 
 def test_5_a_comma_list_runs_acceptance_for_both_ids_and_the_union_diff_stages_once(tmp_path):
@@ -694,6 +514,8 @@ def test_5_control_a_single_id_of_the_pair_leaves_the_other_acceptance_unrun(tmp
     assert sorted(set(_marks(marker))) == ["a"], _marks(marker)
 
 
+# The status stage reads the trailer schema (H-002): a `Land <id>` merge needs all six trailers or the gate rejects at status.
+TRAILERS = "Story: B1\nTests: t\nPlay: p\nPlayed: p\nGate: g\nFlag: f"
 NEW_RED = "def test_new_red():\n    assert False, 'new red on the candidate'\n"
 
 
@@ -704,7 +526,7 @@ def _window_with_a_merged_branch(box):
         _git(c, "checkout", "-q", "-b", "side")
         box["s1"] = _commit(c, {"tests/csim/test_new_red.py": NEW_RED}, "s1")
         _git(c, "checkout", "-q", "main")
-        _git(c, "merge", "-q", "--no-ff", "-m", "Land B1 side", "side")
+        _git(c, "merge", "-q", "--no-ff", "-m", "Land B1 side", "-m", TRAILERS, "side")
         box["mg"] = _git(c, "rev-parse", "HEAD")
         box["c3"] = _commit(c, {"c3.txt": "3\n"}, "c3")
     return steps
@@ -738,7 +560,7 @@ def test_6_control_the_same_window_without_the_red_test_passes_regression_csim(t
         _git(c, "checkout", "-q", "-b", "side")
         _commit(c, {"tests/csim/test_new_red.py": "def test_new_red():\n    assert True\n"}, "s1")
         _git(c, "checkout", "-q", "main")
-        _git(c, "merge", "-q", "--no-ff", "-m", "Land B1 side", "side")
+        _git(c, "merge", "-q", "--no-ff", "-m", "Land B1 side", "-m", TRAILERS, "side")
         _commit(c, {"c3.txt": "3\n"}, "c3")
 
     fx2 = build_gate(tmp2, main_steps=green_steps, pieces=WINDOW_PIECES)
@@ -1081,23 +903,6 @@ def test_9_the_log_names_each_file_the_base_run_dropped(tmp_path):
         assert f"select-csim: dropped {dropped} (base run)" in log.splitlines(), \
             f"the log does not name the dropped base file {dropped} in the form `select-csim: dropped <file> (base run)`\n{log}"
     assert "select-csim: dropped tests/csim/test_a.py" not in log, f"test_a.py exists on the base and is not dropped\n{log}"
-
-
-def test_9_the_sweep_age_and_batch_rules_count_only_landings_since_the_last_row(tmp_path):
-    """Group 9 (iv), layered gate spec section 8 F10 and B3 ('the last PASS or BASE row is the anchor'; a landing is a
-    `Land ` first-parent merge): the last sweeps.md row is 3 * HOURS * MULT hours old (past the drift age) but nothing has landed since it,
-    so there is nothing to sweep: no WARN and no DRIFT."""
-    res = _status_fixture(tmp_path, ["land", ("anchor", "a")], [_row("a", "PASS", HOURS * MULT * 3)])
-    line = _sweep_line(res)
-    assert line.startswith("STATUS sweep OK"), f"zero landings since the last row but the check said: {line}"
-    assert res.returncode == 0, res.stdout + res.stderr
-
-
-def test_9_control_the_old_row_with_landings_past_the_limit_does_warn(tmp_path):
-    """Group 9 (iv) positive control: a row past the hours limit (under the drift multiple) with BATCH + 1 landings since
-    it WARNs, so the red test above is red because no landings were counted, not because the check cannot warn."""
-    res = _status_fixture(tmp_path, ["land", ("anchor", "a")] + ["land"] * (BATCH + 1), [_row("a", "PASS", HOURS * 1.5)])
-    assert _sweep_line(res).startswith("STATUS sweep WARN"), res.stdout + res.stderr
 
 
 # ---------------------------------------------------------------------------------------------------
