@@ -22,3 +22,15 @@ The method before 2026-10-30 lived in sixteen documents, about 160,000 words. Ea
 | `docs/northstar/ROADMAP.md` | 2b03d79b | Lane rows and "Now"; Ready in `stories.md` is the queue |
 
 Kept unchanged: `docs/northstar/story_reviews/westley/decisions.md`, `docs/northstar/plans/2026-10-29-layered-gate-spec.md`, `docs/northstar/ambiguity_register.md`, the bible.
+
+## Retired by H-037 (method rev 3 metrics M01 to M24, Westley 2026-10-30 ruling 4)
+
+| Document | Last sha | What it held |
+|---|---|---|
+| `scripts/specfactory/method_metrics.py` | 2984104e | Metric computations M01 to M24 over git, gate rows and transcripts |
+| `scripts/specfactory/method_metrics_runs.py` | 8653cd8c | Run-row and sub-agent metrics (M06, M07, M13 to M15, M27, M28) and the PASS/FAIL judge |
+| `scripts/specfactory/method_metrics_cli.py` | 3ffc5997 | Command line for the metrics: `--week`, `--write`, `--last`, `--baseline` |
+| `scripts/specfactory/token_ledger.py` | 2984104e | Token and cost ledger from transcripts; the four kept numbers now live in `scripts/method/token_report.py` |
+| `scripts/specfactory/method_weekly.sh` | b7b25e2d | Weekly unattended metrics run in its own worktree, committing the week's JSON |
+| `scripts/specfactory/systemd/om-method-metrics.service` | 1ca9cf82 | Service unit that ran `method_weekly.sh` from origin/main |
+| `scripts/specfactory/systemd/om-method-metrics.timer` | 01dbcb2e | Weekly timer for that service |

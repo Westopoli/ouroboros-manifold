@@ -22,7 +22,7 @@ INTERFACES FIXED HERE (the story leaves them open; the builder reads this file)
   The gate runs with MERGE_GATE_SUITE_TIMEOUT=2400 MERGE_GATE_PLAYTHROUGH_TIMEOUT=2400 MERGE_GATE_PLAY_TIMEOUT=900 and
   MERGE_GATE_PIECES set (rules.md (b), Gate bullet).
 
-POSITIVE CONTROL (green today): `systemd-analyze verify` of the existing om-method-metrics.timer exits 0. (The control that
+POSITIVE CONTROL (green today): `systemd-analyze verify` of the existing om-nightly-play.timer exits 0. (The control that
 pinned status_check.check_sweep was deleted under H-034 Rulings A: H-002 retired it.)
 """
 import fcntl
@@ -439,7 +439,7 @@ def test_9_push_waits_on_records_lock(tmp_path):
 def test_4_unit_files_exist_with_the_nightly_schedule_and_the_origin_main_exec():
     """(4) "the unit files parse (`systemd-analyze verify` when present, else a text check of `OnCalendar` and
     `ExecStart`)"; "`OnCalendar=*-*-* 23:30:00` local (DRAFT-sweep-nightly), `Persistent=true`, the service runs `sweep.sh`
-    from `origin/main` the way `om-method-metrics.service` runs `method_weekly.sh`"."""
+    from `origin/main` the way `om-token-report.service` runs its script"."""
     timer, service = UNITS / "om-sweep.timer", UNITS / "om-sweep.service"
     assert timer.is_file() and service.is_file(), f"missing {timer.relative_to(REPO)} / {service.relative_to(REPO)}"
     t, s = timer.read_text(), service.read_text()
@@ -462,10 +462,10 @@ def test_4b_systemd_analyze_verifies_the_new_timer():
 # --- positive controls (green today) -----------------------------------------------------------------------------------
 
 def test_control_systemd_analyze_verify_passes_on_the_existing_timer():
-    """Control for (4): the verify call is sound; the same call on om-method-metrics.timer exits 0 today."""
+    """Control for (4): the verify call is sound; the same call on om-nightly-play.timer exits 0 today."""
     if not shutil.which("systemd-analyze"):
         pytest.skip("systemd-analyze not present")
-    r = subprocess.run(["systemd-analyze", "verify", str(UNITS / "om-method-metrics.timer")], capture_output=True, text=True)
+    r = subprocess.run(["systemd-analyze", "verify", str(UNITS / "om-nightly-play.timer")], capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
 
 

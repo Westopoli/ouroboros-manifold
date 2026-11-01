@@ -168,6 +168,6 @@ def test_timer_unit_parses():
 
 def test_control_existing_timer_parses():
     """Positive control, green today: the harness works on the existing timer."""
-    t = REPO / "scripts/specfactory/systemd/om-method-metrics.timer"
+    t = REPO / "scripts/specfactory/systemd/om-nightly-play.timer"
     p = subprocess.run(["systemd-analyze", "verify", str(t)], capture_output=True, text=True)
     assert p.returncode == 0, p.stderr

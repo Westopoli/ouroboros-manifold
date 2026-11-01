@@ -96,7 +96,7 @@ RUN_COLS = ["date", "label", "piece", "role", "model", "turns", "cost", "outcome
 
 
 def append_run_row(a: argparse.Namespace, turns, cost, outcome: str) -> None:
-    """One row per run in SDK_RUNS_CSV. See also: method_metrics.py M06/M07, which read it."""
+    """One row per run in SDK_RUNS_CSV."""
     path = Path(os.environ.get("SDK_RUNS_CSV") or Path.home() / "Projects" / "om-push" / "runs" / "sdk_runs.csv")
     path.parent.mkdir(parents=True, exist_ok=True)
     new = not path.is_file() or path.stat().st_size == 0
