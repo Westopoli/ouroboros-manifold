@@ -39,6 +39,10 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-040 | "I place two groups of one unit type on an open field, both attack-move, and I watch the fight happen in the game and see who won against who I said would win." | Spec'd (client; five parts after H-039; eyes gate) | `docs/stories/H-040.md` |
 | H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | none yet |
+| H-041 | "ERROR: Condition "!FileAccess::exists(path)" is true. Returning: ERR_FILE_NOT_FOUND" | Spec'd | `nightly/2026-10-31.log` |
+| H-042 | "ERROR: Condition "!FileAccess::exists(path)" is true. Returning: ERR_FILE_NOT_FOUND" | Spec'd | `nightly/2026-10-31.log` |
+| H-043 | "ERROR: GDExtension dynamic library not found: 'res://addons/godotsteam/godotsteam.gdextension'." | Spec'd | `nightly/2026-10-31.log` |
+| H-044 | "ERROR: Error loading extension: 'res://addons/godotsteam/godotsteam.gdextension'." | Spec'd | `nightly/2026-10-31.log` |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
 
