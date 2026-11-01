@@ -65,14 +65,18 @@ class XGame(GodotGame):
 
 
 @pytest.fixture
-def launch():
+def launch(monkeypatch):
     """launch(resolution_index) starts the game (planting settings.cfg when an index is given, none when None) and returns it."""
     assert shutil.which("xvfb-run") and shutil.which("xwininfo"), "xvfb-run and xwininfo are required"
+    # Private user dir: godot_env keeps a caller's non-empty XDG_DATA_HOME (the merge gate exports one shared by the whole run), and a planted
+    # settings.cfg there outlives this test and breaks S-110 in lane_plays. Unset it so the user dir is <scratch>/xdg, removed with g.scratch.
+    monkeypatch.delenv("XDG_DATA_HOME", raising=False)
     games: list[XGame] = []
 
     def _launch(resolution_index: int | None) -> XGame:
         g = XGame(pick_free_port(), seed=1, resolution=SCREEN)
         games.append(g)
+        assert g.user_dir.is_relative_to(g.scratch), "user dir %s is not under the private scratch %s" % (g.user_dir, g.scratch)
         if resolution_index is not None:
             g.user_dir.mkdir(parents=True, exist_ok=True)
             (g.user_dir / "settings.cfg").write_text("[display]\nresolution_index=%d\nfullscreen=false\n" % resolution_index)
