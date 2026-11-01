@@ -1,4 +1,4 @@
-# H-025 layout rules, the closed list R1 to R5. check_layout in produce.py reads the numbers below.
+# H-025 layout rules, the closed list R1 to R6. check_layout in produce.py reads the numbers below.
 
 [R1]
 text = "every unit inside the preset's bounds"
@@ -18,3 +18,7 @@ max = 256
 [R5]
 text = "roles from the roster at scripts/skilllab/engine.py:16"
 roles = ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]
+
+[R6]
+text = "every layout except open_field carries its situation's feature, and every unit's centre stands off every wall, box, building and ridge rectangle of the features by standoff world units (the collision radius OM_UNIT_COLLISION_RADIUS 15, ALG-68)"
+standoff = 15

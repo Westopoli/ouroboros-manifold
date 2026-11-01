@@ -1,0 +1,428 @@
+{
+  "id": "L-0037",
+  "situation": "chokepoint",
+  "landscape": "small_flat",
+  "seed": 1001651,
+  "predict": "A",
+  "predict_why": "Side A holds the chokepoint walls and side B must funnel through the narrow gap, so position outweighs numbers.",
+  "verdict": "",
+  "feedback": "",
+  "defender": "A",
+  "side_a": {
+    "headcount": 16,
+    "units": [
+      {
+        "role": "Warden",
+        "x": 2440.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2440.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2440.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2440.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2480.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Warden",
+        "x": 2480.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 350.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2480.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2480.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2520.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2520.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2520.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2520.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2560.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2560.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2560.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 1200.0
+      },
+      {
+        "role": "Bombard",
+        "x": 2560.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 1200.0
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 32,
+    "units": [
+      {
+        "role": "Raider",
+        "x": 1200.0,
+        "y": 1900.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1200.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1200.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1200.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1200.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1200.0,
+        "y": 2100.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1160.0,
+        "y": 1900.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1160.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1160.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1160.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1160.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1160.0,
+        "y": 2100.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1120.0,
+        "y": 1900.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1120.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1120.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Raider",
+        "x": 1120.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1120.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1120.0,
+        "y": 2100.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1080.0,
+        "y": 1900.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1080.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1080.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1080.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1080.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1080.0,
+        "y": 2100.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1040.0,
+        "y": 1900.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1040.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1040.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1040.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1040.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1040.0,
+        "y": 2100.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1000.0,
+        "y": 1900.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1000.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      }
+    ]
+  },
+  "features": [
+    {
+      "kind": "chokepoint",
+      "x": 2000.0,
+      "y": 2000.0,
+      "gap": 200,
+      "radius": 600,
+      "walls": [
+        {
+          "x": 2000.0,
+          "y": 1650.0,
+          "w": 200,
+          "h": 500
+        },
+        {
+          "x": 2000.0,
+          "y": 2350.0,
+          "w": 200,
+          "h": 500
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,793 @@
+id = "L-0045"
+situation = "slope"
+landscape = "small_tiered"
+seed = 1084155
+predict = "A"
+predict_why = "Side A holds the top of the slope and fires down it at side B, so position outweighs numbers."
+verdict = ""
+feedback = ""
+defender = "A"
+
+[side_a]
+headcount = 40
+
+[[side_a.units]]
+role = "Warden"
+x = 2480.0
+y = 2100.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2480.0
+y = 2060.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2480.0
+y = 2020.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2480.0
+y = 1980.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2480.0
+y = 1940.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2480.0
+y = 1900.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2520.0
+y = 2100.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2520.0
+y = 2060.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2520.0
+y = 2020.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2520.0
+y = 1980.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2520.0
+y = 1940.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2520.0
+y = 1900.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2560.0
+y = 2100.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 2560.0
+y = 2060.0
+facing = 3.1416
+layer = 1
+range = 350.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2560.0
+y = 2020.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2560.0
+y = 1980.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2560.0
+y = 1940.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2560.0
+y = 1900.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2600.0
+y = 2100.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2600.0
+y = 2060.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2600.0
+y = 2020.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2600.0
+y = 1980.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2600.0
+y = 1940.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2600.0
+y = 1900.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2640.0
+y = 2100.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2640.0
+y = 2060.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2640.0
+y = 2020.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2640.0
+y = 1980.0
+facing = 3.1416
+layer = 1
+range = 300.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2640.0
+y = 1940.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2640.0
+y = 1900.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2680.0
+y = 2100.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2680.0
+y = 2060.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2680.0
+y = 2020.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2680.0
+y = 1980.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2680.0
+y = 1940.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2680.0
+y = 1900.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2720.0
+y = 2100.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2720.0
+y = 2060.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2720.0
+y = 2020.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2720.0
+y = 1980.0
+facing = 3.1416
+layer = 1
+range = 1200.0
+
+[side_b]
+headcount = 56
+
+[[side_b.units]]
+role = "Warden"
+x = 1240.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1240.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1240.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1240.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1240.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1240.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1240.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1200.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1200.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1200.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1200.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1200.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1200.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1200.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1160.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1160.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1160.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1160.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1160.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1160.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1160.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1120.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1120.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1120.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1120.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1120.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1120.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1120.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1080.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1080.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1080.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1080.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1080.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1080.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1080.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1040.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1040.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1040.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1040.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1040.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1040.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1040.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1000.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1000.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1000.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1000.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1000.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1000.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 1000.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 960.0
+y = 1880.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 960.0
+y = 1920.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 960.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 960.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 960.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 960.0
+y = 2080.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 960.0
+y = 2120.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[features]]
+kind = "slope"
+x = 2000.0
+y = 2000.0
+length = 600
+width = 200
+heading = 0.0
+from_band = 0
+to_band = 1
