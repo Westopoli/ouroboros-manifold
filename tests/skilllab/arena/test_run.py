@@ -432,3 +432,236 @@ def test_control_not_used_list_is_still_the_trim_reports():
         assert word in text, word
     for name in NOT_USED_BEFORE_STAGE_6:
         assert (ROOT / "scripts" / "skilllab" / (name + ".py")).is_file(), name
+
+
+# ================================================================ H-040 "Orders and fight end" / H-052 (runner changes)
+# spec: docs/stories/H-040.md "Orders and fight end (ruled 2026-11-01, DEC-lab-amove-rule-2026-11-01; contract H-052)" and docs/stories/H-052.md. Quoted:
+#   "Orders from the layout's `orders` key (H-052): `both_same_point` sends every unit of both sides to one point, DRAFT-same-point the midpoint of the two sides'
+#    tick-0 centroids; `hold:<side>` gives the held side no order and sends every attacker to the held side's centre of mass at tick 0."
+#   "Fight end: `wipe`, or `silence` after DRAFT-silence-seconds 10 s of sim time with no shot by either side ..., or the 600 s cap as a backstop. `silence` with both
+#    sides alive is a `stall`: the runner prints `FIGHT <id> seed <n> STALL ticks <t>` and exits 0."
+#   "Tests (part 2): a 8:8 fixture ends by `wipe` well under the cap; a fixture with the two sides out of range and `hold:A` orders where the attacker's point is
+#    unreachable (a planted blocker) ends by `silence` at about 10 s with `stall` true (positive control); the same fixture with `both_same_point` ends by `wipe`."
+#   H-052: layout `orders = "both_same_point"` or `"hold:A"` / `"hold:B"` (the held side); "a layout without the key means `both_same_point`".
+#   H-052 file: `orders` = {"mode": "both_same_point" | "hold_and_attack", "point": [x, y], "attacker": "A" | "B" | null}; `result.end`; `result.stall`; `winner "stall"`.
+#
+# THE STALL FIXTURE (premises dumped by a direct Engine run on this base, seed 1, sight off, 8 Vanguard a side, attack range 300, speed 80 wu/s):
+#   The runner builds no walls (it spawns units and nothing else), so a "planted blocker" the engine can feel does not exist as a layout feature today. The
+#   blocker used is a standoff: side A (the held side) is two 4-unit clusters at x 1400 and x 2600 (y 2000), so its centre of mass (2020, 2020) is an empty point
+#   600 wu from both clusters, 300 wu outside weapon range; side B (8 units, y 2900) walks to that point and arrives there at about tick 900, never within range of a
+#   unit of A. Engine result: hold (B attack-moves to A's centre, A no order): no hit in 12,000 ticks, 8:8 at the end. Same positions with every unit of both sides
+#   attack-moving to the midpoint (2030, 2470): first hit at tick 102, A wiped out at tick 1711 (8:0). So the pair stall under hold:A and wipe under
+#   both_same_point is the engine's own behaviour, not an assumption.
+#   Premise held for the silence clock: in the hold case no shot happens from tick 1, so the silence end is at 200 to 240 ticks whether the clock starts at tick 0 or
+#   at the first order. The wipe fixtures put the two sides inside weapon range of each other (first hit at tick 1) so no reading of when the silence clock starts
+#   can end them early. GAP reported: a fight whose approach is longer than 10 s with no shot (the six stage 1 layouts, 400 wu apart, first hit about tick 900)
+#   ends by `silence` under a literal reading; the story does not say whether the clock starts at the first shot. No test pins that either way.
+# `orders` in a layout: check_layout reads named keys only (produce._violations), so the extra top-level key passes it (control below); `dump_toml` does not write it, so
+# the fixtures prepend the line.
+
+ORDERS_SPLIT_A = [(1400.0 + (i % 2) * 40.0, 2000.0 + (i // 2) * 40.0) for i in range(4)] + [(2600.0 + (i % 2) * 40.0, 2000.0 + (i // 2) * 40.0) for i in range(4)]
+ORDERS_SPLIT_B = [(1980.0 + (i % 4) * 40.0, 2900.0 + (i // 4) * 40.0) for i in range(8)]
+SILENCE_TICKS_LOW, SILENCE_TICKS_HIGH = 10 * TICK_RATE, 12 * TICK_RATE   # H-040 "about 10 s": the brief's window 10 s to 12 s; DRAFT-silence-seconds 10
+
+
+def make_stall_layout(layout_id):
+    """The standoff fixture above as a legal 8:8 layout (small_flat, Vanguard both sides); A's tick-0 centroid is (2020, 2020), B's (2040, 2920)."""
+    def rows(points, facing):
+        return [{"role": "Vanguard", "x": x, "y": y, "facing": facing, "layer": 0} for x, y in points]
+    return {"id": layout_id, "situation": "open_field", "landscape": "small_flat", "seed": 1, "predict": "B",
+            "predict_why": "Test fixture: A's centre of mass is an empty point out of weapon range.", "verdict": "", "feedback": "",
+            "side_a": {"headcount": 8, "units": rows(ORDERS_SPLIT_A, 0.0)}, "side_b": {"headcount": 8, "units": rows(ORDERS_SPLIT_B, round(math.pi, 4))}}
+
+
+def write_layout_orders(layout, directory, orders=None):
+    """write_layout with an `orders = "<value>"` top-level line prepended (None writes no key); returns the path."""
+    path = write_layout(layout, directory)
+    if orders is not None:
+        path.write_text('orders = "%s"\n' % orders + path.read_text())
+    return path
+
+
+def _centroid_of(layout, key):
+    rows = layout[key]["units"]
+    return sum(r["x"] for r in rows) / len(rows), sum(r["y"] for r in rows) / len(rows)
+
+
+def _midpoint(layout):
+    (ax, ay), (bx, by) = _centroid_of(layout, "side_a"), _centroid_of(layout, "side_b")
+    return (ax + bx) / 2, (ay + by) / 2
+
+
+def _near(point, want, tol=1.0):
+    """A point within `tol` wu of `want` (DRAFT-orders-point-rounding: the story gives no rounding of `orders.point`)."""
+    return len(point) == 2 and abs(point[0] - want[0]) <= tol and abs(point[1] - want[1]) <= tol
+
+
+def _stdout_lines(proc):
+    return [line.strip() for line in proc.stdout.splitlines()]
+
+
+def test_control_stall_fixture_is_legal_and_orders_key_is_ignored_by_check_layout(tmp_path):
+    """Control, green today: the standoff layout passes check_layout, the TOML with a prepended `orders = "hold:A"` line still loads and still passes check_layout
+    (so the layout schema may carry the key without a producer change), and its tick-0 centroids are the premises dumped above."""
+    layout = make_stall_layout("L-9101")
+    pre, rul = produce.presets(), produce.rules()
+    assert produce.check_layout(layout, pre, rul) == []
+    path = write_layout_orders(layout, tmp_path, "hold:A")
+    loaded = tomllib.loads(path.read_text())
+    assert loaded["orders"] == "hold:A"
+    assert produce.check_layout(loaded, pre, rul) == []
+    assert _near(_centroid_of(layout, "side_a"), (2020.0, 2020.0)) and _near(_centroid_of(layout, "side_b"), (2040.0, 2920.0))
+    assert _near(_midpoint(layout), (2030.0, 2470.0))
+
+
+def test_control_engine_standoff_holds_silent_under_hold_and_wipes_under_one_point():
+    """Control, green today: the C sim itself gives the pair the tests below ask the runner for. With the layout's rows spawned directly, B attack-moving to A's centre
+    of mass and A given no order, nobody is hit in 400 ticks and everyone is alive (8:8); with both sides attack-moving to the midpoint of the centroids one side is
+    wiped out before 12,000 ticks. So a stall or a wipe from the runner later is the runner's rule, not the fixture's."""
+    from scripts.skilllab.engine import Engine
+    layout = make_stall_layout("L-9101")
+
+    def play(mode, ticks):
+        e = Engine()
+        w = e.new_world(1)
+        try:
+            e.disable_abilities(w)
+            e.set_param(w, e.param_id("OM_TP_TARGET_BY_SIGHT"), 0)
+            vanguard = e.type_id("Vanguard")
+            ids = {f: [e.spawn(w, vanguard, f, u["x"], u["y"], u["layer"]) for u in layout[k]["units"]] for f, k in ((0, "side_a"), (1, "side_b"))}
+            hp0 = {u: e.unit_hp(w, u) for f in ids for u in ids[f]}
+            if mode == "hold":
+                e.order_attack_move(w, ids[1], *_centroid_of(layout, "side_a"))
+            else:
+                e.order_attack_move(w, ids[0], *_midpoint(layout))
+                e.order_attack_move(w, ids[1], *_midpoint(layout))
+            hit = False
+            for tick in range(1, ticks + 1):
+                e.step(w)
+                hit = hit or any(e.unit_hp(w, u) < hp0[u] for u in hp0)
+                alive = tuple(sum(e.unit_alive(w, u) for u in ids[f]) for f in (0, 1))
+                if min(alive) == 0:
+                    break
+            return hit, alive, tick
+        finally:
+            e.free_world(w)
+
+    hit, alive, _ = play("hold", 400)
+    assert not hit and alive == (8, 8), "premise failed: hold fixture was shot at or lost units (%r, %r)" % (hit, alive)
+    hit, alive, tick = play("same", 12000)
+    assert hit and min(alive) == 0 and tick < 12000, "premise failed: same-point fixture did not end by a wipe (%r, %r, tick %d)" % (hit, alive, tick)
+
+
+def test_run_default_orders_are_both_same_point_and_the_file_is_v2(main_run):
+    """H-052: "a layout without the key means `both_same_point` (stage 1 default)"; "`schema` becomes `om-fight-2`"; "`orders` ... `point` ... the midpoint of the two
+    sides' tick-0 centroids"; `attacker` null for both_same_point. The 8:12 fixture has no `orders` key."""
+    doc = _doc(main_run)
+    assert doc["schema"] == "om-fight-2"
+    assert doc["orders"]["mode"] == "both_same_point" and doc["orders"]["attacker"] is None
+    assert _near(doc["orders"]["point"], _midpoint(main_run["layout"])), doc["orders"]
+
+
+def test_run_wipe_fixture_ends_by_wipe_well_under_the_cap(tmp_path):
+    """H-040 Tests (part 2): "a 8:8 fixture ends by `wipe` well under the cap". 8:8 Vanguards 200 wu apart (inside weapon range, first shot at once), no `orders` key:
+    `result.end == "wipe"`, `stall` false, `capped` false, fewer than half the cap's ticks (the cap is 12,000; 'well under' is not given a number, half is the test's
+    reading: DRAFT-well-under), winner not `stall`, no STALL line."""
+    layout = make_layout("L-9102", 8, 8, "A", gap_x=200.0)
+    proc = run_cli(write_layout(layout, tmp_path / "layouts"), tmp_path / "out", 1)
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    res = snapshot.read(fight_file(tmp_path / "out", "L-9102"))["result"]
+    assert res["end"] == "wipe" and res["stall"] is False and res["capped"] is False
+    assert res["ticks"] < snapshot.CAP_SECONDS * TICK_RATE // 2 and min(res["survivors"]) == 0
+    assert res["winner"] in ("A", "B", "draw")
+    assert not any("STALL" in line for line in _stdout_lines(proc))
+
+
+def test_run_stall_fixture_with_hold_a_ends_by_silence_at_ten_seconds(tmp_path):
+    """H-040 Tests (part 2), the positive control of the stall detector: "a fixture with the two sides out of range and `hold:A` orders where the attacker's point is
+    unreachable (a planted blocker) ends by `silence` at about 10 s with `stall` true". `end` silence, `stall` true, `winner` "stall" (not "draw"), `agree` false, both
+    sides alive (8:8 in the result and in the last frame), `ticks` between 10 s and 12 s of sim time (200 to 240 at 20 per second), the last frame is the last tick,
+    `capped` false; stdout has `FIGHT L-9101 seed 1 STALL ticks <t>` and the exit code is 0."""
+    layout = make_stall_layout("L-9101")
+    proc = run_cli(write_layout_orders(layout, tmp_path / "layouts", "hold:A"), tmp_path / "out", 1)
+    assert proc.returncode == 0, proc.stderr[-2000:] + proc.stdout[-500:]
+    doc = snapshot.read(fight_file(tmp_path / "out", "L-9101"))
+    res = doc["result"]
+    assert res["end"] == "silence" and res["stall"] is True and res["capped"] is False
+    assert res["winner"] == "stall" and res["agree"] is False
+    assert res["survivors"] == [8, 8] and doc["frames"][-1]["alive"] == [8, 8] and doc["frames"][-1]["tick"] == res["ticks"]
+    assert SILENCE_TICKS_LOW <= res["ticks"] <= SILENCE_TICKS_HIGH, "stall at tick %d, wanted %d to %d" % (res["ticks"], SILENCE_TICKS_LOW, SILENCE_TICKS_HIGH)
+    assert "FIGHT L-9101 seed 1 STALL ticks %d" % res["ticks"] in _stdout_lines(proc), "stdout was %r" % proc.stdout
+
+
+def test_run_stall_fixture_with_both_same_point_ends_by_wipe(tmp_path):
+    """H-040 Tests (part 2): "the same fixture with `both_same_point` ends by `wipe`": the standoff layout with `orders = "both_same_point"` (and, equally, without the
+    key) ends `wipe`, `stall` false, one side with no survivors, well under the cap, and prints a `FIGHT ... winner ...` line, not STALL."""
+    layout = make_stall_layout("L-9101")
+    for name, orders in (("explicit", "both_same_point"), ("default", None)):
+        out = tmp_path / ("out_" + name)
+        proc = run_cli(write_layout_orders(layout, tmp_path / ("layouts_" + name), orders), out, 1)
+        assert proc.returncode == 0, proc.stderr[-2000:]
+        res = snapshot.read(fight_file(out, "L-9101"))["result"]
+        assert res["end"] == "wipe" and res["stall"] is False and min(res["survivors"]) == 0, (name, res)
+        assert res["ticks"] < snapshot.CAP_SECONDS * TICK_RATE // 2 and res["winner"] in ("A", "B")
+        assert any(line.startswith("FIGHT L-9101 seed 1 winner ") for line in _stdout_lines(proc)) and not any("STALL" in line for line in _stdout_lines(proc))
+
+
+def test_run_orders_in_the_file_for_hold_a_name_the_holder_and_the_attacker(tmp_path):
+    """H-052: `orders` = `{"mode": ..., "point": [x, y], "attacker": ...}`; "`hold_and_attack`: the holder (the other side) receives no order and fires from where it
+    stands; the attacker attack-moves every unit to `point`, which is the holder's centre of mass at tick 0." `orders = "hold:A"`: mode hold_and_attack, attacker "B",
+    point A's centre of mass (2020, 2020)."""
+    layout = make_stall_layout("L-9101")
+    proc = run_cli(write_layout_orders(layout, tmp_path / "layouts", "hold:A"), tmp_path / "out", 1)
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    orders = snapshot.read(fight_file(tmp_path / "out", "L-9101"))["orders"]
+    assert orders["mode"] == "hold_and_attack" and orders["attacker"] == "B"
+    assert _near(orders["point"], _centroid_of(layout, "side_a")), orders
+
+
+def test_run_orders_in_the_file_for_hold_b_swap_the_sides(tmp_path):
+    """H-052: "`orders = "hold:A"` / `orders = "hold:B"` (the held side)": hold:B on the close 8:8 fixture gives attacker "A" and point B's centre of mass; B has no
+    order, so with the sides inside weapon range B still fires from where it stands and the fight is decided."""
+    layout = make_layout("L-9102", 8, 8, "A", gap_x=200.0)
+    proc = run_cli(write_layout_orders(layout, tmp_path / "layouts", "hold:B"), tmp_path / "out", 1)
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    doc = snapshot.read(fight_file(tmp_path / "out", "L-9102"))
+    assert doc["orders"]["mode"] == "hold_and_attack" and doc["orders"]["attacker"] == "A"
+    assert _near(doc["orders"]["point"], _centroid_of(layout, "side_b")), doc["orders"]
+    assert doc["result"]["end"] == "wipe"
+
+
+def test_run_both_same_point_orders_in_the_file_hold_the_midpoint(tmp_path):
+    """H-052: `both_same_point`: "every unit of both sides attack-moves to `point`"; H-040: DRAFT-same-point "the midpoint of the two sides' tick-0 centroids";
+    `attacker` null. Explicit `orders = "both_same_point"` on the standoff layout: point (2030, 2470)."""
+    layout = make_stall_layout("L-9101")
+    proc = run_cli(write_layout_orders(layout, tmp_path / "layouts", "both_same_point"), tmp_path / "out", 1)
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    orders = snapshot.read(fight_file(tmp_path / "out", "L-9101"))["orders"]
+    assert orders["mode"] == "both_same_point" and orders["attacker"] is None
+    assert _near(orders["point"], _midpoint(layout)), orders
+
+
+def test_run_stall_is_byte_identical_twice(tmp_path):
+    """CLAUDE.md "Determinism is a contract": the stall fight, same layout and seed twice, gives byte-identical files and the same stdout."""
+    path = write_layout_orders(make_stall_layout("L-9101"), tmp_path / "layouts", "hold:A")
+    one, two = run_cli(path, tmp_path / "o1", 1), run_cli(path, tmp_path / "o2", 1)
+    assert one.returncode == 0 and two.returncode == 0, one.stderr[-1000:] + two.stderr[-1000:]
+    assert fight_file(tmp_path / "o1", "L-9101").read_bytes() == fight_file(tmp_path / "o2", "L-9101").read_bytes()
+    assert one.stdout == two.stdout
+
+
+def test_run_capped_fight_writes_end_cap(tmp_path):
+    """H-052: `result.end` "cap" (DRAFT-fight-cap, 'a backstop'); the existing H-040 cap fixture (8:8, 2000 wu apart, cap 1 s: shorter than the 10 s silence) still writes
+    `capped: true` and `winner: "draw"` and now `end: "cap"`, `stall` false (the cap is not a stall), and its FIGHT line is the unchanged v1 line."""
+    layout = make_layout("L-9002", 8, 8, "A", gap_x=2000.0)
+    proc = run_cli(write_layout(layout, tmp_path / "layouts"), tmp_path / "out", 1, "--cap-seconds", "1")
+    assert proc.returncode == 0, proc.stderr[-2000:]
+    res = snapshot.read(fight_file(tmp_path / "out", "L-9002"))["result"]
+    assert res["end"] == "cap" and res["stall"] is False and res["capped"] is True and res["winner"] == "draw"
+    assert "FIGHT L-9002 seed 1 winner draw ticks %d agree no" % res["ticks"] in _stdout_lines(proc)
+
+
+def test_run_main_fixture_ends_by_wipe(main_run):
+    """H-052: `end` "wipe" (one side has no survivors): the existing 8:12 fixture, run once, now also says so in the file."""
+    res = _doc(main_run)["result"]
+    assert res["end"] == "wipe" and res["stall"] is False and min(res["survivors"]) == 0
