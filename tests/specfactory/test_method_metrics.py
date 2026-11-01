@@ -405,7 +405,7 @@ def test_1b_M21b_fail_three_drift_turns(tmp_path):
     t["sess-drift.jsonl"] = [
         W.entry(W.SONNET, W.ts(13, 0), tools=[("ScheduleWakeup", {"delaySeconds": 270, "reason": "p"})]),
         sleep_turn(W.SONNET, 1),
-        W.entry(W.SONNET, W.ts(13, 2), tools=[("Agent", {"subagent_type": "engineer", "prompt": "x"})])]
+        W.entry(W.SONNET, W.ts(13, 2), tools=[("Bash", {"command": "scripts/specfactory/merge_gate.sh /x origin/main H-1"})])]
     expect(tmp_path, ["M21b"], "FAIL", transcripts=t)
 
 

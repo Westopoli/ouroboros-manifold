@@ -5,7 +5,7 @@ set -uo pipefail
 GODOT="$HOME/.local/bin/godot.real"
 WINDOW_S=60   # DRAFT-play-window-s
 SETTLE_S=10   # DRAFT-play-settle-s
-RESOLUTION=1920x1080   # DRAFT-play-resolution
+RESOLUTION=1919x1080   # DRAFT-play-resolution; not 1920x1080: a request equal to the project viewport presents only the splash on GNOME Wayland (2026-10-31, DEC-display-fault-measured-2026-10-31)
 MIN_FPS=30    # DRAFT-play-min-fps
 FPS_S=3       # DRAFT-play-fps-s: consecutive seconds at MIN_FPS
 scene=""; seed=""; story=""; tree=""; check=0; dry=0; keep=0; extra=()
@@ -68,12 +68,13 @@ build="cd $tree && scripts/build_pipe_linux.sh"
 if [[ $dry -eq 1 ]]; then
   echo "tree: $tree"; echo "build: $build"
   echo "launch: $launch -- ${extra[*]:-}"
+  [[ $check -eq 1 ]] && echo "capture: $tree/scripts/specfactory/screen_capture.sh $tree/proof.png"
   exit 0
 fi
 
 # DEC-play-display-check-first-2026-10-30: no display exits before the build and the Godot import,
 # so nothing under $GODOT runs without a display.
-[[ -n "${DISPLAY:-}" ]] || { echo "play.sh: no display" >&2; exit 1; }
+[[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]] || { echo "play.sh: no display" >&2; exit 1; }
 
 # 2. Build
 if ! out=$(cd "$tree" && scripts/build_pipe_linux.sh 2>&1); then
@@ -148,8 +149,15 @@ fi
 if [[ $check -eq 1 ]]; then
   sleep "$SETTLE_S"
   got=$(qa_scene "$port")
-  kill "$gpid" 2>/dev/null
   want="${scene:-$(sed -n 's/^run\/main_scene="\(.*\)"/\1/p' "$tree/project.godot")}"
-  if [[ "$got" == "$want" ]]; then echo "PLAY scene $got reached"; else echo "PLAY REJECT scene $got wanted $want"; exit 3; fi
+  if [[ "$got" != "$want" ]]; then kill "$gpid" 2>/dev/null; echo "PLAY REJECT scene $got wanted $want"; exit 3; fi
+  echo "PLAY scene $got reached"
+  # H-031 proof: a real capture of the desktop while the scene is up; the method is the second word of its CAPTURE line.
+  cap=$("$tree/scripts/specfactory/screen_capture.sh" "$tree/proof.png"); crc=$?
+  kill "$gpid" 2>/dev/null
+  echo "$cap"
+  method=$(sed -n 's/^CAPTURE \(portal\) .*/\1/p' <<<"$cap")
+  if [[ $crc -ne 0 || -z "$method" ]]; then echo "PLAY REJECT proof capture failed (exit $crc)"; exit 4; fi
+  echo "PLAY proof $tree/proof.png $method"
 fi
 exit 0

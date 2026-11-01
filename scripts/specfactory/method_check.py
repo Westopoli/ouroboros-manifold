@@ -9,6 +9,7 @@ import sys
 
 CODE_EXT = r"(?:c|h|gd|py|sh|tscn)"
 EDIT_TOOLS = ("Edit", "Write", "NotebookEdit")
+AGENT_TOOLS = ("Agent", "Task")  # See also: method_metrics_runs.py:344 (reads mc.AGENT_TOOLS)
 GIT_MUTATE = re.compile(r"\bgit\s+(?:add|commit|push|checkout|switch|merge|stash|reset|rm|mv)\b")
 REDIRECT = re.compile(r"(?:>>?|\btee\b(?:\s+-\w+)*)\s*[\"']?[^\s\"'|;&<>]*\.%s(?![\w.])" % CODE_EXT)
 HEREDOC = re.compile(r"(?<!<)<<-?\s*([\"']?)(\w+)\1")

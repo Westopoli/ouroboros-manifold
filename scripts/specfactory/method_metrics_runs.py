@@ -407,7 +407,7 @@ def m27(ctx):  # A17: the Dispatcher's median context tokens per event episode, 
     totals = []
     for p, sub in top_files(ctx):
         es = [] if sub else [e for e in mc.load(p) if in_window(ctx, e.get("timestamp") or "")]
-        if mc.role_of([model_of(e) for e in es if e["type"] == "assistant" and model_of(e)]) != "dispatcher":
+        if mc.role_of([model_of(e) for e in es if e["type"] == "assistant" and model_of(e)]) != "runner":  # See also: method_check.role_of, renamed dispatcher to runner in H-005 (caebd84a)
             continue
         open_, ids = False, set()
         for e in es:
