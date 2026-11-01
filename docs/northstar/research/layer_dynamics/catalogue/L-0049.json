@@ -1,0 +1,277 @@
+{
+  "id": "L-0049",
+  "situation": "open_field",
+  "landscape": "small_flat",
+  "seed": 49,
+  "predict": "draw",
+  "predict_why": "DRAFT (Architect to confirm): the two sides are equal in number and kind with no ground between them, so neither should win.",
+  "verdict": "",
+  "feedback": "",
+  "defender": "",
+  "side_a": {
+    "headcount": 16,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 800.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 800.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 800.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 800.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 760.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 760.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 760.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 760.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 720.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 720.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 720.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 720.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 680.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 680.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 680.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 680.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 16,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 3200.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3200.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3200.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3200.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3240.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3240.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3240.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3240.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3280.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3280.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3280.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3280.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3320.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3320.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3320.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3320.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 0,
+        "range": 300.0
+      }
+    ]
+  }
+}
