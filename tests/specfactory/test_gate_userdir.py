@@ -617,9 +617,26 @@ def _boot_to_tactical_qa(fake_home: Path, xdg: Path | None, monkeypatch) -> dict
         _drop(g)
 
 
-def _plant(fake_home: Path) -> Path:
+def _guard_fake_home(fake_home: Path) -> None:
+    """The planted file must never land where the real game reads: the fake home is not the real
+    HOME, the real HOME/.local/share/data is not under it, and it lives under TMPDIR. (The gate keeps
+    TMPDIR under the real HOME, so "anywhere under the real HOME" is too wide; H-047.)"""
     real = _real_home()
-    assert fake_home != real and real not in fake_home.parents, "fake home %s is inside the real home" % fake_home
+    fake = fake_home.resolve()
+    real_data = (real / ".local" / "share" / "data").resolve()
+    tmp = Path(tempfile.gettempdir()).resolve()
+    assert fake != real.resolve() and fake not in real_data.parents and real_data != fake and tmp in fake.parents, \
+        "fake home %s is inside the real home" % fake_home
+
+
+def test_6c_guard_control_a_fake_home_equal_to_the_real_home_is_refused():
+    # Positive control for the _plant guard (H-047): the real HOME itself still fails it.
+    with pytest.raises(AssertionError, match="inside the real home"):
+        _guard_fake_home(_real_home())
+
+
+def _plant(fake_home: Path) -> Path:
+    _guard_fake_home(fake_home)
     data = fake_home / ".local" / "share" / "data"
     data.mkdir(parents=True)
     (data / "settings.cfg").write_text('[game]\nera_id="greek_placeholder"\n')
