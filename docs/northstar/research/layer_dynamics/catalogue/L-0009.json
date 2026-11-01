@@ -5,8 +5,8 @@
   "seed": 1023265,
   "predict": "B",
   "predict_why": "Side B sits in three separated clusters and side A is one mass in the open, so position outweighs numbers.",
-  "verdict": "",
-  "feedback": "",
+  "verdict": "deny",
+  "feedback": "Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format.",
   "side_a": {
     "headcount": 32,
     "units": [
