@@ -322,3 +322,58 @@ def test_shot_out_saves_one_png_per_frame_none_blank_and_quits(fight3, tmp_path,
         assert (out / "frame-0.png").read_bytes() != (out / "frame-2.png").read_bytes(), "frame-0.png and frame-2.png are identical"
     finally:
         g.stop()
+
+
+# ================================================================ H-040 "Orders and fight end" / H-052: the HUD's end line
+# spec: docs/stories/H-040.md "Orders and fight end": "The replay HUD prints `end: wipe|silence|cap` and `STALL` on the last frame." and docs/stories/H-052.md (the
+# om-fight-2 file: `orders`, `result.end`, `result.stall`, `winner "stall"`).
+# Premises (DRAFT-hud-end-format: the story gives the words, not the line they sit in): the words are read from any Label text, as the HUD test above does; on the
+# last frame one Label text contains `end: <end>` (so `end: wipe`, `end: silence`, `end: cap`), and for a stall one Label text contains the word `STALL`. Before the
+# last frame no Label text contains `end:` or `STALL`. The v2 documents are built inline from `snapshot.example()` and written raw (the checker only accepts v2 once the
+# builder lands it; the scene ignores keys it does not know either way).
+
+def _v2_fight(end: str, stall: bool, tmp_path: Path) -> tuple[Path, dict]:
+    doc = snapshot.example(frames=3)
+    doc["schema"] = "om-fight-2"
+    doc["orders"] = {"mode": "hold_and_attack" if stall else "both_same_point", "point": [120.0, 52.0], "attacker": "B" if stall else None}
+    doc["result"]["end"] = end
+    doc["result"]["stall"] = stall
+    if end != "wipe":   # both sides alive in the last frame
+        last = doc["frames"][-1]
+        for row in last["units"]:
+            row["hp"], row["alive"] = 100.0, True
+        last["alive"] = [2, 2]
+        doc["result"].update({"survivors": [2, 2], "capped": end == "cap", "winner": "stall" if stall else "draw", "agree": False, "predict": "A"})
+    return _write_fight(tmp_path / ("L-0001-%s.fight.json" % end), doc), doc
+
+
+def test_control_v2_fixture_documents_are_well_formed_json(tmp_path):
+    """Control, green today: the three inline v2 fixtures (wipe, silence stall, cap) are written, parse back, and carry the keys the HUD tests rely on (end, stall, a
+    last frame whose alive counts match the result's survivors), so a red below is the HUD and not the fixture."""
+    for end, stall in (("wipe", False), ("silence", True), ("cap", False)):
+        path, doc = _v2_fight(end, stall, tmp_path)
+        back = json.loads(path.read_text())
+        assert back["result"]["end"] == end and back["result"]["stall"] is stall and back["schema"] == "om-fight-2"
+        assert back["frames"][-1]["alive"] == back["result"]["survivors"]
+
+
+@pytest.mark.parametrize("end,stall", [("wipe", False), ("silence", True), ("cap", False)])
+def test_hud_prints_the_end_word_on_the_last_frame_and_stall_only_for_a_stall(end, stall, tmp_path, monkeypatch):
+    """H-040 "Orders and fight end": "The replay HUD prints `end: wipe|silence|cap` and `STALL` on the last frame." Frame 0 shows neither `end:` nor `STALL`; stepping to
+    the last frame shows a Label text containing `end: <end>`, and a Label text containing `STALL` if and only if the fight is a stall (end silence with both sides alive)."""
+    path, doc = _v2_fight(end, stall, tmp_path)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        assert st["qa"]["frame_count"] == 3
+        first = " | ".join(_hud_lines(st))
+        assert "end:" not in first and "STALL" not in first, "end or STALL shown on frame 0: %s" % first
+        _key(g, "Space")
+        _key(g, "Space")
+        st = _state(g, lambda q: q["frame"] == 2, timeout=15.0, label="frame 2")
+        lines = _hud_lines(st)
+        assert any("end: %s" % end in t for t in lines), "no HUD text with 'end: %s' among Label texts %s" % (end, lines)
+        assert any("STALL" in t for t in lines) is stall, "STALL expected %s among Label texts %s" % (stall, lines)
+    finally:
+        g.stop()
