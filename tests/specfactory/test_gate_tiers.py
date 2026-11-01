@@ -542,10 +542,7 @@ def _status_fixture(tmp_path, events, rows):
     anchors = _history(repo, events)
     _commit(repo, {SWEEPS_REL: SWEEPS_HEADER + "".join(row(anchors) + "\n" for row in rows)}, "records sweeps")
     return subprocess.run(
-        [PY, str(STATUS), "--repo", str(repo), "--base", "main",
-         "--programme", "docs/northstar/plans/2026-10-07-visible-game-programme.md",
-         "--pieces", "docs/northstar/plans/push/pieces.toml", "--stories", "docs/bible/stories.md",
-         "--reviews", "docs/northstar/story_reviews", "--roadmap", "docs/northstar/ROADMAP.md"],
+        [PY, str(STATUS), "--repo", str(repo), "--base", "main"],
         capture_output=True, text=True, cwd=repo, timeout=60)
 
 
