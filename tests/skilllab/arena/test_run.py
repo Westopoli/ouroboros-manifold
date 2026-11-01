@@ -445,17 +445,17 @@ def test_control_not_used_list_is_still_the_trim_reports():
 #   H-052: layout `orders = "both_same_point"` or `"hold:A"` / `"hold:B"` (the held side); "a layout without the key means `both_same_point`".
 #   H-052 file: `orders` = {"mode": "both_same_point" | "hold_and_attack", "point": [x, y], "attacker": "A" | "B" | null}; `result.end`; `result.stall`; `winner "stall"`.
 #
-# THE STALL FIXTURE (premises dumped by a direct Engine run on this base, seed 1, sight off, 8 Vanguard a side, attack range 300, speed 80 wu/s):
+# THE STALL FIXTURE (8 Vanguard a side, sight off, attack range 300, speed 80 wu/s; rewritten after DEC-silence-clause-2026-11-01, which counts movement):
 #   The runner builds no walls (it spawns units and nothing else), so a "planted blocker" the engine can feel does not exist as a layout feature today. The
 #   blocker used is a standoff: side A (the held side) is two 4-unit clusters at x 1400 and x 2600 (y 2000), so its centre of mass (2020, 2020) is an empty point
-#   600 wu from both clusters, 300 wu outside weapon range; side B (8 units, y 2900) walks to that point and arrives there at about tick 900, never within range of a
-#   unit of A. Engine result: hold (B attack-moves to A's centre, A no order): no hit in 12,000 ticks, 8:8 at the end. Same positions with every unit of both sides
-#   attack-moving to the midpoint (2030, 2470): first hit at tick 102, A wiped out at tick 1711 (8:0). So the pair stall under hold:A and wipe under
-#   both_same_point is the engine's own behaviour, not an assumption.
-#   Premise held for the silence clock: in the hold case no shot happens from tick 1, so the silence end is at 200 to 240 ticks whether the clock starts at tick 0 or
-#   at the first order. The wipe fixtures put the two sides inside weapon range of each other (first hit at tick 1) so no reading of when the silence clock starts
-#   can end them early. GAP reported: a fight whose approach is longer than 10 s with no shot (the six stage 1 layouts, 400 wu apart, first hit about tick 900)
-#   ends by `silence` under a literal reading; the story does not say whether the clock starts at the first shot. No test pins that either way.
+#   620 wu from the nearest unit of either cluster, outside weapon range (300). Side B (8 units) is a 4x2 block, 40 wu apart, centred on that point
+#   (centroid (2020, 2000)): it starts already at the attacker's order point under hold:A, so it has nowhere to walk and no unit of either side moves in the first
+#   10 s, and no unit of B is within weapon range of a unit of A. Hold (B attack-moves to A's centre, A no order): no shot and no movement, so the silence end
+#   is at 200 to 240 ticks. With both sides attack-moving to the midpoint (2020, 2010) A walks into B and the fight ends by wipe (both_same_point tests).
+#   The engine's own behaviour for the pair is pinned by the control below, not assumed. The wipe fixtures put the two sides inside weapon range of each other
+#   (first hit at tick 1) so no reading of when the silence clock starts can end them early. GAP reported: a fight whose approach is longer than 10 s with no shot
+#   (the six stage 1 layouts, 400 wu apart, first hit about tick 900) ends by `silence` under a literal reading unless the approach counts as movement, which
+#   DEC-silence-clause-2026-11-01 now says it does; the old fixture (B walking about 13 s) failed for that reason.
 # `orders` in a layout: check_layout reads named keys only (produce._violations), so the extra top-level key passes it (control below); `dump_toml` does not write it, so
 # the fixtures prepend the line.
 
