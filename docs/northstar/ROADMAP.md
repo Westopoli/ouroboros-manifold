@@ -25,6 +25,7 @@ Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a ti
 | lab | catalogue round three (arcs, mouth coverage, priority kinds) | H-025 round three | batch 1 pushed c5fddbc9 (29 pictures); producer continues | his verdicts |
 | lab | 3 the ground pushes back | H-063 | Ready 2026-11-02; tests first | his verdicts on the chokepoint and slope fights |
 | lab | 4 sight; 5 facing, arcs, bands; 6 the scan; 7 objectives, hazards, time, space | | plan only | one at a time |
+| lab | after the lab: piecemeal, then whole | none yet (plan in `research/layer_dynamics/decomposition.md`) | Decided 2026-11-02 as a plan; built after the lab is finished | specified then |
 | harness | two gate channels | H-059 | Ready; lands after H-057 through the single gate | the beta Dispatcher chat starts |
 | beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2), H-067 | Seen 2026-11-02 for om-beta; the project-in-the-editor route (H-067) in flight | his confirmation of the editor route |
 | beta | B1 the approved screens | H-060 | Ready; tests in flight, builds after B0 Seen | after B0 Seen |
