@@ -43,7 +43,7 @@ One story, one branch `s/<id>-<slug>`, one `--no-ff` merge on main (`docs/method
 
 ## Usage
 
-Every tool call re-reads the caller's whole context, so waiting is the expensive part. A builder pushes and stops; a fresh clerk lands. Agents report once, at the end. Waits are `flock -w`, never a polling chat. Small context per call: one card and one story per agent, briefs by file path, a mixed-role task split into one brief per role. Every spawn names its model; sub-agents never spawn; nothing is spawned in plan mode; engineers and doers are never Fable. The Architect restarts from memory past 400k context. Build plus tests is at least half of weekly model spend.
+Every tool call re-reads the caller's whole context, so waiting is the expensive part. A builder pushes and stops; a fresh clerk lands. Agents report once, at the end. Waits are `flock -w`, never a polling chat. Small context per call: one card and one story per agent, briefs by file path, a mixed-role task split into one brief per role. Every spawn names its model; sub-agents never spawn; nothing is spawned in plan mode; engineers and doers are never Fable. Chats compact at 400k; there is no hard stop. Build plus tests is at least half of weekly model spend.
 
 ## Tone
 

@@ -21,7 +21,7 @@ Fable, in a chat. Designs, specifies, decides, diagnoses. Writes no code and no 
 
 ## Context
 
-Restart from memory past about 400k tokens; the compaction window is 400k (Westley, 2026-10-30). The context guard hook blocks past DRAFT-context-guard-tokens; a prompt containing "handoff" lets the memory write through. Memory holds a pointer and the last three steps, not state: state is `git log`.
+Context compacts at 400k tokens (`autoCompactWindow`, Westley 2026-10-30); there is no hard stop since 2026-11-01 (DEC-context-guard-off-2026-11-01). Write a continuation memory before a restart you choose. Memory holds a pointer and the last three steps, not state: state is `git log`.
 
 ## Escalation
 

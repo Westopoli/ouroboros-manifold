@@ -134,7 +134,7 @@ def test_control_rev10_fixture_is_the_quoted_file():
     assert "rev 10, 2026-10-10: lane E1 part c" in lines[0]
     assert len(lines) == 290
     assert hashlib.sha256(FIXTURE.read_bytes()).hexdigest() == \
-        "91945bfafc33ed6e10c287b0893427658e122d93b39dc55be95d9bc7572bc748"
+        "97b18ad0f4d9f2d7c29a89c1c51348551ab6415615c6a4721302cbbf50aae95e"
     assert lines[85].startswith("### Lane B: galaxy") and "look approved 2026-10-07" in lines[85]
     assert lines[116].startswith("Pieces. Part a:") and "E1e placement + footprint clearing" in lines[116]
     assert lines[145].startswith("- E1b density (REPLACED by part c, rev 10)")

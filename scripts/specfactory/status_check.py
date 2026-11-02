@@ -11,7 +11,8 @@ checked` and exit 0:
   seen_without_verdict  a `Seen <id>` commit has no Verdict: trailer
   seen_without_commit   a story marked Seen has no `Seen <id>` commit
 Every check looks only at history after the anchor: a story counts only if a commit after
-it changed its row (`git log <anchor>..<ref> -S<id> -- stories.md harness.md` non-empty);
+it changed its own row (a diff of stories.md and harness.md from the anchor to ref has an added or
+removed line starting `| <id> |`; a mention of the id inside another row does not count);
 stories marked by the old method before it are history. Anchor: the sha in the first
 sweep commit's `Base:` trailer on first-parent main, else the commit that added
 docs/method/README.md. Arguments: --repo, --base (the ref read; default origin/main, else
@@ -96,6 +97,7 @@ def main():
     subjects = {}
     for h, s in (l.split(" ", 1) for l in git(repo, "log", "--first-parent", "--format=%H %s", ref).splitlines()):
         subjects[h] = s
+    changed = git(repo, "diff", "--unified=0", base, ref, "--", *ROW_FILES).splitlines() if base else []
     drift, n = [], 0
     in_span = set(git(repo, "log", "--first-parent", "--format=%H", span).split())
     for h in in_span:
@@ -116,7 +118,7 @@ def main():
     for sid, st in story_rows(repo, ref):
         if st not in ("Tested",) and not st.startswith("Seen"):
             continue
-        if base and not git(repo, "log", "--format=%H", span, f"-S{sid}", "--", *ROW_FILES).strip():
+        if base and not any(l[:1] in "+-" and l[1:].startswith(f"| {sid} |") for l in changed):
             continue  # row unchanged since the anchor: old-method history
         if st == "Tested" and sid not in landed:
             drift.append(f"STATUS tested_without_land DRIFT {sid}")
