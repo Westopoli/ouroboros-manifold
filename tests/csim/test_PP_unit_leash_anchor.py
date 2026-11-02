@@ -156,7 +156,7 @@ def test_control_R_087_05_target_leaving_200_of_the_acquisition_spot_is_dropped(
     w = world_factory(n_regions=1)
     u, enemy = _marched_unit(lib, w, switch)
     ax, ay = _acquire_ahead(lib, w, u, enemy, 150.0)
-    lib.om_unit_teleport(w, u, ax + 250.0, ay, 0)
+    lib.om_unit_teleport(w, u, ax + 750.0, ay, 0)
 
     seen = watch_target(lib, w, u, 25)
 

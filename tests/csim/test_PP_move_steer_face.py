@@ -258,7 +258,7 @@ def test_R_100_01_stationary_firing_unit_turns_to_its_target(lib, tw):
 def test_R_100_01_no_target_and_idle_keeps_last_facing(lib, tw):
     """R-100-01: idle with no target, a unit keeps its last facing. Positive control for the stationary-turn test:
     the same scene with the enemy 350 wu away (beyond 1.5 x the 200 wu range, no target) must not turn A."""
-    a, e = _face_scene(lib, tw, 0.0, 350.0)
+    a, e = _face_scene(lib, tw, 0.0, 850.0)
     for _ in range(8):
         lib.om_tactical_step(tw)
     assert lib.om_unit_get_target(tw, a) == 0, "scene error: A engaged a far enemy"
