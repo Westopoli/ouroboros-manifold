@@ -22,7 +22,7 @@ UNSTATED INTERFACE (reported; the builder implements exactly these):
 - `reap` prints one line per non-file directory under the root containing the directory name as a whole word:
   a removal (also in --dry-run) has the token REMOVE and the size in MB as an integer; a kept tree has the token
   KEEP and the reason word from the spec (active, pinned, pending, dirty, open-files, young, foreign, not-worktree).
-- `status` table: a header line whose whitespace tokens are exactly the eight column names; one row per directory,
+- `status` table: a header line whose whitespace tokens are exactly the nine column names; one row per directory,
   tokens in column order (branch has no spaces); then a line starting `worktrees <n> slots <u>/<c> wt <g>/<c> free
   <g>/<f>` where n is the number of rows. `--json` prints one JSON document (a list), rows keyed by the column
   names, last element {"totals": {...}}. wt_gb is the sum of per-tree MB / 1024.
@@ -276,14 +276,14 @@ def test_09_status_totals_in_table_and_json(world, monkeypatch, capsys):
     rc, out = run_main(capsys, ["status", *flags])
     assert rc == 0, f"exit {rc}: {out!r}"
     lines = out.splitlines()
-    cols = ["name", "state", "size_mb", "age_days", "branch", "on_origin", "dirty", "open_files"]
+    cols = ["name", "state", "channel", "size_mb", "age_days", "branch", "on_origin", "dirty", "open_files"]
     assert any(ln.split() == cols for ln in lines), out
     expect = {"s_a1": "active", "s_a2": "active", "s_unfl": "unflagged", "s_pin": "pinned", "s_fin": "finished",
               "s_pend": "pending", "s_done": "done"}
     for name, state in expect.items():
         row = [ln.split() for ln in lines if ln.split()[:1] == [name]]
-        assert len(row) == 1 and len(row[0]) == 8, (name, row)
-        assert row[0][1] == state and int(float(row[0][2])) == mbs[name], row[0]
+        assert len(row) == 1 and len(row[0]) == 9, (name, row)
+        assert row[0][1] == state and int(float(row[0][3])) == mbs[name], row[0]
     assert re.search(r"^worktrees 7 slots 3/12 wt 5(\.0+)?/120(\.0+)? free 100(\.0+)?/60(\.0+)?\s*$", out, re.M), out
     rc, out = run_main(capsys, ["status", "--json", *flags])
     assert rc == 0, f"exit {rc}: {out!r}"
