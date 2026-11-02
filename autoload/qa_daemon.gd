@@ -85,6 +85,7 @@ func state() -> Dictionary:
 			tick_val = tb.current_tick
 	result["scene"] = scene_name
 	result["tick"] = tick_val
+	if UIDataBus.display_settings_applied_frame >= 0: result["display_settings_applied_frame"] = UIDataBus.display_settings_applied_frame  # H-038 hook
 	return result
 
 
