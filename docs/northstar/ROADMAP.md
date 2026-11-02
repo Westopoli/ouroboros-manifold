@@ -9,7 +9,7 @@ Rules for this file:
 - Rewrite, never append. History is `git log`.
 - A row points to a plan doc and never restates it. No design text here.
 - A plan enters "Queued" only when it has a doc path. An idea without a doc goes in "Not planned yet".
-- Whoever starts, finishes or reorders a plan updates this file in the same commit.
+- Whoever starts, finishes or reorders a plan updates this file in the same commit; whoever starts or ends a plan also edits `docs/method/reading_list.toml` in the same commit as the ROADMAP row.
 - File ownership stays in `plans/push/pieces.toml`. Open questions stay in `ambiguity_register.md`. Rulings stay in `plans/2026-10-01-architect-rulings-2.md` and, for the programme, in the spec's `[W ...]` tags.
 - Lane status lives in one place, the lane table of `plans/2026-10-07-visible-game-programme.md`; this file never copies it.
 

@@ -45,7 +45,7 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 | DRAFT-pregate-pins-timeout-s | 600 s for the pre-gate csrc pins step (build plus pinned csim files) | Westley, 2026-10-29 layered-gate spec section 9 |
 | DRAFT-token-report-tolerance | 3 points on shares, 5% on calls and tokens, for the 2026-10-29 fixture | Architect, DEC-token-report-day-2026-10-30 |
 | Agent context stop | 120k per builder, test writer or clerk; 60k for the on-call architect agent | method rev 2 |
-| Architect context | compaction at 400k is the only context rule; the guard hook is removed (DEC-context-guard-off-2026-11-01) | Westley, 2026-11-01 |
+| Architect context | compaction at 400k is the only context rule; a turn past 400k without a compaction (more than one lone turn before it) is drift in `method_check.py`; the guard hook is removed (DEC-context-guard-off-2026-11-01) | Westley, 2026-11-01 |
 
 ## Status
 

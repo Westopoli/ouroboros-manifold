@@ -57,7 +57,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-059 | "The simulation lab and the beta land through separate gates, so neither blocks the other; we have enough compute to run multiple gates at the same time." | Tested | `docs/stories/H-059.md` |
 | H-060 | "The main menu, galaxy view, and mission preparation screens are all approved, so those can be ported right in." | Ready (client; beta stage B1; after H-028 is Seen) | `docs/stories/H-060.md` |
 | H-061 | "Start simple just like the simulation lab, with just a layout and no units, and show several versions." | Ready (client; beta stage B2; after H-060 is Seen) | `docs/stories/H-061.md` |
-| H-062 | "After a compaction the chat re-reads every plan file it is executing before it acts, and the method check says so when it did not." | Ready (harness; lab channel; needs the lab staircase plan copied into the repo first) | `docs/stories/H-062.md` |
+| H-062 | "After a compaction the chat re-reads every plan file it is executing before it acts, and the method check says so when it did not." | Tested | `docs/stories/H-062.md` |
 | H-063 | "Walls, buildings, cover boxes and slopes shape where units can walk and how fast; still everyone sees everyone." | Ready (client; lab stage 3; H-053 Seen 2026-11-02) | `docs/stories/H-063.md` |
 | H-065 | "The sweep is green again: the two tests that pinned the old ROADMAP match the roadmap Westley ordered rewritten." | Ready (harness; lab channel; Fixes-sweep d914f2e0; lands before H-057) | `docs/stories/H-065.md` |
 | H-066 | "Two gates running at the same time never play on each other's game." | Tested | `docs/stories/H-066.md` |
