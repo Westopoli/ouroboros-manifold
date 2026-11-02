@@ -20,5 +20,6 @@ The method before 2026-10-30 lived in sixteen documents, about 160,000 words. Ea
 | `plans/push_ledger_2026-09-22.md` | 7bce91fe | TD, FINDING, DRAFT, GATE, EXC rows; now commit trailers |
 | `story_reviews/westley/README.md` | 01931049 | The shots table; scenes replaced screenshots |
 | `docs/northstar/ROADMAP.md` | 2b03d79b | Lane rows and "Now"; Ready in `stories.md` is the queue |
+| `tests/specfactory/test_pieces.py::test_pieces_toml_owns_disjoint`, `tests/specfactory/test_lab_docs.py::test_l7_depends_on_every_other_lab_rev2_row_except_e2_e4_and_l7b` | 38d08cc2 | Tests of `pieces.toml` ownership and the L7 dependency list; retired 2026-11-01 (H-037 part 2a) with the ownership table (H-029, plan ruling 1, Westley 2026-10-30); `git show 38d08cc2:<path>` reads them |
 
 Kept unchanged: `docs/northstar/story_reviews/westley/decisions.md`, `docs/northstar/plans/2026-10-29-layered-gate-spec.md`, `docs/northstar/ambiguity_register.md`, the bible.
