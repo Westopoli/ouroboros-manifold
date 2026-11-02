@@ -207,6 +207,7 @@ MANUAL_INSERTS: list[tuple[str, tuple[str, ...]]] = [
         '#define OM_ABILITY_SURGE_SPEED_MULT 2.5',
     )),
     ('#define OM_ARRIVAL_TOLERANCE_MULT 1.5', (
+        # See also: csrc/om_constants.h (generated); this comment is emitted from here, not hand-written there.
         '/* H-057, DEC-leash-param-2026-11-01: the pre-H-057 baseline-arm leash, kept so switch-0 goldens stand */',
         '#define OM_ATTACK_MOVE_LEASH_BASELINE 200.0',
         '#define OM_ATTACK_MOVE_LEASH_DIST 0.0',
