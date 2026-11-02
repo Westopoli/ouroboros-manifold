@@ -21,9 +21,9 @@ Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a ti
 |---|---|---|---|---|
 | lab | 1 two blobs on a flat field | H-040 (+H-039, H-052) | Seen 2026-11-01 (Westley on the L-0054 preview under H-057); landing waits on the screen proof | land |
 | lab | engine rule from stage 1: engage on sight, per-type leash | H-057 | built, landing (goldens re-record, gate) | land; L-0054 record run on main |
-| lab | 2 roles, ranges, win rates over seeds | H-053 | built, pre-gated; stage 2 fights running on the H-057 engine; pictures to `arena_stage2/` | his verdicts |
+| lab | 2 roles, ranges, win rates over seeds | H-053 | Seen 2026-11-02 (per-picture verdicts in `crossings.md`); readability and scoring build in progress, then the gate | land; fixed pictures to `arena_stage2/` as the record |
 | lab | catalogue round three (arcs, mouth coverage, priority kinds) | H-025 round three | batch 1 pushed c5fddbc9 (29 pictures); producer continues | his verdicts |
-| lab | 3 the ground pushes back | H-063 | Spec'd 2026-11-02 (story file written; Ready when stage 2 is Seen) | his stage 2 verdicts |
+| lab | 3 the ground pushes back | H-063 | Ready 2026-11-02; tests first | his verdicts on the chokepoint and slope fights |
 | lab | 4 sight; 5 facing, arcs, bands; 6 the scan; 7 objectives, hazards, time, space | | plan only | one at a time |
 | harness | two gate channels | H-059 | Ready; lands after H-057 through the single gate | the beta Dispatcher chat starts |
 | beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2, H-031 piece three) | Ready, beta channel; proof needs the monitors (wake rule) | he runs `om-beta` |
