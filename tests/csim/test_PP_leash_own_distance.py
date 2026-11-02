@@ -12,7 +12,7 @@ and must stay green after it. Each runs with OM_TP_LEASH_BEFORE_DAMAGE 0 (defaul
 """
 import pytest
 
-from test_PP_unit_support import (SUPPLY, VANGUARD, RAIDER, attack_move, dest, hp, pos, set_param, spawn,
+from test_PP_unit_support import (BOMBARD, SUPPLY, VANGUARD, RAIDER, attack_move, dest, hp, pos, set_param, spawn,
                                   step, target)
 
 LEASH = "OM_TP_LEASH_BEFORE_DAMAGE"
@@ -41,16 +41,17 @@ def _acquire(lib, w, switch, enemy_y, enemy_hp=None, utype=VANGUARD):
 
 
 @SWITCHES
-def test_R_087_05_A188_vanguard_acquiring_at_294_holds_and_fires_until_the_target_dies(lib, world_factory, switch):
-    """R-087-05 / R-096-03 / A188: a Vanguard (range 300) holds a Supply 294 wu ahead (acquired at 150 wu, then
-    stood at 294 from its anchor: beyond 200 of the anchor, inside its range). Standing at its anchor it never drops the target for the leash: every tick from
+def test_R_087_05_A188_bombard_acquiring_at_1150_holds_and_fires_until_the_target_dies(lib, world_factory, switch):
+    """R-087-05 / R-096-03 / A188, redesigned for H-057 (DEC-leash-param-2026-11-01: the leash is max(sensor, range) per type,
+    so a Vanguard's range never exceeds it): a Bombard (range 1200, sensor 300) holds a Supply 1150 wu ahead (acquired at 150 wu,
+    then stood at 1150 from its anchor: beyond every pre-ruling leash, 200 and 800, inside its range). Standing at its anchor it never drops the target for the leash: every tick from
     acquisition to the kill the target is held, the unit does not move, and the target dies.
     RED on the old rule: the target (294 wu from the anchor) is dropped on the next AI tick and the unit walks on."""
     w = world_factory(n_regions=1)
-    u, enemy, anchor = _acquire(lib, w, switch, -150.0, enemy_hp=100.0)
+    u, enemy, anchor = _acquire(lib, w, switch, -150.0, enemy_hp=100.0, utype=BOMBARD)
     lib.om_unit_set_hp(w, enemy, 100.0)
-    lib.om_unit_teleport(w, enemy, anchor[0], anchor[1] - 294.0, 0)   # 294 wu from the anchor and from the unit
-    assert _dist(anchor, pos(lib, w, enemy)) > 200.0, "fixture: the target must be beyond the leash from the anchor"
+    lib.om_unit_teleport(w, enemy, anchor[0], anchor[1] - 1150.0, 0)   # 1150 wu from the anchor and from the unit
+    assert _dist(anchor, pos(lib, w, enemy)) > 800.0, "fixture: the target must be beyond the leash from the anchor"
     held, moved = 0, 0.0
     for _ in range(300):
         if hp(lib, w, enemy) <= 0.0:
