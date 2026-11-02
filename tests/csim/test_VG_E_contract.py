@@ -71,7 +71,7 @@ def test_control_existing_getter_still_works(lib, world_factory):
 def test_abi_version_is_7(lib):
     """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1); K-e5 moved the pin to 7 (the hook om_terrain_set_heights, TD-VG-E-16). Red before K-e5: the library reports 6. E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group): red until then, the library reports 7."""
     lib.om_abi_version.argtypes, lib.om_abi_version.restype = [], ctypes.c_uint32
-    assert lib.om_abi_version() == 9
+    assert lib.om_abi_version() == 10
 
 
 def test_new_symbols_present_and_bind(lib):

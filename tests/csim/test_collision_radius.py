@@ -215,6 +215,23 @@ def test_H_041_control_reach_setter_returns_minus_one_for_an_unknown_type_and_ze
 
 # ---- determinism: radius 15 everywhere is byte-identical to never calling the function ----------------------------
 
+def _build_mixed(lib, w):
+    """The mixed scene of test_PP_collision_radius_runtime.py (gap crossing, idle overlapping pair, 3 x 2 group move, lone mover); returns the ids."""
+    ids = [_spawn(lib, w, RAIDER, 1000.0, 1000.0), _spawn(lib, w, RAIDER, 1080.0, 1000.0)]
+    m = _spawn(lib, w, RAIDER, 1040.0, 1200.0)
+    ids.append(m)
+    lib.om_command_move(w, m, 1040.0, 800.0)
+    ids += [_spawn(lib, w, RAIDER, 2000.0, 1000.0), _spawn(lib, w, RAIDER, 2005.0, 1003.0)]
+    grp = [_spawn(lib, w, RAIDER, 1500.0 + 12.0 * (i % 3), 1500.0 + 12.0 * (i // 3)) for i in range(6)]
+    ids += grp
+    arr = (ctypes.c_uint32 * len(grp))(*grp)
+    lib.om_command_group_move(w, arr, len(grp), 1500.0, 1900.0)
+    lone = _spawn(lib, w, RAIDER, 500.0, 500.0)
+    ids.append(lone)
+    lib.om_command_move(w, lone, 500.0, 700.0)
+    return ids
+
+
 def _trace_hash(lib, set_all_to=None, ticks=300):
     """The mixed scene of test_PP_collision_radius_runtime.py (the gap crossing; an idle overlapping pair; a 3 x 2 group
     move through overlap; a lone mover that arrives), one seed, one command stream. sha256 over the little-endian
@@ -225,18 +242,7 @@ def _trace_hash(lib, set_all_to=None, ticks=300):
         if set_all_to is not None:
             for t in SIX_TYPES:
                 assert _set_radius(lib, w, t, set_all_to) == 0
-        ids = [_spawn(lib, w, RAIDER, 1000.0, 1000.0), _spawn(lib, w, RAIDER, 1080.0, 1000.0)]
-        m = _spawn(lib, w, RAIDER, 1040.0, 1200.0)
-        ids.append(m)
-        lib.om_command_move(w, m, 1040.0, 800.0)
-        ids += [_spawn(lib, w, RAIDER, 2000.0, 1000.0), _spawn(lib, w, RAIDER, 2005.0, 1003.0)]
-        grp = [_spawn(lib, w, RAIDER, 1500.0 + 12.0 * (i % 3), 1500.0 + 12.0 * (i // 3)) for i in range(6)]
-        ids += grp
-        arr = (ctypes.c_uint32 * len(grp))(*grp)
-        lib.om_command_group_move(w, arr, len(grp), 1500.0, 1900.0)
-        lone = _spawn(lib, w, RAIDER, 500.0, 500.0)
-        ids.append(lone)
-        lib.om_command_move(w, lone, 500.0, 700.0)
+        ids = _build_mixed(lib, w)
         h = hashlib.sha256()
         for _ in range(ticks):
             lib.om_tactical_step(w)
@@ -323,3 +329,116 @@ def test_H_041_production_slot_spacing_follows_the_largest_when_every_radius_is_
     """The largest, not the larger of it and 15: all six types set to 10 give spacing 20 and the first produced unit at
     (-20, -20). Red today: the symbol is not exported (and unset it is 30)."""
     assert _first_produced_offset(lib, world_factory, 12, {t: 10.0 for t in SIX_TYPES}) == pytest.approx((-20.0, -20.0), abs=1e-6)
+
+
+# ---- the save keeps the radii (Architect conditions for the contract) -----------------------------------------------------
+# om_save_state_size / om_save_state_write / om_load_state_read as tests/csim/test_VG_E_prodslot.py T4 uses them.
+
+# sha256 of the save of _save_scene_bytes(), made on the origin/main a1b64e8c lib (the unmodified csrc: no om_roster_set_collision_radius,
+# so no radius table, ABI 9), the reference "today's save format" the contract must leave byte-identical when no radius is set.
+# How it was recorded: a lib built from `git archive origin/main csrc` (commit recorded in the commit body), _save_scene_bytes run through
+# conftest's own binding functions against it. Not recorded from a modified tree: if it ever changes, a landing changed the save format.
+SAVE_NO_RADIUS_SHA256 = "44dfea2d9e5a0f8537bae9062af34b273335cbb94b9010d3c2a2f8f2af6aa957"
+SAVE_NO_RADIUS_SIZE = 1154363
+SAVE_SERIAL_AT = 40   # the 8-byte world serial (csrc/save.c header): a per-process counter of worlds created, so a second save in one process differs there only; zeroed before hashing
+
+
+def _save_bytes(lib, w):
+    size = lib.om_save_state_size(w)
+    buf = (ctypes.c_uint8 * size)()
+    lib.om_save_state_write(w, buf, size)
+    return buf, size
+
+
+def _save_scene_bytes(lib, radii=None, ticks=100):
+    """The mixed scene, `ticks` ticks of it, saved. radii: {type: radius} set first, or None (the function is never called)."""
+    w = _world(lib)
+    try:
+        if radii is not None:
+            for t, r in radii.items():
+                assert _set_radius(lib, w, t, r) == 0
+        _build_mixed(lib, w)
+        for _ in range(ticks):
+            lib.om_tactical_step(w)
+        buf, size = _save_bytes(lib, w)
+        return bytes(buf[:SAVE_SERIAL_AT]) + bytes(8) + bytes(buf[SAVE_SERIAL_AT + 8:size])
+    finally:
+        lib.om_world_free(w)
+
+
+def test_H_041_control_a_save_without_radii_round_trips(lib):
+    """Control (green today and after): a save of the mixed scene loads into a fresh world and the next 50 ticks match the
+    uninterrupted run, so the load path used below works on this harness."""
+    w = _world(lib)
+    try:
+        ids = _build_mixed(lib, w)
+        for _ in range(50):
+            lib.om_tactical_step(w)
+        buf, size = _save_bytes(lib, w)
+        for _ in range(50):
+            lib.om_tactical_step(w)
+        want = [_pos(lib, w, u) for u in ids]
+        b = _world(lib)
+        try:
+            assert lib.om_load_state_read(b, buf, size) == 0
+            for _ in range(50):
+                lib.om_tactical_step(b)
+            assert [_pos(lib, b, u) for u in ids] == want
+        finally:
+            lib.om_world_free(b)
+    finally:
+        lib.om_world_free(w)
+
+
+def test_H_041_save_made_with_no_radius_set_is_byte_identical_to_todays_save_format(lib):
+    """Architect condition (b): "a save made with NO radius set is byte-identical to today's save format". The save of the mixed
+    scene after 100 ticks, no radius ever set, hashes to the value recorded on the unmodified origin/main lib. Green today (the
+    fence the builder may not cross) and after."""
+    data = _save_scene_bytes(lib, None)
+    assert (len(data), hashlib.sha256(data).hexdigest()) == (SAVE_NO_RADIUS_SIZE, SAVE_NO_RADIUS_SHA256), "the radius-less save differs from the one recorded on main"
+
+
+def test_H_041_a_save_made_with_a_radius_set_differs_from_the_radius_less_save(lib):
+    """Positive control for the byte-identical test: the same scene with the Raider set to 15 (even the default value) saves a
+    table, so its bytes differ from the radius-less save ("written only when a radius was set"). Red today: symbol not exported."""
+    assert _save_scene_bytes(lib, {RAIDER: 15.0}) != _save_scene_bytes(lib, None)
+
+
+def test_H_041_a_load_restores_the_radii_the_save_was_made_with_whatever_was_set_since(lib):
+    """Architect condition (a): a save made with Raider 15 and Bombard 30 restores the SAME radii on load even if the world
+    (the process) set different radii, as a different data/unit_scale.toml value pushed since would. A fresh world sets both to 10,
+    loads the save, then a Raider and a Bombard, idle and 5 wu apart, push apart to 15 + 30 = 45 (not the 10 + 10 = 20 it set).
+    Red today: symbol not exported."""
+    a = _world(lib)
+    try:
+        assert _set_radius(lib, a, RAIDER, 15.0) == 0
+        assert _set_radius(lib, a, BOMBARD, 30.0) == 0
+        buf, size = _save_bytes(lib, a)
+    finally:
+        lib.om_world_free(a)
+    b = _world(lib)
+    try:
+        assert _set_radius(lib, b, RAIDER, 10.0) == 0
+        assert _set_radius(lib, b, BOMBARD, 10.0) == 0
+        assert lib.om_load_state_read(b, buf, size) == 0
+        r, g = _spawn(lib, b, RAIDER, 1000.0, 1000.0), _spawn(lib, b, BOMBARD, 1005.0, 1000.0)
+        for _ in range(5):
+            lib.om_tactical_step(b)
+        assert _gap(lib, b, r, g) == pytest.approx(45.0, abs=STEP_TOL)
+    finally:
+        lib.om_world_free(b)
+
+
+def test_H_041_control_the_world_that_set_10_and_10_without_a_load_pushes_to_20(lib):
+    """Control for the load test above: the same fresh world with 10 and 10 set and NO load ends the pair 20 apart, so the 45
+    above comes from the saved radii and not from the scene. Red today: symbol not exported."""
+    b = _world(lib)
+    try:
+        assert _set_radius(lib, b, RAIDER, 10.0) == 0
+        assert _set_radius(lib, b, BOMBARD, 10.0) == 0
+        r, g = _spawn(lib, b, RAIDER, 1000.0, 1000.0), _spawn(lib, b, BOMBARD, 1005.0, 1000.0)
+        for _ in range(5):
+            lib.om_tactical_step(b)
+        assert _gap(lib, b, r, g) == pytest.approx(20.0, abs=STEP_TOL)
+    finally:
+        lib.om_world_free(b)
