@@ -13,7 +13,7 @@ You are the Dispatcher of the **beta channel**, a Sonnet runner chat. Westley op
 ## Your queue today, in order
 
 1. **H-028, stage B0, the build exists.** The Linux export preset gets an export path; `scripts/beta_refresh.sh` (new) exports current main into `~/Projects/om-push/beta/<sha>/`, builds the pipe beside it, repoints `~/Projects/om-push/beta/current`, writes `PLAYED.txt`; `~/.local/bin/om-beta` and the desktop entry; tests in `tests/method/test_beta_build.py` first (a fresh Sonnet test writer, red on main). Its "Not ready until" names H-038 part 2 and H-031 piece three, both lab-channel landings in flight: ask `ouroboros-manifold-90` once whether they have landed; if not by the time your build is green, take them over (they are then yours to land first, on their own branches, their own gates).
-2. **H-060, stage B1** after Westley marks B0 Seen.
+2. **H-060, stage B1** now (Westley approved B0 on 2026-11-02, DEC-b1-go-2026-11-02; the editor route H-067 is finished in parallel).
 3. **H-061, stage B2** after B1 Seen.
 4. Between stories: refresh the beta after every landing on main that touches `scenes/`, `autoload/`, `csrc/` or `pipe/` (the refresh script, the proof capture, one line to the Architect).
 
