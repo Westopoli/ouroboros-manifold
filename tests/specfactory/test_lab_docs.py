@@ -1,4 +1,4 @@
-# Rule pins: R-087-06@2b0850
+# Rule pins: R-087-06@45fc58
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces row L7 (LAB-REV2-L7)
 """Doc tests for the skill lab rev 2 record: README output rule (ruling 12), the retired gap-table
 rows (E3 fog and cross-layer fire land in the engine), register rows Q-008-03 / Q-008-07 (ruling 5)
