@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-02 (Architect): section 1 rewritten as the two staircases on two gate channels; section 2 points at the beta staircase; earlier: 2026-10-27 section 1 gained the sim lane pieces, the two mockups and the probes; section 2 step 6 macOS done; section 3 points at the decision pack; 3b T5 to T9, T18 restated, T19 added. Before that, 2026-10-07: section 2b added, the order of work after the beta workflow (Westley).
+Last updated: 2026-11-02 (Architect, Westley's order): section 1 is the two staircases on two gate channels; sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -12,52 +12,6 @@ Rules for this file:
 - Whoever starts, finishes or reorders a plan updates this file in the same commit.
 - File ownership stays in `plans/push/pieces.toml`. Open questions stay in `ambiguity_register.md`. Rulings stay in `plans/2026-10-01-architect-rulings-2.md` and, for the programme, in the spec's `[W ...]` tags.
 - Lane status lives in one place, the lane table of `plans/2026-10-07-visible-game-programme.md`; this file never copies it.
-
-## 0. Run a prototype
-
-Copy a command, paste it in a terminal, look, give feedback. Whoever builds or moves a prototype updates its row in the same commit. The scene path must come last.
-
-**On a Mac.** The mockups are plain Godot scenes and need no C sim (verified 2026-10-06: `tests/test_mockup_without_pipe.gd`). Install Godot 4.6.x (the .app), then in a clone of the repo:
-
-```
-git fetch origin && git checkout mac/prototypes && git pull
-GODOT=/Applications/Godot.app/Contents/MacOS/Godot
-$GODOT --path . res://scenes/mockups/walkers/walkers_mockup.tscn        # walkers and flyers on generated land (keys: F1-F3 seeds, B speed, G slope, C climb, 1-5 layer, V view)
-$GODOT --path . res://scenes/mockups/landscape/landscape_mockup.tscn    # land mockup pass 6b (Kit button: space kit)
-$GODOT --path . res://scenes/mockups/layout/layout_mockup.tscn          # layout engine pass 1
-$GODOT --path . res://scenes/mockups/settlement/settlement_mockup.tscn  # settlement pass 1
-```
-
-The first launch imports assets (about a minute). `mac/prototypes` is main plus the prototype branches (`push/proto-land-iter`, `push/proto-walkers`, `push/proto-layout`), merged read-only; it is rebuilt when a prototype moves, never edited directly. The Linux lines below keep their x11/opengl3 flags; a Mac does not need them.
-
-Shots waiting for a verdict (no scene to run, open the files): `docs/northstar/story_reviews/westley/`, one plainly named png per pending row and a README that maps each to its queue row. Section 3 "Now" names the six that matter.
-
-Two folders hold what can be viewed:
-
-- `~/Projects/om-push/wt/view-main`: current main, already imported. Refresh it before viewing anything new on main:
-  `cd ~/Projects/om-push/wt/view-main && git fetch -q origin && git checkout -q --detach origin/main && ~/.local/bin/godot.real --headless --path . --import`
-- `~/Projects/om-push/wt/proto-land-iter`: the land mockup's working copy (branch `push/proto-land-iter`), ahead of main.
-
-If a scene prints "Could not find type" errors, the folder has not been imported since new scripts arrived: run the refresh line (or the same `--import` in that folder).
-
-| Prototype | Command | State | Record (keys and open questions) |
-|---|---|---|---|
-| Layout mockup, pass 1: the flat diagram | `cd ~/Projects/om-push/wt/proto-layout && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/layout/layout_mockup.tscn` | Reference only: Westley 2026-10-06, the layout engine needs no prototype; the lab's layout search supplies the data | `research/layout_engine/README.md` section "Pass 1"; spec `plans/2026-10-04-layout-prototype-pass1-spec.md` |
-| Land mockup, latest: the layout shapes the terrain | `cd ~/Projects/om-push/wt/proto-land-iter && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/landscape/landscape_mockup.tscn` | Pass 6b approved 2026-10-05 and 10-06 ("Landscape engine is also approved"); integrated as terrain stages 1 to 3 and lane C | `research/landscape_design/README.md` on branch `push/proto-land-iter`, sections Pass 4 to Pass 6 |
-| Walkers and flyers on generated land | `cd ~/Projects/om-push/wt/proto-walkers && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/walkers/walkers_mockup.tscn` | Pass 1 approved final 2026-10-06; integrated in terrain stage 2 and lane C. Keys: F1-F3 seeds, B speed, G slope slows, C flyer climbs, 1-5 flyer layer, V view | `research/walkers/README.md` |
-| High ground worth (chart, open the file) | `xdg-open ~/Projects/om-push/wt/proto-highground/docs/northstar/research/layer_dynamics/runs/2026-10-05_highground/highground_page.html` | 2026-10-05; a space-mechanics stand-in | `plans/2026-10-05-proto-highground-spec.md` |
-| Land mockup as on main | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/landscape/landscape_mockup.tscn` | Passes 4 and 5 | `research/landscape_design/README.md` |
-| Space kit (same scene: press the Kit button until it reads space) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/landscape/landscape_mockup.tscn` | Pass 6 approved 2026-10-06 (vision-tube note Q-S3-01); lane D, held on the routed answers | `research/space_landscape/README.md` |
-| Settlement mockup: a base that builds itself | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/settlement/settlement_mockup.tscn` | Pass 1 approved 2026-10-06; its look is now built in the game by lane E (E1k), with a banded-contour prototype queued after it | `research/settlement_mockup/README.md` |
-| Galaxy mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/galaxy/galaxy_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/galaxy/` |
-| Hud mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/hud/hud_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/hud/` |
-| Layers mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/layers/layers_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/layers/` |
-| Fog mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/fog/fog_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/fog/` |
-| Menus mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/menus/menus_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/menus/` |
-| Objectives mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/objectives/objectives_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/objectives/` |
-| Units mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/units/units_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/units/` |
-| Chronicle mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/chronicle/chronicle_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/chronicle/` |
-| Skill lab chart: Formation Read (a web page, not a scene) | open https://claude.ai/artifact/GcVZDf8481tppLwSHE6Bqz | 2026-10-04; private to Westley | `research/layer_dynamics/runs/README.md` |
 
 ## 1. Now building: two staircases, two gate channels
 
@@ -103,79 +57,16 @@ Statuses: `logged` (recorded, nobody on it) · `investigating` (someone is findi
 
 ## 2. The beta critical path
 
-Superseded for the build order by the beta staircase (`plans/2026-11-02-beta-staircase.md`, section 1 above): B0 to B8 assemble the game; rows 5 to 8 below (Steam) follow B8. Rows 1 to 4 are history.
+Superseded for the build order by the beta staircase (`plans/2026-11-02-beta-staircase.md`, section 1 above): B0 to B8 assemble the game; rows 5 to 8 below (Steam) follow B8. The landed rows 1 to 4 (terrain stages 2 and 3, unit size, Steam phase A) are removed; git log has them.
 
-Before any step here resumes after the lab: section 1b, W0 first, and the Architect reminds Westley in chat (his word, 2026-10-27). Target: a private Steam beta with multiplayer and every approved prototype integrated. Westley 2026-10-07: no date; "done right than fast"; efficiency, parallelism and no drift are the measures. Steps 1 to 5 are carried by the programme; this table keeps the Steam-side steps.
+Target: a private Steam beta with multiplayer and every approved prototype integrated. Westley 2026-10-07: no date; "done right than fast"; efficiency, parallelism and no drift are the measures. Steps 1 to 5 are carried by the programme; this table keeps the Steam-side steps.
 
 | # | Step | State (2026-10-13) | Gate | Then |
 |---|---|---|---|---|
-| 1 | Terrain stage 2 on main | landed 008de465 (2026-10-07) | done | |
-| 2 | Terrain stage 3: missions on ground, the player sees it, era toggle | landed 0304d821; the 3D ground is lane C | done; lane C's looks in section 3 | 5 |
-| 3 | Unit size as a runtime setting (D1) | superseded for the programme by `VG-C-unitscale` (53ede72, body 11.5 / shadow 10 wu); the lab's per-type sizes follow the era rosters (3b T13) | | lab run 2 |
-| 4 | Steam wiring phase A | landed e63483f6 | done | 5 |
 | 5 | Steam wiring phase B: pipe frame flag, bridge wrappers, lobby, tactical hookup | lane F: skeleton lobby (dbe480a) and net first tick (b12b47a) on main; S-141 reviewer yes, S-140 unclear, both pending Westley | gate plus a two-process loopback match (S-141, S-142 green) | 6 |
 | 6 | Shipping the C pipe on Windows, macOS, Linux (static pipe per OS, mingw-w64 cross build, client path fix, signing) | Windows: first probe matched byte for byte under wine (2026-10-06). macOS: done 2026-10-18 on the Mac, `scripts/build_pipe_macos.sh` static ad-hoc-signed pipe, full checksums equal the Linux pins at ticks 100 to 2000 (`plans/2026-10-18-macos-pipe-probe.md`); notarisation and a signing identity are Westley's | a build per OS runs the probe and matches checksums (Q-NET-05) | 7 |
 | 7 | First real-Steam test: Westley's two accounts on Spacewar 480, Linux + Mac | after 5 and 6 | a match to its end, a stall, a leave | 8 |
-| 8 | Beta build on Westley's app id, Dev Comp keys, tester guide (`docs/northstar/beta/`) | guide and store copy drafted; app id is Westley's (3b T17) | one tester plays a mission and files an F12 report | public track |
-
-## 2b. After the beta workflow completes: verification, polish, next features (Westley, 2026-10-07)
-
-Step 1 has its plan and spec now: `plans/2026-10-12-simviewer-plan.md` (pieces SV-0 to SV-3, owner rows on main) and the simulation lane context `plans/2026-10-12-sim-lane-context.md`; Westley opens that lane as its own chat. It runs beside the programme, not after it (Westley, 2026-10-12: "I've been meaning to double check on the simulation system anyway").
-
-Three steps, in this order. Step 1 and step 2 run at the same time; step 3 starts when step 2 is finished. Building new features stops for the length of step 2.
-
-1. **Verify the simulation still follows the stochastic rules written into the bible** (`docs/bible/algorithms.md`). The legacy Python version had a small viewer, built on a Python game library, showing the regions on a 2D plane, how they are exchanged as ticks pass, which events fired, what the simulation chose for each mission and how much time passed each time (`simulation/run_strategic_viewer.py` and `simulation/strategic_viewer.py`, pygame). The goal is to find regressions in the core of the game: mission choice, and the source of the chronicle. The viewer is `scripts/simviewer/` (spec `docs/northstar/plans/2026-10-12-simviewer-spec.md`).
-2. **Pause new features until the existing ones are relatively perfected.** Westley gives feedback on each aspect of the game, a change is made, and he checks it again, repeated. Only when this is finished is the game ready for Steam posting.
-3. **Assess the lay of the land** for prospective and unimplemented features and decide what to build next. Contrast the old ideas in the bible and the roadmap with the user feedback received, and prioritise between them.
-
-## 3. Blocked on Westley
-
-Every decision waiting on Westley, in the order that unblocks the most work. Candidates for each `Q-` flag are in `ambiguity_register.md`. An answer is recorded in the register and the epic, and its row is deleted here.
-
-### Now (the 2026-10-18 batch; the six-row cap is suspended for it, Westley 2026-10-18)
-
-**Linux chat starts at `plans/handoff_2026-10-19_mac_to_linux.md`.** Everything waiting on Westley is in one pack: `plans/decision_pack_2026-10-18/batch.md` (the stories' voice; `README.md` beside it is the index and the record) (how to answer; what each answer unblocks on the Linux box this week), with its appendices: the shots in `story_reviews/westley/` (one row per file in its README), the Architect's rulings of the week (B1 to B19 in the pack), the register extract (`register_extract.md`, every open flag grouped, full text), and the five doc branches digested (`doc_branches_digest.md`). After the batch the Dispatcher rebuilds this table at six rows or fewer from what is left.
-
-Closed since the last rewrite: Q-191-14 (b), Q-191-05, Q-191-08/09/10, Q-188-01, Q-189-04, Q-082-06 (2026-10-15, Westley); Q-NET-05 measured on the Mac 2026-10-18 (`plans/2026-10-18-macos-pipe-probe.md`), its closing is pack item B12.
-
-### Parked questions (not asked until the work before them is reached)
-
-| Group | Items | Reference | Asked when |
-|---|---|---|---|
-| Finishing the MVP loop (scouts, 2026-10-03) | F1 event-threshold noise, F3 chronicle wording for a fallen faction and a dead commander, F4 campaign end over the pipe, F5 enemy hooks, F6 transition durations, F8 who consumes a faction's phase, F10 regional commander on conquest, F11 two functions against their rule, F12 objectives for four archetypes (red tests on `push/obj-tests`), F13 retention membership. F2, F7 and F9 are closed in the register (Q-062-01, Q-120-03, Q-056-01) | `plans/2026-10-03-finish-loop-rulings.md` "Westley" | the simulation lane (2b step 1) reads them first; the sim viewer makes F1, F3, F4, F10 visible |
-| Land generator | L9 the land era's name and scope (Q-147-01, in the decision pack); L1 and L3 closed 2026-10-15 (Q-188-01, Q-189-04, Q-191-05: the figures come from the lab and the terrain-obeys prototype) | register | the places (section 4) |
-| Space generator (parked, A207) | S1 to S4: kit pass, small-craft size, camera among sheets, shared density | Q-166-02, Q-166-05, 3b T3 | lane D resumes |
-| Movement, layers and search (parked, A209) | M1 to M10: pass marks, variant B, leash, scattered-group rule, guard stance, fling, scale suite, fight length, height bands | rulings-2 A174 to A199; Q-087-01, Q-096-01, Q-097-02, Q-166-04 | after the lab's data (layout search run 2) |
-| Balance and housekeeping | B1 rates for the balance simulation; B2 E-17 reds; B4 constants promotion, snapshot fixture policy, generation budget at 400 regions (Q-224-01) | rulings-2 | the simulation lane |
-| Economy and bases, open flags | Q-159-07 to -13, Q-167-01 to Q-181-02, Q-177-01 to -05, Q-178-01 to -05, Q-168-06, Q-193-04/05/07/08/09, Q-219-04, Q-E1-01 to -03 | register, E-22 and E-17 | lane E asks each as its piece reaches it, with a shot |
-| Multiplayer | Q-144-03 who hosts the next sitting of a locked universe | register | lane F's lobby piece |
-
-## 3b. Parallel work (the TODO list)
-
-Work that does not wait on the build lanes. Written 2026-10-06 from Westley's list; states as of 2026-10-13.
-
-| # | Item | State | Next mover |
-|---|---|---|---|
-| T1 | Settlement mockup pass 1 and its answers (Q-193-01 to -06) | done 2026-10-06; folded into lane E's spec (E1 part c and E1k) | lane E |
-| T2 | Space landscape pass 6 approved; S1 to S4 to fold | approved 2026-10-06; folding waits on lane D's resume | Architect, when D resumes |
-| T3 | Camera options page for space (five opaque sheets) and Q-103-04/05/06, Q-232-01 | not drafted | Architect, with lane D |
-| T4 | Sense-of-scale prototype (Sand Table, Q-103-05, Q-234-01 c) | not built; the 3D ground on main (lane C) is where scale is first seen | after lane C's looks are Seen |
-| T5 | Methodology write-up | drafted on `docs/method`; digested in the decision pack (`doc_branches_digest.md`): land after edits (rev 2 roles, pre-gate, guards) | Westley's a/b/c in the pack; then the re-draft |
-| T6 | Map-design pillars | both branches are already ancestors of main (`research/map_design/`); the pillars page asks Q-MAP-01 to -05, not yet in the register; digested in the pack | Westley answers Q-MAP-01 to -05 in the pack; the clerk adds the rows and retires the two branches |
-| T7 | Military-strategy research synthesis | drafted on `docs/military-doctrine`; digested in the pack (land as is, one cross-reference re-check) | Westley's a/b/c in the pack |
-| T8 | Website refresh (`~/Projects/ouroboros-site`): galaxy view, the two landscape engines, the walking prototype, `/method` | S-106 Seen 2026-10-13; a draft branch `refresh-2026-10-18` is being built in the site repo (no deploy) | Westley reads the draft; publish is his |
-| T9 | Era pack form for 20+ eras | drafted on `docs/era-pack-form`; digested in the pack: the era-kind row is wrong (Q-146-04 closed), the doctrine and building rows are stale (E1f, E1g), S-147/S-151 of 2026-10-15 missing | Westley's a/b/c in the pack; a clerk applies the named edits |
-| T10 | Cosmetics and art direction | nothing past placeholders; Westley needs example choices to pick from | after the beta's looks are Seen (2b step 2) |
-| T11 | Economy look mockup | superseded: lane E builds the settlement look in the game (E1k) and a banded-contour prototype after it (`PROTO-settlement-banding`); the economy screens (S-230 to S-235) are lane E pieces | lane E |
-| T12 | Flaky playthrough click `test_s_c8_09`, root cause | the gate's flake re-run (G1) masks it; root cause not found | Engineer, `investigate` brief, after the programme's harness pieces land |
-| T13 | Body size per type from the runtime collision radius (Q-LAB-02 a) | unit scale on main for the client (`VG-C-unitscale`); the sim's per-type radius follows the era rosters | lab, with the rosters |
-| T14 | Fight tick cap 12,000; a fight ends by elimination only and a capped fight is a lab defect, never a result (Q-LAB-03) | cap 12,000 in the lab; outcome classes `side0`, `side1`, `draw`, `cap` recorded by the rev 2 contract | lab spec |
-| T16 | Feedback and bug reports: in-game F12 capture, website feedback, classification | piece built 2026-10-06, awaiting its gate; the lockstep save it replays through is lane F | after lane F's tactical hookup |
-| T18 | Branch triage (second audit done 2026-10-15, `plans/branch_triage_2026-10-15/`: 250 proven landed, 127 not proven; delete is pack item B11): 225 unmerged `origin/push/*` branches of 09-22 to 09-24 (B1 to B15m, C1 to C8, T1, F2, HDR, INV) and old tooling branches, nothing deleted; Westley 2026-10-15 chose (c): delete only what a second audit proves landed by another route | report in this chat 2026-10-15; second audit not run | Engineer, a second audit that proves each branch's patches landed by another sha before any deletion |
-| T19 | Layout library audit against the lab's layout search (section 4 row 1) | being written 2026-10-18 (`research/layout_engine/library_audit_2026-10-18.md`) | Westley's pairing answers join the next pack |
-| T17 | Steam onboarding, public track (app fee, tax and identity, Coming Soon page) | Westley by hand; no report yet | Westley |
-
-SHOWCASE lane (2026-10-22): plans/showcase/README.md, behind beta and lab
+| 8 | Beta build on Westley's app id, Dev Comp keys, tester guide (`docs/northstar/beta/`) | guide and store copy drafted; app id is Westley's, by hand | one tester plays a mission and files an F12 report | public track |
 
 ## 4. Not planned yet
 
@@ -198,7 +89,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 |---|---|---|
 | Land generator | Mockup `scenes/mockups/landscape/` | Approved 2026-10-06; integrated (terrain stages 1 to 3, lane C) |
 | Walking and flying units on land | Mockup `scenes/mockups/walkers/` | Approved final 2026-10-06; integrated (terrain stage 2, lane C, lane W routes) |
-| Galaxy | `push/galaxy-field` | Look approved 2026-10-07; integrated by lane B (B22, B23); the second look is in section 3 |
+| Galaxy | `push/galaxy-field` | Look approved 2026-10-07; integrated by lane B (B22, B23) |
 | Settlements | Mockup `scenes/mockups/settlement/` | Pass 1 approved 2026-10-06; integrated by lane E (port E1q, look E1k); a banded-contour prototype is queued after E1k (`PROTO-settlement-banding`) |
 | Space generator | Mockup, space kit mode | Pass 6 approved 2026-10-06 (vision-tube note Q-S3-01); lane D held |
 | High ground worth | Instrument retired: `scripts/skilllab/ground/highground.py` deleted by LAB-REV2-L6; the ground scene `s1_slope_top` replaces it | Built 2026-10-05 as a space-lab stand-in; retired under R-005-09 and S-164 |
@@ -208,7 +99,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Layout engine | No prototype (Westley 2026-10-06) | The lab's layout search supplies the data; `push/proto-layout` is reference only |
 | Mission-to-galaxy transition (S-108) | Mockup `scenes/mockups/transition/` on `push/proto-transition` | Needed (Westley, 2026-10-15); spec `plans/2026-10-15-transition-mockup-spec.md`; a Doer builds it on the Mac |
 | Multiplayer lobby | Mockup needed for the lobby screens | Lane F's skeleton lobby (S-141 shot) stands in; Westley's verdict pending |
-| Simulation | The sim viewer (2b step 1) | Specced 2026-10-12, not built |
+| Simulation | The sim viewer (`plans/2026-10-12-simviewer-plan.md`) | Specced 2026-10-12, not built |
 
 ## 5. Dependency notes
 
