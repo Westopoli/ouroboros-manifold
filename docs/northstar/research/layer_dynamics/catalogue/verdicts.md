@@ -1,6 +1,6 @@
 # Catalogue verdicts (Westley)
 
-One row per layout: `| id | verdict | feedback |`. Verdicts: the words `review.py` accepts. Applied with `python3 scripts/skilllab/catalogue/review.py apply --dir docs/northstar/research/layer_dynamics/catalogue --verdicts <this file>`.
+One row per layout: `| id | verdict | feedback |`. Verdicts used in this file: A, B, draw, deny, hold, redraw, out. `review.py apply` currently accepts only A, B, draw, deny (story H-071 fixes this); the last row per layout id wins; his words live in `docs/northstar/story_reviews/westley/ruled.md` from 2026-11-02. Applied with `python3 scripts/skilllab/catalogue/review.py apply --dir docs/northstar/research/layer_dynamics/catalogue --verdicts <this file>`.
 
 ## Batch one, 2026-10-31 (12-layout sample; the whole batch is denied on the same defect)
 
