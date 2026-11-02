@@ -82,7 +82,7 @@ def _violations(layout, presets, rules):
         arcs, rows = layout[side].get("arcs", []), layout[side]["units"]
         tagged = any("arc" in u for u in rows)
         for i, u in enumerate(rows):
-            arc = arcs[u["arc"]] if "arc" in u else arcs[0] if len(arcs) == 1 and not tagged else None
+            arc = arcs[u["arc"]] if "arc" in u and arcs else arcs[0] if len(arcs) == 1 and not tagged else None
             if arc is None:
                 continue
             d = math.hypot(u["x"] - arc["centre"][0], u["y"] - arc["centre"][1])
