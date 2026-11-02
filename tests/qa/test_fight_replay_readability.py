@@ -10,8 +10,10 @@ shows each. `qa_state()` gains `glyphs: {role: shape}`." Item 5: "`end: A wins (
 (strings, compared exactly in tests)."
 
 Each scene test is isolation (the scene alone on a hand-written file) and integration (the file goes through snapshot.write/validate, the same path run.py feeds).
-Premises not given by the story are NOT pinned here (see the report's questions): the style and shape spelling (only distinctness), the margin split, the side spelling in
-`rings` (A or B is read from the entry itself), when `end_label`/`rate_label` are set (read on the last frame only).
+Architect answers (2026-11-02, recorded with the Replay readability ruling) are pinned here: `rate_label` is set on EVERY frame when a rate file exists (it is the layout's
+verdict) and "" when none; `end_label` is last-frame-only, "" before; `qa_state` `facing_px` equals the glyph size, minimum 8; ring-centre ties go to the lowest unit id; style
+names solid/dotted/dashed/dash_dot/long_dash/double and glyph names triangle/diamond/square/pentagon/circle/hexagon in role order Raider, Interceptor, Vanguard, Warden, Bombard,
+Bastion; sides spelt A and B; rates with two decimals; camera margin 10% of the span each side; wide fields fit per frame with unit_px >= 14.
 
 Positive controls (green today): every fixture validates through snapshot.validate; the label checker rejects "wins" in a mutual-wipe label and accepts it in a win label;
 the world-space bounding box helper agrees with a hand-computed box.
@@ -33,6 +35,8 @@ ROOT = HERE.parents[1]
 from test_fight_replay import _hud_lines, _key, _open, _state, _write_fight  # noqa: E402
 from scripts.skilllab.arena import snapshot  # noqa: E402
 
+STYLES = ["solid", "dotted", "dashed", "dash_dot", "long_dash", "double"]
+SHAPES = ["triangle", "diamond", "square", "pentagon", "circle", "hexagon"]
 ROLES = ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]
 RANGES = {"Raider": 150.0, "Interceptor": 200.0, "Vanguard": 250.0, "Warden": 400.0, "Bombard": 1200.0, "Bastion": 100.0}
 
@@ -141,6 +145,10 @@ def test_camera_fit_contains_every_unit_over_all_frames_and_units_are_at_least_1
     assert x0 <= min(xs) and y0 <= min(ys) and x1 >= max(xs) and y1 >= max(ys), "fit %s does not contain box %s" % (q0["camera"]["fit"], (min(xs), min(ys), max(xs), max(ys)))
     assert q0["camera"]["fit"] == q2["camera"]["fit"], "fit changed over the fight"
     assert q0["camera"]["unit_px"] >= 14
+    w, h = max(xs) - min(xs), max(ys) - min(ys)   # Architect: margin 10% of the span each side (at least; the window's aspect may widen one axis)
+    eps = 1e-3
+    assert x0 <= min(xs) - 0.1 * w + eps and x1 >= max(xs) + 0.1 * w - eps and y0 <= min(ys) - 0.1 * h + eps and y1 >= max(ys) + 0.1 * h - eps, \
+        "fit %s has under a 10%% margin round box %s" % (q0["camera"]["fit"], (min(xs), min(ys), max(xs), max(ys)))
 
 
 def test_a_4000_wu_field_keeps_units_at_14_px(tmp_path, monkeypatch):
@@ -149,6 +157,37 @@ def test_a_4000_wu_field_keeps_units_at_14_px(tmp_path, monkeypatch):
     q, _ = _qa(monkeypatch, path)
     assert "camera" in q, "qa_state keys %s lack camera" % sorted(q)
     assert q["camera"]["unit_px"] >= 14
+
+
+def test_a_wide_field_fits_per_frame_with_units_at_14_px_on_every_frame(tmp_path, monkeypatch):
+    """Architect: on a wide field the fit is per frame with unit_px >= 14: on frame 0 and on the last frame the fit contains that frame's centroid and unit_px >= 14."""
+    path, doc = _fight(tmp_path, gap=4000.0)
+    for last, n in ((False, 0), (True, 2)):
+        q, _ = _qa(monkeypatch, path, last=last)
+        assert "camera" in q, "qa_state keys %s lack camera" % sorted(q)
+        pts = [(u["x"], u["y"]) for u in doc["frames"][n]["units"]]
+        cx, cy = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
+        x0, y0, x1, y1 = q["camera"]["fit"]
+        assert x0 <= cx <= x1 and y0 <= cy <= y1, "frame %d: fit %s misses the centroid %s" % (n, q["camera"]["fit"], (cx, cy))
+        assert q["camera"]["unit_px"] >= 14
+
+
+def _facing_ok(facing_px, unit_px) -> bool:
+    """The facing check kept here so its control is green today: the tick equals the glyph size and is never under 8."""
+    return facing_px == max(8, unit_px) and facing_px >= 8
+
+
+def test_control_facing_checker_rejects_a_short_tick_and_a_mismatch():
+    """H-053 item 4 control: 14 px glyph with a 14 px tick passes; a 5 px tick (the old one), a 20 px tick on a 14 px glyph and a 7 px tick on a 7 px glyph fail."""
+    assert _facing_ok(14, 14) and not _facing_ok(5, 14) and not _facing_ok(20, 14) and not _facing_ok(7, 7)
+
+
+def test_facing_tick_equals_the_glyph_size(tmp_path, monkeypatch):
+    """Item 4: "Facing tick length equals the glyph size (never under 8 px)"; Architect: `qa_state` key `facing_px` equals the glyph size (camera unit_px), minimum 8."""
+    path, _ = _fight(tmp_path)
+    q, _ = _qa(monkeypatch, path)
+    assert "facing_px" in q and "camera" in q, "qa_state keys %s" % sorted(q)
+    assert _facing_ok(q["facing_px"], q["camera"]["unit_px"]), "facing_px %r, unit_px %r" % (q["facing_px"], q["camera"]["unit_px"])
 
 
 # ---------------------------------------------------------------- items 2 and 3: rings, legend, glyphs
@@ -169,6 +208,8 @@ def test_rings_are_one_per_role_per_side_with_a_style_per_role(tmp_path, monkeyp
         by_role.setdefault(r["role"], set()).add(r["style"])
     assert all(len(s) == 1 for s in by_role.values()), "a role has different styles per side: %s" % by_role
     assert len({next(iter(s)) for s in by_role.values()}) == 6, "styles are not six distinct: %s" % by_role
+    assert {role: next(iter(s)) for role, s in by_role.items()} == dict(zip(ROLES, STYLES)), "style names by role: %s" % by_role
+    assert {r["side"] for r in rings} == {"A", "B"}, "side spelling: %s" % {r["side"] for r in rings}
 
 
 def test_ring_is_centred_on_the_unit_of_that_role_nearest_the_opposing_centroid_at_frame_0(tmp_path, monkeypatch):
@@ -176,12 +217,27 @@ def test_ring_is_centred_on_the_unit_of_that_role_nearest_the_opposing_centroid_
     (x 1000) is nearest A. So A rings are at x 50 and B rings at x 1000, y = 100 + 40 * role index."""
     path, _ = _fight(tmp_path)
     q, _ = _qa(monkeypatch, path)
-    sides = sorted({r["side"] for r in q["rings"]})
-    a, b = sides
+    a = "A"
     for r in q["rings"]:
         want_x = 50.0 if r["side"] == a else 1000.0
         want_y = 100.0 + 40.0 * ROLES.index(r["role"])
         assert [round(v, 1) for v in r["centre"]] == [want_x, want_y], r
+
+
+def test_a_tie_for_nearest_the_opposing_centroid_goes_to_the_lowest_unit_id(tmp_path, monkeypatch):
+    """Architect: ring-centre ties go to the lowest unit id. A's two Raiders (ids 1 and 2) sit at y 150 and 250 on the same x, B's centroid y is 200, so both are exactly as near;
+    the A Raider ring is centred on unit 1 (0, 150). Control: the fixture is a true tie and still validates."""
+    path, doc = _fight(tmp_path)
+    f0 = doc["frames"][0]["units"]
+    f0[0].update(x=0.0, y=150.0)
+    f0[1].update(x=0.0, y=250.0)
+    cy = sum(u["y"] for u in f0 if u["side"] == "B") / 12
+    assert cy == 200.0 and abs(f0[0]["y"] - cy) == abs(f0[1]["y"] - cy) and f0[0]["id"] == 1 and f0[1]["id"] == 2 and snapshot.validate(doc) == []
+    path = _write_fight(tmp_path / "tie.fight.json", doc)
+    q, _ = _qa(monkeypatch, path)
+    assert "rings" in q, "qa_state keys %s lack rings" % sorted(q)
+    ring = [r for r in q["rings"] if r["side"] == "A" and r["role"] == "Raider"]
+    assert len(ring) == 1 and [round(v, 1) for v in ring[0]["centre"]] == [0.0, 150.0], ring
 
 
 def test_an_off_frame_ring_is_still_listed_in_rings_and_in_the_legend(tmp_path, monkeypatch):
@@ -208,6 +264,7 @@ def test_six_distinct_role_glyphs_and_the_legend_shows_each(tmp_path, monkeypatc
     g = q["glyphs"]
     assert set(g) == set(ROLES) and all(isinstance(v, str) and v for v in g.values())
     assert len(set(g.values())) == 6, "glyph shapes not distinct: %s" % g
+    assert g == dict(zip(ROLES, SHAPES)), "glyph names by role: %s" % g
     lines = _hud_lines(st)
     for role, shape in g.items():
         assert any(role in t and shape in t for t in lines), "legend lacks %s with %s among Label texts %s" % (role, shape, lines)
@@ -249,3 +306,26 @@ def test_rate_label_names_measured_and_predicted_and_the_verdict(rate_a, predict
     assert "rate_label" in q, "qa_state keys %s lack rate_label" % sorted(q)
     assert q["rate_label"] == label
     assert label in _hud_lines(st), "no HUD text equal to %r among Label texts %s" % (label, _hud_lines(st))
+
+
+# ---------------------------------------------------------------- when the labels are set (Architect answers)
+
+def test_rate_label_is_the_layouts_verdict_on_every_frame_and_empty_without_a_rate_file(tmp_path, monkeypatch):
+    """Architect: `rate_label` is set on EVERY frame when a rate file exists (frame 0 and the last frame carry the same exact string) and is "" when there is none.
+    Control inside: the no-rate-file run reads "" on both frames, so a non-empty value below comes from the file."""
+    label = "rate A 0.75 vs predicted 0.75: AGREE (band 0.10)"
+    path, _ = _fight(tmp_path, name="L-0001-s1")
+    q0, _ = _qa(monkeypatch, path)
+    q2, _ = _qa(monkeypatch, path, last=True)
+    assert q0.get("rate_label") == "" and q2.get("rate_label") == "", "no rate file: %r / %r (keys %s)" % (q0.get("rate_label"), q2.get("rate_label"), sorted(q0))
+    _rate_file(tmp_path, 0.75, 0.75, True)
+    q0, _ = _qa(monkeypatch, path)
+    q2, _ = _qa(monkeypatch, path, last=True)
+    assert q0.get("rate_label") == label and q2.get("rate_label") == label, "with a rate file: %r / %r" % (q0.get("rate_label"), q2.get("rate_label"))
+
+
+def test_end_label_is_empty_before_the_last_frame(tmp_path, monkeypatch):
+    """Architect: `end_label` stays last-frame-only, "" before. Frame 0 of a win fixture reads "" (the last frame reads the story string, see the end-label test)."""
+    path, _ = _fight(tmp_path, winner="A")
+    q0, _ = _qa(monkeypatch, path)
+    assert q0.get("end_label") == "", "frame 0 end_label %r (keys %s)" % (q0.get("end_label"), sorted(q0))
