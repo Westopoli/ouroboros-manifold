@@ -720,7 +720,8 @@ def test_fuel_report_real_register_holds_r_039_05_not_205a(tmp_path):
     import card_lint  # noqa: E402
 
     project = card_lint.DEFAULT_PROJECT
-    register = card_lint.DEFAULT_REGISTER
+    # Vendored register as it stood before 1ec91c0c closed Q-039-01 (2026-10-18).
+    register = Path(__file__).resolve().parent / "fixtures" / "ambiguity_register_pre_1ec91c0c.md"
     flagged_rules, flagged_stories = card_lint.register_flags(register)
     assert "R-039-05" in flagged_rules
 
@@ -737,6 +738,27 @@ def test_fuel_report_real_register_holds_r_039_05_not_205a(tmp_path):
         Path(__file__).resolve().parent / "fixtures" / "205a-e05-collision-lottery.md"
     )
     assert not card_lint.card_is_held(real_205a, project, flagged_rules, flagged_stories)
+
+
+def test_control_register_without_open_flag_does_not_hold_r_039_05(tmp_path):
+    """Positive control for the test above: a register with no open flag
+    flags no rule, so the R-039-05 card is not held. See also:
+    test_fuel_report_real_register_holds_r_039_05_not_205a."""
+    sys.path.insert(0, str(CARD_LINT.parent))
+    import card_lint  # noqa: E402
+
+    register = tmp_path / "ambiguity_register.md"
+    register.write_text("| Flag | Epic / story | Question | Candidate answers | Status | Answer |\n|---|---|---|---|---|---|\n")
+    flagged_rules, flagged_stories = card_lint.register_flags(register)
+    assert "R-039-05" not in flagged_rules
+    held_card = {
+        "acceptance": [
+            f"{sys.executable} -m pytest -q "
+            "tests/csim/test_E05_S039_when_everyone_wants_the_same_region.py"
+            "::test_R_039_05_each_collider_s_strength_applied"
+        ],
+    }
+    assert not card_lint.card_is_held(held_card, card_lint.DEFAULT_PROJECT, flagged_rules, flagged_stories)
 
 
 def test_fuel_report_text_mode_prints_summary(tmp_path):
