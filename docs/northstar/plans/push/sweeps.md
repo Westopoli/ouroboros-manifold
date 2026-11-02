@@ -15,3 +15,4 @@ Row format (spec `docs/northstar/plans/2026-10-29-layered-gate-spec.md` section 
 | 2026-11-01 16:52 | d0f4caa440b29248ea09ad366c1e7bfd05b4838c | PASS | new: none | red: 129 | docs/northstar/plans/push/sweeps/2026-11-01-d0f4caa440b29248ea09ad366c1e7bfd05b4838c.txt |
 | 2026-11-02 00:39 | d12055f68a4191e3570f8013de0a14d89e7ff3bd | PASS | new: none | red: 130 | docs/northstar/plans/push/sweeps/2026-11-02-d12055f68a4191e3570f8013de0a14d89e7ff3bd.txt |
 | 2026-11-02 01:10 | a19b2f65559240b708585fe65eb8b5c599bbcf0c | PASS | new: none | red: 126 | docs/northstar/plans/push/sweeps/2026-11-02-a19b2f65559240b708585fe65eb8b5c599bbcf0c.txt |
+| 2026-11-02 04:54 | fd7f5bcfb9e83d86c377c788e9339eb72f01d206 | PASS | new: none | red: 123 | docs/northstar/plans/push/sweeps/2026-11-02-fd7f5bcfb9e83d86c377c788e9339eb72f01d206.txt |
