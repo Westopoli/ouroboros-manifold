@@ -45,7 +45,7 @@ Round three batch 1, produced by round3.py at 016b36f05a7a8850138cbe35545425b73a
 
 ### DRAFT: Producer gaps for Westley
 
-- Rates are given only on 11 of 30 (chokepoint L-0055 0.98, vantage L-0061 0.98, flank L-0067..69 0.95, L-0070/71 0.75, city L-0073 0.75, trap L-0080/L-0083 0.75); other ratios are 'his'.
+- Rates are given only on 10 of 30 (chokepoint L-0055 0.98, vantage L-0061 0.98, flank L-0067..69 0.95, L-0070/71 0.75, city L-0073 0.75, trap L-0080/L-0083 0.75); other ratios are 'his'.
 - The trap order mode has no 'red goes into the pocket while blue holds', so both_same_point at the pocket (blue attack-moves there too).
 - Trap pictures cannot name the led side nor draw orders_point (the scene does not read it).
 - The converter has no route check and its feature table has no walls/buildings/hills, so round3.py writes layouts directly with the round-two feature schema.
