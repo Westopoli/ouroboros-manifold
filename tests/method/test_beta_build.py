@@ -140,11 +140,14 @@ def test_refresh_script_exists_and_is_executable():
     assert os.access(REFRESH, os.X_OK), f"{REFRESH} is not executable"
 
 
-def test_dry_run_prints_the_six_steps_in_order():
+def test_dry_run_prints_the_six_steps_in_order():  # id kept (known-red lists); it now pins seven lines
     """H-028 Tests: "A dry run of the refresh script prints the export and symlink steps." Interfaces 3:
     `--dry-run [--root <dir>] [--tree <dir>] [--sha <sha>]` prints, in this order, six DRY lines (godot.real
     export, pipe build, `ln -sfn` link, the two installs, keep last 3). `$HOME` in the install lines may be
-    printed literally or already substituted by the run's HOME."""
+    printed literally or already substituted by the run's HOME.
+    Re-pinned round 2 (Architect ruling, H-028 Interfaces item 4, Westley 2026-11-02): seven lines, a new FIRST
+    line `DRY godotsteam: <root>/cache/godotsteam -> <tree>/addons/godotsteam (on a cache miss:
+    scripts/fetch_godotsteam.sh, sha256-pinned)`, then the six above in their order."""
     base = tmp("h028-dry-")
     home, root, tree = base / "home", base / "om-push", base / "tree"
     for d in (home, root, tree):
@@ -154,18 +157,20 @@ def test_dry_run_prints_the_six_steps_in_order():
     got = [l for l in r.stdout.splitlines() if l.startswith("DRY ")]
     b = f"{root}/beta"
     want = [
+        f"DRY godotsteam: {root}/cache/godotsteam -> {tree}/addons/godotsteam "
+        "(on a cache miss: scripts/fetch_godotsteam.sh, sha256-pinned)",
         f'DRY export: godot.real --headless --path {tree} --export-release "Linux" {b}/{SHA}/{BINARY}',
         f"DRY pipe: scripts/build_pipe_linux.sh -> {b}/{SHA}/ouroboros_pipe",
         f"DRY link: ln -sfn {b}/{SHA} {b}/current",
     ]
-    assert got[:3] == want, got
-    assert len(got) == 6, got
-    for line, (src, dst) in zip(got[3:5], ((f"{tree}/scripts/beta/om-beta", ".local/bin/om-beta"),
+    assert got[:4] == want, got
+    assert len(got) == 7, got
+    for line, (src, dst) in zip(got[4:6], ((f"{tree}/scripts/beta/om-beta", ".local/bin/om-beta"),
                                            (f"{tree}/scripts/beta/ouroboros-beta.desktop",
                                             ".local/share/applications/ouroboros-beta.desktop"))):
         m = re.fullmatch(r"DRY install: (\S+) -> (\$HOME|" + re.escape(str(home)) + r")/" + re.escape(dst), line)
         assert m and m.group(1) == src, line
-    assert got[5] == f"DRY keep: last 3 builds under {b}/", got[5]
+    assert got[6] == f"DRY keep: last 3 builds under {b}/", got[6]
 
 
 def test_dry_run_changes_nothing():
