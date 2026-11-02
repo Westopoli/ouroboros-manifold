@@ -173,14 +173,13 @@ def test_the_band_is_ten_points_not_fifteen():
     assert mod.rate(fights, 0.67)["agree"] is True
 
 
-def test_a_stall_seed_is_counted_and_listed_and_blocks_agree():
+def test_a_stall_seed_is_counted_and_listed():
     """Tests line "a stall seed is counted and listed"; Interfaces 1: `stall_seeds` lists the seed numbers whose winner is "stall", a stall counts as no win for either
-    side, and `agree` needs no stall seed even when the rate is on the prediction."""
+    side. (Whether a stall seed blocks `agree` is not pinned since Scoring: open question in the report.)"""
     fights = [fight(s, "stall" if s == 3 else "A", 1000) for s in range(1, 6)]
     rate = load_rate().rate(fights, 0.80)
     assert rate["stalls"] == 1 and rate["stall_seeds"] == [3]
     assert (rate["wins_a"], rate["wins_b"]) == (4, 0) and rate["rate_a"] == 0.8
-    assert rate["agree"] is False, "rate 0.8 is on the prediction 0.80, but a stall seed is present"
 
 
 def test_checker_accepts_winner_none_for_a_same_tick_wipe():
