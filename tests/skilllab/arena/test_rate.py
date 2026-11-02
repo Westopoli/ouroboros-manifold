@@ -188,12 +188,12 @@ def test_checker_accepts_winner_none_for_a_same_tick_wipe():
     assert snapshot.validate(fight(1, "none")) == []
 
 
-def test_a_same_tick_wipe_is_listed_as_none_and_blocks_agree():
-    """Audit item 2 / Interfaces 1: `result.winner` "none" (both sides wiped on the same tick) is listed in `none_seeds`, counts as no win, and blocks `agree`."""
+def test_a_same_tick_wipe_is_listed_as_none():
+    """Audit item 2 / Interfaces 1: `result.winner` "none" (both sides wiped on the same tick) is listed in `none_seeds`, and counts as no win. (Whether it blocks `agree` is not pinned since Scoring.)"""
     fights = [fight(s, "none" if s == 2 else "A", 1000) for s in range(1, 6)]
     rate = load_rate().rate(fights, 0.80)
     assert rate["none_seeds"] == [2] and rate["stall_seeds"] == [] and rate["stalls"] == 0
-    assert rate["wins_a"] == 4 and rate["rate_a"] == 0.8 and rate["agree"] is False
+    assert rate["wins_a"] == 4 and rate["rate_a"] == 0.8
 
 
 def test_median_seed_is_the_median_tick_count_and_the_lower_seed_on_ties():
