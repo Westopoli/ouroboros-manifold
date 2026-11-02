@@ -15,6 +15,7 @@ const SCENES := {
 	"settings": "res://scenes/settings/settings.tscn",
 	"galaxy": "res://scenes/galaxy/galaxy_view.tscn",
 	"tactical_c": "res://scenes/tactical_c/tactical_view.tscn",
+	"beta_field": "res://scenes/beta/stage_field.tscn",
 	"lobby": "res://scenes/lobby/lobby.tscn",
 	"chronicle": "res://scenes/world/chronicle_scroll_panel.tscn",
 }
