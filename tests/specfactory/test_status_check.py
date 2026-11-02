@@ -532,3 +532,80 @@ def _mp(res):
 
 
 
+
+
+# ---------------------------------------------------------------- H-050: row scope of the status check
+# H-050: "The status check counts a story only when a commit changed that story's own row, not when its id is
+# mentioned inside another row." (docs/method/harness.md row H-050; DEC-status-check-row-scope-2026-11-01:
+# diff the row files between anchor and ref, keep lines starting `| <id> |`.)
+# Fixture: anchor commit adds docs/method/README.md and a harness.md with rows; later commits edit rows.
+# UNSTATED INTERFACE (reported): none; the script is run as `status_check.py --repo <dir> --base main`.
+
+H050_HARNESS = "docs/method/harness.md"
+H050_HEAD = "# Harness\n\n| Id | Story | Status | Evidence |\n|---|---|---|---|\n"
+
+
+def _h050_repo(tmp_path, old_rows, new_rows):
+    """Anchor commit holds old_rows; the next commit (after the anchor) rewrites harness.md to new_rows."""
+    repo = tmp_path
+    _git(repo, "init", "-q", "-b", "main")
+    (repo / "docs/method").mkdir(parents=True)
+    (repo / "docs/method/README.md").write_text("method\n")
+    (repo / H050_HARNESS).write_text(H050_HEAD + old_rows)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "anchor")
+    (repo / H050_HARNESS).write_text(H050_HEAD + new_rows)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "edit rows")
+
+
+def _h050_run(tmp_path):
+    return subprocess.run([sys.executable, str(SCRIPT), "--repo", str(tmp_path), "--base", "main"],
+                          capture_output=True, text=True, cwd=tmp_path, timeout=60)
+
+
+def test_h050_control_own_row_change_to_seen_still_counts(tmp_path):
+    """H-050 control (green today): a commit that adds S-111's own row as Seen, with no `Seen S-111`
+    commit, is `seen_without_commit DRIFT S-111`; so a red below means the scope is wrong, not the harness."""
+    _h050_repo(tmp_path, "", "| S-111 | x | Seen | none |\n")
+    res = _h050_run(tmp_path)
+    assert "STATUS seen_without_commit DRIFT S-111" in res.stdout.splitlines(), res.stdout
+
+
+def test_h050_control_own_row_change_to_tested_still_counts(tmp_path):
+    """H-050 control (green today): adding S-112's own row as Tested with no `Land S-112` commit is
+    `tested_without_land DRIFT S-112`."""
+    _h050_repo(tmp_path, "", "| S-112 | x | Tested | none |\n")
+    res = _h050_run(tmp_path)
+    assert "STATUS tested_without_land DRIFT S-112" in res.stdout.splitlines(), res.stdout
+
+
+def test_h050_mention_in_another_row_does_not_count_seen(tmp_path):
+    """H-050: "counts a story only when a commit changed that story's own row, not when its id is mentioned
+    inside another row." S-110's Seen row predates the anchor and is untouched; a later commit adds a row
+    H-049 that mentions S-110. No `seen_without_commit DRIFT S-110`."""
+    old = "| S-110 | x | Seen | none |\n"
+    _h050_repo(tmp_path, old, old + "| H-049 | finding | Ready | S-110 diagnosis |\n")
+    res = _h050_run(tmp_path)
+    assert "STATUS seen_without_commit DRIFT S-110" not in res.stdout.splitlines(), res.stdout
+    assert res.returncode == 0, res.stdout
+
+
+def test_h050_mention_in_another_row_does_not_count_tested(tmp_path):
+    """H-050: same rule for Tested: S-113's Tested row predates the anchor; a later row edit mentioning S-113
+    does not make `tested_without_land DRIFT S-113`."""
+    old = "| S-113 | x | Tested | none |\n| H-049 | finding | Ready | none |\n"
+    new = "| S-113 | x | Tested | none |\n| H-049 | finding | Ready | S-113 diagnosis |\n"
+    _h050_repo(tmp_path, old, new)
+    res = _h050_run(tmp_path)
+    assert "STATUS tested_without_land DRIFT S-113" not in res.stdout.splitlines(), res.stdout
+    assert res.returncode == 0, res.stdout
+
+
+def test_h050_own_row_status_edit_counts(tmp_path):
+    """H-050: "counts a story only when a commit changed that story's own row". S-114's row exists before the
+    anchor as Ready and a later commit edits it to Seen (the id's occurrence count is unchanged, which
+    `git log -S` does not see); with no `Seen S-114` commit that is `seen_without_commit DRIFT S-114`."""
+    _h050_repo(tmp_path, "| S-114 | x | Ready | none |\n", "| S-114 | x | Seen | none |\n")
+    res = _h050_run(tmp_path)
+    assert "STATUS seen_without_commit DRIFT S-114" in res.stdout.splitlines(), res.stdout
