@@ -6,5 +6,5 @@ Description=Slow-tier sweep of main (no model is called)
 Type=oneshot
 WorkingDirectory=%h/Projects/om-push/main
 Environment=PATH=/home/westopoli/.local/bin:/usr/local/bin:/usr/bin:/bin
-# Refreshes the play checkout to origin/main and runs its copy: never the live checkout. No gate.lock: a sweep and a landing gate run at once.
+# Refreshes the play checkout to origin/main and runs its copy: never the live checkout. No gate lock: a sweep and a landing gate run at once.
 ExecStart=/bin/sh -c 'git -C %h/Projects/om-push/main fetch -q origin && git -C %h/Projects/om-push/main reset -q --hard origin/main && git -C %h/Projects/om-push/main cat-file -e origin/main:scripts/specfactory/sweep.sh && exec /bin/bash %h/Projects/om-push/main/scripts/specfactory/sweep.sh'

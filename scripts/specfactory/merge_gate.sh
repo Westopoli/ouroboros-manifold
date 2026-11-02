@@ -119,7 +119,8 @@ gate_row() {
     echo "GATE row $row"
     local csv="${MERGE_GATE_RUNS_CSV:-${HOME:-$SCRATCH_ROOT}/Projects/om-push/gate_runs.csv}"
     mkdir -p "$(dirname "$csv")"
-    echo "$row" >>"$csv"
+    # H-059: two gates (lab and beta) append at once; the row goes in under flock on the csv.
+    ( flock 9; echo "$row" >&9 ) 9>>"$csv"
 }
 cleanup() {
     gate_row "$GATE_RC"
@@ -211,7 +212,7 @@ esac
 echo "GATE tier $TIER"
 
 # -------------------------------------------------------------- 0. base
-# The clerk merges origin/main inside gate.lock; a candidate gated against a main that has since
+# The clerk merges origin/main inside the channel gate lock (gate-lab.lock or gate-beta.lock); a candidate gated against a main that has since
 # moved fails tests that compare with main's build. The sha, not the name, is the baseline from here on.
 # See also: docs/northstar/plans/workflows_2026-10-07/rules.md section (b) "Gate";
 # ledger row FINDING-gate-base-before-lock

@@ -676,9 +676,11 @@ def _store_cached_baseline(cache_path: Path, harness_sha: str, main_sha: str,
         }
         if input_hash is not None:
             data["suites"][suite_key]["input_hash"] = input_hash
-        tmp_path = cache_path.with_suffix(".json.tmp")
-        tmp_path.write_text(json.dumps(data))
-        tmp_path.replace(cache_path)
+        # H-059: a unique temp name in the same directory (mktemp), then rename, so two gates never share a tmp file.
+        fd, tmp_name = tempfile.mkstemp(dir=cache_path.parent, prefix=cache_path.name + ".")
+        with os.fdopen(fd, "w") as f:
+            f.write(json.dumps(data))
+        os.replace(tmp_name, cache_path)
 
 
 SUITE_INPUTS_REL = "scripts/specfactory/suite_inputs.toml"
