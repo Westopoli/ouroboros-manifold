@@ -304,3 +304,137 @@ def test_scope5_failed_listen_takes_retry_path(env, mode):
     assert not fk.alive(ls[0][1])
     assert ls[1][0] != ls[0][0] and fk.alive(ls[1][1])
     assert g.qa_port == ls[1][0]
+
+
+# --- story item 4: a dead holder's lock does not block -------------------------
+
+HOLDER = (
+    "import fcntl,os,sys,time\n"
+    "d=sys.argv[1]; os.makedirs(d, exist_ok=True)\n"
+    "for p in range(47500,47600):\n"
+    "    fd=os.open(os.path.join(d,'%d.lock'%p), os.O_RDWR|os.O_CREAT, 0o644)\n"
+    "    fcntl.flock(fd, fcntl.LOCK_EX|fcntl.LOCK_NB)\n"
+    "print('held', flush=True)\n"
+    "time.sleep(3600)\n"
+)
+
+
+def _spawn_holder(home: Path) -> subprocess.Popen:
+    d = home / "Projects" / "om-push" / "tmp" / "qa_ports"
+    p = subprocess.Popen([sys.executable, "-c", HOLDER, str(d)], stdout=subprocess.PIPE, text=True)
+    assert p.stdout.readline().strip() == "held"
+    return p
+
+
+def test_control_live_holder_holds_flock(env):
+    """CONTROL (story item 4): a live process holding the locks makes the test's
+    own flock probe fail on every port, so 'dead holder' below is a real contrast."""
+    h = _spawn_holder(env.home)
+    try:
+        assert not any(lock_free(env.home, p) for p in range(LO, HI + 1))
+    finally:
+        h.kill()
+        h.wait()
+
+
+def test_item4_dead_holder_does_not_block_live_holder_does(env):
+    """Story item 4 (H-066 scope 1): 'A lock file left behind by a dead process does
+    not block a port (flock is released on process exit)'; a live holder blocks it
+    (raises `QA PORT REFUSED no free port`)."""
+    h = _spawn_holder(env.home)
+    try:
+        with pytest.raises(Exception) as ei:
+            pick_free_port()
+        assert "QA PORT REFUSED no free port" in str(ei.value)
+    finally:
+        h.kill()
+        h.wait()
+    port = pick_free_port()
+    assert LO <= port <= HI
+    assert lock_path(env.home, port).exists()
+
+
+# --- story item 5 control: a listener in the game's own group is accepted ------
+
+def test_item5_control_own_group_listener_accepted(env, capfd):
+    """Story item 5 positive control (H-066 scope 2): 'a listener inside the game's
+    own process group is accepted': no FOREIGN message, one launch, no retry. The
+    decoy-in-another-session case is test_scope2_foreign_listener_detected_and_retried."""
+    env.plan("listen")
+    g = env.new_game()
+    first = g.qa_port
+    start_and_wait(g)
+    out = capfd.readouterr()
+    assert "QA PORT FOREIGN" not in out.out + out.err
+    assert len(fk.launches(env.state)) == 1
+    assert g.qa_port == first
+
+
+# --- TCP self-connect: wait_for_port must not call it ready --------------------
+
+class _ConnectSpy:
+    """Stands in for the `socket` module inside daemon_client (seam: wait_for_port
+    reaches the network only through `socket.create_connection` looked up on the
+    module attribute `daemon_client.socket`). The first `selfconnect` calls return
+    a REAL self-connected socket (bound to ('127.0.0.1', S) and connected to the
+    same address; getsockname() == getpeername(), nothing listening); later calls
+    go to the real socket module."""
+
+    def __init__(self, selfconnect: int):
+        self.selfconnect = selfconnect
+        self.calls = 0
+
+    def __getattr__(self, name):
+        return getattr(socket, name)
+
+    def create_connection(self, addr, *a, **kw):
+        self.calls += 1
+        if self.calls <= self.selfconnect:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind(("127.0.0.1", 0))
+            me = s.getsockname()
+            s.connect(me)
+            assert s.getsockname() == s.getpeername()
+            return s
+        return socket.create_connection(addr, *a, **kw)
+
+
+def test_control_self_connect_premise_and_normal_connect(env, monkeypatch):
+    """CONTROL (self-connect): the kernel really self-connects (sockname == peername
+    with nothing listening), and a normal listener connect is accepted at once,
+    with one launch and no retry."""
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    s.connect(s.getsockname())
+    assert s.getsockname() == s.getpeername()
+    s.close()
+    spy = _ConnectSpy(selfconnect=0)
+    monkeypatch.setattr(daemon_client, "socket", spy)
+    env.plan("listen")
+    g = env.new_game()
+    start_and_wait(g)
+    assert spy.calls >= 1 and len(fk.launches(env.state)) == 1
+
+
+def test_selfconnect_not_ready_keeps_waiting(env, monkeypatch):
+    """Scope 2 (direct fix for the 0.07 s ConnectionRefused sweep red): a connect
+    whose getsockname() == getpeername() is not ready; wait_for_port keeps waiting
+    and returns only on a real connect (here the second call)."""
+    spy = _ConnectSpy(selfconnect=1)
+    monkeypatch.setattr(daemon_client, "socket", spy)
+    env.plan("listen")
+    g = env.new_game()
+    start_and_wait(g)
+    assert spy.calls >= 2, "a self-connected socket was accepted as ready"
+
+
+def test_selfconnect_only_never_reports_ready(env, monkeypatch):
+    """Same: with nothing ever listening and every connect self-connected,
+    wait_for_port raises instead of returning ready."""
+    spy = _ConnectSpy(selfconnect=10**6)
+    monkeypatch.setattr(daemon_client, "socket", spy)
+    env.plan("never")
+    g = env.new_game()
+    g.start()
+    with pytest.raises(Exception):
+        g.wait_for_port(timeout=2.0)
