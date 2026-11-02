@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@74cc9c
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::S (speed); Architect ruling 2026-10-21 for LAB-REV2-SPEED (Westley may veto)
 """LAB-REV2-SPEED stage one: the rev 2 lab gets faster without changing a byte of what it says.
 
