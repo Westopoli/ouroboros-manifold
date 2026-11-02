@@ -91,22 +91,22 @@ def test_R_087_05_A188_unit_over_200_from_its_anchor_drops_its_target_and_resume
     itself is past the leash, so it drops the target within one cohort cycle and its goal is the march
     goal (it resumes the attack-move). Proves the detector reads 'dropped'."""
     w = world_factory(n_regions=1)
-    u, enemy, anchor = _held_scene(lib, w, switch, 201.0, 350.0)
+    u, enemy, anchor = _held_scene(lib, w, switch, 701.0, 850.0)
     seen = _watch(lib, w, u, 3)
-    assert -1 in seen, "a unit 201 wu from its anchor kept its target: %s" % seen
+    assert -1 in seen, "a unit 701 wu from its anchor kept its target: %s" % seen
     has, gx, gy = dest(lib, w, u)
     assert has == 1 and (gx, gy) == pytest.approx(GOAL, abs=1e-6), "unit did not resume its attack-move"
 
 
 @SWITCHES
 def test_R_087_05_A188_unit_inside_200_of_its_anchor_keeps_a_target_far_from_the_anchor(lib, world_factory, switch):
-    """R-087-05 / A188 boundary: the same scene with the unit 199 wu from its anchor (target still 350 wu from
+    """R-087-05 / A188 boundary: the same scene with the unit 699 wu from its anchor (target still 850 wu from
     it, 151 wu from the unit, in range). The unit is inside its leash, so it keeps the target on every tick.
     RED on the old rule (the target is 350 wu from the anchor and is dropped)."""
     w = world_factory(n_regions=1)
-    u, enemy, anchor = _held_scene(lib, w, switch, 199.0, 350.0)
+    u, enemy, anchor = _held_scene(lib, w, switch, 699.0, 850.0)
     seen = _watch(lib, w, u, 3)
-    assert seen == [enemy] * 3, "a unit 199 wu from its anchor dropped its target for the leash: %s" % seen
+    assert seen == [enemy] * 3, "a unit 699 wu from its anchor dropped its target for the leash: %s" % seen
 
 
 @SWITCHES
@@ -124,13 +124,13 @@ def test_R_087_05_A188_range_at_most_200_behaves_as_before(lib, world_factory, s
 
 @SWITCHES
 def test_R_087_05_A188_range_at_most_200_unit_past_its_leash_drops_as_before(lib, world_factory, switch):
-    """Guard (green before and after): a Raider 201 wu from its anchor with the target in its range drops it
-    (target 250 wu from the anchor, 49 wu from the unit); same outcome under the old and new rule."""
+    """Guard (green before and after): a Raider 801 wu from its anchor (leash = its sensor radius 800, H-057) with the target in its range drops it
+    (target 850 wu from the anchor, 49 wu from the unit); same outcome under the old and new rule."""
     w = world_factory(n_regions=1)
     u, enemy, anchor = _acquire(lib, w, switch, -150.0, enemy_hp=100.0, utype=RAIDER)
     ax, ay = anchor
-    lib.om_unit_teleport(w, u, ax, ay - 201.0, 0)
-    lib.om_unit_teleport(w, enemy, ax, ay - 250.0, 0)
+    lib.om_unit_teleport(w, u, ax, ay - 801.0, 0)      # H-057: a Raider's leash is its sensor radius 800
+    lib.om_unit_teleport(w, enemy, ax, ay - 850.0, 0)
     assert -1 in _watch(lib, w, u, 3)
 
 
