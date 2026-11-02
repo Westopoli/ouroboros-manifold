@@ -1,3 +1,4 @@
+# Rule pins: R-039-05@b3cf0e, R-999-05@?
 # spec: docs/northstar/spec_factory.md pipeline (pre-queue mechanical gate)
 """Tests for scripts/specfactory/card_lint.py.
 
