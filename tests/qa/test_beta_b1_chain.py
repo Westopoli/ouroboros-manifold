@@ -73,6 +73,7 @@ class Walk:
     briefing_state: dict = field(default_factory=dict)
     briefing_controls: list = field(default_factory=list)
     after_state: dict = field(default_factory=dict)
+    godot_args: list = field(default_factory=list)
 
 
 def _click(client, name_options: tuple, label: str, text_options: tuple = ()) -> None:
@@ -85,15 +86,16 @@ def _click(client, name_options: tuple, label: str, text_options: tuple = ()) ->
     client.click(*control_center(ctrl))
 
 
-def _walk(beta: bool) -> Walk:
-    """Boot -> main menu -> galaxy -> mission preparation -> Deploy, only through the QA port's state/tree/click verbs."""
+def _walk(beta: bool, extra_args: tuple = ()) -> Walk:
+    """Boot -> main menu -> galaxy -> mission preparation -> Deploy, only through the QA port's state/tree/click verbs.
+    `beta` sets env OM_BETA=1 for the child; `extra_args` are appended after `--` on its command line (the user args, e.g. `--om-beta`)."""
     saved = {k: os.environ.get(k) for k in ("OM_BETA", "XDG_DATA_HOME")}
     os.environ.pop("XDG_DATA_HOME", None)  # a private user dir under the game's scratch, so no stored profile or privacy flag leaks in
     if beta:
         os.environ["OM_BETA"] = "1"
     else:
         os.environ.pop("OM_BETA", None)
-    g = GodotGame(pick_free_port(), seed=1)
+    g = GodotGame(pick_free_port(), seed=1, extra_args=list(extra_args))
     try:
         g.start()
         g.wait_for_port(PORT_S)
@@ -103,7 +105,7 @@ def _walk(beta: bool) -> Walk:
             else:
                 os.environ[k] = v
         c = g.client
-        w = Walk()
+        w = Walk(godot_args=g.godot_args())
         s = wait_for(c, lambda st: st.get("scene") in (PRIVACY, MAIN_MENU), BOOT_S, label="boot")
         if s["scene"] == PRIVACY:
             _click(c, ("AcceptButton",), "boot")
@@ -120,7 +122,7 @@ def _walk(beta: bool) -> Walk:
         w.briefing_state = c.state()["result"]
         w.briefing_controls = c.tree()["result"]["controls"]
         _click(c, ("Deploy",), "mission preparation")  # ruling 1: Launch is the Deploy button
-        want = BETA_FIELD if beta else TACTICAL
+        want = BETA_FIELD if (beta or "--om-beta" in extra_args) else TACTICAL
         deadline = time.monotonic() + AFTER_DEPLOY_S
         last: dict = {}
         while time.monotonic() < deadline:
@@ -149,6 +151,12 @@ def beta_walk() -> Walk:
 @pytest.fixture(scope="module")
 def plain_walk() -> Walk:
     return _walk(False)
+
+
+@pytest.fixture(scope="module")
+def flag_walk() -> Walk:
+    """Launched with `--om-beta` after `--` and with no OM_BETA in the environment (ruling 7's command-line route)."""
+    return _walk(False, ("--om-beta",))
 
 
 def _nodes(walk: Walk) -> dict:
@@ -222,6 +230,29 @@ def test_picker_qa_key_counts_one_entry_under_om_beta(beta_walk):
     assert isinstance(vp, dict), "H-060: qa_state of mission preparation has no variant_picker dict under OM_BETA=1; qa keys = %r" % (sorted(qa),)
     assert "selected" in vp, "H-060: variant_picker lacks `selected`: %r" % (vp,)
     assert vp.get("count") == 1, "H-060: variant_picker.count = %r, wanted 1" % (vp.get("count"),)
+
+
+# --- Test 2, ruling 7: the command-line route --------------------------------------------------------------------------------------------------
+
+def test_control_om_beta_flag_walk_reaches_mission_preparation_and_carries_the_flag(flag_walk):
+    """H-060 ruling 7 positive control (green today): the `--om-beta` launch really passes the flag after `--` and has no OM_BETA in its environment,
+    and the same verbs reach main menu, galaxy and mission preparation in order, so a red below means `BetaMode` is missing, not that the flag launch
+    cannot walk. (The no-flag, no-env, no-file case is `test_control_picker_absent_without_om_beta` above: no picker.)"""
+    assert "--om-beta" in flag_walk.godot_args[flag_walk.godot_args.index("--"):], "the godot command line lacks --om-beta after `--`: %r" % (flag_walk.godot_args,)
+    assert "OM_BETA" not in os.environ, "OM_BETA is set in the test process: the flag route would not be isolated"
+    assert flag_walk.scenes[:3] == [MAIN_MENU, GALAXY, BRIEFING], "scenes reached with --om-beta = %r" % (flag_walk.scenes,)
+
+
+def test_om_beta_flag_without_env_shows_variant_picker(flag_walk):
+    """H-060 ruling 7: "Beta mode is one question asked in one place: a new static helper `autoload/beta_mode.gd` ... with `active()` true when the
+    environment variable `OM_BETA` is `1`, or `--om-beta` is among `OS.get_cmdline_user_args()` or `OS.get_cmdline_args()`, or `beta_build.txt` exists
+    beside the executable ... Every place this story says 'under `OM_BETA=1`' means `BetaMode.active()`." With `--om-beta` and no `OM_BETA`, mission
+    preparation's `qa_state()` therefore gains `variant_picker` (ruling 3: `count == 1`). RED today: there is no `BetaMode`, so qa_state has no
+    variant_picker key."""
+    qa = flag_walk.briefing_state.get("qa", {})
+    vp = qa.get("variant_picker")
+    assert isinstance(vp, dict), "H-060 ruling 7: --om-beta without OM_BETA gives no variant_picker dict in qa_state of mission preparation; qa keys = %r" % (sorted(qa),)
+    assert vp.get("count") == 1, "H-060 ruling 7: variant_picker.count = %r, wanted 1" % (vp.get("count"),)
 
 
 # --- Test 3: the story play -----------------------------------------------------------------------------------------------------------------
