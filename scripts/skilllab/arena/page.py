@@ -9,8 +9,8 @@ against the current directory), winner, survivors, ticks, agree in green or red,
 
 H-053 (DRAFT-stage2-page): a layout with a `<id>.rate.json` in the directory is shown as one block per layout, after a head and a summary table
 (`_layout_block`); its fight files are not also listed as stage 1 rows. Rates, stall and none seeds, firing_capable and the median seed are the rate
-file's, never recomputed; the per-role survivors are means over the seeds' last frames. Each seed number links to `<id>-s<k>/strip.html`, written
-beside the page, a strip of that seed's frames.
+file's, never recomputed; the per-role survivors are means over the seeds' last frames. One strip per layout, the median seed's; the seed numbers are
+plain text (H-053 Replay readability, no per-seed strip pages).
 """
 import argparse
 import datetime
@@ -27,7 +27,7 @@ STRIP_HEIGHT = 240     # story: frame strip 240 px high
 STAGE2_THUMB_PX = 480  # DRAFT-stage2-thumb-px: a stage 2 strip image is at least this tall (stage 1 stays STRIP_HEIGHT); Westley rules
 FALL_HEIGHT = 480      # DRAFT-fall-map-height: "the last frame larger"; Westley rules
 
-STYLE = ("<style>.agree{background:#bfe8bf}.disagree{background:#f0b8b8}.none{background:#cccccc}td.stall,a.stall{background:#f5d76e}.shot img{outline:4px solid #e6c200}"
+STYLE = ("<style>.agree{background:#bfe8bf}.disagree{background:#f0b8b8}.none{background:#cccccc}td.stall,span.stall{background:#f5d76e}.shot img{outline:4px solid #e6c200}"
          ".stall td{background:#f5d76e}"   # DRAFT-stall-colour: flagged amber; Westley rules
          ".strip figure{display:inline-block;margin:2px;text-align:center}</style>")
 
@@ -159,20 +159,13 @@ def _row_html(cells, tag="td"):
 
 
 def _layout_block(d, out_dir, rate, docs, layout, bad):
-    """One layout's block (title line, the three sentences, survivors, median seed strip, seed line); writes each seed's strip.html beside the page."""
+    """One layout's block (title line, the three sentences, survivors, median seed strip, seed line)."""
     cells = _summary_cells(rate, docs, layout)
     median = docs.get(rate["median_seed"])
     seeds = []
     for s in rate["seeds"]:
-        stem = "%s-s%d" % (rate["layout_id"], s)
-        if s in docs:
-            doc = docs[s]
-            (Path(out_dir) / stem).mkdir(parents=True, exist_ok=True)
-            (Path(out_dir) / stem / "strip.html").write_text(
-                '<!doctype html><meta charset="utf-8"><title>%s</title>%s<body><h1>%s seed %d</h1><div class="strip">%s</div></body>\n'
-                % (html.escape(stem), STYLE, html.escape(rate["layout_id"]), s, _strip(stem, doc["frames"], "", _first_shot(doc["frames"]))))
         cls = "stall" if s in rate["stall_seeds"] else "none" if s in rate["none_seeds"] else ""
-        seeds.append('<a href="%s/strip.html"%s>%d</a>' % (html.escape(stem), ' class="%s"' % cls if cls else "", s))
+        seeds.append('<span%s>%d</span>' % (' class="%s"' % cls if cls else "", s))
     survivors = "".join("<tr><td>%s</td><td>%.1f</td><td>%.1f</td><td>%d</td><td>%d</td></tr>" % (html.escape(r), a, b, sa, sb)
                         for r, a, b, sa, sb in _survivors(list(docs.values()))) if docs else ""
     stem = "%s-s%d" % (rate["layout_id"], rate["median_seed"])
