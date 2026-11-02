@@ -396,8 +396,7 @@ def test_t4c_land_push_rejects_when_main_moved_under_it(tmp_path):
 def test_t4d_land_push_fails_closed_when_the_lock_is_held_past_its_timeout(tmp_path):
     """H-059 ruling 2: "fails closed when the lock is not won inside its timeout". A holder keeps push.lock; the
     script exits non-zero with PUSH REJECT and never pushes or runs pre_gate. Control half: t4a lands with the
-    lock free. The way a test shortens the timeout is Q-H059-4 (gate_channels_park.py)."""
-    assert park.LAND_PUSH_TIMEOUT_ENV is not None, "PARKED Q-H059-4: how a caller sets land_push.sh's lock timeout"
+    lock free. The test shortens the timeout through LAND_PUSH_LOCK_TIMEOUT_S (Q-H059-4, ruled; gate_channels_park.py)."""
     home = tmp_path / "home"
     script = _land_root(tmp_path, "exit 0")
     fd = open(_lock(home, "push.lock"), "w")
