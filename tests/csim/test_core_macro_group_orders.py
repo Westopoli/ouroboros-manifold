@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@74cc9c, R-120-02@5c2e20, R-123-02@80e79e
 """Enemy macro real group orders (B13-8/B9-13).
 
 `om_macro_tick` used to compute `om_macro_command_for_behavior(f->behavior)`
