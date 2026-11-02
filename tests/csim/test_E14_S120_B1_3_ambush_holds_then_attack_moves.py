@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@74cc9c, R-120-02@5c2e20
 """B1-3 (plan 2026-09-30, item B1): ambush holds in cover until a player group
 enters range, then becomes advance_aggressive and attack-moves (R-120-02).
 
