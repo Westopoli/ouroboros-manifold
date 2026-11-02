@@ -307,3 +307,95 @@ def test_linux_export_preset_path_is_set():
     """H-028 Build: "`export_presets.cfg` already has a `Linux` preset with an empty `export_path`; the
     first piece sets the path". Interfaces 3: it is set to `dist/linux/ouroboros_beta.x86_64`."""
     assert linux_export_path() == "dist/linux/" + BINARY, linux_export_path()
+
+
+# ---------------------------------------------------------------- round 2 (Architect ruling 2026-11-02, Interfaces items 4 and 5)
+
+def git_repo(path):
+    """A scratch git repo with one commit; returns its full HEAD sha."""
+    env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@example.invalid",
+               GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@example.invalid")
+    for cmd in (["init", "-q"], ["commit", "-q", "--allow-empty", "-m", "scratch"]):
+        subprocess.run(["git", "-C", str(path), *cmd], check=True, capture_output=True, env=env)
+    return subprocess.run(["git", "-C", str(path), "rev-parse", "HEAD"], check=True, capture_output=True,
+                          text=True).stdout.strip()
+
+
+def test_control_scratch_git_repo_has_a_full_head_sha():
+    """Positive control for the `--sha` default test (H-028 round-2 ruling: "`--sha` defaults to
+    `git -C <tree> rev-parse HEAD`"): the scratch repo helper yields a 40-hex HEAD, so a red there means the
+    script's default differs, not that the fixture is broken. Checks the fixture, not the script."""
+    head = git_repo(tmp("h028-git-ctl-"))
+    assert re.fullmatch(r"[0-9a-f]{40}", head), head
+
+
+def test_sha_defaults_to_git_rev_parse_head_of_the_tree():
+    """H-028 round-2 ruling: "`--sha` defaults to `git -C <tree> rev-parse HEAD`". A scratch git repo as
+    `--tree`, no `--sha`: the sha the dry run prints in its `<root>/beta/<sha>` paths is that repo's full HEAD."""
+    base = tmp("h028-sha-")
+    home, root, tree = base / "home", base / "om-push", base / "tree"
+    for d in (home, root, tree):
+        d.mkdir()
+    head = git_repo(tree)
+    r = run_refresh(["--dry-run", "--root", str(root), "--tree", str(tree)], home)
+    assert r.returncode == 0, (r.returncode, r.stdout, r.stderr)
+    link = next((l for l in r.stdout.splitlines() if l.startswith("DRY link:")), None)
+    assert link == f"DRY link: ln -sfn {root}/beta/{head} {root}/beta/current", (head, r.stdout)
+
+
+def test_installed_desktop_entry_exec_is_absolute_and_exists_under_root():
+    """H-028 round-2 ruling (accepted as built): "the installed copy's `Exec=` path is absolute and exists
+    under `--root`". Publish path with a fake build: `--root <HOME>/Projects/om-push` holds
+    `beta/<sha>/ouroboros_beta.x86_64`, a planted busy PNG is the proof, HOME is a tmpdir. The installed
+    `$HOME/.local/share/applications/ouroboros-beta.desktop` (desktop entries do not expand variables) has
+    an `Exec=` whose binary path is absolute, lies under `--root`, and exists."""
+    base = tmp("h028-install-")
+    home = base / "home"
+    root = home / "Projects" / "om-push"
+    build = root / "beta" / SHA
+    build.mkdir(parents=True)
+    fake = build / BINARY
+    fake.write_text("#!/bin/sh\n")
+    fake.chmod(0o755)
+    proof = write_png(base / "proof.png", "varied")
+    r = run_refresh(["--root", str(root), "--tree", str(ROOT), "--sha", SHA, "--proof", str(proof)], home)
+    assert r.returncode == 0, (r.returncode, r.stdout, r.stderr)
+    installed = home / ".local" / "share" / "applications" / "ouroboros-beta.desktop"
+    assert installed.is_file(), f"{installed} was not installed"
+    entry = parse_desktop(installed.read_text())
+    assert entry and entry.get("Exec"), entry
+    paths = [t for t in shlex.split(entry["Exec"]) if t.endswith(BINARY)]
+    assert paths, entry["Exec"]
+    p = Path(paths[0])
+    assert p.is_absolute() and "$" not in paths[0], paths[0]
+    assert str(p).startswith(str(root) + "/"), (p, root)
+    assert p.is_file() and os.access(p, os.X_OK), p
+
+
+def test_real_run_copies_the_cached_godotsteam_into_the_tree_before_the_export():
+    """H-028 round-2 ruling: "`beta_refresh.sh`'s real run fills `<tree>/addons/godotsteam/` from
+    `<root>/cache/godotsteam/` when the cache has the library". Scratch tree and root, a planted cache
+    library (a file and a nested file), a stub `godot.real` first on PATH (no Godot runs; the export is not
+    performed): after the build phase the library is in `<tree>/addons/godotsteam/` with the same contents,
+    and it was already there when the export command ran (the export needs it). The cache holds the library,
+    so `scripts/fetch_godotsteam.sh` is not needed."""
+    base = tmp("h028-steam-")
+    home, root, tree, bindir = base / "home", base / "om-push", base / "tree", base / "bin"
+    for d in (home, root, tree, bindir):
+        d.mkdir()
+    cache = root / "cache" / "godotsteam"
+    (cache / "linux64").mkdir(parents=True)
+    (cache / "godotsteam.gdextension").write_text("planted-extension\n")
+    (cache / "linux64" / "libgodotsteam.so").write_text("planted-library\n")
+    seen = base / "export-saw.txt"
+    stub = bindir / "godot.real"
+    stub.write_text(f'#!/bin/sh\nls -R "{tree}/addons/godotsteam" > "{seen}" 2>&1\nexit 0\n')
+    stub.chmod(0o755)
+    env = dict(os.environ, HOME=str(home), PATH=f"{bindir}:{os.environ['PATH']}")
+    assert REFRESH.is_file(), f"{REFRESH} does not exist"
+    subprocess.run([str(REFRESH), "--root", str(root), "--tree", str(tree), "--sha", SHA],
+                   capture_output=True, text=True, timeout=60, env=env)
+    dst = tree / "addons" / "godotsteam"
+    assert (dst / "godotsteam.gdextension").read_text() == "planted-extension\n", list(dst.rglob("*"))
+    assert (dst / "linux64" / "libgodotsteam.so").read_text() == "planted-library\n", list(dst.rglob("*"))
+    assert "libgodotsteam.so" in seen.read_text(), "library was not in place when the export ran"
