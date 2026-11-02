@@ -235,7 +235,7 @@ func open_session(seed: int, n_regions: int, features: Array, new_campaign: bool
 	_last_error = ""
 	var exe := _pipe_path()
 	if not FileAccess.file_exists(exe):
-		_last_error = "pipe binary missing"
+		_last_error = "pipe binary missing: run scripts/setup_editor.sh"
 		return false
 	var result: Dictionary = OS.execute_with_pipe(exe, PackedStringArray())
 	if result.is_empty() or not result.has("pid"):
