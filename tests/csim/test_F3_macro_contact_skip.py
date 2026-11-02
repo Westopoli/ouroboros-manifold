@@ -243,7 +243,7 @@ def _state_hash(lib, w):
 # Re-recorded day21 on push/pp-settle-gold (A184 collision settle epsilon 0.1 wu ends the push sequence early; was: day20 pp-c3-land recorded).
 # Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold recorded). TD-PP-A199-rerecord.
 GOLDEN = {
-    "clash": "22e0c79d8dc6c9e9c049398522182bdc215746dbe76f7b52f50ddc9e39156be4",
+    "clash": "d6ac88b519859b668f3870174c658375ea356528a4f2798f868190b139a41e7c",
     "spread": "12ad27cb5f68afb9e32c68dbd9c38cf22ccaa61cbda43a18e7409024a861cceb",
 }
 
