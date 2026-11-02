@@ -2,10 +2,13 @@
 # H-028 stable-beta-build (docs/stories/H-028.md): refresh the standing beta under <root>/beta/.
 #   beta_refresh.sh [--root <dir>] [--tree <dir>] [--sha <sha>]          build: export + pipe into beta/<sha>/
 #   beta_refresh.sh ... --proof <png>   publish: capture check, repoint beta/current, PLAYED.txt, install, keep 3
-#   beta_refresh.sh --dry-run ...       print the six steps, change nothing
+#   beta_refresh.sh --dry-run ...       print the seven steps, change nothing
 #   beta_refresh.sh --check-capture <png>   CAPTURE OK <fraction> (exit 0) or CAPTURE REJECT uniform (exit 3)
 # The clerk builds, wakes the monitors, launches beta/<sha>/ouroboros_beta.x86_64, takes the screen capture
 # (scripts/specfactory/screen_capture.sh), then publishes with --proof. A REJECT leaves beta/current on the previous build.
+# The build phase fills <tree>/addons/godotsteam/ from <root>/cache/godotsteam/ first; a cache miss runs
+# scripts/fetch_godotsteam.sh (sha256-pinned) in the tree and caches the result, so only the first refresh needs the network.
+# --sha defaults to the full `git rev-parse HEAD` of the tree.
 # See also: scripts/specfactory/screen_capture.sh (same uniformity rule), scripts/beta/ (installed templates).
 set -uo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,11 +41,13 @@ PY
 
 if [[ -n "$check" ]]; then check_capture "$check"; exit $?; fi
 
-[[ -n "$sha" ]] || sha="$(git -C "$tree" rev-parse --short HEAD)" || exit 1
+[[ -n "$sha" ]] || sha="$(git -C "$tree" rev-parse HEAD)" || exit 1
 beta="$root/beta"; out="$beta/$sha"; bin=ouroboros_beta.x86_64
+steam_cache="$root/cache/godotsteam"; steam_dst="$tree/addons/godotsteam"
 bin_dst="$HOME/.local/bin/om-beta"; desk_dst="$HOME/.local/share/applications/ouroboros-beta.desktop"
 
 if [[ $dry -eq 1 ]]; then
+  echo "DRY godotsteam: $steam_cache -> $steam_dst (on a cache miss: scripts/fetch_godotsteam.sh, sha256-pinned)"
   echo "DRY export: godot.real --headless --path $tree --export-release \"Linux\" $out/$bin"
   echo "DRY pipe: scripts/build_pipe_linux.sh -> $out/ouroboros_pipe"
   echo "DRY link: ln -sfn $out $beta/current"
@@ -54,6 +59,12 @@ fi
 
 if [[ -z "$proof" ]]; then  # build phase
   mkdir -p "$out" || exit 1
+  if [[ -n "$(ls -A "$steam_cache" 2>/dev/null)" ]]; then
+    mkdir -p "$steam_dst" && cp -a "$steam_cache/." "$steam_dst/" || { echo "BUILD FAIL godotsteam copy" >&2; rm -rf "$out"; exit 1; }
+  else  # cache miss: pinned, sha256-checked fetch into the tree, then keep it for the next refresh
+    "$tree/scripts/fetch_godotsteam.sh" >/dev/null || { echo "BUILD FAIL godotsteam fetch" >&2; rm -rf "$out"; exit 1; }
+    mkdir -p "$steam_cache" && cp -a "$steam_dst/." "$steam_cache/" || { echo "BUILD FAIL godotsteam cache" >&2; rm -rf "$out"; exit 1; }
+  fi
   godot.real --headless --path "$tree" --export-release "Linux" "$out/$bin" || { echo "BUILD FAIL export" >&2; rm -rf "$out"; exit 1; }
   "$tree/scripts/build_pipe_linux.sh" >/dev/null || { echo "BUILD FAIL pipe" >&2; rm -rf "$out"; exit 1; }
   cp "$tree/dist/linux/ouroboros_pipe" "$out/ouroboros_pipe" || exit 1
