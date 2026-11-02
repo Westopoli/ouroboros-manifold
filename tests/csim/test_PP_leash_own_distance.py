@@ -12,7 +12,7 @@ and must stay green after it. Each runs with OM_TP_LEASH_BEFORE_DAMAGE 0 (defaul
 """
 import pytest
 
-from test_PP_unit_support import (SUPPLY, VANGUARD, RAIDER, attack_move, dest, hp, pos, set_param, spawn,
+from test_PP_unit_support import (BOMBARD, SUPPLY, VANGUARD, RAIDER, attack_move, dest, hp, pos, set_param, spawn,
                                   step, target)
 
 LEASH = "OM_TP_LEASH_BEFORE_DAMAGE"
@@ -41,16 +41,18 @@ def _acquire(lib, w, switch, enemy_y, enemy_hp=None, utype=VANGUARD):
 
 
 @SWITCHES
-def test_R_087_05_A188_vanguard_acquiring_at_294_holds_and_fires_until_the_target_dies(lib, world_factory, switch):
-    """R-087-05 / R-096-03 / A188: a Vanguard (range 300) holds a Supply 294 wu ahead (acquired at 150 wu, then
-    stood at 294 from its anchor: beyond 200 of the anchor, inside its range). Standing at its anchor it never drops the target for the leash: every tick from
+def test_R_087_05_A188_bombard_acquiring_at_1150_holds_and_fires_until_the_target_dies(lib, world_factory, switch):
+    """R-087-05 / R-096-03 / A188, redesigned for H-057 (DEC-leash-param-2026-11-01: the leash is max(sensor, range) per type,
+    so a Vanguard's range never exceeds it): a Bombard (range 1200, sensor 300) holds a Supply 1150 wu ahead (acquired at 150 wu,
+    then stood at 1150 from its anchor: beyond every pre-ruling leash, 200 and 800, inside its range). Standing at its anchor it never drops the target for the leash: every tick from
     acquisition to the kill the target is held, the unit does not move, and the target dies.
     RED on the old rule: the target (294 wu from the anchor) is dropped on the next AI tick and the unit walks on."""
     w = world_factory(n_regions=1)
-    u, enemy, anchor = _acquire(lib, w, switch, -150.0, enemy_hp=100.0)
-    lib.om_unit_set_hp(w, enemy, 100.0)
-    lib.om_unit_teleport(w, enemy, anchor[0], anchor[1] - 294.0, 0)   # 294 wu from the anchor and from the unit
-    assert _dist(anchor, pos(lib, w, enemy)) > 200.0, "fixture: the target must be beyond the leash from the anchor"
+    assert set_param(lib, w, "OM_TP_TARGET_BY_SIGHT", 0) == 0   # sight is untouched by H-057: a Bombard with sight on and no spotter does not fire beyond 300
+    u, enemy, anchor = _acquire(lib, w, switch, -150.0, enemy_hp=100.0, utype=BOMBARD)
+    lib.om_unit_set_hp(w, enemy, 5.0)   # low hp: a Bombard does about 3.5 per 60 ticks, so it can die inside the loop
+    lib.om_unit_teleport(w, enemy, anchor[0], anchor[1] - 1150.0, 0)   # 1150 wu from the anchor and from the unit
+    assert _dist(anchor, pos(lib, w, enemy)) > 800.0, "fixture: the target must be beyond the leash from the anchor"
     held, moved = 0, 0.0
     for _ in range(300):
         if hp(lib, w, enemy) <= 0.0:
@@ -91,22 +93,22 @@ def test_R_087_05_A188_unit_over_200_from_its_anchor_drops_its_target_and_resume
     itself is past the leash, so it drops the target within one cohort cycle and its goal is the march
     goal (it resumes the attack-move). Proves the detector reads 'dropped'."""
     w = world_factory(n_regions=1)
-    u, enemy, anchor = _held_scene(lib, w, switch, 201.0, 350.0)
+    u, enemy, anchor = _held_scene(lib, w, switch, 701.0, 850.0)
     seen = _watch(lib, w, u, 3)
-    assert -1 in seen, "a unit 201 wu from its anchor kept its target: %s" % seen
+    assert -1 in seen, "a unit 701 wu from its anchor kept its target: %s" % seen
     has, gx, gy = dest(lib, w, u)
     assert has == 1 and (gx, gy) == pytest.approx(GOAL, abs=1e-6), "unit did not resume its attack-move"
 
 
 @SWITCHES
 def test_R_087_05_A188_unit_inside_200_of_its_anchor_keeps_a_target_far_from_the_anchor(lib, world_factory, switch):
-    """R-087-05 / A188 boundary: the same scene with the unit 199 wu from its anchor (target still 350 wu from
+    """R-087-05 / A188 boundary: the same scene with the unit 699 wu from its anchor (target still 850 wu from
     it, 151 wu from the unit, in range). The unit is inside its leash, so it keeps the target on every tick.
     RED on the old rule (the target is 350 wu from the anchor and is dropped)."""
     w = world_factory(n_regions=1)
-    u, enemy, anchor = _held_scene(lib, w, switch, 199.0, 350.0)
+    u, enemy, anchor = _held_scene(lib, w, switch, 699.0, 850.0)
     seen = _watch(lib, w, u, 3)
-    assert seen == [enemy] * 3, "a unit 199 wu from its anchor dropped its target for the leash: %s" % seen
+    assert seen == [enemy] * 3, "a unit 699 wu from its anchor dropped its target for the leash: %s" % seen
 
 
 @SWITCHES
@@ -124,13 +126,13 @@ def test_R_087_05_A188_range_at_most_200_behaves_as_before(lib, world_factory, s
 
 @SWITCHES
 def test_R_087_05_A188_range_at_most_200_unit_past_its_leash_drops_as_before(lib, world_factory, switch):
-    """Guard (green before and after): a Raider 201 wu from its anchor with the target in its range drops it
-    (target 250 wu from the anchor, 49 wu from the unit); same outcome under the old and new rule."""
+    """Guard (green before and after): a Raider 801 wu from its anchor (leash = its sensor radius 800, H-057) with the target in its range drops it
+    (target 850 wu from the anchor, 49 wu from the unit); same outcome under the old and new rule."""
     w = world_factory(n_regions=1)
     u, enemy, anchor = _acquire(lib, w, switch, -150.0, enemy_hp=100.0, utype=RAIDER)
     ax, ay = anchor
-    lib.om_unit_teleport(w, u, ax, ay - 201.0, 0)
-    lib.om_unit_teleport(w, enemy, ax, ay - 250.0, 0)
+    lib.om_unit_teleport(w, u, ax, ay - 801.0, 0)      # H-057: a Raider's leash is its sensor radius 800
+    lib.om_unit_teleport(w, enemy, ax, ay - 850.0, 0)
     assert -1 in _watch(lib, w, u, 3)
 
 

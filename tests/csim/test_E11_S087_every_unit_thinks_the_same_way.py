@@ -130,7 +130,9 @@ def test_R_087_05_it_anchors_at_its_position(lib, world_factory):
     assert lib.om_unit_target(w, vanguard) == enemy
 
     # Test-defect, A188: the unit moves > 200 wu from the anchor (anchor was at ~100.0, unit moved to 350.0 -> distance 250 > 200)
-    lib.om_unit_teleport(w, vanguard, 350.0, 0.0, 0)
+    # Test-defect, H-057: the leash is a Vanguard's sensor radius 700; the unit goes to 850 (750 from the anchor), the enemy beside it.
+    lib.om_unit_teleport(w, vanguard, 850.0, 0.0, 0)
+    lib.om_unit_teleport(w, enemy, 950.0, 0.0, 0)
     lib.om_tactical_step(w)
 
     # Target is dropped, unit resumes path

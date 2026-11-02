@@ -57,6 +57,8 @@ The group member is covered by decision 30 point 1 (tests below).
 """
 import math
 
+import ctypes
+
 import pytest
 
 from test_PP_unit_support import BASTION, SUPPLY, VANGUARD, attack_move, dest, hp, kill, pos, spawn, step
@@ -68,7 +70,7 @@ HIT = 10.0
 KILL_TICK = 5                     # ticks of pursuit before the attacker dies in the 'early' scenes; the unit has moved about 20 wu
 ARRIVAL = 22.5                    # R-095-05: 1.5 x the collision radius 15; the same radius the E1 tests use
 MARCH_TICKS = 2000                # budget to pursue, kill and walk back 2100 wu at 4 wu a tick; fixture number, a bug detector only
-LEASH = 200.0                     # R-096-03 / R-087-05: the leash from the acquisition anchor, in wu (a rule number)
+LEASH = 700.0                     # R-096-03 / R-087-05 (H-057, DEC-leash-param-2026-11-01): the leash from the anchor, a Vanguard's max(sensor 700, range 300)
 IDLE_KILL_TICK = 15               # ticks of pursuit before the idle unit's attacker dies: the unit is then about 60 wu out, beyond the arrival
                                   # radius of its start, so 'holds out here' and 'walked back to the start' read differently
 STAGGER = 4                       # R-087-08: the cohort stagger, ticks; decision 30 point 3: the resume lands within it (a rule number)
@@ -173,19 +175,23 @@ def _ticks_until_past_leash(lib, w, u, limit):
     for t in range(1, limit + 1):
         step(lib, w)
         x, y = pos(lib, w, u)
-        if math.hypot(x, y) > LEASH:
+        if x > 0.0 and math.hypot(x, y) > LEASH:      # x > 0: out on the attacker's side (P lies west), not on the way back
             return t
     return None
 
 
 def test_S087_R_096_03_the_pursuit_ends_at_the_leash_and_the_unit_resumes_toward_its_ordered_point(lib, world_factory):
     """Decision 30 point 2 (R-096-03): the attacker stands 350 wu beyond the unit's range, so it cannot be reached inside the leash.
-    The unit pursues, passes LEASH (200 wu from where it was hit), and within STAGGER ticks of that its destination is P again; it
+    The unit pursues, passes LEASH (700 wu from where it was hit; the attacker walks away at its speed), and within STAGGER ticks of that its destination is P again; it
     then reaches P. Red today: nothing leashes the redirect, the destination stays the attacker's place and the unit walks there."""
     w = world_factory(n_regions=1)
     u = _victim(lib, w, ordered=True)
-    attacker = spawn(lib, w, SUPPLY, 1, *FAR_ATTACKER_AT)
+    # Test-defect, H-057 (leash 200 replaced by the type's 700): the attacker is a Vanguard on a plain move east at the victim's own
+    # speed, so it stays 650 wu ahead and the victim cannot reach it inside the leash (a plain-moving unit never fires, R-096-01).
+    attacker = spawn(lib, w, VANGUARD, 1, *FAR_ATTACKER_AT)
     lib.om_unit_deal_damage(w, attacker, u, HIT)
+    arr = (ctypes.c_uint32 * 1)(attacker)
+    lib.om_command_move.raw(w, arr, 1, 4000.0, 0.0)
 
     took = _ticks_until_past_leash(lib, w, u, MARCH_TICKS)
     assert took is not None, f"the unit never pursued out past the leash: {_idle_line(lib, w, u)}"

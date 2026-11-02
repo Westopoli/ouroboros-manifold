@@ -668,11 +668,12 @@ def _movement_section(lib, w):
     return sections[names.index("movement")], whole
 
 
-def test_control_leash_still_reads_200_and_the_existing_defaults_are_unchanged(lib, world):
-    """Control, green on main: adding a row must not move any existing default. The documented defaults of
+def test_control_leash_reads_0_per_type_and_the_existing_defaults_are_unchanged(lib, world):
+    """Control (H-057: the leash default is 0 = per type): adding a row must not move any existing default. The documented defaults of
     every pre-existing member are read from section 4 and compared with the built library."""
     w = world()
-    assert lib.om_tactical_get_param(w, 6) == 200.0, "OM_TP_ATTACK_MOVE_LEASH (member 6) no longer defaults to 200"
+    # Test-defect: leash default 0 = per-type since H-057 (DEC-leash-param-2026-11-01): 0 means max(sensor_radius, attack_range).
+    assert lib.om_tactical_get_param(w, 6) == 0.0, "OM_TP_ATTACK_MOVE_LEASH (member 6) no longer defaults to 0 (the type's leash)"
     rows = [r for r in parse_param_table(DOC.read_text()) if r["name"] not in ("OM_TP__COUNT", ARC)]
     assert len(rows) >= BASE_COUNT_BEFORE_E0
     for r in rows:

@@ -110,7 +110,9 @@ def test_R_096_03_unit_drops_target_resumes(lib, world_factory):
     assert lib.om_unit_get_target(w, u) == enemy
 
     # Test-defect, A188: the unit (not the target) moves farther than 200 wu from its acquisition anchor (to 250, 0)
-    lib.om_unit_set_pos(w, u, 250.0, 0.0)
+    # Test-defect, H-057 (leash = the type's sensor radius, a Vanguard's 700): 750 wu from the anchor, the enemy beside it.
+    lib.om_unit_set_pos(w, u, 750.0, 0.0)
+    lib.om_unit_set_pos(w, enemy, 850.0, 0.0)
     lib.om_world_step(w)
 
     # Unit drops the target because leash > 200 wu from anchor, and resumes attack-move

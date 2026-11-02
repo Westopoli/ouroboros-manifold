@@ -995,9 +995,21 @@ static int om_tac_pursue(const om_world *w) {
 /* A188 (R-087-05, R-096-03): the leash tests the unit's own distance from its anchor, never the target's.
  * Switch 0 keeps the old target-distance test: old path kept as baseline only, deleted at end of Phase E.
  * See also: simulation/movement.py _update_attack_move_state */
+static double om_tac_leash(const om_world *w, const om_unit_row *u);
 static int om_tac_leash_broken(const om_world *w, const om_unit_row *u, const om_unit_row *t) {
     const om_unit_row *p = om_tac_pursue(w) ? u : t;
-    return !om_tac_dist_le(p->x - u->anchor_x, p->y - u->anchor_y, OM_ATTACK_MOVE_LEASH_DIST);
+    return !om_tac_dist_le(p->x - u->anchor_x, p->y - u->anchor_y, om_tac_leash(w, u));
+}
+
+/* H-057 (DEC-leash-param-2026-11-01): the leash and the acquisition radius are the unit's own type's
+ * max(sensor_radius, attack_range); OM_TP_ATTACK_MOVE_LEASH 0 (the default) means that, non-zero overrides in wu. */
+static double om_tac_leash(const om_world *w, const om_unit_row *u) {
+    double p = om_tactical_get_param(w, OM_TP_ATTACK_MOVE_LEASH), r;
+    const om_unit_type_profile *prof;
+    if (p != 0.0) return p;
+    prof = om_get_profile((om_world *)w, u->unit_type);
+    r = prof ? prof->sensor_radius : 0.0;
+    return r > u->attack_range ? r : u->attack_range;
 }
 
 /* R-087-06: the unit returns fire at the lowest-id living same-layer attacker
@@ -1960,6 +1972,42 @@ static void om_tac_end_pursuit(om_world *w, om_unit_row *u) {
     u->issued_y = u->order_y;
 }
 
+/* H-057 (R-087-04 rev 2026-11-01): walk toward a target beyond attack range. The unit leaves its group for the
+ * engagement exactly as the return-fire redirect does: am_gid cleared, order_x/y kept as the point to resume to. */
+static void om_tac_chase(om_world *w, om_unit_row *u, const om_unit_row *t) {
+    if (!u->halted && u->issued_x == t->x && u->issued_y == t->y) return;
+    if (u->am_gid != 0 && om_unit_get_group_id(w, u->unit_id) == u->am_gid) {
+        if (!om_unit_get_destination(w, u->unit_id, &u->order_x, &u->order_y)) {
+            u->order_x = u->issued_x; u->order_y = u->issued_y;
+        }
+    }
+    u->am_gid = 0;
+    u->halted = 0;
+    om_command_move(w, &u->unit_id, 1, t->x, t->y);
+    u->issued_x = t->x; u->issued_y = t->y;
+}
+
+/* H-057 (DEC-leash-anchor-return-2026-11-01): anchor_set 2 = returning after a leash drop. An idle unit walks back to
+ * its anchor (its order point is its post); an attack-mover resumes toward its point or slot. Either halts to fire at
+ * anything in attack range and never pursues, and may acquire beyond attack range again only once within arrival
+ * tolerance of its anchor-to-point line (idle: of the anchor). */
+static void om_tac_return(om_world *w, om_unit_row *u) {
+    double lx = u->order_x - u->anchor_x, ly = u->order_y - u->anchor_y;
+    double px = u->x - u->anchor_x, py = u->y - u->anchor_y;
+    double len2 = lx * lx + ly * ly, f = len2 > 0.0 ? (px * lx + py * ly) / len2 : 0.0;
+    if (f < 0.0) f = 0.0;
+    if (f > 1.0) f = 1.0;
+    if (om_tac_dist_le(px - f * lx, py - f * ly, OM_ARRIVAL_TOLERANCE_MULT * OM_UNIT_COLLISION_RADIUS)) {
+        om_tac_end_pursuit(w, u);
+        return;
+    }
+    if (u->halted || u->issued_x != u->order_x || u->issued_y != u->order_y) {
+        u->halted = 0;
+        om_command_move(w, &u->unit_id, 1, u->order_x, u->order_y);
+        u->issued_x = u->order_x; u->issued_y = u->order_y;
+    }
+}
+
 static void om_tac_fire(om_world *w, om_unit_row *u, om_unit_row *t) {
     om_tac_state *st = om_tac(w);
     om_tac_ev_emit(st, OM_TAC_EV_FIRE, u->unit_id, (int32_t)t->unit_id);
@@ -2041,6 +2089,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     int pursue = om_tac_pursue(w);
     int most_damaged;
     int leash_first = om_tactical_get_param(w, OM_TP_LEASH_BEFORE_DAMAGE) != 0.0;
+    int cohort_turn;
     /* P1: an attack-move that has arrived stays an attack-move (the chase persists) until a new order */
     int chase_idle = pursue && u->order == OM_ORDER_ATTACK_MOVE && !has_dest;
     int ordered = u->order != OM_ORDER_NONE && !chase_idle;
@@ -2065,7 +2114,14 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         }
     }
 
-    if (ordered) u->suppress_auto = 1;
+    /* H-057, R-087-02: the order that wins over auto-engagement is the player's. An idle unit that engaged on sight
+     * holds an attack-move whose point is its own post (order point == anchor, set together at acquisition); that is
+     * not a player command, so it keeps its auto-abilities. A player's attack-move point is never its anchor.
+     * Detection condition: an attack-move whose point equals the unit's own anchor (anchor_set). That condition
+     * stands in for an explicit engage flag; there is no such flag on the unit.
+     * See also: DEC-engage-keeps-abilities-2026-11-02 */
+    if (ordered && !(u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set
+                     && u->order_x == u->anchor_x && u->order_y == u->anchor_y)) u->suppress_auto = 1;
     if (u->brace_auto && (ordered || (has_dest && !arrived))
         && (u->ability_phase == OM_ABILITY_PHASE_WINDUP || u->ability_phase == OM_ABILITY_PHASE_ACTIVE)) {
         om_ability_start_or_cancel_brace(st, u);
@@ -2133,7 +2189,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     if (u->flinching) { u->suppress_auto = 1; return; }
 
     if (u->target_id != 0) {
-        int drop;
+        int drop, leash_drop = 0;
         t = om_registry_find_in(st, u->target_id);
         drop = !t || t->hp <= 0.0 || !om_tac_hostile(u, t);
         /* R-164-02: an attack-target order is bound by reach too; one beyond it is ended like a dead target's */
@@ -2156,15 +2212,20 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             /* P1: with pursuit by steering a target that has left attack range is kept until a cohort turn finds another */
             if (!om_tac_in_reach(w, u, t) || t->stealth || ((!pursue || u->guard) && !om_tac_in_range(w, u, t))) {
                 drop = 1;
-            } else if (!leash_first && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set
+            } else if (pursue && u->anchor_set == 2 && !om_tac_in_range(w, u, t)) {
+                drop = 1;   /* H-057: returning, it fires within attack range and does not pursue */
+            } else if (!leash_first && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set == 1
                        && om_tac_leash_broken(w, u, t)) {
-                drop = 1;
+                drop = 1; leash_drop = 1;
             }
         }
         if (drop) {
             int gone = !t || t->hp <= 0.0 || (u->order == OM_ORDER_ATTACK_TARGET && !om_tac_in_reach(w, u, t));
             u->target_id = 0;
-            u->anchor_set = 0;
+            /* H-057: a leash drop starts the walk back (2); a pursuit whose target is gone keeps its anchor until the
+             * next cohort turn decides (never reset while pursuing); anything else clears it */
+            if (leash_drop) u->anchor_set = 2;
+            else if (!(pursue && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set && om_tac_pursuing(w, u))) u->anchor_set = 0;
             if (u->order == OM_ORDER_ATTACK_TARGET && gone) {
                 u->order = OM_ORDER_NONE;
                 u->halted = 0;
@@ -2175,11 +2236,19 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
 
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     most_damaged = om_tac_most_damaged_for(w, u);
+    cohort_turn = (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT;
     if ((u->target_id == 0 || most_damaged || (pursue && t && !om_tac_in_range(w, u, t))) && u->order != OM_ORDER_ATTACK_TARGET
-        && (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT) {
+        && cohort_turn) {
+        /* H-057: an idle or attack-moving unit looks as far as it can be led, the type's leash; a guard, and a unit on
+         * its way back to its anchor, only as far as it can shoot */
+        double acq = u->attack_range;
+        if (pursue && !u->guard && u->anchor_set != 2) {
+            acq = om_tac_leash(w, u);
+            if (acq < u->attack_range) acq = u->attack_range;
+        }
         t = most_damaged
             ? om_tac_most_damaged_hostile(w, st, u, u->attack_range)
-            : om_tac_nearest_actable(w, st, u, u->attack_range);
+            : om_tac_nearest_actable(w, st, u, acq);
         t = om_tac_pick_across(w, st, u, t);
         if (t) {
             u->target_id = t->unit_id;
@@ -2187,24 +2256,32 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                 u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
             }
         }
-        /* A199 (R-087-04): no pursuit on sight; a unit with no target in attack range keeps its slot and route.
-         * The old pursue-on-sight call (om_tac_pursue_goal) is deleted; the switch-0 baseline arm below
-         * (old path kept as baseline only, deleted at end of Phase E) still steps toward a seen enemy. */
+        /* H-057 (R-087-04 rev 2026-11-01, replaces A199): a target beyond attack range is walked to below. The
+         * switch-0 baseline arm below (old path kept as baseline only, deleted at end of Phase E) still steps toward a
+         * seen enemy. */
     }
 
     /* OM_TP_LEASH_BEFORE_DAMAGE 1 (R-087-05, R-096-03; the Python's order): the leash drop runs here, before this
      * tick's shot; at 0 it runs at the start of the next tick, after the shot. */
-    if (leash_first && u->target_id != 0 && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set) {
+    if (leash_first && u->target_id != 0 && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set == 1) {
         t = om_registry_find_in(st, u->target_id);
         if (t && om_tac_leash_broken(w, u, t)) {
             u->target_id = 0;
-            u->anchor_set = 0;
+            u->anchor_set = pursue ? 2 : 0;
         }
     }
 
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     if (t) {
         int in_range = om_tac_in_range(w, u, t);
+        if (pursue && u->order == OM_ORDER_NONE && !u->guard && !in_range) {
+            /* H-057: an idle unit leaves its post as an attack-mover whose point is the post (it walks back to it) */
+            u->order = OM_ORDER_ATTACK_MOVE;
+            u->order_x = u->x; u->order_y = u->y;
+            u->issued_x = u->x; u->issued_y = u->y;
+            u->am_gid = 0;
+            u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
+        }
         if (u->order == OM_ORDER_ATTACK_TARGET) {
             if (in_range) {
                 if (!u->halted) {
@@ -2216,6 +2293,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                 u->issued_x = t->x; u->issued_y = t->y;
                 u->halted = 0;
             }
+        } else if (u->order == OM_ORDER_ATTACK_MOVE && pursue && !in_range && u->anchor_set == 1) {
+            om_tac_chase(w, u, t);
         } else if (u->order == OM_ORDER_ATTACK_MOVE && pursue
                    && (!in_range || !om_combat_can_shoot(w, u->unit_id, t->unit_id))) {
             /* P1: holds only while its own target is in attack range and the unit can shoot it (A171, R-087-05),
@@ -2236,8 +2315,11 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             om_tac_fire(w, u, t);
         }
     } else if (u->order == OM_ORDER_ATTACK_MOVE && pursue) {
-        if (om_tac_pursuing(w, u)) om_tac_end_pursuit(w, u);
-        else om_tac_release(w, u);
+        if (u->anchor_set == 2) om_tac_return(w, u);
+        else if (u->anchor_set == 1 && om_tac_pursuing(w, u) && !cohort_turn) {
+            /* H-057: the target is gone; the walk goes on and the anchor stays until the next cohort turn finds another */
+        } else if (om_tac_pursuing(w, u)) om_tac_end_pursuit(w, u);
+        else { u->anchor_set = 0; om_tac_release(w, u); }
     } else if (u->order == OM_ORDER_ATTACK_MOVE) {
         /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
         /* old path kept as baseline only, deleted at end of Phase E. See also: A199 (R-087-04), the pursue branch above */

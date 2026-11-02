@@ -137,8 +137,9 @@ def test_G1_a_set_changes_that_parameter_and_no_other(lib, w, p):
 def test_G1_two_worlds_hold_their_own_settings(lib, world_factory):
     a, b = world_factory(n_regions=1), world_factory(n_regions=1)
     p = BY_NAME["OM_TP_ATTACK_MOVE_LEASH"]
-    assert lib.om_tactical_set_param(a, p["value"], 0.0) == 0
-    assert lib.om_tactical_get_param(a, p["value"]) == 0.0
+    # Test-defect: leash default 0 = per-type since H-057: the set value is a non-default override (300 wu), so b's default still differs.
+    assert lib.om_tactical_set_param(a, p["value"], 300.0) == 0
+    assert lib.om_tactical_get_param(a, p["value"]) == 300.0
     assert lib.om_tactical_get_param(b, p["value"]) == pytest.approx(p["default"], abs=1e-12)
 
 
@@ -275,7 +276,7 @@ def test_PP_a_set_does_not_change_the_state_checksum(lib, w):
     with_tick = lib.om_world_get_state_checksum(w)
     assert with_tick != before, "control: the checksum must react to a state change"
     lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
-    for name, v in (("OM_TP_ATTACK_MOVE_LEASH", 0.0), ("OM_TP_CATMULT_STRIKE_LINE", 1.5),
+    for name, v in (("OM_TP_ATTACK_MOVE_LEASH", 300.0), ("OM_TP_CATMULT_STRIKE_LINE", 1.5),
                     ("OM_TP_TARGETING_COHORTS", 7.0), ("OM_TP_PURSUE_BY_STEERING", 0.0)):
         assert lib.om_tactical_set_param(w, BY_NAME[name]["value"], v) == 0, name
         assert lib.om_world_get_state_checksum(w) == with_tick, f"setting {name} changed the checksum"
