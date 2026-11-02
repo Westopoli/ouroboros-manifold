@@ -519,6 +519,8 @@ def _ranged_fight(tmp_path: Path, ranges: dict | None) -> Path:
     doc = snapshot.example(frames=3, schema=snapshot.SCHEMA_V2)
     if ranges is not None:
         doc["ranges"] = ranges
+    else:
+        doc.pop("ranges", None)
     return _write_fight(tmp_path / "L-0001-s1.fight.json", doc)
 
 
