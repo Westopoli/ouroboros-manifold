@@ -131,7 +131,7 @@ def is_read(c, cwd, rel, root):
 
 def is_mutating(c):
     if c["name"] == "Bash":
-        return any(w not in READERS and w != "cd" and w for g, w in segments(str(c["input"].get("command") or "")))
+        return any((w not in READERS and w != "cd" and w) or GIT_MUTATE.search(g) for g, w in segments(str(c["input"].get("command") or "")))
     return c["name"] in MUTATING_TOOLS
 
 
