@@ -7,6 +7,7 @@ tests/qa/desktop/ (fenced -- see tests/qa/README.md).
 """
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import random
@@ -63,17 +64,84 @@ def find_godot() -> str:
     raise RuntimeError("godot binary not found on PATH or at ~/.local/bin/godot")
 
 
+_PORT_LOCKS: dict[int, int] = {}  # port -> open flock fd, held until release_port_lock or process exit
+
+
+def _port_lock_dir() -> Path:
+    # The push root the sibling scripts use (merge_gate.sh: ${HOME}/Projects/om-push).
+    return Path(os.environ.get("HOME") or str(Path.home())) / "Projects" / "om-push" / "tmp" / "qa_ports"
+
+
+def release_port_lock(port: int) -> None:
+    fd = _PORT_LOCKS.pop(port, None)
+    if fd is not None:
+        os.close(fd)
+
+
 def pick_free_port(lo: int = 47500, hi: int = 47599) -> int:
-    for _ in range(50):
-        port = random.randint(lo, hi)
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # See also: docs/stories/H-066.md (two concurrent runs picked the same port in the
+    # bind-close-listen gap; a per-port flock held for the life of the process fixes the pick)
+    ports = list(range(lo, hi + 1))
+    random.shuffle(ports)
+    lock_dir = _port_lock_dir()
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    for port in ports:
+        fd = os.open(str(lock_dir / ("%d.lock" % port)), os.O_RDWR | os.O_CREAT, 0o644)
         try:
-            s.bind(("127.0.0.1", port))
-            s.close()
-            return port
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
-            s.close()
-    raise RuntimeError("no free port found in range %d-%d" % (lo, hi))
+            os.close(fd)
+            continue
+        if not _port_bindable(port):
+            os.close(fd)
+            continue
+        _PORT_LOCKS[port] = fd
+        return port
+    raise RuntimeError("QA PORT REFUSED no free port in range %d-%d" % (lo, hi))
+
+
+def _port_bindable(port: int) -> bool:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(("127.0.0.1", port))
+        return True
+    except OSError:
+        return False
+    finally:
+        s.close()
+
+
+def _listener_pids(port: int) -> set[int]:
+    """Pids holding a LISTEN socket on :port, from /proc/net/tcp{,6} (state 0A) and /proc/<pid>/fd."""
+    inodes = set()
+    for name in ("tcp", "tcp6"):
+        try:
+            lines = Path("/proc/net/" + name).read_text().splitlines()[1:]
+        except OSError:
+            continue
+        for line in lines:
+            f = line.split()
+            if len(f) > 9 and f[3] == "0A" and int(f[1].rsplit(":", 1)[1], 16) == port:
+                inodes.add(f[9])
+    pids = set()
+    want = {"socket:[%s]" % i for i in inodes}
+    if not want:
+        return pids
+    for d in Path("/proc").iterdir():
+        if not d.name.isdigit():
+            continue
+        try:
+            for fd in (d / "fd").iterdir():
+                if os.readlink(str(fd)) in want:
+                    pids.add(int(d.name))
+                    break
+        except OSError:
+            continue
+    return pids
+
+
+class _PortRetry(Exception):
+    """wait_for_port: this launch is unusable (early exit, cannot listen, foreign listener)."""
 
 
 class DaemonClient:
@@ -197,22 +265,65 @@ class GodotGame:
         )
 
     def wait_for_port(self, timeout: float = 60.0) -> None:
+        # See also: docs/stories/H-066.md (parts 2, 3, 5, 6: a foreign listener, a failed
+        # listen and a TCP self-connect each made this return ready on a port the game
+        # does not own; a failed wait also leaked the game)
+        try:
+            for attempt in range(1, 4):
+                try:
+                    self._wait_once(timeout)
+                    return
+                except _PortRetry as e:
+                    self.stop()
+                    if attempt == 3:
+                        raise RuntimeError("qa-port gave up after 3 launches: %s" % e) from None
+                    self.qa_port = pick_free_port()
+                    self.client.port = self.qa_port
+                    self.start()
+        except BaseException:
+            self.stop()
+            raise
+
+    def _wait_once(self, timeout: float) -> None:
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             if self.proc.poll() is not None:
-                raise RuntimeError(
-                    "godot exited before qa-port %d opened (rc=%s)\n--- stderr tail ---\n%s"
-                    % (self.qa_port, self.proc.returncode, self.stderr_tail())
-                )
+                raise _PortRetry("godot exited before qa-port %d opened (rc=%s)\n--- stderr tail ---\n%s"
+                                 % (self.qa_port, self.proc.returncode, self.stderr_tail()))
+            if "cannot listen" in self.stderr_tail():
+                raise _PortRetry("godot could not listen on %d\n--- stderr tail ---\n%s"
+                                 % (self.qa_port, self.stderr_tail()))
             try:
-                with socket.create_connection(("127.0.0.1", self.qa_port), timeout=1):
-                    return
+                sock = socket.create_connection(("127.0.0.1", self.qa_port), timeout=1)
             except OSError:
                 time.sleep(0.25)
+                continue
+            with sock:
+                # A connect to a closed port inside the ephemeral range can connect to itself.
+                if sock.getsockname() == sock.getpeername():
+                    time.sleep(0.25)
+                    continue
+            if self._owned_by_game():
+                return
+            print("QA PORT FOREIGN %d" % self.qa_port, flush=True)
+            raise _PortRetry("foreign listener on %d" % self.qa_port)
         raise TimeoutError(
             "qa-port %d never opened within %ss\n--- stderr tail ---\n%s"
             % (self.qa_port, timeout, self.stderr_tail())
         )
+
+    def _owned_by_game(self) -> bool:
+        try:
+            pgid = os.getpgid(self.proc.pid)
+        except ProcessLookupError:
+            return False
+        for pid in _listener_pids(self.qa_port):
+            try:
+                if os.getpgid(pid) == pgid:
+                    return True
+            except ProcessLookupError:
+                continue
+        return False
 
     def stderr_tail(self, n: int = 40) -> str:
         path = self.out_dir / "stderr.log"
@@ -231,6 +342,13 @@ class GodotGame:
                 self.proc.wait(timeout=10)
             except Exception:
                 pass
+        # The lock is released only once the game is gone and the port binds again, so a
+        # second run never takes a port this game still holds (H-066 part 4). A foreign
+        # holder never frees it: the wait is capped.
+        deadline = time.monotonic() + 1.5
+        while not _port_bindable(self.qa_port) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        release_port_lock(self.qa_port)
         for f in (self._stdout_f, self._stderr_f):
             if f is not None:
                 f.close()
