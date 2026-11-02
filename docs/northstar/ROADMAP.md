@@ -36,7 +36,7 @@ Channels: lab = `gate-lab.lock`, Dispatcher chat `ouroboros-manifold-lab` (today
 
 Held behind nothing now: the 2026-10-30 "no scene story until proof by eyes" gate is answered by H-031 pieces one and two (landed) plus the wake rule; piece three (crop to the window) is a Spec'd harness improvement, not a B0 precondition.
 
-Not in a staircase, still owed: H-023 unit-size tuning session (Westley); the thresholds batch (`story_reviews/westley/thresholds_batch_2026-11-01.md`, nine rows); H-042/H-043 findings; H-044, H-046, H-048, H-049, H-051, H-054, H-055, H-056 Spec'd harness stories; the earlier programme rows below are history until a staircase reaches them.
+Not in a staircase, still owed: H-023 unit-size tuning session (Westley); the thresholds batch (`story_reviews/westley/thresholds_batch_2026-11-01.md`, ten rows); H-042/H-043 findings; H-044, H-046, H-048, H-049, H-051, H-054, H-055, H-056 Spec'd harness stories; the earlier programme rows below are history until a staircase reaches them.
 
 ## 1b. Westley's log: what he pointed out, and what became of it
 

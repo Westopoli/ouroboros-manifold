@@ -11,7 +11,7 @@ Everything Westley has to look at, judge or decide lives in this directory and n
 - `crossings.md`: Lines-crossing log: why each fight goes the way it does (Westley's reasoning, per picture).
 - `2026-11-02-piecemeal-then-whole-proposal.md`: Piecemeal, then whole: a draft proposal for amending the lab documents.
 - `H-025-r3-L-0055-*.png` to `H-025-r3-L-0083-*.png`: round three layout pictures (rows in the Round three batch 1 section below).
-- `thresholds_batch_2026-11-01.md`: Nine red tests that are yours to rule (batch of 2026-11-01, rows 5 to 9 added 2026-11-02).
+- `thresholds_batch_2026-11-01.md`: Ten items that are yours to rule: nine red tests and one new tolerance (batch of 2026-11-01, rows 5 to 10 added 2026-11-02).
 - `arena_stage1/`: stage 1 flat-field fight pictures and fight files, with `index.html` and `results.md` (rows in the table below).
 - `H-025-r2-L-0048-open_field.png`: the one round two layout picture with no ruling yet (his only word on it is a question; row in the table below).
 - `display_debug_2026-10-31.md`: Display fault: context for the debugging chat (2026-10-31).
@@ -47,7 +47,7 @@ To see motion live rather than in a still (your rule of 2026-10-22): ask the cha
 | `method_audit_2026-10-27.md` | Eight yes-or-no questions and 24 thresholds from the audit of the method tests |
 | `wt_reap_dryrun_2026-10-24.md` | Second dry run of the worktree clean-up: your word to remove the listed trees. |
 | `method_retro_2026-10-24.md` | The method investigation: which of the drop, keep and try lists you take. Superseded in part by the rev 3 plan you approved on 2026-10-26; the thresholds come to you after the audit. |
-| `thresholds_batch_2026-11-01.md` | H-037 | Red tests whose numbers are yours: the batch now has nine rows (rows 5 to 9 added 2026-11-02, see the batch file's own header); each bisected, nothing edited. | After stage 1 is Seen. | Say keep, move (number), or retire per row. |
+| `thresholds_batch_2026-11-01.md` | H-037 | Red tests whose numbers are yours, and one new tolerance: the batch now has ten rows (rows 5 to 10 added 2026-11-02, see the batch file's own header); each bisected, nothing edited. | After stage 1 is Seen. | Say keep, move (number), or retire per row; row 10 is a draft tolerance: keep, tighten or loosen. |
 
 ## Round three batch 1
 
