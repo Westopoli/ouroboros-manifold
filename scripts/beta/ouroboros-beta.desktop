@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ouroboros Manifold (beta)
+Comment=The standing beta build (H-028)
+# $HOME is resolved to an absolute path when scripts/beta_refresh.sh installs this file (the desktop-entry spec does not expand it).
+Exec=$HOME/Projects/om-push/beta/current/ouroboros_beta.x86_64
+Terminal=false
+Categories=Game;

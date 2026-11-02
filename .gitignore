@@ -44,3 +44,4 @@ build/_pyi_dist/
 graphify-out/
 docs/research/graphify-out/
 saves/
+dist/
