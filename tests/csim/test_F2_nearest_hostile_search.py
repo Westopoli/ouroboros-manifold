@@ -1,3 +1,4 @@
+# Rule pins: R-084-01@e7a835, R-087-04@74cc9c, R-097-09@4d4fa7
 """F2 (A7 sim-step fix 2, architect rulings 2 Addendum 3 A5/A6; profile docs/northstar/plans/
 2026-10-01-a7-sim-profile.md "fix 2"): the AI target search in csrc/unit.c (B10) stops walking
 candidates that can never be the answer. About 71% of sim self time was circle-query candidate

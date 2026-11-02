@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@74cc9c, R-087-05@a79833, R-095-03@f360de, R-095-05@819fd3, R-096-02@e8ae96, R-096-03@16d0c4
 """PP-move (the A199 "no pursuit on sight" tests that pinned the old rule are retired: H-057 replaced it with R-087-04 rev
 2026-11-01, engage on sight; the replacing tests are tests/csim/test_E11_S087_engage_on_sight.py. See also there.): an attack-moving unit holds its slot and route until it can SHOOT, not until it sees (E-11 R-087-04,
 R-087-05; E-13 R-096-02, R-096-03; ruling A199, docs/northstar/plans/2026-10-01-architect-rulings-2.md Addendum).

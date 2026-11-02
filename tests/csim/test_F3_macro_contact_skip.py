@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@74cc9c, R-120-02@5c2e20
 """F3 (A7 sim-step fix 3, architect rulings 2 Addendum 3 A5/A6): skip the all-pairs
 om_unit_can_see contact loop in om_macro_issue_group_orders (csrc/enemy_macro.c, B13)
 once the force's sticky has_contact is already set. Profile: docs/northstar/plans/

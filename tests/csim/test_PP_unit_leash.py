@@ -1,3 +1,4 @@
+# Rule pins: R-087-05@a79833, R-096-03@16d0c4
 """PP-unit: the 200 wu leash and the leash-before-damage switch (E-11 R-087-05, E-13 R-096-03;
 plan Phase A "Decisions": "200 wu leash before damage: a switch; the lab runs both; he picks";
 audit G03).

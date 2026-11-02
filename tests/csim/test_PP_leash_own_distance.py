@@ -1,3 +1,4 @@
+# Rule pins: R-087-05@a79833, R-096-03@16d0c4
 """PP-move: the attack-move leash measures the PURSUER, never the target (E-11 R-087-05, E-13 R-096-03;
 ruling A188, docs/northstar/plans/2026-10-01-architect-rulings-2.md Addendum 64/65).
 

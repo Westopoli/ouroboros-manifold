@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@74cc9c, R-087-05@a79833, R-093-02@652353
 """PP-unit (A199 "no pursuit on sight": the tests that pinned it are retired, H-057 engage on sight replaced it; see
 tests/csim/test_E11_S087_engage_on_sight.py): no pursuit on sight (E-11 S-087, R-087-04, R-087-05; plan Phase A row P1, audit G10).
 

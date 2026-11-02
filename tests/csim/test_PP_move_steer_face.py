@@ -1,3 +1,4 @@
+# Rule pins: R-096-01@d86536, R-097-03@6f75ba, R-097-04@3756c3, R-099-02@9e76f5, R-100-01@3b6c41, R-100-02@91e007, R-102-02@c99d03
 """PP-move rule tests, steering sweep (P8) and facing (P7).
 
 Proves E-13 R-097-03, R-097-04, R-102-02 (S-097, S-102) and R-100-01 (S-100), as

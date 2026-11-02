@@ -1,3 +1,4 @@
+# Rule pins: R-007-06@3926a6, R-087-04@74cc9c, R-089-02@d379f6, R-093-02@652353
 """Phase C, step G3: pursuit and hold follow the side's sight (E-12 R-093-02 "acquires, pursues or fires";
 E-11 R-087-04; brief G3: "An attack-moving unit steps toward the nearest visible enemy within sensor
 radius (today it steps toward any enemy, through anything)" and "a unit never sits holding a target it
