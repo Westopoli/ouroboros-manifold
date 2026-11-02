@@ -66,6 +66,7 @@ if [[ -z "$proof" ]]; then  # build phase
     mkdir -p "$steam_cache" && cp -a "$steam_dst/." "$steam_cache/" || { echo "BUILD FAIL godotsteam cache" >&2; rm -rf "$out"; exit 1; }
   fi
   godot.real --headless --path "$tree" --export-release "Linux" "$out/$bin" || { echo "BUILD FAIL export" >&2; rm -rf "$out"; exit 1; }
+  printf '%s\n' "$sha" > "$out/beta_build.txt" || exit 1  # H-060: the build's sha beside the binary; the field HUD and BetaMode read it
   "$tree/scripts/build_pipe_linux.sh" >/dev/null || { echo "BUILD FAIL pipe" >&2; rm -rf "$out"; exit 1; }
   cp "$tree/dist/linux/ouroboros_pipe" "$out/ouroboros_pipe" || exit 1
   echo "BUILT $out"
