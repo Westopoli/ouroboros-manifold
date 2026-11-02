@@ -22,6 +22,7 @@ const SCENES := {
 var _back_stack: Array[Dictionary] = []
 var _overlay: ColorRect
 var _current_scene_name: String = ""
+var _current_params: Dictionary = {}
 var _transitioning := false
 var _pending: Dictionary = {}
 
@@ -39,8 +40,16 @@ func _ready() -> void:
 func go_to(scene_name: String, params: Dictionary = {}) -> void:
 	# See also: tests/test_scene_router_queue.gd (T12, dropped Deploy click)
 	if _transitioning:
+		# H-069: a repeat of the running target (same scene, same params) starts no second
+		# transition; a queued different request is discarded, the repeat is the latest.
+		var is_repeat: bool = scene_name == _current_scene_name and params == _current_params
+		if is_repeat and _pending.is_empty():
+			return
 		if not _pending.is_empty():
 			push_warning("SceneRouter: queued '%s' replaced by '%s'" % [_pending["name"], scene_name])
+		if is_repeat:
+			_pending = {}
+			return
 		_pending = {"name": scene_name, "params": params}
 		return
 	if not SCENES.has(scene_name):
@@ -56,6 +65,7 @@ func go_to(scene_name: String, params: Dictionary = {}) -> void:
 		_back_stack.push_back({"name": _current_scene_name, "params": {}})
 
 	_current_scene_name = scene_name
+	_current_params = params
 
 	var tw := create_tween()
 	tw.tween_property(_overlay, "modulate:a", 1.0, ThemeConstants.FADE_DURATION)
