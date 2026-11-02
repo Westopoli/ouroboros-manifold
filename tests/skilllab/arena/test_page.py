@@ -414,12 +414,10 @@ def test_stage2_strip_images_on_the_page_are_at_least_480_high(stage):
     assert set(imgs.td_strip) == {240}, "stage 1 strip changed: %s" % sorted(set(imgs.td_strip))
 
 
-def test_stage2_seed_strip_page_images_are_at_least_480_high(stage):
-    """DRAFT-stage2-thumb-px: the per-seed `<id>-s<k>/strip.html` that each seed number links to carries images >= 480 px high too."""
-    _, out = _stage2(stage)
-    seed_page = out.parent / "L-0101-s1" / "strip.html"
-    assert seed_page.is_file(), "no %s" % seed_page
+def test_stage2_layout_strip_images_are_at_least_480_high(stage):
+    """DRAFT-stage2-thumb-px: the one strip per layout (no per-seed strip pages, H-053 Replay readability item 6) carries images >= 480 px high."""
+    page, _ = _stage2(stage)
     imgs = _Imgs()
-    imgs.feed(seed_page.read_text())
+    imgs.feed(page)
     assert imgs.div_strip and None not in imgs.div_strip, imgs.div_strip
-    assert min(imgs.div_strip) >= 480, "seed strip heights %s" % sorted(set(imgs.div_strip))
+    assert min(imgs.div_strip) >= 480, "layout strip heights %s" % sorted(set(imgs.div_strip))
