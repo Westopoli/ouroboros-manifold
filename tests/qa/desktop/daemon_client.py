@@ -7,6 +7,7 @@ tests/qa/desktop/ (fenced -- see tests/qa/README.md).
 """
 from __future__ import annotations
 
+import atexit
 import fcntl
 import json
 import os
@@ -65,6 +66,7 @@ def find_godot() -> str:
 
 
 _PORT_LOCKS: dict[int, int] = {}  # port -> open flock fd, held until release_port_lock or process exit
+_PORT_RANGES: dict[int, tuple[int, int]] = {}  # port -> the (lo, hi) its pick_free_port call was given
 
 
 def _port_lock_dir() -> Path:
@@ -96,6 +98,7 @@ def pick_free_port(lo: int = 47500, hi: int = 47599) -> int:
             os.close(fd)
             continue
         _PORT_LOCKS[port] = fd
+        _PORT_RANGES[port] = (lo, hi)
         return port
     raise RuntimeError("QA PORT REFUSED no free port in range %d-%d" % (lo, hi))
 
@@ -210,6 +213,7 @@ class GodotGame:
         self.proc: subprocess.Popen | None = None
         self._stdout_f = None
         self._stderr_f = None
+        self._atexit_registered = False
 
     def write_privacy_flag(self) -> None:
         """Creates user://privacy_accepted the way privacy_modal.gd's
@@ -263,6 +267,11 @@ class GodotGame:
             stdout=self._stdout_f, stderr=self._stderr_f,
             start_new_session=True,
         )
+        # See also: docs/stories/H-068.md part 5 (a fixture whose first state() raised after a
+        # good wait left the game running): no game outlives its pytest process.
+        if not self._atexit_registered:
+            atexit.register(self.stop)
+            self._atexit_registered = True
 
     def wait_for_port(self, timeout: float = 60.0) -> None:
         # See also: docs/stories/H-066.md (parts 2, 3, 5, 6: a foreign listener, a failed
@@ -277,7 +286,8 @@ class GodotGame:
                     self.stop()
                     if attempt == 3:
                         raise RuntimeError("qa-port gave up after 3 launches: %s" % e) from None
-                    self.qa_port = pick_free_port()
+                    # See also: docs/stories/H-068.md part 6 (the retry ignored the caller's range)
+                    self.qa_port = pick_free_port(*_PORT_RANGES.get(self.qa_port, (47500, 47599)))
                     self.client.port = self.qa_port
                     self.start()
         except BaseException:
