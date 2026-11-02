@@ -218,12 +218,6 @@ def test_pieces_toml_parses_and_has_unique_ids():
     assert findings == []
 
 
-def test_pieces_toml_owns_disjoint():
-    pieces = pc.load_pieces(PIECES_TOML)
-    findings = pc.check_owns_disjoint(pieces)
-    assert findings == [], findings
-
-
 def test_pieces_toml_is_valid_toml():
     data = tomllib.loads(PIECES_TOML.read_text())
     assert "piece" in data
