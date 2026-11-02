@@ -60,6 +60,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-062 | "After a compaction the chat re-reads every plan file it is executing before it acts, and the method check says so when it did not." | Ready (harness; lab channel; needs the lab staircase plan copied into the repo first) | `docs/stories/H-062.md` |
 | H-063 | "Walls, buildings, cover boxes and slopes shape where units can walk and how fast; still everyone sees everyone." | Ready (client; lab stage 3; H-053 Seen 2026-11-02) | `docs/stories/H-063.md` |
 | H-065 | "The sweep is green again: the two tests that pinned the old ROADMAP match the roadmap Westley ordered rewritten." | Ready (harness; lab channel; Fixes-sweep d914f2e0; lands before H-057) | `docs/stories/H-065.md` |
+| H-066 | "Two gates running at the same time never play on each other's game." | Ready (harness; lab channel; after H-059 lands) | `docs/stories/H-066.md` |
 | H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | none yet |
 
