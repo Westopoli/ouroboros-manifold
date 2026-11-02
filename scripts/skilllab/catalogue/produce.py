@@ -78,9 +78,13 @@ def _violations(layout, presets, rules):
             if abs(u["x"] - r["x"]) < r["w"] / 2 + pad and abs(u["y"] - r["y"]) < r["h"] / 2 + pad:
                 out.append(("R6", "%s unit %d at (%s, %s) is inside a wall, box or building plus %s" % (side, i, u["x"], u["y"], pad)))
                 break
-    for side in ("side_a", "side_b"):  # R7, arc placement (H-053): a side that records an arc has every unit on its ring
-        arc = layout[side].get("arc")
-        for i, u in enumerate(layout[side]["units"] if arc else []):
+    for side in ("side_a", "side_b"):  # R7, arc placement (H-053): a unit tagged `arc` = i lies on its side's arcs[i] ring; with one arc and no tags, every unit does
+        arcs, rows = layout[side].get("arcs", []), layout[side]["units"]
+        tagged = any("arc" in u for u in rows)
+        for i, u in enumerate(rows):
+            arc = arcs[u["arc"]] if "arc" in u else arcs[0] if len(arcs) == 1 and not tagged else None
+            if arc is None:
+                continue
             d = math.hypot(u["x"] - arc["centre"][0], u["y"] - arc["centre"][1])
             if abs(d - arc["radius"]) > rules["R7"]["tolerance"]:
                 out.append(("R7", "arc placement: unit %d is %.1f wu from the centre, radius %g" % (i, d, arc["radius"])))
@@ -466,17 +470,21 @@ def dump_toml(layout):
         lines.append("predict_rate = %r" % float(layout["predict_rate"]))
     if "orders_point" in layout:  # H-053: absent means the midpoint
         lines.append("orders_point = %s" % _tv([float(c) for c in layout["orders_point"]]))
+    lines += ["%s = %s" % (k, _q(layout[k])) for k in ("what_to_expect", "approve_means", "deny_means") if k in layout]  # H-053 page text
     if "orders" in layout:  # H-052: "both_same_point" or "hold:A" / "hold:B"; absent means both_same_point
         lines.append("orders = %s" % _q(layout["orders"]))
     for side in ("side_a", "side_b"):
         lines += ["", "[%s]" % side, "headcount = %d" % layout[side]["headcount"]]
-        if "arc" in layout[side]:  # H-053
-            a = layout[side]["arc"]
-            lines += ["", "[%s.arc]" % side, "centre = %s" % _tv([float(c) for c in a["centre"]]), "radius = %r" % float(a["radius"]),
+        for a in layout[side].get("arcs", []):  # H-053, one entry per arc row
+            lines += ["", "[[%s.arcs]]" % side, "centre = %s" % _tv([float(c) for c in a["centre"]]), "radius = %r" % float(a["radius"]),
                       "start_deg = %r" % float(a["start_deg"]), "end_deg = %r" % float(a["end_deg"])]
+            if "count" in a:
+                lines.append("count = %d" % a["count"])
         for u in layout[side]["units"]:
             lines += ["", "[[%s.units]]" % side, "role = %s" % _q(u["role"]), "x = %r" % u["x"], "y = %r" % u["y"], "facing = %r" % u["facing"],
                       "layer = %d" % u["layer"]] + (["range = %r" % u["range"]] if "range" in u else [])  # a round-one row has no range, and none is invented
+            if "arc" in u:   # H-053: which of the side's arcs the unit sits on
+                lines.append("arc = %d" % u["arc"])
     for f in layout.get("features", []):
         lines += ["", "[[features]]"] + ["%s = %s" % (k, _tv(v)) for k, v in f.items()]
     return "\n".join(lines) + "\n"

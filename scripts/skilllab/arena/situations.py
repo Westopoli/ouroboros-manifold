@@ -79,29 +79,23 @@ def _block_units(row):
     return [_round_unit(x, y, f, lay, row["role"]) for x, y, f, lay in _block(n, cx, cy, facing, cols, _number(row["layer"], "layer", int))]
 
 
-def _arc_units(rows, side):
-    """The units of one side's arc rows (H-053 Interfaces 2): one ring, units at the chord PITCH from start_deg clockwise on screen, each facing the centre.
-    Several rows (mixed roles) share one geometry and continue along the ring in row order. Returns (units, the arc record for the layout)."""
-    geo = tuple(rows[0].get(c, "") for c in ARC_COLUMNS[1:])
-    if any(tuple(row.get(c, "") for c in ARC_COLUMNS[1:]) != geo for row in rows):
-        raise Reject("side %s arc rows differ in centre, radius or angles" % side)
-    cx, cy, radius, start, end = (_number(v, c) for v, c in zip(geo, ARC_COLUMNS[1:]))
-    counts = [_number(row["count"], "count", int) for row in rows]
-    n, span = sum(counts), end - start
+def _arc_units(row, index):
+    """The units of one arc row (H-053 Interfaces 2): one ring, units at the chord PITCH from start_deg clockwise on screen, each facing the centre and
+    tagged `arc` = the arc's index in the side's `arcs` list (R7 reads the tag). Returns (units, the arc record)."""
+    cx, cy, radius, start, end = (_number(row.get(c, ""), c) for c in ARC_COLUMNS[1:])
+    n, span = _number(row["count"], "count", int), end - start
     step = 2 * math.asin(PITCH / (2 * radius))
     if n > 1 and (n - 1) * step > math.radians(span) + 1e-9:
         need = math.ceil(PITCH / (2 * math.sin(math.radians(span) / (2 * (n - 1)))))
         raise Reject("arc too small: %d units at pitch %d on %d° need radius %d" % (n, PITCH, round(span), need))
-    units, k = [], 0
-    for row, count in zip(rows, counts):
-        if _number(row["range"], "range") != 0:
-            raise Reject("range %s: only 0 (the role's own range) converts" % row["range"])
-        for _ in range(count):
-            a = math.radians(start) + k * step
-            x, y = cx + radius * math.cos(a), cy + radius * math.sin(a)
-            units.append(_round_unit(x, y, math.atan2(cy - y, cx - x), _number(row["layer"], "layer", int), row["role"]))
-            k += 1
-    return units, {"centre": [cx, cy], "radius": radius, "start_deg": start, "end_deg": end}
+    if _number(row["range"], "range") != 0:
+        raise Reject("range %s: only 0 (the role's own range) converts" % row["range"])
+    units = []
+    for k in range(n):
+        a = math.radians(start) + k * step
+        x, y = cx + radius * math.cos(a), cy + radius * math.sin(a)
+        units.append(dict(_round_unit(x, y, math.atan2(cy - y, cx - x), _number(row["layer"], "layer", int), row["role"]), arc=index))
+    return units, {"centre": [cx, cy], "radius": radius, "start_deg": start, "end_deg": end, "count": n}
 
 
 def _layout(text):
@@ -133,22 +127,22 @@ def _layout(text):
         if len(xy) != 2:
             raise Reject("orders point %r is not midpoint or <x> <y>" % point)
         keys["orders_point"] = [_number(v, "orders point") for v in xy]
-    sides, arcs, blocks = {"A": [], "B": []}, {"A": [], "B": []}, {"A": [], "B": []}
+    for head, key in (("What to expect", "what_to_expect"), ("Approve means", "approve_means"), ("Deny means", "deny_means")):
+        if _head(text, head) is not None:   # H-053 page text, optional
+            keys[key] = _head(text, head)
+    sides, arcs = {"A": [], "B": []}, {"A": [], "B": []}
     for row in _rows(_section(text, "Sides"), SIDE_COLUMNS, "sides"):
         if row["side"] not in sides:
             raise Reject("side %r is not A or B" % row["side"])
         shape = row.get("shape", "").lower() or "block"
         if shape not in ("block", "arc"):
             raise Reject("shape %r is not block or arc" % shape)
-        (arcs if shape == "arc" else blocks)[row["side"]].append(row)
-        if shape == "block":
+        if shape == "arc":   # each row is its own block or arc; a side may mix them
+            units, record = _arc_units(row, len(arcs[row["side"]]))
+            sides[row["side"]] += units
+            arcs[row["side"]].append(record)
+        else:
             sides[row["side"]] += _block_units(row)
-    arc_records = {}
-    for letter, rows in arcs.items():
-        if rows:
-            if blocks[letter]:
-                raise Reject("side %s mixes arc and block rows" % letter)
-            sides[letter], arc_records[letter] = _arc_units(rows, letter)
     for letter, units in sides.items():
         if not units:
             raise Reject("missing side %s" % letter)
@@ -164,8 +158,9 @@ def _layout(text):
             "defender": "" if defender == "none" else defender, "features": features,
             "side_a": {"headcount": len(sides["A"]), "units": sides["A"]}, "side_b": {"headcount": len(sides["B"]), "units": sides["B"]}}
     layout.update(keys)
-    for letter, record in arc_records.items():
-        layout["side_" + letter.lower()]["arc"] = record
+    for letter, records in arcs.items():
+        if records:
+            layout["side_" + letter.lower()]["arcs"] = records
     return layout
 
 
