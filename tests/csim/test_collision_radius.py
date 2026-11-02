@@ -26,6 +26,12 @@ TRACE_R15 and the mixed scene are the ones recorded in tests/csim/test_PP_collis
 docstring for how it was recorded); this file reuses them so the "never called" and "every value is 15" runs are pinned
 to the same bytes.
 
+Seventh site (Architect ruling, round 3): the production-slot lattice. csrc/om_internal.h OM_PRODSLOT_SPACING_WU
+(2 * OM_UNIT_COLLISION_RADIUS, used by om_mission_production_slot in csrc/mission.c, called from
+om_structure_tick_production in csrc/tactical_support.c) uses the roster's LARGEST radius: the spacing is two largest radii.
+Observable through the tick: a held structure's first produced unit stands on the first slot of the scan, P + (-s, -s)
+(tests/csim/test_VG_E_prodslot.py: ring 1, j from -1, i from -1), so the offset read off that unit is the spacing s.
+
 Not tested here, said in the report: the OM_TP_UNIT_COLLISION_RADIUS multiplier reading (the story says it "keeps
 working as a multiplier on the per-type value; its reading is documented at the knob" and gives no formula), the
 roster's-largest-radius at sites with no unit type in hand, and "read once at om_roster_* time" (no observable).
@@ -37,6 +43,7 @@ import struct
 
 import pytest
 
+from b1_macro_scene import ENEMY_FAC, PLAYER_FAC, tactical_world
 from conftest import OMFeature
 
 FACTION = 0
@@ -259,3 +266,60 @@ def test_H_041_control_the_trace_hash_sees_a_changed_radius(lib):
     """Positive control for the two hashes above: all six types at 30 hash differently from TRACE_R15, so equality
     at 15 means the radius was read as 15 and not that the hash cannot see a radius. Red today: symbol not exported."""
     assert _trace_hash(lib, 30.0) != TRACE_R15, "every type at 30 hashes like 15: the hash cannot see the radius"
+
+
+# ---- the seventh site: production-slot spacing = two largest radii -----------------------------------------------------
+# Mirrors tests/csim/test_VG_E_prodslot.py (build, produce): structure 0 held by the player at AT, one far filler unit of the
+# other faction so om_tactical_step runs, the timer set to one interval, one step; the new unit stands on the first free slot,
+# P + (-s, -s), with s the lattice spacing (30 today). Seeds 12 and 13: that test's dumped runs show no enemy wave.
+
+PROD_AT = (3000.0, 3000.0)   # an integer point, as in test_VG_E_prodslot.py AT
+PROD_POWER = 100.0
+PROD_STRUCT = 0
+PROD_FAR = (100000.0, 100000.0)
+PROD_SEEDS = (12, 13)
+WESTLEYS_RADII = {RAIDER: 4.05, INTERCEPTOR: 8.25, VANGUARD: 11.25, WARDEN: 11.55, BOMBARD: 21.6, BASTION: 30.0}
+
+
+def _first_produced_offset(lib, world_factory, seed, radii):
+    """radii: {type: radius} set on the world before production, or None (the function is never called). Returns the first
+    produced unit's offset from the structure, (x - P.x, y - P.y)."""
+    w = tactical_world(lib, world_factory, seed=seed)
+    if radii is not None:
+        for t, r in radii.items():
+            assert _set_radius(lib, w, t, r) == 0
+    for s in (1, 2):
+        lib.om_structure_set_owner(w, s, -1)
+    lib.om_structure_init(w, PROD_STRUCT, RAIDER, ctypes.c_double(PROD_POWER))
+    lib.om_structure_set_owner(w, PROD_STRUCT, PLAYER_FAC)
+    lib.om_structure_set_position(w, PROD_STRUCT, *PROD_AT)
+    assert lib.om_unit_spawn(w, INTERCEPTOR, ENEMY_FAC, PROD_FAR[0], PROD_FAR[1], 0) != 0, "fixture: the filler unit was refused"
+    ids = lambda: [lib.om_unit_id_at(w, k) for k in range(lib.om_unit_count(w))]
+    before = [u for u in ids() if lib.om_unit_alive(w, u)]
+    lib.om_structure_set_timer(w, PROD_STRUCT, lib.om_structure_production_interval_ticks(ctypes.c_double(PROD_POWER)))
+    lib.om_tactical_step(w)
+    new = [u for u in ids() if lib.om_unit_alive(w, u) and u not in before]
+    assert len(new) == 1, "fixture: expected exactly one produced unit, found %d" % len(new)
+    x, y = lib.om_unit_position_x(w, new[0]), lib.om_unit_position_y(w, new[0])
+    return (x - PROD_AT[0], y - PROD_AT[1])
+
+
+@pytest.mark.parametrize("seed", PROD_SEEDS)
+def test_H_041_control_production_slot_spacing_is_30_when_no_radius_is_set(lib, world_factory, seed):
+    """Control (green today and after): "unchanged (30) when none is set". With the function never called the first
+    produced unit stands at (-30, -30) from its structure (ALG-68's 2 * 15, OM_PRODSLOT_SPACING_WU)."""
+    assert _first_produced_offset(lib, world_factory, seed, None) == pytest.approx((-30.0, -30.0), abs=1e-6)
+
+
+@pytest.mark.parametrize("seed", PROD_SEEDS)
+def test_H_041_production_slot_spacing_is_two_largest_radii(lib, world_factory, seed):
+    """Architect ruling, round 3: OM_PRODSLOT_SPACING_WU "now uses the roster's LARGEST radius": with Westley's six radii set
+    (Raider 4.05 ... Bastion 30; the structure makes Raiders, so the structure's own type is not the largest) the spacing is
+    2 x 30 = 60 and the first produced unit stands at (-60, -60). Red today: the symbol is not exported (and unset it is 30)."""
+    assert _first_produced_offset(lib, world_factory, seed, WESTLEYS_RADII) == pytest.approx((-60.0, -60.0), abs=1e-6)
+
+
+def test_H_041_production_slot_spacing_follows_the_largest_when_every_radius_is_below_15(lib, world_factory):
+    """The largest, not the larger of it and 15: all six types set to 10 give spacing 20 and the first produced unit at
+    (-20, -20). Red today: the symbol is not exported (and unset it is 30)."""
+    assert _first_produced_offset(lib, world_factory, 12, {t: 10.0 for t in SIX_TYPES}) == pytest.approx((-20.0, -20.0), abs=1e-6)

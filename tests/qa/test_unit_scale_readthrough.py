@@ -30,12 +30,22 @@ PREMISES (dumped on the base tree, origin/main 9c9721ff merged into s/H-041-unit
   * The file-missing run cannot delete data/unit_scale.toml from the tree under test, and the story gives no path override, so it launches
     the same project through a symlink farm (every top-level entry, and every file of data/ except unit_scale.toml, linked).
 
-CONTROLS (green on the base tree): the harness reaches the tactical view with the real file and with the farm; the farm lacks the file;
-the real file is Westley's (no role at 15, so radius == file is not 15 == 15); the real-file run prints no unit_scale line (the detector
-of the one-warning test sees an absent warning).
-GAPS: the model's NATIVE footprint is not on any seam, so the footprint test pins footprint = 15 x drawn_scale (the H-023 meaning) against
-the file's radius within tests/qa/unit_scale_park_footprint.py FOOTPRINT_TOL_PCT; measuring each model is the builder's, and if it derives a
-drawn_scale that is not visual_scale the Architect picks which of the two assertions stands.
+Test-defect round r2 (Architect rulings, story "Size rulings" (b), (c), tests/qa/unit_scale_park_footprint.py): the footprint is
+asserted in the 3D ground view (the real-file game is launched with `--era greek_placeholder`, the ground era of
+tests/qa/desktop/test_ground_era.py; qa_state()["ground3d"]["present"] is true there and false in the default space era, where only the
+2D UnitVisuals draws). `drawn_scale == visual_scale` is dropped (the factor is derived per model, so it is not visual_scale). The
+tolerance is DRAFT-footprint-tol (parked, 5.0 %). With the file missing the drawn footprint is NOT asserted (ground_units keeps
+BODY_RADIUS_WU 11.5 as the fallback), visual_scale is the era default 2.0 (EraConfig.UNIT_VISUAL_SCALE).
+How the footprint is computed: the story says "the model's native footprint radius times drawn_scale" and the builder's table of native
+footprints is not written yet, so the test measures the native footprint of the 3D body itself: ground_units.gd draws the role's
+UnitVisuals.SHAPES polygon (index = unit type) scaled by BODY_RADIUS_WU, so native footprint = BODY_RADIUS_WU x the farthest vertex of
+that shape from the unit centre (the bounding-circle radius; the comment at ground_units.gd:11 says the shapes reach about 1.28 x), both
+read from the GDScript sources. The definition (bounding circle) is mine, nobody gave one: if the builder's table measures another way,
+or moves BODY_RADIUS_WU, that is a Test-defect round with the table.
+
+CONTROLS (green on the base tree): the values file is Westley's (no role at 15); the harness reaches the tactical view with the real file in
+the ground era (3D view up) and without the file; the farm lacks the file; the real-file run prints no unit_scale line; the native
+footprint reader returns 1.28 x 11.5 for the Interceptor shape and rejects nothing else; the footprint detector rejects the old cap.
 """
 from __future__ import annotations
 
@@ -52,7 +62,7 @@ _QA = Path(__file__).resolve().parent
 sys.path.insert(0, str(_QA / "desktop"))
 sys.path.insert(0, str(_QA))
 from daemon_client import GodotGame, REPO_ROOT, control_center, find_control, pick_free_port, wait_for  # noqa: E402
-from unit_scale_park_footprint import FOOTPRINT_TOL_PCT, H023_BASE_RADIUS_WU  # noqa: E402
+from unit_scale_park_footprint import DRAFT_FOOTPRINT_TOL  # noqa: E402
 
 ROLES = ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]
 VALUES_FILE = REPO_ROOT / "data" / "unit_scale.toml"
@@ -70,6 +80,19 @@ EPS = 1e-6   # float round trip of a three-decimal toml number, not a rule toler
 def _file_values() -> dict:
     raw = tomllib.loads(VALUES_FILE.read_text())
     return {r: {"radius": float(raw[r]["radius"]), "visual_scale": float(raw[r]["visual_scale"])} for r in ROLES}
+
+
+def _native_footprint_wu(role: str) -> float:
+    """The 3D body's native footprint radius for a role: BODY_RADIUS_WU (scenes/ground3d/ground_units.gd) times the farthest vertex of
+    UnitVisuals.SHAPES[type] from the centre (scenes/tactical_c/unit_visuals.gd), type = the role's index in ROLES."""
+    body = re.search(r"const\s+BODY_RADIUS_WU\s*(?::=|:\s*float\s*=)\s*([0-9.]+)", (REPO_ROOT / "scenes/ground3d/ground_units.gd").read_text())
+    assert body, "scenes/ground3d/ground_units.gd no longer declares BODY_RADIUS_WU (the builder's native footprint table replaces this reader: Test-defect round)"
+    src = (REPO_ROOT / "scenes/tactical_c/unit_visuals.gd").read_text()
+    block = src[src.index("const SHAPES"):]
+    polys = re.findall(r"\[((?:Vector2\([^)]*\)[,\s]*)+)\]", block.split("\n]\n", 1)[0].split("[", 1)[1])
+    assert len(polys) == len(ROLES), "UnitVisuals.SHAPES has %d outlines, expected %d" % (len(polys), len(ROLES))
+    verts = [(float(x), float(y)) for x, y in re.findall(r"Vector2\(\s*(-?[0-9.]+)\s*,\s*(-?[0-9.]+)\s*\)", polys[ROLES.index(role)])]
+    return float(body.group(1)) * max((x * x + y * y) ** 0.5 for x, y in verts)
 
 
 def _era_default_scale() -> float:
@@ -138,7 +161,7 @@ def _stderr_unit_scale_lines(game: GodotGame) -> list[str]:
 
 @pytest.fixture(scope="module")
 def real_game():
-    g = GodotGame(qa_port=pick_free_port(), seed=1, resolution="1920x1080")
+    g = GodotGame(qa_port=pick_free_port(), seed=1, resolution="1920x1080", extra_args=["--era", "greek_placeholder"])
     g.start()
     g.wait_for_port(timeout=60.0)
     try:
@@ -191,9 +214,18 @@ def test_H_041_control_the_values_file_is_westleys_and_not_the_15_fallback():
     assert [v[r]["visual_scale"] for r in ROLES] == [0.27, 0.55, 0.75, 0.77, 1.44, 2.0]
 
 
-def test_H_041_control_harness_reaches_the_tactical_view_with_the_real_file(real_game):
-    """Control (green today): the launch reaches the tactical view and qa_state() answers, so a red below is the missing key."""
-    assert _qa(real_game).get("scene") == "tactical_view"
+def test_H_041_control_harness_reaches_the_tactical_view_with_the_real_file_and_the_3d_view_up(real_game):
+    """Control (green today): the ground-era launch reaches the tactical view with the 3D ground view up and qa_state() answers,
+    so a red below is the missing key and the footprint it reads is the 3D view's."""
+    qa = _qa(real_game)
+    assert qa.get("scene") == "tactical_view"
+    assert qa["ground3d"].get("present") is True, "ground3d is not up: %r" % (qa["ground3d"],)
+
+
+def test_H_041_control_the_native_footprint_reader_reads_the_3d_body():
+    """Control (green today): Interceptor shape reaches 1.28 x BODY_RADIUS_WU (ground_units.gd:11 'reach 1.28 x'), the dart less."""
+    assert _native_footprint_wu("Interceptor") == pytest.approx(1.28 * 11.5, abs=0.01)
+    assert 11.5 <= _native_footprint_wu("Raider") < _native_footprint_wu("Interceptor")
 
 
 def test_H_041_control_harness_reaches_the_tactical_view_without_the_file(missing_game):
@@ -226,34 +258,27 @@ def test_H_041_with_the_file_each_roles_visual_scale_equals_the_files_visual_sca
         assert float(us[r]["visual_scale"]) == pytest.approx(f[r]["visual_scale"], abs=EPS), "%s: %r, file %r" % (r, us[r]["visual_scale"], f[r]["visual_scale"])
 
 
-def test_H_041_with_the_file_the_drawn_scale_follows_the_files_visual_scale(real_game):
-    """H-041 Tests: "the drawn scale per role follows the file's visual_scale"; ruling 1: one lookup, the file wins, the
-    MAX_VISUAL_SCALE 1.0 cap goes (Bombard 1.44 and Bastion 2.0 are over it). drawn_scale is non-null while the tactical
-    view is up and equals visual_scale. Red today: no unit_scale key."""
+def test_H_041_with_the_file_the_3d_footprint_radius_equals_the_files_radius_within_draft_footprint_tol(real_game):
+    """Story Size rulings (b), (c) and Tests: "the resulting footprint (the model's native footprint radius times `drawn_scale`)
+    equals the file's `radius` within a tolerance ... and the same assertion covers the 3D view's body radius per role". In the 3D
+    view (ground era) drawn_scale is the factor ground_units applies; native footprint x drawn_scale is within DRAFT_FOOTPRINT_TOL
+    percent of the file's radius for each of the six roles. Red today: no unit_scale key."""
     us, f = _unit_scale(real_game), _file_values()
     for r in ROLES:
         assert us[r]["drawn_scale"] is not None, "%s: drawn_scale is null while the tactical view is up" % r
-        assert float(us[r]["drawn_scale"]) == pytest.approx(f[r]["visual_scale"], abs=EPS), "%s: drawn %r, file %r" % (r, us[r]["drawn_scale"], f[r]["visual_scale"])
-
-
-def test_H_041_with_the_file_the_footprint_radius_equals_the_files_radius_within_the_parked_tolerance(real_game):
-    """Ruling 2: the unit's ground footprint radius equals the file's radius. The footprint is computed as the H-023 scene
-    draws it, H023_BASE_RADIUS_WU x drawn_scale (native model footprints are not on a seam, see GAPS), and may differ from
-    the file's radius by FOOTPRINT_TOL_PCT percent (parked, Westley's). Red today: no unit_scale key."""
-    us, f = _unit_scale(real_game), _file_values()
-    for r in ROLES:
-        footprint = H023_BASE_RADIUS_WU * float(us[r]["drawn_scale"])
+        footprint = _native_footprint_wu(r) * float(us[r]["drawn_scale"])
         want = f[r]["radius"]
-        assert abs(footprint - want) <= want * FOOTPRINT_TOL_PCT / 100.0, "%s: footprint %.3f wu, file radius %.3f, tolerance %.1f %%" % (r, footprint, want, FOOTPRINT_TOL_PCT)
+        assert abs(footprint - want) <= want * DRAFT_FOOTPRINT_TOL / 100.0, "%s: footprint %.3f wu (native %.3f x drawn_scale %r), file radius %.3f, DRAFT-footprint-tol %.1f %%" % (r, footprint, _native_footprint_wu(r), us[r]["drawn_scale"], want, DRAFT_FOOTPRINT_TOL)
 
 
 def test_H_041_positive_control_the_footprint_detector_sees_a_wrong_scale():
-    """Positive control of the footprint test: the same arithmetic rejects the capped scale (Bastion drawn at the old
-    MAX_VISUAL_SCALE 1.0 gives a 15 wu footprint against 30) and accepts the file's value. Green today."""
+    """Positive control of the footprint test: the same arithmetic rejects the 3D body left at today's fixed size (drawn_scale 1.0 gives
+    Bastion a native footprint, well under its 30 wu) and accepts the factor that lands on the file's radius. Green today."""
     want = _file_values()["Bastion"]["radius"]
-    tol = want * FOOTPRINT_TOL_PCT / 100.0
-    assert abs(H023_BASE_RADIUS_WU * 1.0 - want) > tol
-    assert abs(H023_BASE_RADIUS_WU * 2.0 - want) <= tol
+    tol = want * DRAFT_FOOTPRINT_TOL / 100.0
+    native = _native_footprint_wu("Bastion")
+    assert abs(native * 1.0 - want) > tol
+    assert abs(native * (want / native) - want) <= tol
 
 
 # ---- with the file missing -----------------------------------------------------------------------------------------

@@ -1,12 +1,12 @@
 # Shots waiting on Westley
 
-One word per picture: approve, reject, or a short note. Answer in the chat or in `answers.md`. When a verdict is recorded, the picture and its row are removed from here; past verdicts live in `verdicts_2026-10.md`, the rulings in `decisions.md`.
+One word per picture: approve, reject, or a short note. Answer in the chat; each verdict is written to `ruled.md` the turn you give it (the Architect does this). When a verdict is recorded, the picture and its row are removed from here; past verdicts live in `verdicts_2026-10.md`, the rulings in `decisions.md`.
 
 Everything Westley has to look at, judge or decide lives in this directory and nowhere else (2026-11-02): proposals, verdict logs, threshold batches, pictures and proof captures. Chat context files and plans for the Dispatchers stay in `docs/northstar/plans/`.
 
 ## What is here (newest first, by the day each was added; names are relative to this directory)
 
-- `ruled.md`: pictures Westley has ruled on, removed 2026-11-02; his verdicts and the git command that brings each back.
+- `ruled.md`: the verdict ledger: every verdict of Westley's, one row per picture or layout id, his words verbatim with the chat date, any owed action, and the git command that brings back a removed picture.
 - `beta_stage0/`: B0: the standing beta build (`beta-proof.png`).
 - `crossings.md`: Lines-crossing log: why each fight goes the way it does (Westley's reasoning, per picture).
 - `2026-11-02-piecemeal-then-whole-proposal.md`: Piecemeal, then whole: a draft proposal for amending the lab documents.
