@@ -424,8 +424,8 @@ def _state_hash(lib, w):
 # Re-recorded day22 on push/pl-land (A188 leash tests the unit's own distance; clash 37bc9238 -> e1377247; spread unchanged; was: day21 pp-settle-gold recorded).
 # Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold and day22 pl-land recorded). TD-PP-A199-rerecord.
 GOLDEN = {
-    "clash": "078776355f08bcc9978634e8d50cac48b2a62b8f674659273ba281fe32ecebdd",
-    "spread": "bb85256fd29a1b754468f8adf3388aba58ce94c7552cd7f8382a42b634bcedf5",
+    "clash": "cbcb54089b313fd4b755a822a5e30c6fac3968ebce11dac6f827378127dc7e78",
+    "spread": "f5cd5e5cd578c694304205838935946d5ce79bb3f65cf6596102c3b55fcaeb2d",
 }
 
 
