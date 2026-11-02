@@ -4,7 +4,7 @@ Sonnet 5.5, `subagent_type: doer`. Read this card, then the story file the brief
 
 ## Setup
 
-- `python3 ~/Projects/ouroboros-manifold/scripts/specfactory/wt.py new <name> --owner <you> --purpose "<id>" --base origin/<branch>` where the branch is the story's `s/<id>-<slug>`. Every command names the absolute path. Never cd into, or touch, `~/Projects/ouroboros-manifold`.
+- `python3 ~/Projects/ouroboros-manifold/scripts/specfactory/wt.py new <name> [--channel beta] --owner <you> --purpose "<id>" --base origin/<branch>` where the branch is the story's `s/<id>-<slug>`. Every command names the absolute path. Never cd into, or touch, `~/Projects/ouroboros-manifold`.
 - Build: `make && make pipe/ouroboros_pipe pipe/ouroboros_pipe_dbg`; `godot.real --headless --import` once first. Python `.venv/bin/python`; Godot `~/.local/bin/godot.real`.
 - Godot tests: `timeout 1800 scripts/run_godot_tests.sh <file>`; display-needing files under `xvfb-run -a -s '-screen 0 1920x1080x24'`. Every Godot or xvfb run under `timeout 1800`.
 - Long runs: `systemd-run --user --scope -q -p MemoryMax=6G -p MemorySwapMax=0 -- nice -n 10 <cmd>`.

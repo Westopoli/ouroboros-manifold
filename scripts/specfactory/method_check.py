@@ -97,6 +97,10 @@ def excerpt(c):
     return " ".join(str(text).split())[:100]
 
 
+# H-059: the retired single lock and the two channel locks all mean "a chat waits on a gate".
+GATE_LOCKS = ("gate.lock", "gate-lab.lock", "gate-beta.lock")
+
+
 def matcher(cid, role, live):
     def under_live(p, cwd):
         return under(resolve(p, cwd), live)
@@ -111,7 +115,7 @@ def matcher(cid, role, live):
             return n == "ScheduleWakeup"
         if cid == "polling":
             return n == "Monitor" or (s is not None and any(
-                w in ("sleep", "flock") or ("gate.lock" in g and w not in READERS) for g, w in segments(s)))
+                w in ("sleep", "flock") or (any(n in g for n in GATE_LOCKS) and w not in READERS) for g, w in segments(s)))
         if cid == "gate_runs":
             return s is not None and any(
                 ("merge_gate.sh" in g or "pre_gate.sh" in g) and w not in READERS for g, w in segments(s))
