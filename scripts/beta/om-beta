@@ -1,0 +1,3 @@
+#!/bin/sh
+# H-028: open the standing beta build under the caller's own session env. No scene argument: the game boots to its first scene.
+exec "$HOME/Projects/om-push/beta/current/ouroboros_beta.x86_64"
