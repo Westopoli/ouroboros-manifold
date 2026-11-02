@@ -187,15 +187,27 @@ def test_unknown_role_shows_the_architect_rule(tmp_path):
     assert got["code_edits"][0] == "OK"
 
 
-def test_mixed_models_role_comes_from_the_last_model(tmp_path):
-    # method_check.md "Role:": last assistant entry's model sets the role; header lists the others
+def test_mixed_models_role_comes_from_the_first_model(tmp_path):
+    # H-062 Change (docs/stories/H-062.md:20): role is the model of the first assistant entry; header lists the others
+    # (was: last assistant entry's model sets the role; renamed from ..._from_the_last_model)
     opus = "claude-opus-5-5"
     entries = [clean_turn(opus), clean_turn(opus), clean_turn(), clean_turn(), clean_turn()]
     r = run(tmp_path, write_transcript(tmp_path, entries))
     assert r.returncode == 0, r.stderr
     header = next(l for l in r.stdout.splitlines() if l.startswith("METHOD role"))
-    assert header.startswith(f"METHOD role runner model {SONNET} (session also {opus})"), header
-    assert "code_edits" not in checks(r.stdout)  # architect-only rule, role is runner
+    assert header.startswith(f"METHOD role architect model {SONNET} (session also {opus})"), header
+    assert "code_edits" in checks(r.stdout)  # architect-only rule, role is architect
+
+
+def test_sonnet_first_then_opus_stays_runner(tmp_path):
+    # H-062 control for the test above: the first entry decides, so Sonnet then Opus is a runner
+    opus = "claude-opus-5-5"
+    entries = [clean_turn(), clean_turn(), clean_turn(opus), clean_turn(opus), clean_turn(opus)]
+    r = run(tmp_path, write_transcript(tmp_path, entries))
+    assert r.returncode == 0, r.stderr
+    header = next(l for l in r.stdout.splitlines() if l.startswith("METHOD role"))
+    assert header.startswith("METHOD role runner"), header
+    assert "code_edits" not in checks(r.stdout)
 
 
 def test_threshold_option(tmp_path):
