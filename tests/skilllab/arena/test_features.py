@@ -18,6 +18,12 @@ Engine expressibility (report): walls, boxes, buildings and ridge rectangles are
 expresses them. The slope band and tier steps need terrain heights: the C side has `om_terrain_set_heights` (ouroboros_sim.h:166) but `scripts/skilllab/engine.py`
 binds neither it nor a slope setter, so the builder adds a binding in the harness file engine.py (not a contract change; the story's Files list does not name engine.py).
 
+Runtime (second pass): the fixtures call the arena CLI in-process (h063_fixtures.run), so the engine library builds once per session (13 s) and a fight costs
+little; planar runs stop at 20 s of fight (`--cap-seconds 20`, 400 ticks, enough for the resting positions). Fixture headcounts stay 8:8 (H-025 R4 minimum). Rulings used
+(H-063 "Rulings for the build", 5, 7 and 8): the runner writes an optional per-frame `blocked` list, the validator accepts it present or absent, feature kinds built
+are chokepoint, cover, city, ridge (the flank_route feature's `ridge` rectangle) and slope; plateau and tier steps are not tested; engine.py gains a terrain-heights
+binding.
+
 Every test is red today because the runner ignores the features; the `test_control_*` tests are green today and keep a red from being a broken harness."""
 import pytest
 
@@ -25,6 +31,7 @@ import h063_fixtures as fx
 from scripts.skilllab.catalogue import produce
 
 NAMES = ["chokepoint", "cover", "city", "ridge"]
+CAP = ("--cap-seconds", "20")
 
 
 @pytest.fixture(scope="module")
@@ -34,8 +41,8 @@ def runs(tmp_path_factory):
     for name in NAMES:
         lay, rects = fx.planar(name, "L-91%02d" % NAMES.index(name))
         base = tmp_path_factory.mktemp("feat_" + name)
-        with_p, with_doc = fx.fight(lay, base / "with")
-        ctl_p, ctl_doc = fx.fight(fx.without_features(lay), base / "without")
+        with_p, with_doc = fx.fight(lay, base / "with", 1, *CAP)
+        ctl_p, ctl_doc = fx.fight(fx.without_features(lay), base / "without", 1, *CAP)
         out[name] = (lay, rects, with_p, with_doc, ctl_p, ctl_doc)
     return out
 
@@ -85,8 +92,8 @@ def test_slope_slows_the_climbers(tmp_path):
     lay["side_b"]["units"] = fx.block(8, 1200.0, 2000.0, 0.0)   # B west of the ribbon, facing east
     for u in lay["side_a"]["units"]:
         u["facing"] = 3.1416
-    p1, d1 = fx.fight(lay, tmp_path / "slope")
-    p2, d2 = fx.fight(fx.without_features(lay), tmp_path / "flat")
+    p1, d1 = fx.fight(lay, tmp_path / "slope", 1, *CAP)
+    p2, d2 = fx.fight(fx.without_features(lay), tmp_path / "flat", 1, *CAP)
     assert p1.returncode == 0 and p2.returncode == 0, (p1.stdout + p1.stderr)[-500:] + (p2.stdout + p2.stderr)[-500:]
     ticks = sorted({f["tick"] for f in d1["frames"]} & {f["tick"] for f in d2["frames"]} - {0})
     assert ticks, "premise failed: no common frame tick between the slope and the control fight"
@@ -103,3 +110,47 @@ def test_features_module_maps_a_layout_to_engine_blocking_calls():
     assert (root / "features.py").exists(), "scripts/skilllab/arena/features.py is missing"
     text = (root / "run.py").read_text()
     assert "arena.features" in text or "arena import features" in text or "import features" in text, "run.py does not import arena/features.py"
+
+
+def test_control_engine_binds_the_terrain_band_query_today():
+    """H-063 ruling 8 control (green today): engine.py already binds `om_terrain_band_at`, so the red test below is the missing heights binding."""
+    from pathlib import Path
+    text = (Path(__file__).resolve().parents[3] / "scripts" / "skilllab" / "engine.py").read_text()
+    assert '"om_terrain_band_at"' in text
+
+
+def test_engine_binds_the_terrain_heights_setter():
+    """H-063 Files "`scripts/skilllab/engine.py` (terrain heights binding for the slope)" and ruling 8: "`scripts/skilllab/engine.py` gains the harness binding
+    (`om_terrain_set_heights` or the slope setter the engine exposes), no contract change". The signature table names `om_terrain_set_heights` (ouroboros_sim.h:166) and
+    an Engine method calls it."""
+    from pathlib import Path
+    text = (Path(__file__).resolve().parents[3] / "scripts" / "skilllab" / "engine.py").read_text()
+    assert '"om_terrain_set_heights"' in text, "no signature entry for om_terrain_set_heights in scripts/skilllab/engine.py"
+    assert "self._lib.om_terrain_set_heights(" in text, "no Engine method calls om_terrain_set_heights"
+
+
+def test_runner_writes_blocked_per_frame_for_the_gap_queue(runs):
+    """H-063 "a marker on units blocked for more than 2 s: the first-contact queue at a gap" and ruling 5: "the runner writes an optional per-frame `blocked` list (unit
+    rows blocked more than 2 s, judged at sample ticks) into the fight file". The chokepoint fight with walls has `blocked` on every frame, a list of ints, and at some
+    frame it is not empty (units queue at the walls). CONTROL half: the features-emptied twin has no blocked unit in any frame (absent or empty), so the marker is the
+    ground's."""
+    _, _, with_p, with_doc, _, ctl_doc = runs["chokepoint"]
+    assert with_p.returncode == 0, with_p.stdout[-300:] + with_p.stderr[-500:]
+    frames = with_doc["frames"]
+    assert all(isinstance(f.get("blocked"), list) and all(isinstance(i, int) for i in f["blocked"]) for f in frames), "a frame has no int list `blocked`"
+    assert any(f["blocked"] for f in frames), "no unit is ever listed blocked at the walls"
+    assert not any(f.get("blocked") for f in ctl_doc["frames"]), "the no-features control lists blocked units"
+
+
+def test_fight_file_validator_accepts_blocked_present_or_absent():
+    """H-063 ruling 5: "additive and optional, schema name `om-fight-2` unchanged ... the validator accepts it absent or present", and Files "`SNAPSHOT.md` (optional
+    `blocked`)". CONTROL half (green today): the example document without `blocked` validates. Red half: a frame carrying `blocked: [1]` validates too, the schema name is
+    still om-fight-2, and SNAPSHOT.md documents the key."""
+    from pathlib import Path
+    from scripts.skilllab.arena import snapshot
+    doc = snapshot.example(frames=3, schema=snapshot.SCHEMA_V2)
+    assert snapshot.validate(doc) == []
+    doc["frames"][1]["blocked"] = [doc["frames"][1]["units"][0]["id"]]
+    assert snapshot.validate(doc) == []
+    assert doc["schema"] == "om-fight-2"
+    assert "blocked" in (Path(__file__).resolve().parents[3] / "scripts" / "skilllab" / "arena" / "SNAPSHOT.md").read_text()

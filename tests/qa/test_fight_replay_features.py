@@ -11,10 +11,9 @@ Story lines proved here:
 Premises dumped (base aac0cd41, 2026-11-02): the layout shot's qa_state `features` is a list of `{kind, x, y}` (layout_shot.gd:588-590); the replay's qa_state has no
 `features` and no `blocked_units` key; the replay builds its own layout dict with `situation: "fight_replay"` and no features (fight_replay.gd:94).
 
-OPEN INTERFACES (not in the story; Q for the Architect in the report): (1) how the replay learns the features: this file's fight fixture carries BOTH candidate channels, a top-level
-`features` key in the fight file and a `layout_path` pointing at a layout TOML with its `.json` twin beside it (the produce.write_layout pair), and asserts only the
-qa_state, so either channel passes. (2) What `blocked_units` holds and where the runner writes it: only the key's presence and type (a list of unit ids, `[]` when none)
-are asserted per frame; the marker's content waits on the Architect's ruling.
+Rulings (H-063 "Rulings for the build", 4 and 5): the replay learns the features from the layout JSON twin at `layout_path` (the produce.write_layout pair); the
+fight-file schema gains no `features` key. The runner writes an optional per-frame `blocked` list into the fight file and the replay's qa_state `blocked_units` is that
+frame's list (`[]` when absent).
 
 Controls (green today): the layout shot reports the fixture's feature kinds; the fixture fight validates."""
 from __future__ import annotations
@@ -41,15 +40,15 @@ def _side(x, face, n=2):
 
 @pytest.fixture()
 def staged(tmp_path):
-    """(layout json path, fight path): a chokepoint layout (TOML text and JSON twin) and a 3-frame om-fight-2 file naming it, with the features also inline."""
+    """(layout json path, fight path): a chokepoint layout (TOML stub and JSON twin) and a 3-frame om-fight-2 file naming it (the features only in the layout twin)."""
     layout = {"id": "L-0055", "situation": "chokepoint", "landscape": "small_flat", "seed": 1, "predict": "A", "predict_why": "toy", "verdict": "", "feedback": "",
               "defender": "A", "side_a": _side(1000.0, 0.0), "side_b": _side(3000.0, 3.1416), "features": FEATURES}
     lj = tmp_path / "L-0055.json"
     lj.write_text(json.dumps(layout))
     (tmp_path / "L-0055.toml").write_text('id = "L-0055"\n# the JSON twin beside this file carries the same layout\n')
     doc = snapshot.example(frames=3, schema=snapshot.SCHEMA_V2)
-    doc["layout_id"], doc["layout_path"], doc["features"] = "L-0055", str(tmp_path / "L-0055.toml"), FEATURES
-    assert snapshot.validate({k: v for k, v in doc.items() if k != "features"}) == []
+    doc["layout_id"], doc["layout_path"] = "L-0055", str(tmp_path / "L-0055.toml")
+    assert snapshot.validate(doc) == []
     return lj, _write_fight(tmp_path / "L-0055-s1.fight.json", doc)
 
 
@@ -99,17 +98,37 @@ def test_replay_qa_state_lists_the_features_drawn_as_the_shot_does(staged, monke
 
 
 def test_replay_qa_state_has_blocked_units_on_every_frame(staged, monkeypatch):
-    """H-063 Tests "`blocked_units` per frame". On each of the three frames qa_state carries `blocked_units`, a list of unit ids (ints); the fixture has no blocking
-    data, so it is `[]` there (content ruling pending, see the module docstring)."""
+    """H-063 Tests "`blocked_units` per frame". On each of the three frames qa_state carries `blocked_units`, a list of ints; the fixture has no `blocked` data, so
+    it is `[]` there."""
     _, fight = staged
     g = _replay(fight, monkeypatch)
     try:
         for want_frame in range(3):
             qa = _state(g, want=lambda q, f=want_frame: q.get("frame") == f)["qa"]
             assert isinstance(qa.get("blocked_units"), list), "frame %d: no `blocked_units` list (keys: %s)" % (want_frame, sorted(qa))
-            assert all(isinstance(i, int) for i in qa["blocked_units"])
+            assert qa["blocked_units"] == []
             if want_frame < 2:
                 _key(g, "Space")
+    finally:
+        g.stop()
+
+
+def test_replay_blocked_units_is_the_frames_blocked_list(staged, monkeypatch):
+    """H-063 ruling 5 and "a marker on units blocked for more than 2 s". Frame 1 of the fixture carries `blocked: [<first unit id>]` (frames 0 and 2 carry none): the
+    replay's `blocked_units` is that list on frame 1 and `[]` on frames 0 and 2."""
+    _, fight = staged
+    doc = json.loads(fight.read_text())
+    uid = doc["frames"][1]["units"][0]["id"]
+    doc["frames"][1]["blocked"] = [uid]
+    fight.write_text(json.dumps(doc))
+    g = _replay(fight, monkeypatch)
+    try:
+        got = []
+        for want_frame in range(3):
+            got.append(_state(g, want=lambda q, f=want_frame: q.get("frame") == f)["qa"].get("blocked_units"))
+            if want_frame < 2:
+                _key(g, "Space")
+        assert got == [[], [uid], []], got
     finally:
         g.stop()
 

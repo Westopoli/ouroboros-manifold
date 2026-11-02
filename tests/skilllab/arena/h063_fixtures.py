@@ -2,17 +2,19 @@
 Geometry recipe (premises dumped 2026-11-02 on base aac0cd41, Vanguards, sight off, default orders both_same_point): side A block at x 1000, side B at x 3000, same
 y; both attack-move to the midpoint (2000, y) and stop when the enemy is in the 300 wu range, resting near x 1850 and x 2150. A feature rectangle centred at
 (2000, y), 600 wu wide, therefore holds the resting units when the engine ignores it (the stage 2 runner does) and holds none when the engine blocks it."""
+import contextlib
+import io
 import json
 import math
-import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.skilllab.arena import snapshot  # noqa: E402
+from scripts.skilllab.arena import run as arena_run, snapshot  # noqa: E402
 from scripts.skilllab.catalogue import produce  # noqa: E402
 
 PITCH = 40.0
@@ -85,12 +87,20 @@ def write(lay, directory):
 
 
 def run(path, out, seed=1, *extra):
-    cmd = [sys.executable, "-m", "scripts.skilllab.arena.run", "--layout", str(path), "--seed", str(seed), "--out", str(out), *extra]
-    return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=600)
+    """The arena CLI (`arena.run.main`), called in-process so the engine library (a 13 s `cc` build per process) is built once per test session, not per fight;
+    stdout and the exit code are the CLI's own (an argparse exit is caught as its code)."""
+    argv = ["--layout", str(path), "--seed", str(seed), "--out", str(out), *[str(e) for e in extra]]
+    buf, err = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(err):
+        try:
+            code = arena_run.main(argv)
+        except SystemExit as e:
+            code = e.code
+    return SimpleNamespace(returncode=int(code or 0), stdout=buf.getvalue(), stderr=err.getvalue())
 
 
 def fight(lay, directory, seed=1, *extra):
-    """Run `lay` through the CLI; returns (process, the fight document or None)."""
+    """Run `lay` through the CLI (in-process, see `run`); returns (process, the fight document or None)."""
     path = write(lay, Path(directory) / "layouts")
     out = Path(directory) / "out"
     proc = run(path, out, seed, *extra)

@@ -5,9 +5,8 @@ Story lines proved here: "the same fight without the geometry beside it as a con
 ground is visible, not argued." and Files "`scripts/skilllab/arena/page.py` (control strip beside the fight)"; Tests "`test_page.py` (control strip present)". This file
 sits beside test_page.py (new file, test_page.py untouched).
 
-OPEN INTERFACE (not in the story; Q for the Architect, see the report): how the control fight is named and found. This file assumes candidate (a): the control fight of
-layout <id> seed <n> is `<id>-control-s<n>.fight.json` in the same directory as the main one, with its PNGs in `<id>-control-s<n>/frame-<i>.png`, same units in frame 0.
-Candidates (b) a `--control-dir`, (c) a separately id'd layout, would change only the fixture here.
+Interface (H-063 "Rulings for the build", 6): `page.py --control-dir <dir>`; the control fight of layout <id> seed <n> is `<id>-control-s<n>.fight.json` with its PNGs in
+`<id>-control-s<n>/frame-<i>.png`, both in that directory (the runner produces them by emptying `features`), same units in frame 0.
 
 Control (green today): the same fixture without control files builds a page with the layout's own strip, so a red below is the missing control strip."""
 import json
@@ -62,25 +61,27 @@ def _stage(tmp_path, control):
     (root / "layouts").mkdir(parents=True)
     out.mkdir()
     (root / "layouts" / (LID + ".toml")).write_text(LAYOUT.format(lid=LID))
+    (root / "control").mkdir()
     stems = ["%s-s1" % LID] + (["%s-control-s1" % LID] if control else [])
     docs = []
     for stem in stems:
+        where = root / "control" if "control" in stem else out
         doc = snapshot.example(frames=3, units_per_side=2, schema=snapshot.SCHEMA_V2)
         doc["layout_id"], doc["layout_path"], doc["seed"] = LID, "layouts/%s.toml" % LID, 1
         doc["result"]["predict"], doc["result"]["agree"] = "A", doc["result"]["winner"] == "A"
-        snapshot.write(doc, out / (stem + ".fight.json"))
-        (out / stem).mkdir()
+        snapshot.write(doc, where / (stem + ".fight.json"))
+        (where / stem).mkdir()
         for i in range(3):
-            _png(out / stem / ("frame-%d.png" % i))
+            _png(where / stem / ("frame-%d.png" % i))
         docs.append(doc)
     (out / (LID + ".rate.json")).write_text(json.dumps(rate([docs[0]], 0.98), indent=2) + "\n")
     return root, out, docs
 
 
-def _page(root, out):
+def _page(root, out, control=False):
     html = root / "index.html"
     env = {"PYTHONPATH": str(ROOT), "PATH": "/usr/bin:/bin"}
-    done = subprocess.run([sys.executable, "-m", "scripts.skilllab.arena.page", "--dir", str(out), "--out", str(html)], cwd=root, env=env, capture_output=True, text=True, timeout=60)
+    done = subprocess.run([sys.executable, "-m", "scripts.skilllab.arena.page", "--dir", str(out), "--out", str(html)] + (["--control-dir", str(root / "control")] if control else []), cwd=root, env=env, capture_output=True, text=True, timeout=60)
     assert done.returncode == 0, "page CLI failed: " + done.stderr[-300:]
     return html.read_text()
 
@@ -99,7 +100,7 @@ def test_page_shows_a_control_strip_beside_the_fight(tmp_path):
     block, and the control fight's frame 0 holds the same units as the main one (the fixture says so; the page must not drop or reorder them: it lists the control's
     captions `tick <t> A <a> B <b>` for every frame)."""
     root, out, docs = _stage(tmp_path, control=True)
-    page = _page(root, out)
+    page = _page(root, out, control=True)
     start = page.index("<h2>%s</h2>" % LID)
     block = re.split(r"<h2>", page[start + 4:], maxsplit=1)[0]   # the layout's block, up to the next heading
     assert sorted(set(re.findall(r"%s-control-s1/frame-(\d+)\.png" % LID, block))) == ["0", "1", "2"], "control frames missing from the layout's block"
@@ -115,7 +116,7 @@ def test_a_control_strip_is_not_a_second_layout_row(tmp_path):
     """H-063 "the control strip beside the fight" (not another fight): the control file's id is not listed as its own layout block or INVALID row; the summary table
     keeps one row for the layout."""
     root, out, _ = _stage(tmp_path, control=True)
-    page = _page(root, out)
+    page = _page(root, out, control=True)
     assert page.count("<h2>%s</h2>" % LID) == 1
     assert "pair:" not in page and "<b>%s</b>" % LID not in page, "the control fight is listed as a stage 1 fight row"
     assert "INVALID" not in page

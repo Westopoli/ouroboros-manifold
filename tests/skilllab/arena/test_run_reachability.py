@@ -10,10 +10,9 @@ Fixture: `city` on small_flat, orders hold:A, so side B is the attacker. B's uni
 60 wu from every strip centre, so R6's 15 wu standoff holds); the pens are closed. The control opens the top strip of both pens. Premises dumped on base aac0cd41:
 the stage 2 runner ignores features, so both layouts run to a result today (exit 0): the control is green today and the closed pens are red.
 
-Rule id: the story says "the next free in `rules.toml`" without a number (R7 is H-053's arc placement, so R8 on a tree that has it). The tests take the one id
-above R7 from `rules.toml` instead of pinning a number (question for the Architect in the report)."""
-import re
-
+Rulings (H-063 "Rulings for the build", 1 to 3): the rule is the next free id above R7 (R8 once H-053 has landed); the tests read `rules.toml` for exactly one new id.
+The line reads `REJECT <layout id> <rule id> unreachable: side_b unit 2` (row index, side token). Attackers are the side that is not `hold`; for `both_same_point`
+every moving unit's route to the point is checked."""
 import h063_fixtures as fx
 from scripts.skilllab.catalogue import produce
 
@@ -34,6 +33,16 @@ def pen_layout(lid, open_top):
     lay = fx.layout(lid, "city", "small_flat", feature, orders="hold:A")
     for i, (cx, cy) in PENS.items():
         lay["side_b"]["units"][i].update(x=cx, y=cy)
+    return lay
+
+
+def pen_layout_both(lid):
+    """both_same_point: every unit moves to the point, so A unit 1 (moved out to its own closed pen at the west edge) is unreachable too, and it is the only one."""
+    lay = pen_layout(lid, True)
+    lay["orders"] = "both_same_point"
+    lay.pop("defender", None)
+    lay["features"][0]["buildings"] = _pen(500.0, 1000.0, False)
+    lay["side_a"]["units"][1].update(x=500.0, y=1000.0)
     return lay
 
 
@@ -61,16 +70,28 @@ def test_rules_toml_carries_one_new_reachability_rule():
 
 
 def test_closed_pens_reject_naming_the_first_unreachable_unit(tmp_path):
-    """H-063 "REJECTs a layout whose attackers cannot reach the defenders, with a line naming the first unreachable unit". Closed pens around B units 2 and 5: exit
-    2, a REJECT line for the layout id carrying the new rule id and `unit 2` (the first, by the row index convention of check_layout's own messages, `side_b unit 2`;
-    the format is a question for the Architect), no fight file."""
+    """H-063 "REJECTs a layout whose attackers cannot reach the defenders, with a line naming the first unreachable unit" and ruling 2: "The line reads
+    `REJECT <layout id> R8 unreachable: side_b unit 2`". Closed pens around B units 2 and 5 (B attacks, hold:A, ruling 3): exit 2, exactly one such line with the new
+    rule id, `unit 2` and no mention of unit 5, no fight file."""
     proc, doc = fx.fight(pen_layout("L-9130", False), tmp_path, 1, "--cap-seconds", "5")
     assert proc.returncode == 2, "exit %d: %s" % (proc.returncode, (proc.stdout + proc.stderr)[-400:])
     new = _new_rule_ids()
     assert len(new) == 1, "rules.toml carries %r above R7, want exactly one new rule" % (new,)
-    lines = [l for l in proc.stdout.splitlines() if l.startswith("REJECT L-9130")]
-    assert any(new[0] in l for l in lines), "no REJECT line with %s: %r" % (new[0], proc.stdout[-400:])
-    line = next(l for l in lines if new[0] in l)
-    assert re.search(r"\bunit 2\b", line) and re.search(r"side_b|\bB\b", line), line
-    assert not re.search(r"\bunit 5\b", line), "the line names a later unit as well as the first: " + line
+    want = "REJECT L-9130 %s unreachable: side_b unit 2" % new[0]
+    lines = [l.strip() for l in proc.stdout.splitlines() if l.startswith("REJECT L-9130") and new[0] in l]
+    assert lines == [want], "want exactly %r, got %r" % (want, lines)
     assert doc is None, "a fight file was written for a rejected layout"
+
+
+def test_both_same_point_checks_every_moving_unit(tmp_path):
+    """H-063 ruling 3: "for `both_same_point` every moving unit's route to the point is checked". The unreachable unit is side A's unit 1 (closed pen at the west edge),
+    so the line names `side_a unit 1`; the fight is not run."""
+    lay = pen_layout_both("L-9132")
+    assert produce.check_layout(lay, produce.presets(), produce.rules()) == []
+    proc, doc = fx.fight(lay, tmp_path, 1, "--cap-seconds", "5")
+    assert proc.returncode == 2, "exit %d: %s" % (proc.returncode, (proc.stdout + proc.stderr)[-400:])
+    new = _new_rule_ids()
+    assert len(new) == 1, "rules.toml carries %r above R7, want exactly one new rule" % (new,)
+    lines = [l.strip() for l in proc.stdout.splitlines() if l.startswith("REJECT L-9132") and new[0] in l]
+    assert lines == ["REJECT L-9132 %s unreachable: side_a unit 1" % new[0]], lines
+    assert doc is None
