@@ -113,9 +113,11 @@ def _layout(text):
         rate = _head(text, "Expected win rate")
         if rate is None:
             raise Reject("missing expected win rate")
-        keys["predict_rate"] = _number(rate, "expected win rate")
-        if not 0 <= keys["predict_rate"] <= 1:
+        number = _number(rate, "expected win rate")
+        if not 0 <= number <= 1:
             raise Reject("expected win rate %s is not between 0 and 1" % rate)
+        # The file's number is the Predict side's probability; predict_rate is side A's (draw: 0.50, number ignored).
+        keys["predict_rate"] = {"A": number, "B": 1 - number, "draw": 0.5}[predict]
     orders = _head(text, "Orders")
     if orders is not None:
         if orders not in ORDERS:

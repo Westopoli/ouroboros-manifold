@@ -4,7 +4,7 @@ Stage: 1
 Kind: open_field            (one of: open_field, chokepoint, vantage, cover, objective, staging, transit, flank_route, hazard_anchor, slope, city, trap)
 Field: small_flat           (a preset name from scripts/skilllab/catalogue/presets.toml; small_flat is 4000 x 4000, one layer)
 Predict: A                  (A, B or draw)
-Expected win rate: 0.98     (the better side's probability, your heuristic; see ../heuristics.md)
+Expected win rate: 0.98     (the probability of the side named in Predict, your heuristic; see ../heuristics.md. The converter stores side A's: this number for Predict A, one minus it for B, 0.50 for draw where the number is ignored)
 Orders: both_same_point     (both_same_point, hold:A or hold:B; see docs/stories/H-052.md)
 Orders point: midpoint      (midpoint, or x y in world units: the exact spot both sides attack-move to)
 What to expect: A closes and wins    (optional, one sentence: what the replay should show; the stage 2 page prints it)
