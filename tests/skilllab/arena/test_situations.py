@@ -265,3 +265,171 @@ def test_a_situation_above_the_current_stage_is_still_converted(tmp_path):
     r, out = _converted(tmp_path, [("SIT-0001-example.md", later)])
     assert re.search(r"^CONVERTED SIT-0001\S* L-0100", _said(r), re.M), _said(r)
     assert _check(_load(out, "L-0100")) == []
+
+
+# ================================================================ H-053 stage 2 (arena-stage2-roles-ranges-winrates)
+# spec: docs/stories/H-053.md "Arc blocks", "Interfaces" 2, 3 and 7; Flag client. Story Tests line: "`test_situations.py` (an arc converts to units on the arc facing the
+# centre, spacing at the pitch, `check_layout` clean)".
+# Interfaces 2, quoted: "Arc columns in the Sides table, after the existing ones: `shape` (`block`, the default when blank, or `arc`), `centre_x`, `centre_y`, `radius`,
+# `start_deg`, `end_deg` ... Angles in degrees in the converter's own convention (`COMPASS`: atan2 with y growing south ...), the arc running from `start_deg` to `end_deg`
+# clockwise on screen. ... the chord between neighbours is `PITCH` (40 wu): angular step `2*asin(PITCH/(2*radius))`; the n units sit at `start_deg + k*step` for k in 0..n-1
+# ... Each unit faces the arc's centre (`atan2(centre_y - y, centre_x - x)`). An arc that cannot hold its count ... is rejected with exactly: `arc too small: <n> units at
+# pitch 40 on <span>° need radius <r>` where `<r>` is `ceil(PITCH / (2*sin(span_rad / (2*(n-1)))))` and `<span>` is the span in whole degrees."
+# Interfaces 3: "records the arc under the side as `side_a.arc = {centre: [x, y], radius, start_deg, end_deg}` (absent for blocks). `check_layout` gains R6, "arc placement":
+# when a side carries `arc`, every unit of that side lies within 1 wu of `radius` from `centre`, else ... `R6 arc placement: unit <id> is <d> wu from the centre, radius <r>`."
+# Interfaces 7: "`Expected win rate: <0 to 1, side A>` (required for `Stage: 2` and above, Reject `missing expected win rate` ...), `Orders: both_same_point | hold:A | hold:B`
+# ..., `Orders point: midpoint | <x> <y>` ... Layout keys: `predict_rate` (float), `orders` (the H-052 string), `orders_point` (`[x, y]`, absent for midpoint)."
+# Finding for the Architect: R6 already exists in rules.toml / produce.py ("landscape feature present", standoff). Interfaces 3 names the new rule R6 too; the tests use an
+# open_field layout (existing R6 silent there) and read the rule id "R6" plus the message text "arc placement", so either a shared id or a message-level split satisfies them.
+
+ARC_COLUMNS = ("shape", "centre_x", "centre_y", "radius", "start_deg", "end_deg")
+ARC = {"n": 10, "cx": 1500.0, "cy": 2000.0, "r": 400.0, "start": 154.0, "end": 206.0}   # chord 40 at r 400 is a 5.7296 degree step; 9 steps = 51.6 degrees of the 52 given
+
+
+def _sit2(stage="2", expected="0.75", orders="both_same_point", orders_point="midpoint", arc=ARC, a_role="Bombard"):
+    """A stage 2 situation text: side A an arc of `arc["n"]` `a_role`, side B a block of 8 Raiders at (3200, 2000) facing west. `expected` None leaves the line out; `arc` None makes side A a plain block of 16 Vanguards at (800, 2000)."""
+    head = ["# SIT-0200 open_field (test)", "", "Stage: %s" % stage, "Kind: open_field", "Field: small_flat", "Predict: A"]
+    if expected is not None:
+        head.append("Expected win rate: %s" % expected)
+    head += ["Orders: %s" % orders, "Orders point: %s" % orders_point, "Why: An arc of long guns holds against a rush."]
+    cols = "| side | role | count | anchor x | anchor y | facing | range | layer | " + " | ".join(ARC_COLUMNS) + " |"
+    sep = "|" + "---|" * (8 + len(ARC_COLUMNS))
+    row_a = ("| A | Vanguard | 16 | 800 | 2000 | east | 0 | 0 | block |  |  |  |  |  |" if arc is None else "| A | %s | %d | 0 | 0 | east | 0 | 0 | arc | %s | %s | %s | %s | %s |" % (a_role, arc["n"], arc["cx"], arc["cy"], arc["r"], arc["start"], arc["end"]))
+    row_b = "| B | Raider | 8 | 3200 | 2000 | west | 0 | 0 | block |  |  |  |  |  |"
+    feats = ["", "## Features", "", "| kind | x | y | size | notes |", "|---|---|---|---|---|", "|  |  |  |  | (none) |", "", "## Defender", "", "none"]
+    return "\n".join(head + ["", "## Sides", "", cols, sep, row_a, row_b] + feats) + "\n"
+
+
+def _arc_expected(n, cx, cy, r, start):
+    step = 2 * math.asin(PITCH / (2 * r))
+    out = []
+    for k in range(n):
+        a = math.radians(start) + k * step
+        out.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    return out
+
+
+def test_control_stage1_file_without_expected_rate_converts_and_extra_head_lines_are_ignored(tmp_path):
+    """H-053 Interfaces 7 control, green today: a Stage 1 file with no `Expected win rate` line converts (the line is required for Stage 2 and above only), so the Reject test
+    below is red for the missing rule and not for a converter that rejects every file lacking the line."""
+    text = re.sub(r"^Expected win rate:.*\n", "", _example(), flags=re.M)
+    assert "Expected win rate" not in text
+    _converted(tmp_path, [("SIT-0001-example.md", text)])
+
+
+def test_control_arc_geometry_helper_matches_the_story_spacing():
+    """H-053 control, green today: the test's own arc formula puts neighbours exactly PITCH apart and every unit at radius r (so the converter tests below compare to a
+    correct expectation), and a 10-unit arc at r 400 fits inside the 52 degrees the fixture gives."""
+    pts = _arc_expected(ARC["n"], ARC["cx"], ARC["cy"], ARC["r"], ARC["start"])
+    assert len(pts) == 10
+    for p, q in zip(pts, pts[1:]):
+        assert abs(math.hypot(q[0] - p[0], q[1] - p[1]) - PITCH) < 1e-6
+    assert all(abs(math.hypot(x - ARC["cx"], y - ARC["cy"]) - ARC["r"]) < 1e-6 for x, y in pts)
+    assert 9 * math.degrees(2 * math.asin(PITCH / (2 * ARC["r"]))) <= ARC["end"] - ARC["start"]
+
+
+def test_arc_converts_to_units_on_the_arc_facing_the_centre_at_the_pitch(tmp_path):
+    """Story "units spaced at the block pitch along the arc, each facing the arc's centre" and Tests line "an arc converts to units on the arc facing the centre, spacing at the
+    pitch": side A's ten units sit at start_deg + k*step on the radius-400 ring, each faces atan2(cy - y, cx - x), neighbours are 40 wu apart (within rounding)."""
+    _, out = _converted(tmp_path, [("SIT-0200-arc.md", _sit2())])
+    layout = _load(out, "L-0100")
+    units = layout["side_a"]["units"]
+    assert layout["side_a"]["headcount"] == 10 and len(units) == 10 and {u["role"] for u in units} == {"Bombard"}
+    want = _arc_expected(ARC["n"], ARC["cx"], ARC["cy"], ARC["r"], ARC["start"])
+    for u, (x, y) in zip(units, want):
+        assert abs(u["x"] - x) < TOL and abs(u["y"] - y) < TOL, "unit at (%s, %s), the arc wants (%.2f, %.2f)" % (u["x"], u["y"], x, y)
+        face = math.atan2(ARC["cy"] - u["y"], ARC["cx"] - u["x"])
+        assert abs(math.atan2(math.sin(u["facing"] - face), math.cos(u["facing"] - face))) < 0.01, "facing %s, toward the centre is %.4f" % (u["facing"], face)
+    for p, q in zip(units, units[1:]):
+        assert abs(math.hypot(q["x"] - p["x"], q["y"] - p["y"]) - PITCH) < 0.1
+
+
+def test_arc_layout_records_the_arc_under_the_side_and_check_layout_is_clean(tmp_path):
+    """Interfaces 3: `side_a.arc = {centre: [x, y], radius, start_deg, end_deg}` in both the TOML and the JSON, absent on the block side; `check_layout` (R1 to R5 and the arc rule)
+    returns no violation on the converted layout."""
+    _, out = _converted(tmp_path, [("SIT-0200-arc.md", _sit2())])
+    toml_layout, json_layout = _load(out, "L-0100"), json.loads((out / "L-0100.json").read_text())
+    for layout in (toml_layout, json_layout):
+        arc = layout["side_a"]["arc"]
+        assert [float(c) for c in arc["centre"]] == [1500.0, 2000.0] and float(arc["radius"]) == 400.0
+        assert float(arc["start_deg"]) == 154.0 and float(arc["end_deg"]) == 206.0
+        assert "arc" not in layout["side_b"]
+    assert _check(toml_layout) == []
+
+
+def test_an_arc_that_cannot_hold_its_count_is_rejected_with_the_needed_radius(tmp_path):
+    """Interfaces 2 and audit item 9: forty units on a radius-100 arc over 52 degrees cannot sit at the pitch; the converter prints `REJECT <sit> arc too small: 40 units at pitch
+    40 on 52° need radius <r>` with r = ceil(PITCH / (2*sin(span_rad / (2*(n-1))))), exits 2, and writes no layout."""
+    arc = dict(ARC, n=40, r=100.0)
+    d = _sit(tmp_path, "SIT-0200-small.md", _sit2(arc=arc))
+    out = tmp_path / "catalogue"
+    out.mkdir()
+    r = _run(d, out)
+    need = math.ceil(PITCH / (2 * math.sin(math.radians(52) / (2 * 39))))
+    assert r.returncode == 2, _said(r)
+    assert "REJECT SIT-0200-small arc too small: 40 units at pitch 40 on 52° need radius %d" % need in _said(r), _said(r)
+    assert list(out.glob("L-*.toml")) == []
+
+
+def test_stage_two_without_expected_win_rate_is_rejected(tmp_path):
+    """Interfaces 7: `Expected win rate` is required for `Stage: 2` and above; the converter prints `REJECT ... missing expected win rate` and exits 2."""
+    d = _sit(tmp_path, "SIT-0200-norate.md", _sit2(expected=None, arc=None))
+    out = tmp_path / "catalogue"
+    out.mkdir()
+    r = _run(d, out)
+    assert r.returncode == 2 and re.search(r"^REJECT SIT-0200-norate .*missing expected win rate", _said(r), re.M), _said(r)
+
+
+def test_layout_carries_predict_rate_orders_and_orders_point(tmp_path):
+    """Interfaces 7 layout keys: `Expected win rate: 0.8`, `Orders: hold:A`, `Orders point: 1500 2000` give `predict_rate = 0.8`, `orders = "hold:A"`, `orders_point = [1500, 2000]`
+    (TOML and JSON); the default `Orders point: midpoint` leaves `orders_point` out."""
+    _, out = _converted(tmp_path, [("SIT-0200-keys.md", _sit2(expected="0.8", orders="hold:A", orders_point="1500 2000", arc=None))])
+    for layout in (_load(out, "L-0100"), json.loads((out / "L-0100.json").read_text())):
+        assert layout["predict_rate"] == 0.8 and layout["orders"] == "hold:A"
+        assert [float(c) for c in layout["orders_point"]] == [1500.0, 2000.0]
+        assert layout["predict"] == "A"
+    out2 = tmp_path / "catalogue2"
+    out2.mkdir()
+    d = _sit(tmp_path / "second", "SIT-0201-mid.md", _sit2(arc=None))
+    assert _run(d, out2).returncode == 0
+    mid = _load(out2, "L-0100")
+    assert "orders_point" not in mid and mid["predict_rate"] == 0.75
+
+
+# ---------------------------------------------------------------- check_layout arc placement (Interfaces 3)
+
+def _arc_layout(displace=0.0):
+    """An in-memory open_field layout: side A ten Bombards on the radius-400 ring recorded as `arc`, side B eight Raiders in a block; unit 3 of A pushed `displace` wu outward."""
+    pts = _arc_expected(ARC["n"], ARC["cx"], ARC["cy"], ARC["r"], ARC["start"])
+    a = []
+    for i, (x, y) in enumerate(pts):
+        if i == 3 and displace:
+            ang = math.atan2(y - ARC["cy"], x - ARC["cx"])
+            x, y = x + displace * math.cos(ang), y + displace * math.sin(ang)
+        a.append({"role": "Bombard", "x": round(x, 2), "y": round(y, 2), "facing": 0.0, "layer": 0})
+    b = [{"role": "Raider", "x": 3200.0, "y": 1800.0 + 40.0 * i, "facing": 3.1416, "layer": 0} for i in range(8)]
+    return {"id": "L-9200", "situation": "open_field", "landscape": "small_flat", "seed": 1, "predict": "A", "predict_why": "t", "verdict": "", "feedback": "",
+            "side_a": {"headcount": 10, "units": a, "arc": {"centre": [ARC["cx"], ARC["cy"]], "radius": ARC["r"], "start_deg": ARC["start"], "end_deg": ARC["end"]}},
+            "side_b": {"headcount": 8, "units": b}}
+
+
+def test_control_arc_layout_without_the_arc_record_ignores_a_displaced_unit():
+    """H-053 control, green today: the same layout with a unit 5 wu off the ring and no `arc` record on the side passes check_layout, so the R6 reds below come from the arc rule."""
+    layout = _arc_layout(displace=5.0)
+    del layout["side_a"]["arc"]
+    assert _check(layout) == []
+
+
+def test_arc_layout_with_every_unit_on_the_ring_passes():
+    """Interfaces 3: units all within 1 wu of the radius from the centre; check_layout returns no violation."""
+    assert _check(_arc_layout()) == []
+
+
+def test_unit_off_the_ring_is_rejected_as_arc_placement():
+    """Interfaces 3: a unit 5 wu off the ring is rejected: check_layout reports R6 (an open_field layout, so the feature rule is silent), and the violation text reads
+    `arc placement: unit <id> is <d> wu from the centre, radius 400`."""
+    from scripts.skilllab.catalogue import produce
+    layout = _arc_layout(displace=5.0)
+    assert _check(layout) == ["R6"]
+    details = [d for r, d in produce._violations(layout, presets(), rules()) if r == "R6"]
+    assert details and re.search(r"arc placement: unit \S+ is [\d.]+ wu from the centre, radius 400", details[0]), details

@@ -665,3 +665,95 @@ def test_run_main_fixture_ends_by_wipe(main_run):
     """H-052: `end` "wipe" (one side has no survivors): the existing 8:12 fixture, run once, now also says so in the file."""
     res = _doc(main_run)["result"]
     assert res["end"] == "wipe" and res["stall"] is False and min(res["survivors"]) == 0
+
+
+# ================================================================ H-053 stage 2 (arena-stage2-roles-ranges-winrates)
+# spec: docs/stories/H-053.md "What stage 2 adds", "Interfaces" 1 and 7; Flag client. Story Tests line: "`test_run.py` (`--seeds 3` writes three fight files and one rate file)".
+# Not pinned by the story: which seed numbers `--seeds N` runs from `--seed S`; the tests read them from the rate file's `seeds` list.
+
+SIX_ROLES = ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]
+
+
+def _with_top_keys(layout, **keys):
+    """The layout as TOML with extra top-level keys first (a top-level key must precede every table); lists are written as TOML arrays."""
+    head = "".join("%s = %s\n" % (k, "[%s]" % ", ".join(repr(float(x)) for x in v) if isinstance(v, list) else repr(v)) for k, v in keys.items())
+    return head + produce.dump_toml(layout)
+
+
+def six_role_layout(layout_id):
+    """The 8:12 fixture with the rows' roles cycled through all six roles on both sides (same positions, so it stays legal)."""
+    layout = make_layout(layout_id, 8, 12, "B")
+    for key in ("side_a", "side_b"):
+        for i, row in enumerate(layout[key]["units"]):
+            row["role"] = SIX_ROLES[i % 6]
+    return layout
+
+
+def test_control_stage2_fixtures_are_legal_and_toml_carries_the_new_keys():
+    """H-053 control, green today: the six-role fixture passes check_layout (R5 lists all six roles), and a TOML with `predict_rate`, `orders` and `orders_point` at the top
+    still parses and passes check_layout, so a red below is the runner and not the fixture."""
+    pre, rul = produce.presets(), produce.rules()
+    assert set(rul["R5"]["roles"]) >= set(SIX_ROLES)
+    assert produce.check_layout(six_role_layout("L-9010"), pre, rul) == []
+    layout = make_layout("L-9011", 8, 12, "B")
+    loaded = tomllib.loads(_with_top_keys(layout, predict_rate=0.75, orders_point=[2000.0, 2100.0]))
+    assert loaded["predict_rate"] == 0.75 and loaded["orders_point"] == [2000.0, 2100.0]
+    assert produce.check_layout(loaded, pre, rul) == []
+
+
+def test_seeds_three_writes_three_fight_files_and_one_rate_file(tmp_path):
+    """Tests line "`--seeds 3` writes three fight files and one rate file"; story "one `fight.json` per seed, plus `<id>.rate.json`". With `--seed 1 --seeds 3` on the 8:12
+    fixture: exactly three `L-9012-s*.fight.json` that validate, one `L-9012.rate.json` whose `seeds` list names those three seeds, `wins_b` 3 (B wins every seed) and
+    `rate_a` 0.0, and the layout's `predict_rate` 0.0 carried into the file."""
+    layout = make_layout("L-9012", 8, 12, "B")
+    path = tmp_path / "layouts" / "L-9012.toml"
+    path.parent.mkdir()
+    path.write_text(_with_top_keys(layout, predict_rate=0.0))
+    out = tmp_path / "out"
+    proc = run_cli(path, out, 1, "--seeds", "3")
+    assert proc.returncode == 0, proc.stderr[-1500:] + proc.stdout[-500:]
+    files = sorted(out.glob("L-9012-s*.fight.json"))
+    assert len(files) == 3, [p.name for p in files]
+    for p in files:
+        snapshot.read(p)
+    rates = sorted(out.glob("*.rate.json"))
+    assert [p.name for p in rates] == ["L-9012.rate.json"], [p.name for p in rates]
+    rate = json.loads(rates[0].read_text())
+    assert len(rate["seeds"]) == 3 and sorted(out.joinpath("L-9012-s%d.fight.json" % s).name for s in rate["seeds"]) == [p.name for p in files]
+    assert (rate["wins_a"], rate["wins_b"], rate["stalls"]) == (0, 3, 0) and rate["rate_a"] == 0.0 and rate["predict_rate"] == 0.0
+
+
+def test_a_single_seed_run_still_writes_no_rate_file(tmp_path):
+    """Control, green today: without `--seeds` the stage 1 behaviour stands (one fight file, no rate file), so the test above is red for the missing `--seeds` and not for a
+    runner that always writes a rate file."""
+    layout = make_layout("L-9013", 8, 12, "B")
+    path = write_layout(layout, tmp_path / "layouts")
+    out = tmp_path / "out"
+    proc = run_cli(path, out, 1)
+    assert proc.returncode == 0, proc.stderr[-1500:]
+    assert len(list(out.glob("*.fight.json"))) == 1 and list(out.glob("*.rate.json")) == []
+
+
+def test_all_six_roles_run_and_appear_in_frame_zero(tmp_path):
+    """Story "All six roles (Raider, Interceptor, Vanguard, Warden, Bombard, Bastion) in one layout": a mixed-role 8:12 layout runs to a valid file whose frame 0 carries every
+    role on its units (roster ranges come from the engine; the layout's `range` is absent)."""
+    path = write_layout(six_role_layout("L-9014"), tmp_path / "layouts")
+    out = tmp_path / "out"
+    proc = run_cli(path, out, 1)
+    assert proc.returncode == 0, proc.stderr[-1500:]
+    doc = snapshot.read(fight_file(out, "L-9014"))
+    assert {u["role"] for u in doc["frames"][0]["units"]} == set(SIX_ROLES)
+
+
+def test_orders_point_names_the_spot_both_sides_go_to(tmp_path):
+    """Interfaces 7: "`orders_point` (`[x, y]`, absent for midpoint)"; audit item 5: "both sides go to the exact same spot". With `orders_point = [2000.0, 2100.0]` and the default
+    both_same_point the file's `orders.point` is [2000.0, 2100.0], not the centroid midpoint (2010.0, 2040.0 for this fixture)."""
+    layout = make_layout("L-9015", 8, 12, "B")
+    path = tmp_path / "layouts" / "L-9015.toml"
+    path.parent.mkdir()
+    path.write_text(_with_top_keys(layout, orders_point=[2000.0, 2100.0]))
+    out = tmp_path / "out"
+    proc = run_cli(path, out, 1)
+    assert proc.returncode == 0, proc.stderr[-1500:]
+    orders = snapshot.read(fight_file(out, "L-9015"))["orders"]
+    assert orders["mode"] == "both_same_point" and orders["point"] == [2000.0, 2100.0], orders

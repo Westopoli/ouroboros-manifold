@@ -377,3 +377,130 @@ def test_hud_prints_the_end_word_on_the_last_frame_and_stall_only_for_a_stall(en
         assert any("STALL" in t for t in lines) is stall, "STALL expected %s among Label texts %s" % (stall, lines)
     finally:
         g.stop()
+
+
+# ================================================================ H-053 stage 2 (arena-stage2-roles-ranges-winrates)
+# spec: docs/stories/H-053.md "Replay" and "Interfaces" 4; Flag client; Scene res://scenes/proto/fight_replay/fight_replay.tscn.
+# Interfaces 4, quoted: "Replay `qa_state` gains `targets` (list of `[unit_id, target_id]` for the living units of the current frame that have a target), `first_shot_frame`
+# (frame index, not tick, of the first frame in which any unit's hp is lower than in the previous frame; -1 when none), `seed` (the fight's `seed`) and `rate_a` (from
+# `<id>.rate.json` beside the fight file when it exists, else `null`). HUD line appends `seed <n>` and, when a rate file exists, `rate <0.00>`. The first-shot marker is a ring
+# on the damaged unit on that frame." Tests line: "target lines present in `qa_state`, first-shot frame index equals the first hp drop in the file".
+# Visible-only, no test (the marker ring and target line are drawn, qa_state carries no pixels): reported as a gap, judged by eye at the story's play.
+# Fixture premise (dumped by the control below): 4 frames of snapshot.example(schema om-fight-2), 2 units a side with ids 1,2 (A) and 3,4 (B); hp is 100.0 on frames 0 and 1,
+# B unit 3 drops to 60.0 on frame 2 (the first hp drop, so first_shot_frame 2), A unit 1 targets unit 3 from frame 1 on; unit 2 never has a target.
+
+H053_KEYS = {"targets", "first_shot_frame", "seed", "rate_a"}
+
+
+def _shot_fight(tmp_path: Path, seed: int = 7, drop: bool = True) -> tuple[Path, dict]:
+    doc = snapshot.example(frames=4, schema=snapshot.SCHEMA_V2)
+    doc["seed"] = seed
+    doc["result"]["survivors"] = [2, 0]
+    for n, frame in enumerate(doc["frames"]):
+        for u in frame["units"]:
+            if u["id"] == 1 and n >= 1:
+                u["target"] = 3
+        if drop and n == 2:
+            for u in frame["units"]:
+                if u["id"] == 3:
+                    u["hp"] = 60.0
+    if not drop:   # nobody is ever hurt: undo the example's last-frame deaths, a capped draw with all four alive
+        for u in doc["frames"][-1]["units"]:
+            u["hp"], u["alive"] = 100.0, True
+        doc["frames"][-1]["alive"] = [2, 2]
+        doc["result"].update({"winner": "draw", "survivors": [2, 2], "capped": True, "end": "cap", "agree": False})
+    assert snapshot.validate(doc) == [], snapshot.validate(doc)
+    return _write_fight(tmp_path / ("L-0001-s%d.fight.json" % seed), doc), doc
+
+
+def _first_hp_drop(doc: dict) -> int:
+    for n in range(1, len(doc["frames"])):
+        before = {u["id"]: u["hp"] for u in doc["frames"][n - 1]["units"]}
+        if any(u["hp"] < before[u["id"]] for u in doc["frames"][n]["units"]):
+            return n
+    return -1
+
+
+def test_control_shot_fixture_has_its_first_hp_drop_on_frame_two_and_a_target_from_frame_one(tmp_path):
+    """H-053 control, green today: the fixture validates, its first hp drop (computed here from the file) is frame 2, unit 1 has target 3 on frames 1 to 3, and the
+    drop-less variant has none, so a red below is the missing qa_state keys and not the fixture. Also: today's qa_state does not yet carry the H-053 keys is the red's reason."""
+    path, doc = _shot_fight(tmp_path)
+    assert _first_hp_drop(doc) == 2
+    assert [next(u for u in f["units"] if u["id"] == 1)["target"] for f in doc["frames"]] == [None, 3, 3, 3]
+    _, quiet = _shot_fight(tmp_path, seed=8, drop=False)
+    assert _first_hp_drop(quiet) == -1
+
+
+def test_qa_state_carries_the_stage2_keys_and_the_seed(tmp_path, monkeypatch):
+    """Interfaces 4: qa_state has `targets`, `first_shot_frame`, `seed`, `rate_a`; `seed` is the file's seed (7); with no rate file beside the fight `rate_a` is null."""
+    path, doc = _shot_fight(tmp_path)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        qa = _state(g)["qa"]
+        assert H053_KEYS <= set(qa), "qa_state keys %s lack %s" % (sorted(qa), sorted(H053_KEYS - set(qa)))
+        assert qa["seed"] == 7 and qa["rate_a"] is None
+    finally:
+        g.stop()
+
+
+def test_first_shot_frame_equals_the_first_hp_drop_in_the_file(tmp_path, monkeypatch):
+    """Tests line "first-shot frame index equals the first hp drop in the file": `first_shot_frame` is the frame index (2), not the tick, and is the same from frame 0 on."""
+    path, doc = _shot_fight(tmp_path)
+    assert _first_hp_drop(doc) == 2 and doc["frames"][2]["tick"] != 2
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        assert _state(g)["qa"]["first_shot_frame"] == 2
+    finally:
+        g.stop()
+
+
+def test_first_shot_frame_is_minus_one_when_no_hp_ever_drops(tmp_path, monkeypatch):
+    """Interfaces 4: `first_shot_frame` is -1 when no frame has an hp drop (the detector's negative case)."""
+    path, _ = _shot_fight(tmp_path, seed=8, drop=False)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        assert _state(g)["qa"]["first_shot_frame"] == -1
+    finally:
+        g.stop()
+
+
+def test_targets_list_the_living_units_with_a_target_on_the_current_frame(tmp_path, monkeypatch):
+    """Tests line "target lines present in `qa_state`": frame 0 has no target (`targets` empty); after one step (frame 1) it is [[1, 3]], unit 1 targeting unit 3."""
+    path, _ = _shot_fight(tmp_path)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        assert st["qa"].get("targets") == [], "frame 0 targets %r" % (st["qa"].get("targets"),)
+        _key(g, "Space")
+        st = _state(g, lambda q: q["frame"] == 1, timeout=15.0, label="frame 1")
+        assert [list(t) for t in st["qa"].get("targets", [])] == [[1, 3]]
+    finally:
+        g.stop()
+
+
+def test_rate_a_comes_from_the_rate_file_beside_the_fight_and_the_hud_shows_seed_and_rate(tmp_path, monkeypatch):
+    """Interfaces 4: with `L-0001.rate.json` beside the fight file, `rate_a` is that file's value (0.75) and the HUD line carries `seed 7` and `rate 0.75`; without the rate file the
+    HUD has `seed 7` and no `rate`."""
+    path, _ = _shot_fight(tmp_path)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        lines = _hud_lines(_state(g))
+        assert any("seed 7" in t for t in lines), "no 'seed 7' among Label texts %s" % lines
+        assert not any("rate " in t for t in lines), "a rate shown with no rate file: %s" % lines
+    finally:
+        g.stop()
+    (tmp_path / "L-0001.rate.json").write_text(json.dumps({"layout_id": "L-0001", "seeds": [7], "rate_a": 0.75, "predict_rate": 0.75}) + "\n")
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        assert st["qa"].get("rate_a") == 0.75
+        lines = _hud_lines(st)
+        assert any("seed 7" in t for t in lines) and any("rate 0.75" in t for t in lines), "HUD Label texts %s" % lines
+    finally:
+        g.stop()
