@@ -156,7 +156,7 @@ def test_explicit_docs_profile_flag_skips_even_with_owns(tmp_path):
 def test_real_examples_from_the_repo():
     """The brief's own two worked examples, run against the real repo."""
     proc_w1f = subprocess.run(
-        [sys.executable, str(SIZE_LINT), "origin/push/W-1f", "origin/main", "--piece-id", "B13"],
+        [sys.executable, str(SIZE_LINT), "c46afcdf", "origin/main", "--piece-id", "B13"],
         cwd=REPO, capture_output=True, text=True,
     )
     assert proc_w1f.returncode == 0, proc_w1f.stdout + proc_w1f.stderr
@@ -164,7 +164,7 @@ def test_real_examples_from_the_repo():
     assert "csrc/enemy_macro.c" in proc_w1f.stdout
 
     proc_const1 = subprocess.run(
-        [sys.executable, str(SIZE_LINT), "origin/push/CONST-1", "origin/main", "--piece-id", "CONST-1"],
+        [sys.executable, str(SIZE_LINT), "8baad88c", "origin/main", "--piece-id", "CONST-1"],
         cwd=REPO, capture_output=True, text=True,
     )
     assert proc_const1.returncode == 0, proc_const1.stdout + proc_const1.stderr
