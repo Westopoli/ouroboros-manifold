@@ -113,7 +113,9 @@ setsid nohup ${envp:+env "${envp% }"} "$GODOT" --path "$tree" $dflags "${pflag[@
 gpid=$!
 
 # qa_scene <port>: the scene the QA daemon reports, empty when it does not answer.
+# See also: docs/stories/H-068.md (a self-connect echoes the request back; the helper refuses it first)
 qa_scene() {
+  python3 "$(dirname "${BASH_SOURCE[0]}")/qa_wait_port.py" "$1" --timeout 2 >/dev/null || return 1
   python3 -c '
 import json,socket,sys
 s=socket.create_connection(("127.0.0.1",int(sys.argv[1])),timeout=10)

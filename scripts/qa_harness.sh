@@ -188,14 +188,12 @@ def send(verb_args):
     return json.loads(buf.decode())
 
 
-connected = False
-while time.monotonic() < deadline:
-    try:
-        with socket.create_connection(("127.0.0.1", port), timeout=1):
-            connected = True
-            break
-    except OSError:
-        time.sleep(0.25)
+# See also: docs/stories/H-068.md (a connect to a closed port can connect to itself; qa_wait_port refuses that)
+connected = subprocess.run(
+    [sys.executable, os.path.join(repo_root, "scripts", "qa_wait_port.py"), str(port),
+     "--timeout", str(max(0.0, deadline - time.monotonic()))],
+    stdout=subprocess.DEVNULL,
+).returncode == 0
 if not connected:
     proc.kill()
     fail("port %d never opened" % port)
