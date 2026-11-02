@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/beta/stage_field.gd" id="1_field"]
+[ext_resource type="Script" path="res://scenes/ground3d/camera_rig_3d.gd" id="2_rig"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_field"]
+size = Vector2(24000, 24000)
+
+[sub_resource type="StandardMaterial3D" id="Mat_field"]
+albedo_color = Color(0.32, 0.38, 0.3, 1)
+
+[node name="StageField" type="Node3D"]
+script = ExtResource("1_field")
+
+[node name="Rig" type="Node3D" parent="."]
+script = ExtResource("2_rig")
+
+[node name="Plane" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12000, 0, 12000)
+mesh = SubResource("PlaneMesh_field")
+surface_material_override/0 = SubResource("Mat_field")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866, 0, -0.866, 0.5, 0, 1000, 0)
+
+[node name="Hud" type="CanvasLayer" parent="."]
+
+[node name="Line" type="Label" parent="Hud"]
+offset_left = 16.0
+offset_top = 12.0
