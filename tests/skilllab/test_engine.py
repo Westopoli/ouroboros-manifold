@@ -246,9 +246,10 @@ def test_ac3_smoke_spawn_order_step_and_read_back(eng):
         assert set(eng.type_stats(w, 100)) == set(STAT_KEYS)
         m = eng.spawn(w, vg, 0, -100.0, 400.0, 0)
         eng.order_move(w, [m], -100.0, 550.0)
-        for _ in range(100):
+        for _ in range(33):                                              # the plain move arrives at step 33 (R-096-01), then the unit is idle
             eng.step(w)
-        assert 450.0 < eng.unit_pos(w, m)[1] <= 551.0                   # order_move moved it toward the goal
+            if eng.unit_destination(w, m) is None: break
+        assert abs(eng.unit_pos(w, m)[1] - 550.0) <= 22.5 + 1e-9        # order_move moved it to the goal, within OM_ARRIVAL_TOLERANCE_MULT 1.5 x OM_UNIT_COLLISION_RADIUS 15
     finally:
         eng.free_world(w)
 
