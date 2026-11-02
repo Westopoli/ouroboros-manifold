@@ -7,7 +7,7 @@ game that is up. listening() refuses it.
 
 See also: docs/stories/H-068.md, docs/stories/H-066.md (the same fix in daemon_client.wait_for_port)
 
-Usage: python3 scripts/qa_wait_port.py PORT [--timeout S]   (default 60)
+Usage: python3 scripts/qa_wait_port.py PORT [TIMEOUT | --timeout S]   (default 60)
 Prints "PORT READY <port>" and exits 0, or "PORT TIMEOUT <port>" and exits 1; bad arguments exit 2.
 """
 import socket
@@ -30,20 +30,23 @@ def listening(port):
 
 def main(argv):
     try:
-        port, timeout = None, 60.0
+        port, timeout, seen_timeout = None, 60.0, False
         args = list(argv)
         while args:
             a = args.pop(0)
             if a == "--timeout":
+                seen_timeout = True
                 timeout = float(args.pop(0))
             elif port is None:
                 port = int(a)
+            elif not seen_timeout:
+                timeout, seen_timeout = float(a), True
             else:
                 raise ValueError(a)
         if port is None:
             raise ValueError("port")
     except (ValueError, IndexError):
-        print("usage: qa_wait_port.py PORT [--timeout S]", file=sys.stderr)
+        print("usage: qa_wait_port.py PORT [TIMEOUT | --timeout S]", file=sys.stderr)
         return 2
     deadline = time.monotonic() + timeout
     while True:
