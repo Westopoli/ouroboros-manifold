@@ -11,6 +11,10 @@ H-053 (DRAFT-stage2-page): a layout with a `<id>.rate.json` in the directory is 
 (`_layout_block`); its fight files are not also listed as stage 1 rows. Rates, stall and none seeds, firing_capable and the median seed are the rate
 file's, never recomputed; the per-role survivors are means over the seeds' last frames. One strip per layout, the median seed's; the seed numbers are
 plain text (H-053 Replay readability, no per-seed strip pages).
+
+H-063 (stage 3): `--control-dir <dir>` adds, under a rated layout's median-seed strip, the control strip: the same fight with the layout's `features` emptied,
+`<id>-control-s<n>.fight.json` in that directory with its frames in `<id>-control-s<n>/frame-<i>.png` (run.py `--control-dir` writes the fight). A layout without a
+control file shows no second strip.
 """
 import argparse
 import datetime
@@ -173,8 +177,18 @@ def _row_html(cells, tag="td"):
     return "<tr>%s</tr>" % "".join('<%s%s>%s</%s>' % (tag, ' class="%s"' % c if c else "", html.escape(x), tag) for x, c in cells)
 
 
-def _layout_block(d, out_dir, rate, docs, layout, bad):
-    """One layout's block (title line, the three sentences, survivors, median seed strip, seed line)."""
+def _control_strip(control_dir, rate):
+    """The control strip of the median seed, with its label; empty when no control fight file is there or it does not validate."""
+    stem = "%s-control-s%d" % (rate["layout_id"], rate["median_seed"])
+    try:
+        doc = read(Path(control_dir) / (stem + ".fight.json"))
+    except (ValueError, OSError):
+        return ""
+    return '<p>control: the same fight without the ground (features emptied)</p><div class="strip">%s</div>' % _strip(stem, doc["frames"], stem)
+
+
+def _layout_block(d, out_dir, rate, docs, layout, bad, control_dir=None):
+    """One layout's block (title line, the three sentences, survivors, median seed strip, control strip, seed line)."""
     cells = _summary_cells(rate, docs, layout)
     median = docs.get(rate["median_seed"])
     seeds = []
@@ -189,12 +203,12 @@ def _layout_block(d, out_dir, rate, docs, layout, bad):
                     for label, key in (("What to expect", "what_to_expect"), ("Approve means", "approve_means"), ("Deny means", "deny_means")))
     return ('<h2>%s</h2><table border="1" cellpadding="6">%s%s</table>%s%s<table border="1" cellpadding="4"><tr><th>role</th><th>A mean survivors</th>'
             '<th>B mean survivors</th><th>A start</th><th>B start</th></tr>%s</table><p>median seed %d strip (first shot outlined)</p>'
-            '<div class="strip">%s</div><p>seeds: %s</p>%s'
+            '<div class="strip">%s</div>%s<p>seeds: %s</p>%s'
             % (html.escape(rate["layout_id"]), _row_html([(h, "") for h in SUMMARY_HEAD], "th"), _row_html(cells), _gap_sentence(rate), words, survivors, rate["median_seed"], strip,
-               " ".join(seeds), "".join("<p><b>%s</b></p>" % html.escape(m) for m in bad)))
+               _control_strip(control_dir, rate) if control_dir else "", " ".join(seeds), "".join("<p><b>%s</b></p>" % html.escape(m) for m in bad)))
 
 
-def build(d, out):
+def build(d, out, control_dir=None):
     rate_files = sorted(Path(d).glob("*.rate.json"))
     rated = set()
     entries = []
@@ -209,7 +223,7 @@ def build(d, out):
                 "engine %s, %s</p>" % (html.escape(_engine_sha()), datetime.date.today().isoformat()))
         summary = ('<table border="1" cellpadding="6">%s%s</table>' % (_row_html([(h, "") for h in SUMMARY_HEAD], "th"),
                    "".join(_row_html(_summary_cells(r, dd, lay)) for r, dd, lay, _ in sorted(entries, key=lambda e: e[0]["layout_id"]))))
-        blocks = "".join(_layout_block(d, Path(out).parent, r, dd, lay, bad) for r, dd, lay, bad in sorted(entries, key=lambda e: e[0]["layout_id"]))
+        blocks = "".join(_layout_block(d, Path(out).parent, r, dd, lay, bad, control_dir) for r, dd, lay, bad in sorted(entries, key=lambda e: e[0]["layout_id"]))
     page = ('<!doctype html><meta charset="utf-8"><title>Arena stage review</title>%s<body><h1>Arena stage review</h1>'
             "%s%s%s<p>Side A blue, side B red. Answer in verdicts.md: | id | verdict | feedback | with verdict A, B, draw or deny.</p>"
             '<table border="1" cellpadding="6">%s</table></body>\n' % (STYLE, head, summary, blocks, "\n".join(rows)))
@@ -221,8 +235,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--control-dir", help="directory of <id>-control-s<n>.fight.json control fights, shown as a second strip (H-063)")
     args = ap.parse_args(argv)
-    return build(args.dir, args.out)
+    return build(args.dir, args.out, args.control_dir)
 
 
 if __name__ == "__main__":
