@@ -7,6 +7,8 @@ Story test lines proved here (Tests, word for word):
      uses (the QA port), each screen's `scene` key named in order; positive control: without `OM_BETA`, Launch reaches `tactical_c`."
   2. "The picker exists on mission preparation with one entry under `OM_BETA=1` and is absent otherwise."
   3. "The story play: `scripts/play.sh --story H-060 --check` reaches `beta_field`."
+  4. "With `OM_BETA_BUILD_FILE` naming a planted file holding a 40-hex sha, the field HUD reads `beta B1: field placeholder, <first 8 hex>`; with it
+     naming a missing file the HUD reads `..., dev`."
 Story Change lines: "mission preparation's Launch routes to it when the build is the beta (DRAFT: an `OM_BETA=1` env the `om-beta` launcher sets;
 `tactical_c` otherwise)"; "A dev picker placeholder on mission preparation (DRAFT-variant-picker): an OptionButton labelled "variant" with one entry,
 hidden unless `OM_BETA=1`"; "a HUD line "beta B1: field placeholder, sha"". Machine line: "Scene: res://scenes/beta/stage_field.tscn".
@@ -29,7 +31,8 @@ Names the story's "Rulings for the build" (2026-11-02, origin/main 1c2cce20) fix
      The key sits in the state reply's `qa` dict (where deploy_enabled is); `selected` is present but its value is not pinned (nobody gave one).
   4. "The field HUD reads `beta B1: field placeholder, <sha8>` ... read from a file `beta_build.txt` beside the exported binary ... and `dev` when the file
      is absent (runs from a checkout)." The story play runs from a checkout (godot beside no beta_build.txt), so its HUD must read "..., dev".
-     A planted-file test is NOT written: the story gives no path or env the scene reads (reported gap, two candidates).
+  5. "`OS.get_executable_path().get_base_dir().path_join("beta_build.txt")` by default, and the environment variable `OM_BETA_BUILD_FILE`, when set,
+     names the file instead. The variable is a test seam only" (round-two ruling): the planted-file tests set it for the child process.
 Waits are harness waits, not rule thresholds.
 """
 from __future__ import annotations
@@ -59,6 +62,7 @@ BOOT_S = 45.0
 STEP_S = 10.0
 PORT_S = 60.0
 AFTER_DEPLOY_S = 15.0
+PLANTED_SHA = "0123abcd4567ef890123abcd4567ef890123abcd"  # 40 hex; the HUD must show its first 8, 0123abcd
 HUD_DEV = "beta B1: field placeholder, dev"  # Ruling 4: `dev` when beta_build.txt is absent (a checkout run)
 
 
@@ -254,26 +258,74 @@ def test_control_story_play_launch_line_carries_the_scene():
     assert _play_sh_scene() == BETA_FIELD
 
 
-def test_story_play_reaches_beta_field_with_its_hud_line():
-    """H-060 test 3: "`scripts/play.sh --story H-060 --check` reaches `beta_field`." The play launches the scene play.sh launches, under Xvfb, with
-    --qa-port as --check does, and asserts the scene key and the inventory: the HUD line, which reads `dev` from a checkout (ruling 4: "`dev` when the
-    file is absent (runs from a checkout)"). RED today: scene
-    res://scenes/beta/stage_field.tscn does not exist."""
+def _story_play_hud(build_file: str | None) -> list:
+    """Launch the scene play.sh launches under Xvfb with --qa-port, as --check does, and return the HUD texts of its state reply.
+    `build_file` None leaves OM_BETA_BUILD_FILE unset (a checkout run); a string sets it for the child only."""
     scene = _play_sh_scene()
     assert (ROOT / scene.replace("res://", "")).exists(), "H-060: %s does not exist, so play.sh --story H-060 --check cannot reach it" % scene
-    saved = os.environ.pop("XDG_DATA_HOME", None)
+    saved = {k: os.environ.get(k) for k in ("XDG_DATA_HOME", "OM_BETA_BUILD_FILE")}
+    os.environ.pop("XDG_DATA_HOME", None)
+    os.environ.pop("OM_BETA_BUILD_FILE", None)
+    if build_file is not None:
+        os.environ["OM_BETA_BUILD_FILE"] = build_file
     g = SceneGame(scene, pick_free_port(), seed=1)
     try:
         g.start()
+        for k, v in saved.items():  # the child has its environment already
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
         try:
             g.wait_for_port(PORT_S)
         except RuntimeError as e:
             raise AssertionError("H-060: godot exited before the qa port opened on %s: %s" % (scene, str(e)[-400:]))
         state = wait_for(g.client, lambda st: st.get("scene") == scene, STEP_S * 2, label="story play")
-        hud = [str(t) for t in state["inventory"]["hud_texts"].values()]
-        assert HUD_DEV in hud, "H-060: no HUD line %r among %r" % (HUD_DEV, hud)
+        return [str(t) for t in state["inventory"]["hud_texts"].values()]
     finally:
-        if saved is not None:
-            os.environ["XDG_DATA_HOME"] = saved
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
         g.stop()
         shutil.rmtree(g.scratch, ignore_errors=True)
+
+
+def test_story_play_reaches_beta_field_with_its_hud_line():
+    """H-060 test 3: "`scripts/play.sh --story H-060 --check` reaches `beta_field`." The play launches the scene play.sh launches, under Xvfb, with
+    --qa-port as --check does, and asserts the scene key and the inventory: the HUD line, which reads `dev` from a checkout (ruling 4: "`dev` when the
+    file is absent (runs from a checkout)"). RED today: scene
+    res://scenes/beta/stage_field.tscn does not exist."""
+    hud = _story_play_hud(None)
+    assert HUD_DEV in hud, "H-060: no HUD line %r among %r" % (HUD_DEV, hud)
+
+
+# --- Test 4: the sha on the HUD (rulings 4 and 5) ---------------------------------------------------------------------------------------------
+
+def test_control_planted_build_file_fixture_is_a_40_hex_first_line(tmp_path):
+    """H-060 test 4 positive control (green today): the planted file this test writes holds a 40-hex sha on its first line and its first 8 hex are
+    what the HUD must show; the missing path is really missing. Checks the fixture, so a red below means the scene's read is missing."""
+    f = tmp_path / "beta_build.txt"
+    f.write_text(PLANTED_SHA + "\n")
+    first = f.read_text().splitlines()[0]
+    assert len(first) == 40 and all(c in "0123456789abcdef" for c in first) and first[:8] == PLANTED_SHA[:8]
+    assert not (tmp_path / "absent_beta_build.txt").exists()
+
+
+def test_story_play_hud_reads_first_8_hex_of_planted_build_file(tmp_path):
+    """H-060 test 4 and ruling 5: "With `OM_BETA_BUILD_FILE` naming a planted file holding a 40-hex sha, the field HUD reads `beta B1: field
+    placeholder, <first 8 hex>`"; ruling 4: "`<sha8>` is the first 8 hex of the build's sha, read from a file `beta_build.txt`". The variable is a test
+    seam: "the environment variable `OM_BETA_BUILD_FILE`, when set, names the file instead". RED today: scenes/beta/stage_field.tscn does not exist."""
+    f = tmp_path / "beta_build.txt"
+    f.write_text(PLANTED_SHA + "\n")
+    hud = _story_play_hud(str(f))
+    want = "beta B1: field placeholder, " + PLANTED_SHA[:8]
+    assert want in hud, "H-060: no HUD line %r among %r" % (want, hud)
+
+
+def test_story_play_hud_reads_dev_when_build_file_env_names_a_missing_file(tmp_path):
+    """H-060 test 4 and ruling 5: "with it naming a missing file the HUD reads `..., dev`"; ruling 4: "`dev` when the file is absent". Nothing sits
+    beside the godot binary. RED today: scenes/beta/stage_field.tscn does not exist."""
+    hud = _story_play_hud(str(tmp_path / "absent_beta_build.txt"))
+    assert HUD_DEV in hud, "H-060: no HUD line %r among %r" % (HUD_DEV, hud)
