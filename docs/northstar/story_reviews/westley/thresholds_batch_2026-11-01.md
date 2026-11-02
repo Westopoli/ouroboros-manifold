@@ -1,0 +1,12 @@
+# Four red tests that are yours to rule (batch of 2026-11-01)
+
+Not urgent: none of these blocks a landing (the sweep only rejects new reds). Brought to you after stage 1 is Seen, per DEC-h037-part2-groups-2026-11-01. Each has been bisected read-only; nothing was edited. For each, say: **keep** (the test stays red as a finding against the landing named), **move** (give the new number), or **retire** (with a word why).
+
+| # | What the player would notice | Test and number today | What moved it | Your options |
+|---|---|---|---|---|
+| 1 | In the biggest tactical test fight, one side now fields about half the soldiers it used to, because starting forces are sized by how many strongpoints a side holds. The test expects both sides over the contact cap. | `tests/csim/scale/test_scale_A99_tactical_equivalence.py` `test_A99_largest_fight_has_both_sides_over_the_contact_cap`: player side 1348 (was 2246), enemy 2535, cap 1800 | d3bf1614, E7 starting force by strongpoint share (2026-10-19); only the player side changed | keep as a finding against E7's sizing; move the cap; or give the test fight a larger starting share |
+| 2 | How fast your side forgets what it knew about regions it no longer sees. The rule says a mean "knowledge lost" between 1 and 2; it is 4.41 since one landing. | `tests/csim/` E-06 S-045 `R_045_09` mean 4.41, window 1.0 to 2.0 | 02e05a14 (2026-10-02): event tables sized to all 512 regions instead of 64; the test world has 100 to 150 regions, so regions past 64 were previously outside the tables and never counted | keep (the old number measured a 64-region cap, the new one is the real rate: then the window moves to fit 4.41, your number); or treat 4.41 as too fast and file a game story |
+| 3 | A fight that should resolve within 1800 ticks takes 4226. | E-11 S-085 `R_085_04` tick window 1800, measured 4226 | not bisected yet (same family as 1: starting force and ranges changed in October) | keep as finding; move the window; or ask for the bisect first |
+| 4 | A speed mark: a benchmark that must finish in 30 s took 89 s inside the full sweep, under gate load. | `tests/skilllab/integration/test_speed.py`, 30 s mark | load-dependent; three idle timings pending | keep the mark and run it only idle; move the mark; or retire it |
+
+Rule of record: thresholds and windows are yours (CLAUDE.md "Tests are the spec"); a real finding is never reclassified as a skip. Whatever you say is written as a `Verdict:` on a records commit and the test is moved or kept accordingly.
