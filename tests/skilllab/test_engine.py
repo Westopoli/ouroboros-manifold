@@ -1,3 +1,4 @@
+# Rule pins: R-096-01@d86536
 # spec: docs/northstar/plans/skilllab-harness-spec.md::Acceptance criteria::AC-2
 """engine.py: build command by architecture (observed through monkeypatch), the Engine surface, one real-library smoke."""
 import json
