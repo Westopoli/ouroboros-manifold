@@ -5,3 +5,4 @@ scenes/proto/unit_scale/unit_scale.gd # H-023 prototype
 scenes/proto/unit_scale/unit_scale_model.gd # H-023 prototype
 scenes/proto/unit_scale/unit_scale_stage.gd # H-023 prototype
 scenes/proto/fight_replay/fight_replay.gd # H-040 part 3 prototype
+scenes/proto/fight_replay/replay_marks.gd # H-053 prototype, preloaded by fight_replay.gd
