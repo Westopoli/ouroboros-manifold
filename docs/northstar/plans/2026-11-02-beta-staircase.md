@@ -33,7 +33,7 @@ Stories written Ready today: H-059 (channels), H-028 (B0, rewritten), H-060 (B1)
 
 ## Beta Dispatcher brief (the first message of the `ouroboros-manifold-beta` chat)
 
-Read `docs/method/runner.md`, then this file. Your channel is `beta`; your lock is `gate-beta.lock` once H-059 is on main, `gate.lock` before (one landing at a time with the lab until then). Queue in order: H-028 (B0: export preset, `scripts/beta_refresh.sh`, `om-beta`, the proof with the monitors woken), H-060 (B1), H-061 (B2). Standing rules: one report per landing group to the Architect (`rewrite-method-git-record`); stop rules in each story bind; no polling; every picture through the Sonnet look reviewer with the three sentences; Westley's checkout is fast-forwarded only when clean. H-031 piece three and H-038 part 2 are yours if the lab Dispatcher has not landed them by the time you start (ask it by message, once).
+Read `docs/method/runner.md`, then this file. Your channel is `beta`; your lock is `gate-beta.lock` once H-059 is on main, `gate.lock` before (one landing at a time with the lab until then). B0 is done on your side: H-028 (93815871) and H-038 part 2 (d914f2e0) landed, build 1c2cce20 is published and proved, and it waits only on Westley's verdict. Queue in order: H-060 (B1) once B0 is Seen, then H-061 (B2). Standing rules: one report per landing group to the Architect (`beta-staircase-gate-channel`, ref 845ad1); stop rules in each story bind; no polling; every picture through the Sonnet look reviewer with the three sentences; Westley's checkout is fast-forwarded only when clean. H-031 piece three (crop the proof to the game window) stays Spec'd and is not a B0 precondition.
 
 ## Where things stand
 
