@@ -86,16 +86,52 @@ def _click(client, name_options: tuple, label: str, text_options: tuple = ()) ->
     client.click(*control_center(ctrl))
 
 
-def _walk(beta: bool, extra_args: tuple = ()) -> Walk:
+class CopyGame(GodotGame):
+    """GodotGame that runs a copy of the godot binary (`exe`) instead of the PATH wrapper, so `OS.get_executable_path()` names the copy's directory.
+    The wrapper's work (force the x11 driver under Xvfb) is already in godot_args via --display-driver x11."""
+
+    def __init__(self, exe: str, *a, **kw):
+        super().__init__(*a, **kw)
+        self.exe = exe
+
+    def godot_args(self, godot: str = "godot") -> list[str]:
+        args = super().godot_args(godot)
+        args[args.index(godot)] = self.exe
+        return args
+
+
+def _binary_copy(tmp_path: Path, planted: bool) -> str:
+    """Hard-link (same filesystem) or copy the real godot binary into `tmp_path/bin`, with a planted `beta_build.txt` beside it when `planted`.
+    Skips with a visible reason when the binary cannot be linked or copied."""
+    real = Path(os.path.realpath(shutil.which("godot") or os.path.expanduser("~/.local/bin/godot"))).parent / "godot.real"
+    if not real.is_file():
+        pytest.skip("H-060 ruling 7 route (b): cannot find the real godot binary %s to copy" % real)
+    d = tmp_path / ("bin_planted" if planted else "bin_bare")
+    d.mkdir()
+    exe = d / "godot.real"
+    try:
+        try:
+            os.link(real, exe)
+        except OSError:
+            shutil.copy2(real, exe)
+    except OSError as e:
+        pytest.skip("H-060 ruling 7 route (b): cannot link or copy %s into %s: %s" % (real, d, e))
+    if planted:
+        (d / "beta_build.txt").write_text(PLANTED_SHA + "\n")
+    return str(exe)
+
+
+def _walk(beta: bool, extra_args: tuple = (), exe: str | None = None, expect_beta: bool = False) -> Walk:
     """Boot -> main menu -> galaxy -> mission preparation -> Deploy, only through the QA port's state/tree/click verbs.
-    `beta` sets env OM_BETA=1 for the child; `extra_args` are appended after `--` on its command line (the user args, e.g. `--om-beta`)."""
+    `beta` sets env OM_BETA=1 for the child; `extra_args` are appended after `--` on its command line (the user args, e.g. `--om-beta`);
+    `exe` runs that godot binary instead of the PATH wrapper; `expect_beta` says Launch is wanted at beta_field though neither env nor flag is set."""
     saved = {k: os.environ.get(k) for k in ("OM_BETA", "XDG_DATA_HOME")}
     os.environ.pop("XDG_DATA_HOME", None)  # a private user dir under the game's scratch, so no stored profile or privacy flag leaks in
     if beta:
         os.environ["OM_BETA"] = "1"
     else:
         os.environ.pop("OM_BETA", None)
-    g = GodotGame(pick_free_port(), seed=1, extra_args=list(extra_args))
+    g = CopyGame(exe, pick_free_port(), seed=1, extra_args=list(extra_args)) if exe else GodotGame(pick_free_port(), seed=1, extra_args=list(extra_args))
     try:
         g.start()
         g.wait_for_port(PORT_S)
@@ -122,7 +158,7 @@ def _walk(beta: bool, extra_args: tuple = ()) -> Walk:
         w.briefing_state = c.state()["result"]
         w.briefing_controls = c.tree()["result"]["controls"]
         _click(c, ("Deploy",), "mission preparation")  # ruling 1: Launch is the Deploy button
-        want = BETA_FIELD if (beta or "--om-beta" in extra_args) else TACTICAL
+        want = BETA_FIELD if (beta or expect_beta or "--om-beta" in extra_args) else TACTICAL
         deadline = time.monotonic() + AFTER_DEPLOY_S
         last: dict = {}
         while time.monotonic() < deadline:
@@ -157,6 +193,18 @@ def plain_walk() -> Walk:
 def flag_walk() -> Walk:
     """Launched with `--om-beta` after `--` and with no OM_BETA in the environment (ruling 7's command-line route)."""
     return _walk(False, ("--om-beta",))
+
+
+@pytest.fixture(scope="module")
+def exe_walk_planted(tmp_path_factory) -> Walk:
+    """A copy of the godot binary with `beta_build.txt` beside it, no OM_BETA and no --om-beta (ruling 7's file route)."""
+    return _walk(False, exe=_binary_copy(tmp_path_factory.mktemp("exe"), True), expect_beta=True)
+
+
+@pytest.fixture(scope="module")
+def exe_walk_bare(tmp_path_factory) -> Walk:
+    """The same kind of copy of the godot binary with no `beta_build.txt` beside it."""
+    return _walk(False, exe=_binary_copy(tmp_path_factory.mktemp("exe"), False))
 
 
 def _nodes(walk: Walk) -> dict:
@@ -252,6 +300,27 @@ def test_om_beta_flag_without_env_shows_variant_picker(flag_walk):
     qa = flag_walk.briefing_state.get("qa", {})
     vp = qa.get("variant_picker")
     assert isinstance(vp, dict), "H-060 ruling 7: --om-beta without OM_BETA gives no variant_picker dict in qa_state of mission preparation; qa keys = %r" % (sorted(qa),)
+    assert vp.get("count") == 1, "H-060 ruling 7: variant_picker.count = %r, wanted 1" % (vp.get("count"),)
+
+
+def test_control_binary_copy_without_build_file_has_no_picker(exe_walk_bare):
+    """H-060 ruling 7 route (b) positive control (green today): a copy of the godot binary with NO `beta_build.txt` beside it, no `OM_BETA`, no
+    `--om-beta`: the copy runs the project, the same verbs reach mission preparation, and `qa_state()` has no `variant_picker` and no OptionButton.
+    A red below therefore means `BetaMode` is missing, not that the copied binary cannot run the game."""
+    w = exe_walk_bare
+    assert w.scenes == [MAIN_MENU, GALAXY, BRIEFING, TACTICAL], "scenes reached by the bare binary copy = %r" % (w.scenes,)
+    assert "variant_picker" not in w.briefing_state.get("qa", {}), "qa_state has variant_picker with no beta_build.txt: %r" % (w.briefing_state.get("qa"),)
+    assert _option_buttons_anywhere(w) == [], "a visible OptionButton with no beta_build.txt: %r" % (_option_buttons_anywhere(w),)
+
+
+def test_beta_build_txt_beside_executable_shows_variant_picker(exe_walk_planted):
+    """H-060 ruling 7: "`active()` true when ... `beta_build.txt` exists beside the executable ... `om-beta` and the desktop entry therefore need no
+    launcher edit (the exported beta carries `beta_build.txt`)". A copy of the godot binary with a planted `beta_build.txt` beside it, launched with no
+    `OM_BETA` and no `--om-beta`: mission preparation's `qa_state()` has `variant_picker` with `count == 1` (ruling 3). RED today: there is no
+    `BetaMode`, so qa_state has no variant_picker key."""
+    qa = exe_walk_planted.briefing_state.get("qa", {})
+    vp = qa.get("variant_picker")
+    assert isinstance(vp, dict), "H-060 ruling 7: beta_build.txt beside the executable gives no variant_picker dict in qa_state of mission preparation; qa keys = %r" % (sorted(qa),)
     assert vp.get("count") == 1, "H-060 ruling 7: variant_picker.count = %r, wanted 1" % (vp.get("count"),)
 
 
