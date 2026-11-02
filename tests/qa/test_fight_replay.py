@@ -504,3 +504,121 @@ def test_rate_a_comes_from_the_rate_file_beside_the_fight_and_the_hud_shows_seed
         assert any("seed 7" in t for t in lines) and any("rate 0.75" in t for t in lines), "HUD Label texts %s" % lines
     finally:
         g.stop()
+
+
+# ================================================================ H-053 defects found at the stage 2 look review (brief to the test writer, 2026-11-02)
+# (1) Range rings: the replay builds its rows with range 0.0 and the fight file carried none, so no ring is drawn and the legend prints "<role>: no range". Intended: the fight file
+#     has a top-level `ranges` map {role: range} (snapshot.py, run.py) and the replay reads the role's range from it. New qa_state key, named here: `ring_count` = the number of unit
+#     range rings the scene has drawn (one per unit whose role has a range above 0; 0 for a file without `ranges`). The legend text is read from the Label texts, as the HUD is.
+# (3) End line: the last frame printed the per-fight `winner <w>  predicted <p>  agree|disagree` (the old A/B/draw) even beside a rate file, which contradicts the page. Intended: with a
+#     rate file beside the fight (`rate_a` not null) the end line is the rate verdict `rate <rate_a> vs <predict_rate> agree|disagree` from the rate file; with no rate file the old text.
+#     New qa_state key, named here: `end_line` = the end HUD line's text on the last frame, "" on any other frame. Floats are written with two decimals (the HUD's `rate %.2f`); the
+#     tests use values (0.25, 0.75) that read the same under %.2f, %g and str(), so the number format is not pinned.
+
+def _ranged_fight(tmp_path: Path, ranges: dict | None) -> Path:
+    doc = snapshot.example(frames=3, schema=snapshot.SCHEMA_V2)
+    if ranges is not None:
+        doc["ranges"] = ranges
+    return _write_fight(tmp_path / "L-0001-s1.fight.json", doc)
+
+
+def test_control_without_ranges_the_legend_says_no_range_and_the_fixture_has_four_raiders(tmp_path, monkeypatch):
+    """Control, green today: a v2 fight file with no `ranges` replays with a legend line `Raider: no range` (the v1 behaviour that must survive for old files) and 4 units on
+    frame 0 (the fixture premise for the ring count below)."""
+    path = _ranged_fight(tmp_path, None)
+    assert sum(len(f["units"]) for f in json.loads(path.read_text())["frames"][:1]) == 4
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        lines = _hud_lines(_state(g))
+        assert any("Raider: no range" in t for t in lines), "Label texts %s" % lines
+    finally:
+        g.stop()
+
+
+def test_a_file_without_ranges_has_no_rings(tmp_path, monkeypatch):
+    """Control for the ring count (red today only because the key is missing): a file with no `ranges` draws 0 rings, `ring_count` 0, and keeps the `no range` legend line."""
+    path = _ranged_fight(tmp_path, None)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        assert st["qa"].get("ring_count") == 0, "qa_state keys %s" % sorted(st["qa"])
+        assert any("Raider: no range" in t for t in _hud_lines(st))
+    finally:
+        g.stop()
+
+
+def test_a_file_with_ranges_draws_a_ring_per_unit_and_the_legend_gives_the_range(tmp_path, monkeypatch):
+    """Brief 2026-11-02: "a replay of a fight with ranges has rings and the legend text has no 'no range' line". With `ranges` {"Raider": 200.0} the four Raiders have four rings
+    (`ring_count` 4), the legend line reads `Raider: range 200 wu`, and no Label text says `no range`."""
+    path = _ranged_fight(tmp_path, {"Raider": 200.0})
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        lines = _hud_lines(st)
+        assert st["qa"].get("ring_count") == 4, "ring_count %r, qa_state keys %s" % (st["qa"].get("ring_count"), sorted(st["qa"]))
+        assert any("Raider: range 200 wu" in t for t in lines), "Label texts %s" % lines
+        assert not any("no range" in t for t in lines), "a 'no range' line with ranges in the file: %s" % lines
+    finally:
+        g.stop()
+
+
+def _end_fight(tmp_path: Path, rate: dict | None) -> Path:
+    path, _ = _shot_fight(tmp_path)   # winner A, predict A, agree true on the last frame (the old text would read "winner A  predicted A  agree")
+    if rate is not None:
+        (tmp_path / "L-0001.rate.json").write_text(json.dumps(dict({"layout_id": "L-0001", "seeds": [7]}, **rate)) + "\n")
+    return path
+
+
+def _last_frame(g: ReplayGame) -> dict:
+    _state(g)
+    _key(g, "Space")
+    _key(g, "Space")
+    _key(g, "Space")
+    return _state(g, lambda q: q["frame"] == 3, timeout=15.0, label="last frame")
+
+
+def test_control_without_a_rate_file_the_end_line_is_the_old_text(tmp_path, monkeypatch):
+    """Control, green today: with no rate file beside the fight the last frame's HUD says `winner A  predicted A  agree` (the old per-fight verdict stays for v1 files)."""
+    path = _end_fight(tmp_path, None)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        lines = _hud_lines(_last_frame(g))
+        assert any(t.startswith("winner A  predicted A  agree") for t in lines), "Label texts %s" % lines
+    finally:
+        g.stop()
+
+
+def test_without_a_rate_file_end_line_is_the_old_text_and_empty_before_the_last_frame(tmp_path, monkeypatch):
+    """Brief 2026-11-02: "with no rate file the old text", through the new key: `end_line` is "" on frame 0 and starts `winner A  predicted A  agree` on the last frame."""
+    path = _end_fight(tmp_path, None)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        assert st["qa"].get("end_line") == "", "qa_state keys %s" % sorted(st["qa"])
+        st = _last_frame(g)
+        assert str(st["qa"].get("end_line", "")).startswith("winner A  predicted A  agree"), st["qa"].get("end_line")
+    finally:
+        g.stop()
+
+
+@pytest.mark.parametrize("rate_a,predict_rate,agree,word", [(0.75, 0.75, True, "agree"), (0.25, 0.75, False, "disagree")], ids=["agree", "disagree"])
+def test_with_a_rate_file_the_end_line_is_the_rate_verdict(rate_a, predict_rate, agree, word, tmp_path, monkeypatch):
+    """Brief 2026-11-02: "when a rate file is beside the fight (rate_a not null) the end line shows the rate verdict (`rate <rate_a> vs <predict_rate> agree|disagree` from the rate file)".
+    The fight's own result says agree (winner A, predict A), so the old text would say `agree` in both cases; the line must read the rate file's `agree` and carry no `predicted`."""
+    path = _end_fight(tmp_path, {"rate_a": rate_a, "predict_rate": predict_rate, "agree": agree})
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _last_frame(g)
+        want = "rate %.2f vs %.2f %s" % (rate_a, predict_rate, word)
+        line = str(st["qa"].get("end_line", ""))
+        assert want in line and "predicted" not in line, "end_line %r, want it to contain %r (qa_state keys %s)" % (line, want, sorted(st["qa"]))
+        lines = _hud_lines(st)
+        assert any(want in t and "predicted" not in t for t in lines), "Label texts %s" % lines
+    finally:
+        g.stop()

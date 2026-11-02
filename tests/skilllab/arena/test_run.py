@@ -759,3 +759,35 @@ def test_orders_point_names_the_spot_both_sides_go_to(tmp_path):
     assert proc.returncode == 0, proc.stderr[-1500:]
     orders = snapshot.read(fight_file(out, "L-9015"))["orders"]
     assert orders["mode"] == "both_same_point" and orders["point"] == [2000.0, 2100.0], orders
+
+
+# ================================================================ H-053 defect: the fight file carries the roster ranges (range rings)
+# Brief to the test writer, 2026-11-02: the replay draws a range ring only for a unit whose range is above 0 and the om-fight-2 file carried no range, so no ring was drawn. Intended:
+# run.py writes a top-level `ranges` map {role: range in wu} for every role present in the layout, with the roster values (`produce._roster_ranges()`, the same numbers the layout
+# converter puts on its rows); schema stays om-fight-2. Format side: tests/skilllab/arena/test_snapshot.py (`ranges`); replay side: tests/qa/test_fight_replay.py.
+
+ROSTER_RANGES = {"Raider": 200.0, "Interceptor": 250.0, "Vanguard": 300.0, "Warden": 350.0, "Bombard": 1200.0, "Bastion": 800.0}
+
+
+def test_control_roster_ranges_are_the_six_numbers_the_brief_names():
+    """Control, green today: the roster function the runner must read gives the six ranges named in the brief (Raider 200, Interceptor 250, Vanguard 300, Warden 350, Bombard 1200,
+    Bastion 800), so a red below is the missing `ranges` key and not a moved roster."""
+    assert produce._roster_ranges() == ROSTER_RANGES
+
+
+def test_run_writes_a_ranges_map_for_the_one_role_present(main_run):
+    """Brief 2026-11-02: "run.py writes `ranges` for every role present with the roster values". The 8:12 Vanguard fixture's file has `ranges` == {"Vanguard": 300.0} (only the roles
+    present), the value the roster function gives, and the file still reads through the checker as om-fight-2."""
+    doc = _doc(main_run)
+    assert doc["schema"] == snapshot.SCHEMA_V2
+    assert doc.get("ranges") == {"Vanguard": produce._roster_ranges()["Vanguard"]}, doc.get("ranges")
+
+
+def test_run_writes_a_ranges_map_for_all_six_roles(tmp_path):
+    """Brief 2026-11-02: the six-role layout's file carries `ranges` for each of the six roles, each equal to the roster's number (read from `produce._roster_ranges()`)."""
+    path = write_layout(six_role_layout("L-9016"), tmp_path / "layouts")
+    out = tmp_path / "out"
+    proc = run_cli(path, out, 1)
+    assert proc.returncode == 0, proc.stderr[-1500:]
+    doc = snapshot.read(fight_file(out, "L-9016"))
+    assert doc.get("ranges") == produce._roster_ranges(), doc.get("ranges")

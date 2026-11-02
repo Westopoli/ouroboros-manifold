@@ -209,6 +209,52 @@ def test_firing_capable_counts_units_whose_range_reaches_the_first_contact_point
     assert rate["firing_capable"] == {"A": 2.5, "B": 1.0}
 
 
+# ---------------------------------------------------------------- firing_capable at the first-shot frame (defect found at the stage 2 look review)
+# DRAFT, pending Architect confirmation (brief to the test writer, 2026-11-02): Interfaces 5 as written measures frame-0 positions against the first-contact point, which reads 0
+# for a side that closes in. Intended rule: count the units ALIVE AT THE FIRST-SHOT FRAME, at their positions in that frame, whose roster range reaches the first-contact point
+# (the position of the first-damaged unit at the first-shot frame); per side; mean over seeds. Red ids below: test_firing_capable_counts_the_side_that_closes_in_*,
+# test_firing_capable_ignores_a_unit_that_is_dead_at_the_first_shot_frame. Control: test_firing_capable_a_side_still_out_of_range_at_the_first_shot_frame_counts_zero.
+
+def closing_fight(seed, b_end_x, dead_b_unit=False, layout_id="L-9102"):
+    """A Vanguard (range 300) A unit 1 at (1000, 500), hurt on frame 1 (so the contact point is (1000, 500)); B Vanguard unit 2 starts at (1600, 500), 600 wu away on frame 0, and is at
+    (`b_end_x`, 500) on frame 1. With `dead_b_unit`, B unit 3 stands 100 wu from the point on frame 0 and is dead on frame 1 (hp 0, alive false; its id is above 1, so unit 1 still
+    drops first by id)."""
+    def unit(i, side, x, hp=100.0, alive=True):
+        return {"id": i, "side": side, "role": "Vanguard", "x": x, "y": 500.0, "layer": 0, "facing": 0.0 if side == "A" else 3.14, "hp": hp, "alive": alive, "target": None}
+    f0 = [unit(1, "A", 1000.0), unit(2, "B", 1600.0)]
+    f1 = [unit(1, "A", 1000.0, hp=90.0), unit(2, "B", b_end_x)]
+    if dead_b_unit:
+        f0.append(unit(3, "B", 1100.0))
+        f1.append(unit(3, "B", 1100.0, hp=0.0, alive=False))
+    frames = [{"tick": 0, "alive": [1, len(f0) - 1], "units": f0}, {"tick": 100, "alive": [1, len(f1) - 1 - dead_b_unit], "units": f1}]
+    doc = fight(seed, layout_id=layout_id)
+    doc["frames"] = frames
+    doc["result"].update({"survivors": frames[1]["alive"], "ticks": 100})
+    assert snapshot.validate(doc) == [], snapshot.validate(doc)
+    return doc
+
+
+def test_firing_capable_a_side_still_out_of_range_at_the_first_shot_frame_counts_zero():
+    """Interfaces 5 (positive control for the fix below, green today). B closes from 600 wu only to 500 wu of the hurt unit by the first-shot frame, outside its Vanguard range 300,
+    so B counts 0 under both the current and the intended rule; A's unit 1 is the hurt unit itself (distance 0) and counts 1."""
+    rate = load_rate().rate([closing_fight(1, 1500.0)], 0.5)
+    assert rate["firing_capable"] == {"A": 1.0, "B": 0.0}, rate["firing_capable"]
+
+
+def test_firing_capable_counts_the_side_that_closes_in_by_the_first_shot_frame():
+    """Interfaces 5, amended (DRAFT, Architect to confirm): "units alive at the first-shot frame, at their positions in that frame, whose roster range reaches the first-contact point".
+    B is 600 wu from the point on frame 0 and 200 wu on the first-shot frame (Vanguard range 300): B counts 1. Today it reads 0 (frame-0 positions)."""
+    rate = load_rate().rate([closing_fight(1, 1200.0)], 0.5)
+    assert rate["firing_capable"] == {"A": 1.0, "B": 1.0}, rate["firing_capable"]
+
+
+def test_firing_capable_ignores_a_unit_that_is_dead_at_the_first_shot_frame():
+    """Interfaces 5, amended (DRAFT): only units alive AT THE FIRST-SHOT FRAME count. B unit 3 is 100 wu from the point on frame 0 (in range) but dead on frame 1, and B unit 2 is
+    still out of range (500 wu): B counts 0. Today the dead unit is counted from frame 0 and B reads 1."""
+    rate = load_rate().rate([closing_fight(1, 1500.0, dead_b_unit=True)], 0.5)
+    assert rate["firing_capable"] == {"A": 1.0, "B": 0.0}, rate["firing_capable"]
+
+
 # ---------------------------------------------------------------- the runner writes it
 
 @pytest.fixture(scope="module")
