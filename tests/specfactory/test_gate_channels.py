@@ -5,8 +5,8 @@ Everything runs in scratch: private HOME (so `~/Projects/om-push/<name>.lock` is
 reusing test_gate_concurrent.py's helpers (_fake_root, _fixture_repo, _env; that file is not edited), scratch wt root
 and repo, scratch bare remote. Nothing touches the real om-push locks, trees or remote.
 
-Pinned from the story: lock names gate-lab.lock, gate-beta.lock, push.lock, play.lock; `Channel: lab|beta` Machine
-line; `CHANNEL mismatch`; wt.py `--channel`; ten slots per channel (DRAFT-wt-slots-per-channel). Pinned by precedent
+Pinned from the story and rulings (pass 2): lock names gate-lab.lock, gate-beta.lock, push.lock, play.lock; `Channel: lab|beta`
+Machine line; `status_check.py --lock`; `STATUS channel DRIFT <id>`; land_push.sh; wt.py `--channel` (optional, default lab); ten slots per channel (DRAFT-wt-slots-per-channel). Pinned by precedent
 (gate.lock, records.lock live in ~/Projects/om-push): the new locks live there too. Open interfaces are listed in
 the report and in gate_channels_park.py; no value is guessed.
 
@@ -313,13 +313,113 @@ def test_c4_two_pushes_under_one_flock_serialise_and_both_land_in_order(tmp_path
     assert "commit a" in subj and "commit b" in subj
 
 
-def test_t4_the_clerk_card_takes_push_lock_around_the_push():
-    """H-059 test 4: "`push.lock`: two pushes ... serialise and both land in order." and Change: "`push.lock` (new,
-    short) around fetch, merge, pre_gate re-check and `git push HEAD:main`". No script performs the push (Q-H059-2),
-    so the carrier tested is the clerk card: the push step names push.lock and the retired gate.lock is gone."""
+LAND_PUSH = SPEC_DIR / "land_push.sh"
+
+
+def _land_root(tmp_path, pre_gate_body):
+    """Scratch script root: the real land_push.sh next to a stub pre_gate.sh (land_push.sh is assumed to find
+    pre_gate.sh beside itself, Q-H059-4). The stub logs its argv to pre_gate.args."""
+    root = tmp_path / "root"
+    d = root / "scripts" / "specfactory"
+    d.mkdir(parents=True)
+    if LAND_PUSH.exists():
+        shutil.copy(LAND_PUSH, d / "land_push.sh")
+    pg = d / "pre_gate.sh"
+    pg.write_text(f'#!/bin/bash\necho "$@" >> "{tmp_path}/pre_gate.args"\n{pre_gate_body}\n')
+    pg.chmod(0o755)
+    return d / "land_push.sh"
+
+
+def _land(tmp_path, script, home, extra_env=None, timeout=60):
+    """A candidate worktree `b` (clone of the scratch remote) with one commit, then land_push.sh <b> H-777."""
+    bare = _scratch_remote(tmp_path)
+    for n in ("a", "b"):
+        gc._git(tmp_path / n, "fetch", "-q", "origin")
+    gc._git(tmp_path / "b", "merge", "-q", "--ff-only", "origin/main")
+    (tmp_path / "b" / "cand.txt").write_text("cand")
+    gc._git(tmp_path / "b", "add", "-A")
+    gc._git(tmp_path / "b", "commit", "-q", "-m", "candidate")
+    env = {**os.environ, "HOME": str(home), "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t", **(extra_env or {})}
+    r = subprocess.run(["bash", str(script), str(tmp_path / "b"), "H-777"], capture_output=True, text=True,
+                       env=env, timeout=timeout)
+    return bare, r
+
+
+def test_c4b_scratch_remote_fixture_pushes_by_hand(tmp_path):
+    """Control for t4: the fixture's candidate worktree can push HEAD:main to the scratch remote with the stub
+    pre_gate present, so a red land_push.sh test means the script, not the fixture."""
+    script = _land_root(tmp_path, "exit 0")
+    bare = _scratch_remote(tmp_path)
+    gc._git(tmp_path / "b", "fetch", "-q", "origin")
+    gc._git(tmp_path / "b", "merge", "-q", "--ff-only", "origin/main")
+    gc._git(tmp_path / "b", "push", "-q", "origin", "HEAD:main")
+    assert (script.parent / "pre_gate.sh").exists() and gc._git(bare, "rev-parse", "main")
+
+
+def test_t4a_land_push_pushes_and_prints_pushed_sha(tmp_path):
+    """H-059 ruling 2: "`land_push.sh <worktree> <id>` takes `push.lock`, runs fetch, merge of origin/main, the
+    `pre_gate` re-check and `git push HEAD:main`, prints `PUSHED <sha>`". The sha is the remote main afterwards;
+    pre_gate ran once, with the worktree and the id among its arguments."""
+    script = _land_root(tmp_path, "exit 0")
+    bare, r = _land(tmp_path, script, tmp_path / "home")
+    m = re.search(r"^PUSHED ([0-9a-f]{7,40})\s*$", r.stdout, re.M)
+    assert r.returncode == 0 and m, r.stdout + r.stderr
+    assert gc._git(bare, "rev-parse", "main").startswith(m.group(1)), (m.group(1), r.stdout)
+    assert "candidate" in gc._git(bare, "log", "--format=%s", "main")
+    args = (tmp_path / "pre_gate.args").read_text().splitlines()
+    assert len(args) == 1 and str(tmp_path / "b") in args[0] and "H-777" in args[0], args
+
+
+def test_t4b_land_push_rejects_when_the_pre_gate_recheck_fails(tmp_path):
+    """H-059 ruling 2: "`PUSH REJECT <why>`" (control: t4a prints PUSHED with a passing pre_gate). A failing
+    `pre_gate` re-check prints PUSH REJECT, exits non-zero and pushes nothing."""
+    script = _land_root(tmp_path, "echo PRE GATE FAIL; exit 1")
+    bare, r = _land(tmp_path, script, tmp_path / "home")
+    before = gc._git(tmp_path / "a", "rev-parse", "HEAD")
+    assert r.returncode != 0 and re.search(r"^PUSH REJECT \S", r.stdout, re.M) and "PUSHED" not in r.stdout, r.stdout + r.stderr
+    assert gc._git(bare, "rev-parse", "main") == before and "candidate" not in gc._git(bare, "log", "--format=%s", "main")
+
+
+def test_t4c_land_push_rejects_when_main_moved_under_it(tmp_path):
+    """H-059 ruling 2: `PUSH REJECT <why>`. Main moves after the merge (another pusher gets in during the pre_gate
+    re-check), so `git push HEAD:main` is not a fast-forward: PUSH REJECT, non-zero, no PUSHED, and the other
+    commit survives on the remote."""
+    moved = f"cd {tmp_path}/a && echo m > moved.txt && git add -A && git -c user.name=t -c user.email=t@t commit -q -m moved && git push -q origin HEAD:main"
+    script = _land_root(tmp_path, moved)
+    bare, r = _land(tmp_path, script, tmp_path / "home")
+    subj = gc._git(bare, "log", "--format=%s", "main")
+    assert r.returncode != 0 and re.search(r"^PUSH REJECT \S", r.stdout, re.M) and "PUSHED" not in r.stdout, r.stdout + r.stderr
+    assert "moved" in subj and "candidate" not in subj, subj
+
+
+def test_t4d_land_push_fails_closed_when_the_lock_is_held_past_its_timeout(tmp_path):
+    """H-059 ruling 2: "fails closed when the lock is not won inside its timeout". A holder keeps push.lock; the
+    script exits non-zero with PUSH REJECT and never pushes or runs pre_gate. Control half: t4a lands with the
+    lock free. The way a test shortens the timeout is Q-H059-4 (gate_channels_park.py)."""
+    assert park.LAND_PUSH_TIMEOUT_ENV is not None, "PARKED Q-H059-4: how a caller sets land_push.sh's lock timeout"
+    home = tmp_path / "home"
+    script = _land_root(tmp_path, "exit 0")
+    fd = open(_lock(home, "push.lock"), "w")
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    try:
+        t0 = time.time()
+        bare, r = _land(tmp_path, script, home, {park.LAND_PUSH_TIMEOUT_ENV: "2"}, timeout=30)
+        assert time.time() - t0 < 25
+    finally:
+        fd.close()
+    assert r.returncode != 0 and re.search(r"^PUSH REJECT \S", r.stdout, re.M) and "PUSHED" not in r.stdout, r.stdout + r.stderr
+    assert "candidate" not in gc._git(bare, "log", "--format=%s", "main") and not (tmp_path / "pre_gate.args").exists()
+
+
+def test_t4e_the_clerk_card_calls_land_push_and_names_the_channel_lock():
+    """H-059 ruling 2: "`docs/method/clerk.md` calls it in place of the hand-typed push", and Change: "the clerk's
+    flock line takes the story's channel lock". The card names land_push.sh, has no hand-typed
+    HEAD:main line, names both channel locks and no longer names gate.lock."""
     text = (REPO / "docs" / "method" / "clerk.md").read_text()
-    push_lines = [ln for ln in text.splitlines() if "HEAD:main" in ln]
-    assert push_lines and any("push.lock" in ln for ln in push_lines), "clerk.md: no push line names push.lock"
+    assert "land_push.sh" in text, "clerk.md does not call land_push.sh"
+    assert not any("HEAD:main" in ln and "land_push.sh" not in ln for ln in text.splitlines()), "clerk.md still has a hand-typed push line"
+    assert "gate-lab.lock" in text and "gate-beta.lock" in text
     assert "gate.lock" not in re.sub(r"gate-(lab|beta)\.lock", "", text), "clerk.md still names the retired gate.lock"
 
 
@@ -343,24 +443,24 @@ def _status(repo, extra):
 
 def test_c5_status_check_runs_on_a_toy_repo_without_channel_complaints(tmp_path):
     """Control for t5: status_check.py runs on the toy repo (story with no Channel line, default lab) and says nothing
-    about CHANNEL."""
+    about channel drift."""
     r = _status(_channel_repo(tmp_path, None), [])
-    assert "STATUS" in r.stdout and "CHANNEL" not in r.stdout + r.stderr, r.stdout + r.stderr
+    assert "STATUS" in r.stdout and "STATUS channel" not in r.stdout + r.stderr, r.stdout + r.stderr
 
 
-def test_t5_beta_story_gated_under_the_lab_lock_is_refused(tmp_path):
-    """H-059 test 5: "A story with `Channel: beta` gated under `gate-lab.lock` is refused by `status_check.py` with
-    `CHANNEL mismatch`." Also Change: "a `Channel: lab|beta` Machine line (default `lab` when absent)"; so beta under
-    gate-beta.lock and an absent line under gate-lab.lock are both accepted. How status_check.py learns the lock is
-    Q-H059-1 (gate_channels_park.py)."""
-    assert park.TAKEN_LOCK_ARGV is not None, "PARKED Q-H059-1: the interface by which status_check.py learns the lock taken"
+def test_t5_beta_story_gated_under_the_lab_lock_is_drift(tmp_path):
+    """H-059 ruling 1: "`status_check.py` learns the lock the clerk took from an argument: `--lock gate-lab.lock` or
+    `--lock gate-beta.lock`; it reports `STATUS channel DRIFT <id>` when a story's `Channel:` line names the other
+    lock." And Change: "a `Channel: lab|beta` Machine line (default `lab` when absent)": beta under gate-beta.lock,
+    lab under gate-lab.lock and an absent line under gate-lab.lock are accepted; lab under gate-beta.lock drifts."""
     def run(channel, lock):
-        return _status(_channel_repo(tmp_path / f"{channel}-{lock}", channel), park.TAKEN_LOCK_ARGV("H-777", lock))
-    bad = run("beta", "gate-lab.lock")
-    assert bad.returncode != 0 and "CHANNEL mismatch" in bad.stdout + bad.stderr, bad.stdout + bad.stderr
+        return _status(_channel_repo(tmp_path / f"{channel}-{lock}", channel), ["--story", "H-777", "--lock", lock])
+    for channel, lock in (("beta", "gate-lab.lock"), ("lab", "gate-beta.lock"), (None, "gate-beta.lock")):
+        bad = run(channel, lock)
+        assert "STATUS channel DRIFT H-777" in bad.stdout + bad.stderr, (channel, lock, bad.stdout + bad.stderr)
     for channel, lock in (("beta", "gate-beta.lock"), (None, "gate-lab.lock"), ("lab", "gate-lab.lock")):
         ok = run(channel, lock)
-        assert "CHANNEL mismatch" not in ok.stdout + ok.stderr, (channel, lock, ok.stdout + ok.stderr)
+        assert "STATUS channel DRIFT" not in ok.stdout + ok.stderr, (channel, lock, ok.stdout + ok.stderr)
 
 
 # ------------------------------------------------------------------ t6
@@ -391,21 +491,37 @@ def test_c6_wt_status_and_check_run_on_the_scratch_root(tmp_path):
     assert _wt(tmp_path, "status").returncode == 0 and _wt(tmp_path, "check").returncode == 0
 
 
-def test_t6a_wt_new_without_channel_refuses(tmp_path):
-    """H-059 test 6: "`wt.py new` without `--channel` refuses" (`--channel lab|beta` is required on `new`)."""
+def test_t6a_wt_new_without_channel_defaults_to_lab_and_unknown_channel_refuses(tmp_path):
+    """H-059 ruling 5: "`wt.py new` takes `--channel lab|beta`, default `lab` so every existing caller keeps working
+    ...; an unknown channel ... exits 3 with `WT REFUSED ...`". (Pass 2: this replaces the first pass's "without
+    --channel refuses", changed by the Architect's Q5 ruling before any builder saw it.) Control half: the unknown
+    channel is refused, so the default is not just "anything goes"."""
     r = _new(tmp_path, "nochan", None)
-    assert r.returncode != 0 and not (tmp_path / "wt" / "nochan").exists(), r.stdout + r.stderr
+    assert r.returncode == 0 and (tmp_path / "wt" / "nochan").exists(), r.stdout + r.stderr
+    assert "lab" in " ".join(l for l in _wt(tmp_path, "status").stdout.splitlines() if l.split()[:1] == ["nochan"]).split()
+    bad = _new(tmp_path, "oddchan", "gamma")
+    assert bad.returncode == 3 and "WT REFUSED" in bad.stdout and not (tmp_path / "wt" / "oddchan").exists(), bad.stdout + bad.stderr
 
 
-def test_t6b_status_prints_the_channel_of_each_tree(tmp_path):
-    """H-059 test 6: "`status` prints the channel". Tested as: the tree's status row carries its channel word as a
-    whitespace token and not the other's (column name and position are Q-H059-3)."""
+def test_t6b_status_has_a_channel_column_and_json_key(tmp_path):
+    """H-059 ruling 3: "`wt.py status` gains a `channel` column and a `channel` JSON key". The header names `channel`;
+    each tree's row carries its own channel word; `status --json` entries have key channel. (Control: the existing
+    columns stay, name first.)"""
     for name, ch in (("treeone", "lab"), ("treetwo", "beta")):
         r = _new(tmp_path, name, ch)
         assert r.returncode == 0, r.stdout + r.stderr
-    rows = {ln.split()[0]: ln.split() for ln in _wt(tmp_path, "status").stdout.splitlines() if ln.split()[:1] in (["treeone"], ["treetwo"])}
-    assert "lab" in rows["treeone"] and "beta" not in rows["treeone"], rows
-    assert "beta" in rows["treetwo"] and "lab" not in rows["treetwo"], rows
+    out = _wt(tmp_path, "status").stdout
+    header = next(ln.split() for ln in out.splitlines() if ln.split()[:2] == ["name", "state"])
+    assert "channel" in header, out
+    rows = {ln.split()[0]: ln.split() for ln in out.splitlines() if ln.split()[:1] in (["treeone"], ["treetwo"])}
+    i = header.index("channel")
+    assert rows["treeone"][i] == "lab" and rows["treetwo"][i] == "beta", rows
+    j = _wt(tmp_path, "status", "--json")
+    assert j.returncode == 0, j.stdout + j.stderr
+    data = json.loads(j.stdout)
+    items = data if isinstance(data, list) else next(v for v in data.values() if isinstance(v, list))
+    by = {e["name"]: e for e in items if e.get("name") in ("treeone", "treetwo")}
+    assert by["treeone"]["channel"] == "lab" and by["treetwo"]["channel"] == "beta", by
 
 
 def test_t6c_slot_cap_is_per_channel(tmp_path):

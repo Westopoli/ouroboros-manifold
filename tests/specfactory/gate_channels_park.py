@@ -3,10 +3,11 @@
 Each is None until the Architect rules the question below; a test that needs one fails with the question named.
 Nobody guessed these (docs/method/test_writer.md: a value nobody gave goes in a *_park_* file).
 
-Q-H059-1 (test 5): how does status_check.py learn which channel lock the clerk took? Candidates:
-  (a) an argument: `status_check.py --repo R --story H-xyz --lock gate-lab.lock`
-  (b) an argument on the channel word: `status_check.py --repo R --story H-xyz --took-channel lab`
-  (c) it reads the lock name out of the clerk's gate command line (a log or a file path passed in).
-Set TAKEN_LOCK_ARGV to a function (story_id, lock_name) -> list of extra argv for status_check.py.
+Q-H059-4 (test t4d): land_push.sh "fails closed when the lock is not won inside its timeout", but the story names
+neither the timeout nor how a caller sets it. Candidates:
+  (a) an environment variable, e.g. LAND_PUSH_LOCK_TIMEOUT_S (seconds)
+  (b) a flag, e.g. `land_push.sh --lock-timeout S <worktree> <id>`
+  (c) a fixed value in the script (then the test must wait it out; needs the value and Westley's tolerance)
+Set LAND_PUSH_TIMEOUT_ENV to the variable name for (a).
 """
-TAKEN_LOCK_ARGV = None
+LAND_PUSH_TIMEOUT_ENV = None
