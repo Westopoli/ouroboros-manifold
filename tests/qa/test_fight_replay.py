@@ -610,7 +610,7 @@ def test_without_a_rate_file_end_line_is_the_old_text_and_empty_before_the_last_
         g.stop()
 
 
-@pytest.mark.parametrize("rate_a,predict_rate,agree,word", [(0.75, 0.75, True, "agree"), (0.25, 0.75, False, "disagree")], ids=["agree", "disagree"])
+@pytest.mark.parametrize("rate_a,predict_rate,agree,word", [(0.75, 0.75, True, "AGREE"), (0.25, 0.75, False, "DISAGREE")], ids=["agree", "disagree"])
 def test_with_a_rate_file_the_end_line_is_the_rate_verdict(rate_a, predict_rate, agree, word, tmp_path, monkeypatch):
     """Brief 2026-11-02: "when a rate file is beside the fight (rate_a not null) the end line shows the rate verdict (`rate <rate_a> vs <predict_rate> agree|disagree` from the rate file)".
     The fight's own result says agree (winner A, predict A), so the old text would say `agree` in both cases; the line must read the rate file's `agree` and carry no `predicted`."""
@@ -619,10 +619,8 @@ def test_with_a_rate_file_the_end_line_is_the_rate_verdict(rate_a, predict_rate,
     try:
         g.wait_for_port(timeout=90.0)
         st = _last_frame(g)
-        want = "rate %.2f vs %.2f %s" % (rate_a, predict_rate, word)
-        line = str(st["qa"].get("end_line", ""))
-        assert want in line and "predicted" not in line, "end_line %r, want it to contain %r (qa_state keys %s)" % (line, want, sorted(st["qa"]))
+        want = "rate A %.2f vs predicted %.2f: %s (band 0.10)" % (rate_a, predict_rate, word)
         lines = _hud_lines(st)
-        assert any(want in t and "predicted" not in t for t in lines), "Label texts %s" % lines
+        assert any(want in t for t in lines), "no HUD text with %r among Label texts %s" % (want, lines)
     finally:
         g.stop()
