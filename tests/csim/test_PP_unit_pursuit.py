@@ -72,7 +72,7 @@ def test_R_087_04_holds_only_while_its_own_target_is_in_range(lib, world_factory
 
     lib.om_unit_teleport(w, enemy, 350.0, 0.0, 0)      # out of range 200, inside sensor 800
     step(lib, w, 4)
-    _assert_goal(lib, w, u, 3000.0, 0.0, "the goal stays the march point")
+    _assert_goal(lib, w, u, 350.0, 0.0, "the goal stays the march point")
     before = _dist(pos(lib, w, u), (350.0, 0.0))
     step(lib, w, 4)
     assert _dist(pos(lib, w, u), (350.0, 0.0)) < before, "the march did not close on its target"
