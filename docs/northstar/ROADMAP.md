@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-02 (Architect, Westley's order): section 1 is the two staircases on two gate channels; sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
+Last updated: 2026-11-02 (Architect, Westley's order; beta B0 built and proved, awaiting his verdict): section 1 is the two staircases on two gate channels; sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -15,25 +15,25 @@ Rules for this file:
 
 ## 1. Now building: two staircases, two gate channels
 
-Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a time, each step ending in something he looks at in a scene he plays, approve or deny, before the next starts. Two staircases run side by side on separate gate channels (DEC-two-gate-channels-2026-11-02, H-059): the **simulation lab** (`plans/` plan file `~/.claude/plans/cheerful-baking-codd.md` as DEC-lab-staircase-2026-10-31; stories H-039, H-040, H-052, H-053) and the **beta** (`plans/2026-11-02-beta-staircase.md`; stories H-028, H-059, H-060, H-061, then one per stage). Each row is one story; its words and done-when live in the story file; this table is the order and the state only. Whoever moves a stage rewrites its row in the same commit.
+Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a time, each step ending in something he looks at in a scene he plays, approve or deny, before the next starts. Two staircases run side by side on separate gate channels (DEC-two-gate-channels-2026-11-02, H-059): the **simulation lab** (`plans/2026-10-31-lab-staircase.md`, DEC-lab-staircase-2026-10-31; stories H-039, H-040, H-052, H-053) and the **beta** (`plans/2026-11-02-beta-staircase.md`; stories H-028, H-059, H-060, H-061, then one per stage). Each row is one story; its words and done-when live in the story file; this table is the order and the state only. Whoever moves a stage rewrites its row in the same commit.
 
 | Staircase | Stage | Story | State (2026-11-02) | Next |
 |---|---|---|---|---|
 | lab | 1 two blobs on a flat field | H-040 (+H-039, H-052) | Seen 2026-11-01 (Westley on the L-0054 preview under H-057); landing waits on the screen proof | land |
 | lab | engine rule from stage 1: engage on sight, per-type leash | H-057 | built, landing (goldens re-record, gate) | land; L-0054 record run on main |
-| lab | 2 roles, ranges, win rates over seeds | H-053 | built, pre-gated; stage 2 fights running on the H-057 engine; pictures to `arena_stage2/` | his verdicts |
+| lab | 2 roles, ranges, win rates over seeds | H-053 | Seen 2026-11-02 (per-picture verdicts in `crossings.md`); readability and scoring build in progress, then the gate | land; fixed pictures to `arena_stage2/` as the record |
 | lab | catalogue round three (arcs, mouth coverage, priority kinds) | H-025 round three | batch 1 pushed c5fddbc9 (29 pictures); producer continues | his verdicts |
-| lab | 3 the ground pushes back | H-063 | Spec'd 2026-11-02 (story file written; Ready when stage 2 is Seen) | his stage 2 verdicts |
+| lab | 3 the ground pushes back | H-063 | Ready 2026-11-02; tests first | his verdicts on the chokepoint and slope fights |
 | lab | 4 sight; 5 facing, arcs, bands; 6 the scan; 7 objectives, hazards, time, space | | plan only | one at a time |
 | harness | two gate channels | H-059 | Ready; lands after H-057 through the single gate | the beta Dispatcher chat starts |
-| beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2, H-031 piece three) | Ready, beta channel; proof needs the monitors (wake rule) | he runs `om-beta` |
-| beta | B1 the approved screens | H-060 | Ready | after B0 Seen |
+| beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2) | Built and proved 2026-11-02 (build 1c2cce20 published, `om-beta` installed, PROOF OK); waits on his verdict | he runs `om-beta`, reaches the main menu, says Seen |
+| beta | B1 the approved screens | H-060 | Ready; tests in flight, builds after B0 Seen | after B0 Seen |
 | beta | B2 the layout, no units, five kinds | H-061 | Ready | after B1 Seen |
 | beta | B3 landscape engine; B4 places; B5 one role in groups; B6 vision; B7 layers (land); B8 all roles, real fights; B9+ economy in pieces | ids when written (H-062 is the plan re-read check) | plan table only; story written one stage ahead | one at a time |
 
 Channels: lab = `gate-lab.lock`, Dispatcher chat `ouroboros-manifold-lab` (today `ouroboros-manifold-90`); beta = `gate-beta.lock`, Dispatcher chat `ouroboros-manifold-beta` (Westley opens it; first brief in the beta plan). Until H-059 lands both use `gate.lock`, one landing at a time. The Architect chat `rewrite-method-git-record` briefs both and rules; Westley vetoes by a word.
 
-Held behind nothing now: the 2026-10-30 "no scene story until proof by eyes" gate is answered by H-031 pieces one and two (landed) plus the wake rule; piece three (crop to the window) is B0's.
+Held behind nothing now: the 2026-10-30 "no scene story until proof by eyes" gate is answered by H-031 pieces one and two (landed) plus the wake rule; piece three (crop to the window) is a Spec'd harness improvement, not a B0 precondition.
 
 Not in a staircase, still owed: H-023 unit-size tuning session (Westley); the thresholds batch (`story_reviews/westley/thresholds_batch_2026-11-01.md`, six rows); H-042/H-043 findings; H-044, H-046, H-048, H-049, H-051, H-054, H-055, H-056 Spec'd harness stories; the earlier programme rows below are history until a staircase reaches them.
 
