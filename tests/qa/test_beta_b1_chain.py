@@ -22,13 +22,14 @@ Premises dumped on the built tree (base 761c36cd origin/main, 2026-11-02), qa-po
 The `scene` key throughout is the top-level `scene` of the daemon's `state` reply (the scene's res:// path), as tests/qa/desktop/test_flow_spine.py
 reads it; `beta_field`'s is the story's own Machine line, res://scenes/beta/stage_field.tscn.
 
-Names the story does not fix, accepted both ways here (reported as gaps, none invented):
-  the button: the story says "Launch"; the scene's control is named "Deploy" (text "DEPLOY FORCES") and the story changes no screen, so Deploy is
-    clicked, with a control named Launch (or whose text holds LAUNCH) accepted too;
-  the picker: the story says an OptionButton "labelled" variant; a node named "variant" (any case), an OptionButton whose text holds "variant", or an
-    OptionButton beside a label holding "variant" all count;
-  the picker's one entry: not observable through the standing qa surface (see the gap in the report); the test checks the picker shows a non-empty
-    selected entry (text of an OptionButton is its selected item), which a picker with no entry cannot.
+Names the story's "Rulings for the build" (2026-11-02, origin/main 1c2cce20) fix, pinned exactly here:
+  1. "'Launch' in this story is the existing `Deploy` button ("DEPLOY FORCES") on mission preparation; no approved screen is relabelled."
+  2. "The picker is an `OptionButton` named `VariantPicker` beside a `Label` whose text is `variant`."
+  3. "Mission preparation's `qa_state()` gains an additive key `variant_picker: {count, selected}` (present only when `OM_BETA=1`); B1 pins `count == 1`".
+     The key sits in the state reply's `qa` dict (where deploy_enabled is); `selected` is present but its value is not pinned (nobody gave one).
+  4. "The field HUD reads `beta B1: field placeholder, <sha8>` ... read from a file `beta_build.txt` beside the exported binary ... and `dev` when the file
+     is absent (runs from a checkout)." The story play runs from a checkout (godot beside no beta_build.txt), so its HUD must read "..., dev".
+     A planted-file test is NOT written: the story gives no path or env the scene reads (reported gap, two candidates).
 Waits are harness waits, not rule thresholds.
 """
 from __future__ import annotations
@@ -58,7 +59,7 @@ BOOT_S = 45.0
 STEP_S = 10.0
 PORT_S = 60.0
 AFTER_DEPLOY_S = 15.0
-HUD_PREFIX = "beta B1: field placeholder"  # Change: 'a HUD line "beta B1: field placeholder, sha"'
+HUD_DEV = "beta B1: field placeholder, dev"  # Ruling 4: `dev` when beta_build.txt is absent (a checkout run)
 
 
 @dataclass
@@ -81,7 +82,7 @@ def _click(client, name_options: tuple, label: str, text_options: tuple = ()) ->
 
 
 def _walk(beta: bool) -> Walk:
-    """Boot -> main menu -> galaxy -> mission preparation -> Deploy/Launch, only through the QA port's state/tree/click verbs."""
+    """Boot -> main menu -> galaxy -> mission preparation -> Deploy, only through the QA port's state/tree/click verbs."""
     saved = {k: os.environ.get(k) for k in ("OM_BETA", "XDG_DATA_HOME")}
     os.environ.pop("XDG_DATA_HOME", None)  # a private user dir under the game's scratch, so no stored profile or privacy flag leaks in
     if beta:
@@ -114,7 +115,7 @@ def _walk(beta: bool) -> Walk:
         time.sleep(1.0)  # settle, the neighbouring plays' value
         w.briefing_state = c.state()["result"]
         w.briefing_controls = c.tree()["result"]["controls"]
-        _click(c, ("Launch", "Deploy"), "mission preparation", ("LAUNCH",))
+        _click(c, ("Deploy",), "mission preparation")  # ruling 1: Launch is the Deploy button
         want = BETA_FIELD if beta else TACTICAL
         deadline = time.monotonic() + AFTER_DEPLOY_S
         last: dict = {}
@@ -146,23 +147,23 @@ def plain_walk() -> Walk:
     return _walk(False)
 
 
-def _pickers(walk: Walk) -> list:
-    """OptionButtons on mission preparation that read as the variant picker (see the module docstring for the accepted forms)."""
-    options = [c for c in walk.briefing_controls if c.get("class") == "OptionButton"]
-    texts = [str(t).lower() for t in walk.briefing_state.get("inventory", {}).get("hud_texts", {}).values()]
-    label_there = any("variant" in t for t in texts)
-    out = []
-    for c in options:
-        name = c["path"].rsplit("/", 1)[-1].lower()
-        if "variant" in name or "variant" in str(c.get("text") or "").lower() or label_there:
-            out.append(c)
-    return out
+def _nodes(walk: Walk) -> dict:
+    return walk.briefing_state.get("inventory", {}).get("nodes_by_name", {})
+
+
+def _label_texts(walk: Walk) -> list:
+    return [str(t) for t in walk.briefing_state.get("inventory", {}).get("hud_texts", {}).values()]
+
+
+def _visible_picker(walk: Walk):
+    """The `VariantPicker` node entry when it is an OptionButton and visible, else None (ruling 2)."""
+    n = _nodes(walk).get("VariantPicker")
+    return n if n and n.get("class") == "OptionButton" and n.get("visible", True) else None
 
 
 def _option_buttons_anywhere(walk: Walk) -> list:
-    """Every OptionButton on mission preparation, visible or hidden (inventory.nodes_by_name carries class and visible per node name)."""
-    names = walk.briefing_state.get("inventory", {}).get("nodes_by_name", {})
-    return [n for n, v in names.items() if v.get("class") == "OptionButton" and v.get("visible", True)]
+    """Every visible OptionButton on mission preparation (inventory.nodes_by_name carries class and visible per node name)."""
+    return [n for n, v in _nodes(walk).items() if v.get("class") == "OptionButton" and v.get("visible", True)]
 
 
 # --- Test 1: the chain ----------------------------------------------------------------------------------------------------------------------
@@ -190,21 +191,33 @@ def test_chain_under_om_beta_launch_reaches_beta_field(beta_walk):
 # --- Test 2: the picker ---------------------------------------------------------------------------------------------------------------------
 
 def test_control_picker_absent_without_om_beta(plain_walk):
-    """H-060 test 2 positive control and second half (green today): "The picker ... is absent otherwise." Without `OM_BETA` no OptionButton shows
-    on mission preparation (inventory and controls both checked), and the inventory itself was read (the Deploy control is there)."""
+    """H-060 test 2 positive control and second half (green today): "The picker exists on mission preparation with one entry under `OM_BETA=1` and is
+    absent otherwise." Without `OM_BETA` no VariantPicker and no OptionButton shows on mission preparation, no Label reads `variant`, and `qa_state()`
+    has no `variant_picker` key (ruling 3: "present only when `OM_BETA=1`"). The inventory itself was read (the Deploy control is there)."""
     assert find_control({"result": {"controls": plain_walk.briefing_controls}}, "Deploy") is not None, "control: briefing tree lacks Deploy"
-    assert _pickers(plain_walk) == [], "a variant picker shows on mission preparation without OM_BETA: %r" % (_pickers(plain_walk),)
+    assert _visible_picker(plain_walk) is None, "a VariantPicker shows on mission preparation without OM_BETA: %r" % (_nodes(plain_walk).get("VariantPicker"),)
     assert _option_buttons_anywhere(plain_walk) == [], "a visible OptionButton on mission preparation without OM_BETA: %r" % (_option_buttons_anywhere(plain_walk),)
+    assert "variant" not in _label_texts(plain_walk), "a Label reading `variant` on mission preparation without OM_BETA"
+    assert "variant_picker" not in plain_walk.briefing_state.get("qa", {}), "qa_state has variant_picker without OM_BETA: %r" % (plain_walk.briefing_state.get("qa"),)
 
 
-def test_picker_present_under_om_beta(beta_walk):
-    """H-060 test 2: "The picker exists on mission preparation with one entry under `OM_BETA=1`" (Change: 'an OptionButton labelled "variant" with one
-    entry'). RED today: no OptionButton on mission preparation. The entry is checked as a non-empty selected text; the exactly-one count is a
-    reported gap (no qa surface for item_count)."""
-    found = _pickers(beta_walk)
-    assert len(found) == 1, "H-060: %d variant pickers (OptionButton) on mission preparation under OM_BETA=1, wanted 1; OptionButtons anywhere = %r" % (
-        len(found), _option_buttons_anywhere(beta_walk))
-    assert str(found[0].get("text") or "").strip() != "", "H-060: the picker shows no selected entry (text empty): %r" % (found[0],)
+def test_picker_node_present_under_om_beta(beta_walk):
+    """H-060 test 2 and ruling 2: "The picker exists on mission preparation ... under `OM_BETA=1`"; "The picker is an `OptionButton` named `VariantPicker`
+    beside a `Label` whose text is `variant`." RED today: no VariantPicker node, no `variant` Label on mission preparation."""
+    node = _visible_picker(beta_walk)
+    assert node is not None, "H-060: no visible OptionButton named VariantPicker on mission preparation under OM_BETA=1; OptionButtons anywhere = %r, node = %r" % (
+        _option_buttons_anywhere(beta_walk), _nodes(beta_walk).get("VariantPicker"))
+    assert "variant" in _label_texts(beta_walk), "H-060: no Label with text `variant` beside the picker; texts = %r" % (_label_texts(beta_walk),)
+
+
+def test_picker_qa_key_counts_one_entry_under_om_beta(beta_walk):
+    """H-060 test 2 and ruling 3: "The picker exists ... with one entry under `OM_BETA=1`"; "Mission preparation's `qa_state()` gains an additive key
+    `variant_picker: {count, selected}` (present only when `OM_BETA=1`); B1 pins `count == 1`". RED today: qa_state has no variant_picker key."""
+    qa = beta_walk.briefing_state.get("qa", {})
+    vp = qa.get("variant_picker")
+    assert isinstance(vp, dict), "H-060: qa_state of mission preparation has no variant_picker dict under OM_BETA=1; qa keys = %r" % (sorted(qa),)
+    assert "selected" in vp, "H-060: variant_picker lacks `selected`: %r" % (vp,)
+    assert vp.get("count") == 1, "H-060: variant_picker.count = %r, wanted 1" % (vp.get("count"),)
 
 
 # --- Test 3: the story play -----------------------------------------------------------------------------------------------------------------
@@ -243,7 +256,8 @@ def test_control_story_play_launch_line_carries_the_scene():
 
 def test_story_play_reaches_beta_field_with_its_hud_line():
     """H-060 test 3: "`scripts/play.sh --story H-060 --check` reaches `beta_field`." The play launches the scene play.sh launches, under Xvfb, with
-    --qa-port as --check does, and asserts the scene key and the inventory: the HUD line "beta B1: field placeholder, sha". RED today: scene
+    --qa-port as --check does, and asserts the scene key and the inventory: the HUD line, which reads `dev` from a checkout (ruling 4: "`dev` when the
+    file is absent (runs from a checkout)"). RED today: scene
     res://scenes/beta/stage_field.tscn does not exist."""
     scene = _play_sh_scene()
     assert (ROOT / scene.replace("res://", "")).exists(), "H-060: %s does not exist, so play.sh --story H-060 --check cannot reach it" % scene
@@ -257,7 +271,7 @@ def test_story_play_reaches_beta_field_with_its_hud_line():
             raise AssertionError("H-060: godot exited before the qa port opened on %s: %s" % (scene, str(e)[-400:]))
         state = wait_for(g.client, lambda st: st.get("scene") == scene, STEP_S * 2, label="story play")
         hud = [str(t) for t in state["inventory"]["hud_texts"].values()]
-        assert any(t.startswith(HUD_PREFIX) for t in hud), "H-060: no HUD line starting %r among %r" % (HUD_PREFIX, hud)
+        assert HUD_DEV in hud, "H-060: no HUD line %r among %r" % (HUD_DEV, hud)
     finally:
         if saved is not None:
             os.environ["XDG_DATA_HOME"] = saved
