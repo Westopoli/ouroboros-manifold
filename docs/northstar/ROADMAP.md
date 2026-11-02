@@ -15,7 +15,7 @@ Rules for this file:
 
 ## 1. Now building: two staircases, two gate channels
 
-Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a time, each step ending in something he looks at in a scene he plays, approve or deny, before the next starts. Two staircases run side by side on separate gate channels (DEC-two-gate-channels-2026-11-02, H-059): the **simulation lab** (`plans/` plan file `~/.claude/plans/cheerful-baking-codd.md` as DEC-lab-staircase-2026-10-31; stories H-039, H-040, H-052, H-053) and the **beta** (`plans/2026-11-02-beta-staircase.md`; stories H-028, H-059, H-060, H-061, then one per stage). Each row is one story; its words and done-when live in the story file; this table is the order and the state only. Whoever moves a stage rewrites its row in the same commit.
+Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a time, each step ending in something he looks at in a scene he plays, approve or deny, before the next starts. Two staircases run side by side on separate gate channels (DEC-two-gate-channels-2026-11-02, H-059): the **simulation lab** (`plans/2026-10-31-lab-staircase.md`, DEC-lab-staircase-2026-10-31; stories H-039, H-040, H-052, H-053) and the **beta** (`plans/2026-11-02-beta-staircase.md`; stories H-028, H-059, H-060, H-061, then one per stage). Each row is one story; its words and done-when live in the story file; this table is the order and the state only. Whoever moves a stage rewrites its row in the same commit.
 
 | Staircase | Stage | Story | State (2026-11-02) | Next |
 |---|---|---|---|---|
