@@ -35,8 +35,10 @@ def _firing_capable(doc, ranges):
     return count
 
 
-def rate(fights, predict_rate, band=BAND):
-    """The rate file's content for the fight dicts of one layout (one per seed)."""
+def rate(fights, predict_rate, band=BAND, mirror=False):
+    """The rate file's content for the fight dicts of one layout (one per seed). Scoring (H-053, ruled 2026-11-02): `agree` is the winner guess, the layout's `predict`
+    (read from fights[0]["result"]) against the measured majority winner (a tie of wins or a mutual wipe is "draw"); `band_gap` (points) is information and decides nothing;
+    an exact mirror with Predict draw is not scored (`agree` None). Stall and none seeds are the flag, their seed lists; they do not change `agree`."""
     seeds = [f["seed"] for f in fights]
     wins = lambda w: sum(1 for f in fights if f["result"]["winner"] == w)
     stall_seeds = [f["seed"] for f in fights if f["result"]["winner"] == "stall"]
@@ -45,8 +47,11 @@ def rate(fights, predict_rate, band=BAND):
     ranges = _roster_ranges()
     capable = [c for c in (_firing_capable(f, ranges) for f in fights) if c]
     ticks = sorted((f["result"]["ticks"], f["seed"]) for f in fights)
+    predict = fights[0]["result"]["predict"]
+    majority = "A" if wins("A") > wins("B") else "B" if wins("B") > wins("A") else "draw"
     return {"layout_id": fights[0]["layout_id"], "seeds": seeds, "wins_a": wins("A"), "wins_b": wins("B"), "stalls": len(stall_seeds),
             "stall_seeds": stall_seeds, "none_seeds": none_seeds, "rate_a": rate_a, "predict_rate": predict_rate, "band": band,
-            "agree": abs(rate_a - predict_rate) <= band and not stall_seeds and not none_seeds,
+            "band_gap": abs(rate_a - predict_rate) * 100, "mirror": mirror,
+            "agree": None if mirror and predict == "draw" else predict == majority,
             "firing_capable": {s: round(sum(c[s] for c in capable) / len(capable), 1) if capable else -1 for s in "AB"},
             "median_seed": ticks[(len(ticks) - 1) // 2][1]}

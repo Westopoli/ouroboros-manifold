@@ -46,7 +46,7 @@ var _ring_count := 0  # H-053: unit range rings drawn on the current frame (a ro
 var _hud_end_label: Label  # H-053: `end: A wins (wipe)` and the like, last frame only
 var _hud_rate_label: Label  # H-053: the layout's rate verdict, every frame when a rate file exists
 var _end_label := ""
-var _rate_label := ""  # `rate A <m> vs predicted <p>: AGREE|DISAGREE (band 0.10)` from the rate file, "" when there is none
+var _rate_label := ""  # `rate A <m> vs target <p> (gap <n> pts, not scored); guess <A|B|draw>: AGREE|DISAGREE|NOT SCORED (mirror)` from the rate file, "" when there is none
 var _role_rings: Array = []  # H-053: [{side, role, range, style, id}] one per role per side, id = the fight unit the ring follows (nearest the enemy at frame 0)
 var _unit_rings := false  # key R: a ring on every living unit instead of the per-role rings
 var _wide := false  # the camera follows each frame's centroid instead of holding the whole fight
@@ -74,8 +74,10 @@ func _ready() -> void:
 		var rate = JSON.parse_string(FileAccess.get_file_as_string(rate_path))
 		if rate is Dictionary and rate.has("rate_a"):
 			_rate_a = float(rate["rate_a"])
-			_rate_label = "rate A %.2f vs predicted %.2f: %s (band %.2f)" % [_rate_a, float(rate.get("predict_rate", 0.0)), "AGREE" if rate.get("agree", false) else "DISAGREE",
-					float(rate.get("band", 0.10))]
+			var predict_rate := float(rate.get("predict_rate", 0.0))
+			var guess := String(_fight.get("result", {}).get("predict", ""))
+			var verdict := "NOT SCORED (mirror)" if rate.get("mirror", false) else ("AGREE" if rate.get("agree", false) else "DISAGREE")
+			_rate_label = "rate A %.2f vs target %.2f (gap %d pts, not scored); guess %s: %s" % [_rate_a, predict_rate, roundi(absf(_rate_a - predict_rate) * 100.0), guess, verdict]
 	var result: Dictionary = _fight.get("result", {})
 	var ranges: Dictionary = _fight.get("ranges", {})  # om-fight-2 H-053: {role: range wu}; absent in older files
 	_end_label = _end_label_for(result)

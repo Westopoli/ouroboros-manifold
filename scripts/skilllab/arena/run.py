@@ -146,6 +146,20 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders):
                        "agree": winner == layout["predict"]}}
 
 
+def is_mirror(layout):
+    """True when side B is side A reflected across the line or point midway between their centroids (same roles, same positions); H-053 Scoring: such a layout with
+    Predict draw is not scored. DRAFT-mirror-test, the Architect's reading of "exact mirror"."""
+    ua, ub = layout["side_a"]["units"], layout["side_b"]["units"]
+    if len(ua) != len(ub):
+        return False
+    cx = (sum(u["x"] for u in ua) + sum(u["x"] for u in ub)) / (2 * len(ua))
+    cy = (sum(u["y"] for u in ua) + sum(u["y"] for u in ub)) / (2 * len(ua))
+    key = lambda pts: sorted((role, round(x, 3), round(y, 3)) for role, x, y in pts)
+    a = [(u["role"], u["x"], u["y"]) for u in ua]
+    return any(key(a2) == key((u["role"], u["x"], u["y"]) for u in ub)
+               for a2 in ([(r, 2 * cx - x, y) for r, x, y in a], [(r, x, 2 * cy - y) for r, x, y in a], [(r, 2 * cx - x, 2 * cy - y) for r, x, y in a]))
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python3 -m scripts.skilllab.arena.run")
     ap.add_argument("--layout", required=True, type=Path)
@@ -186,10 +200,10 @@ def main(argv=None):
         else:
             print("FIGHT %s seed %d winner %s ticks %d agree %s" % (layout["id"], seed, res["winner"], res["ticks"], "yes" if res["agree"] else "no"))
     if args.seeds:
-        summary = rate(fights, layout["predict_rate"])
+        summary = rate(fights, layout["predict_rate"], mirror=is_mirror(layout))
         (args.out / ("%s.rate.json" % layout["id"])).write_text(json.dumps(summary, indent=2) + "\n")
         print("RATE %s seeds %d rate_a %s predict_rate %s agree %s" % (layout["id"], len(fights), summary["rate_a"], summary["predict_rate"],
-                                                                      "yes" if summary["agree"] else "no"))
+                                                                      {True: "yes", False: "no", None: "not scored (mirror)"}[summary["agree"]]))
     return 0
 
 

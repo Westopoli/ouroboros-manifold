@@ -145,9 +145,24 @@ def _summary_cells(rate, docs, layout):
     stalls = "%d (%s)" % (rate["stalls"], " ".join(str(s) for s in rate["stall_seeds"]) or "-")
     fc = rate["firing_capable"]
     return [(rate["layout_id"], ""), (layout.get("situation", "-"), ""), (_roles(first, "A") if first else "-", ""), (_roles(first, "B") if first else "-", ""),
-            ("%.2f" % rate["predict_rate"], ""), ("%.2f" % rate["rate_a"], ""), ("agree" if rate["agree"] else "disagree", "agree" if rate["agree"] else "disagree"),
+            ("%.2f" % rate["predict_rate"], ""), ("%.2f" % rate["rate_a"], ""), _agree_cell(rate),
             (stalls, "stall" if rate["stalls"] else ""), (" ".join(str(s) for s in rate["none_seeds"]) or "-", "none" if rate["none_seeds"] else ""),
             ("%s / %s" % (fc["A"], fc["B"]), ""), (str(rate["median_seed"]), "")]
+
+
+def _agree_cell(rate):
+    """The winner-guess verdict; an exact-mirror draw (`agree` null) is flagged, not scored (H-053 Scoring)."""
+    if rate["agree"] is None:
+        return ("mirror: not scored (check the winner for an engine asymmetry)", "")
+    word = "agree" if rate["agree"] else "disagree"
+    return (word, word)
+
+
+def _gap_sentence(rate):
+    """`heuristic target <p>, measured <m>, gap <n> pts (not scored)`, grey up to the band and amber above it (information, no verdict)."""
+    gap = rate.get("band_gap", abs(rate["rate_a"] - rate["predict_rate"]) * 100)
+    colour = "gray" if gap <= rate.get("band", 0.10) * 100 else "darkorange"
+    return '<p style="color:%s">heuristic target %.2f, measured %.2f, gap %d pts (not scored)</p>' % (colour, rate["predict_rate"], rate["rate_a"], round(gap))
 
 
 SUMMARY_HEAD = ("id", "situation", "A roles", "B roles", "predicted rate A", "measured rate A", "agree", "stalls (seeds)", "none seeds",
@@ -172,10 +187,10 @@ def _layout_block(d, out_dir, rate, docs, layout, bad):
     strip = _strip(stem, median["frames"], stem, _first_shot(median["frames"])) if median else ""
     words = "".join("<p><b>%s:</b> %s</p>" % (label, html.escape(layout.get(key, "-")))
                     for label, key in (("What to expect", "what_to_expect"), ("Approve means", "approve_means"), ("Deny means", "deny_means")))
-    return ('<h2>%s</h2><table border="1" cellpadding="6">%s%s</table>%s<table border="1" cellpadding="4"><tr><th>role</th><th>A mean survivors</th>'
+    return ('<h2>%s</h2><table border="1" cellpadding="6">%s%s</table>%s%s<table border="1" cellpadding="4"><tr><th>role</th><th>A mean survivors</th>'
             '<th>B mean survivors</th><th>A start</th><th>B start</th></tr>%s</table><p>median seed %d strip (first shot outlined)</p>'
             '<div class="strip">%s</div><p>seeds: %s</p>%s'
-            % (html.escape(rate["layout_id"]), _row_html([(h, "") for h in SUMMARY_HEAD], "th"), _row_html(cells), words, survivors, rate["median_seed"], strip,
+            % (html.escape(rate["layout_id"]), _row_html([(h, "") for h in SUMMARY_HEAD], "th"), _row_html(cells), _gap_sentence(rate), words, survivors, rate["median_seed"], strip,
                " ".join(seeds), "".join("<p><b>%s</b></p>" % html.escape(m) for m in bad)))
 
 
