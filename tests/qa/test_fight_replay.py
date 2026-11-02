@@ -597,15 +597,17 @@ def test_control_without_a_rate_file_the_end_line_is_the_old_text(tmp_path, monk
 
 
 def test_without_a_rate_file_end_line_is_the_old_text_and_empty_before_the_last_frame(tmp_path, monkeypatch):
-    """Brief 2026-11-02: "with no rate file the old text", through the new key: `end_line` is "" on frame 0 and starts `winner A  predicted A  agree` on the last frame."""
+    """H-053 Replay readability item 5 (`end_label`, `rate_label`; the old `end_line` key is superseded): with no rate file `rate_label` is "" on every frame, `end_label` is "" on frame 0
+    and `end: A wins (wipe)` on the last frame (this fixture: winner A, survivors [2, 0], end wipe)."""
     path = _end_fight(tmp_path, None)
     g = _open(monkeypatch, path)
     try:
         g.wait_for_port(timeout=90.0)
         st = _state(g)
-        assert st["qa"].get("end_line") == "", "qa_state keys %s" % sorted(st["qa"])
+        assert st["qa"].get("end_label") == "" and st["qa"].get("rate_label") == "", "qa_state keys %s" % sorted(st["qa"])
         st = _last_frame(g)
-        assert str(st["qa"].get("end_line", "")).startswith("winner A  predicted A  agree"), st["qa"].get("end_line")
+        assert st["qa"].get("end_label") == "end: A wins (wipe)", st["qa"].get("end_label")
+        assert st["qa"].get("rate_label") == "", st["qa"].get("rate_label")
     finally:
         g.stop()
 
