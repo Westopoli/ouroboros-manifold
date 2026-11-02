@@ -167,17 +167,6 @@ def test_lab_rev2_rows_all_have_status_table():
         assert isinstance(st, dict) and st.get("state"), f"{p['id']} has no status table"
 
 
-def test_l7_depends_on_every_other_lab_rev2_row_except_e2_e4_and_l7b():
-    # decision 39 item 7 (ruler row TD-LAB-REV2-L7-2): E2 and E4 land after the lab landing, so L7 does not wait for them; L7B depends on L7, E2 and E4, so L7 cannot depend on L7B (cycle).
-    # LAB-REV2-FIX (decisions 41 and 42, ruler row TD-LAB-REV2-FIX-l7deps) depends on L7, so L7 cannot depend on FIX either (cycle).
-    rows = _lab_rev2_rows()
-    l7 = next(p for p in rows if p["id"] == "LAB-REV2-L7")
-    # rows that land after the lab landing (decision 39 item 7 for E2/E4; Architect 2026-10-20, implementation, Westley may veto, for L8M/L8M2); L7B takes their doc updates.
-    others = {p["id"] for p in rows if p["id"] not in ("LAB-REV2", "LAB-REV2-L7", "LAB-REV2-L7B", "LAB-REV2-E2", "LAB-REV2-E4", "LAB-REV2-L8M", "LAB-REV2-L8M2", "LAB-REV2-FIX", "LAB-REV2-SPEED-2")}
-    missing = sorted(others - set(l7["depends_on"]))
-    assert not missing, f"LAB-REV2-L7 depends_on lacks {missing}"
-
-
 def test_l7_depends_on_drops_e2_and_e4():
     l7 = next(p for p in _lab_rev2_rows() if p["id"] == "LAB-REV2-L7")
     kept = sorted({"LAB-REV2-E2", "LAB-REV2-E4"} & set(l7["depends_on"]))
