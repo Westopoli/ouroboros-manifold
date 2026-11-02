@@ -2114,7 +2114,11 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         }
     }
 
-    if (ordered) u->suppress_auto = 1;
+    /* H-057, R-087-02: the order that wins over auto-engagement is the player's. An idle unit that engaged on sight
+     * holds an attack-move whose point is its own post (order point == anchor, set together at acquisition); that is
+     * not a player command, so it keeps its auto-abilities. A player's attack-move point is never its anchor. */
+    if (ordered && !(u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set
+                     && u->order_x == u->anchor_x && u->order_y == u->anchor_y)) u->suppress_auto = 1;
     if (u->brace_auto && (ordered || (has_dest && !arrived))
         && (u->ability_phase == OM_ABILITY_PHASE_WINDUP || u->ability_phase == OM_ABILITY_PHASE_ACTIVE)) {
         om_ability_start_or_cancel_brace(st, u);
