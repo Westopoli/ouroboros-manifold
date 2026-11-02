@@ -153,11 +153,13 @@ def test_twenty_all_a_seeds_give_rate_one_and_agree_with_098():
 
 
 def test_predict_zero_disagrees_on_the_same_seeds():
-    """Tests line "positive control: a fixture with predict_rate 0.0 disagrees" (detector control: the same twenty seeds that agree with 0.98 do not agree with 0.0)."""
+    """Scoring: "the positive control becomes a fixture whose predict is the other side and disagrees" (detector control: the same twenty A-win seeds agree when A was guessed and do not when B was)."""
     mod = load_rate()
     fights = [fight(s, "A", 1000 + s) for s in range(1, 21)]
     assert mod.rate(fights, 0.98)["agree"] is True
-    assert mod.rate(fights, 0.0)["agree"] is False
+    for f in fights:
+        f["result"]["predict"] = "B"
+    assert mod.rate(fights, 0.98)["agree"] is False
 
 
 def test_the_band_is_ten_points_not_fifteen():
