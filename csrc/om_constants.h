@@ -567,7 +567,9 @@
 #define OM_VANTAGE_EXTRA_LAYER 1
 /* ALG-66 Group move */
 #define OM_ARRIVAL_TOLERANCE_MULT 1.5
-#define OM_ATTACK_MOVE_LEASH_DIST 200.0
+/* H-057, DEC-leash-param-2026-11-01: the pre-H-057 baseline-arm leash, kept so switch-0 goldens stand */
+#define OM_ATTACK_MOVE_LEASH_BASELINE 200.0
+#define OM_ATTACK_MOVE_LEASH_DIST 0.0
 #define OM_COMPOSITION_BASE 50
 #define OM_COMPOSITION_BASTION 2
 #define OM_COMPOSITION_BOMBARD 3

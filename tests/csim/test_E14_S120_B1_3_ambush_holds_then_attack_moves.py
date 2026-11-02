@@ -56,11 +56,29 @@ def test_R_120_02_ambush_triggers_to_advance_aggressive_on_contact(lib, world_fa
     assert lib.om_macro_get_behavior(w, 0) == OM_MACRO_ADVANCE, "R-120-02: ambush reset after triggering"
 
 
+def _engaged(lib, w, ids, player, player_hp0):
+    """The engagement happened (R-087-04): the nearest squad unit is within weapon range of the player's CURRENT position (or the player is dead) and the player's hp is below its start value."""
+    rng = lib.om_unit_profile_attack_range(w, RAIDER)
+    if lib.om_unit_alive(w, player):
+        px, py = lib.om_unit_get_pos(w, player)
+        near = min(dist(lib.om_unit_get_pos(w, u), (px, py)) for u in ids if lib.om_unit_alive(w, u))
+        in_range = near <= rng
+    else:
+        in_range = True
+    return in_range and lib.om_unit_get_hp(w, player) < player_hp0
+
+
 def test_R_120_02_ambushers_attack_move_toward_the_trigger(lib, world_factory):
-    """R-120-02: once triggered the squad attack-moves toward the player: within 150 ticks it has closed at least half the 700 wu gap (the player is due east, the objective due north-west of the squad, so the two are distinguishable)."""
+    """R-120-02: once triggered the squad attack-moves toward the player and the engagement happens by tick 150: the nearest squad unit is within weapon range of the player's current position (or the player is dead) and the player has lost hp. Sample tick unchanged (150); H-057 idle units engage on sight, so the player no longer stands untouched and 'closed half the gap to its start' no longer holds (R-087-04)."""
     w, ids, player = _ambush_scene(lib, world_factory, NEAR)
-    ppos = lib.om_unit_get_pos(w, player)
-    d0 = dist(centroid(lib, w, ids), ppos)
+    hp0 = lib.om_unit_get_hp(w, player)
     lib.om_tactical_tick_to(w, 150)
-    d1 = dist(centroid(lib, w, ids), ppos)
-    assert d1 <= 0.5 * d0, f"R-120-02: ambushers did not close on the player ({d0:.1f} -> {d1:.1f} wu)"
+    assert _engaged(lib, w, ids, player, hp0), "R-120-02: ambushers did not engage the player"
+
+
+def test_R_120_02_engagement_predicate_control_fails_without_contact(lib, world_factory):
+    """Control for the test above: with the player out of sight (FAR, ambush never triggers, squad gets no order) the same predicate at the same tick is False."""
+    w, ids, player = _ambush_scene(lib, world_factory, FAR)
+    hp0 = lib.om_unit_get_hp(w, player)
+    lib.om_tactical_tick_to(w, 150)
+    assert not _engaged(lib, w, ids, player, hp0)

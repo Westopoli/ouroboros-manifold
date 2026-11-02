@@ -97,7 +97,7 @@ The `#` column is the enum value. Kind: `bool` accepts exactly 0 or 1; `int` acc
 | 3 | `OM_TP_TARGET_POLICY` | int | 0 | 0 | 1 | plan appendix (0 nearest, the game's rule; 1 most damaged, lab only); rulings-2 A125 | writer: only the two named policies |
 | 4 | `OM_TP_TARGET_BY_SIGHT` | bool | 1 | 0 | 1 | plan Phase C switches; brief section 5 preamble | writer: switch: exactly 0 or 1 |
 | 5 | `OM_TP_ROUTE_ACROSS_LAYERS` | bool | 1 | 0 | 1 | plan Phase C switches; brief G4 and section 6 | writer: switch: exactly 0 or 1 |
-| 6 | `OM_TP_ATTACK_MOVE_LEASH` | real | 200.0 | 0 | 28000 | om_constants.h OM_ATTACK_MOVE_LEASH_DIST | writer: 0 is brief G1's own test case; top is OM_CANVAS_SIZE_RANGES_LARGE_HI |
+| 6 | `OM_TP_ATTACK_MOVE_LEASH` | real | 0 | 0 | 28000 | om_constants.h OM_ATTACK_MOVE_LEASH_DIST (0 = per-type leash, max(sight, range); H-057) | writer: 0 is brief G1's own test case; top is OM_CANVAS_SIZE_RANGES_LARGE_HI |
 | 7 | `OM_TP_RETURN_FIRE_FLEE_DIST` | real | 200.0 | 0 | 28000 | om_constants.h OM_RETURN_FIRE_FLEE_DIST | writer: as ATTACK_MOVE_LEASH |
 | 8 | `OM_TP_UNIT_COLLISION_RADIUS` | real | 15.0 | 0 | 200 | om_constants.h OM_UNIT_COLLISION_RADIUS | writer: top is half OM_GRID_CELL_SIZE (400), so a collision pair stays inside one broad-phase cell |
 | 9 | `OM_TP_VANTAGE_MULT` | real | 2.0 | 0 | 10 | om_constants.h OM_VANTAGE_CONE_MULTIPLIER | writer: non-negative, top 10 |

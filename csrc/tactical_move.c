@@ -386,6 +386,7 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     OM_PP_SWITCH(1.0), OM_PP_SWITCH(1.0), OM_PP_SWITCH(0.0),
     { OM_PP_INT, 0.0, 0.0, 1.0 },
     OM_PP_SWITCH(1.0), OM_PP_SWITCH(1.0),
+    /* H-057: OM_ATTACK_MOVE_LEASH_DIST is 0.0 = the type's own leash, max(sensor_radius, attack_range); non-zero overrides in wu */
     OM_PP_DIST(OM_ATTACK_MOVE_LEASH_DIST), OM_PP_DIST(OM_RETURN_FIRE_FLEE_DIST),
     { OM_PP_REAL, OM_UNIT_COLLISION_RADIUS, 0.0, OM_GRID_CELL_SIZE / 2.0 },
     OM_PP_MULT(OM_VANTAGE_CONE_MULTIPLIER),

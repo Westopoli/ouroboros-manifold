@@ -39,7 +39,7 @@ def _scene(lib, world_factory, seed=7):
     w = tactical_world(lib, world_factory, seed=seed)
     lib.om_cmd_reset(w)
     ps = [lib.om_unit_spawn(w, RAIDER, PLAYER_FAC, CX - 90.0 + i * 60.0, 6000.0, 0) for i in range(4)]
-    es = [lib.om_unit_spawn(w, RAIDER, ENEMY_FAC, CX - 90.0 + i * 60.0, 6700.0, 0) for i in range(4)]
+    es = [lib.om_unit_spawn(w, RAIDER, ENEMY_FAC, CX - 90.0 + i * 60.0, 6900.0, 0) for i in range(4)]
     return w, ps, es
 
 
