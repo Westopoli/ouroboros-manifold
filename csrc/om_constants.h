@@ -578,6 +578,7 @@
 #define OM_GRID_CELL_SIZE 400.0
 #define OM_MAGIC_BOX_SPREAD_RADIUS 450
 #define OM_RETURN_FIRE_FLEE_DIST 200.0
+/* H-041: the collision radius of a unit type whose radius om_roster_set_collision_radius never set, and the default of OM_TP_UNIT_COLLISION_RADIUS. */
 #define OM_UNIT_COLLISION_RADIUS 15
 /* ALG-67 Routing */
 #define OM_NAVMESH_CELL_SIZE 100

@@ -5,8 +5,8 @@
 # `wrapper` names the conftest adapter sig_table.py must generate for that symbol.
 
 [meta]
-abi_version = 9
-symbol_count = 802
+abi_version = 10
+symbol_count = 803
 struct_count = 45
 ambiguous_remaining = 0
 
@@ -6538,6 +6538,15 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "unit_type", ctype = "in
 epics = ["E-01"]
 confidence = "certain"
 note = "PP-contract: layers above and below a unit type may acquire and fire at; 0 ok, -1 unknown type."
+
+[[symbols]]
+name = "om_roster_set_collision_radius"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_type", ctype = "int" }, { name = "radius", ctype = "double" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "H-041: per-type collision radius in world units, 1 to 200; a pair pushes apart at the sum of its radii; 0 ok, -1 unknown type or radius out of bounds; a type never set stays 15. OM_TP_UNIT_COLLISION_RADIUS multiplies the per-type value."
 
 [[symbols]]
 name = "om_unit_profile_reach"
