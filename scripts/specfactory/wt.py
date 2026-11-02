@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """wt.py: HARNESS-wt-cap. The only way a worktree under ~/Projects/om-push/wt is created, finished or reaped.
 
-`.wt-state` is `<active|pinned|finished> <YYYY-MM-DD> <owner> <purpose...>`; derived states pending (`.wt-done-pending`),
+`.wt-state` is `<active|pinned|finished> <YYYY-MM-DD> <owner> <purpose...>`, plus a second line `channel beta` for a beta tree
+(absent means lab; H-059); derived states pending (`.wt-done-pending`),
 done (`.wt-done` only), unflagged (neither: it holds a slot), foreign, not-worktree. Subcommands: new, done, status, reap,
 check. Exit 0 ok, 2 usage, 3 refused, 1 error or DRIFT. Caps are the named drafts below (spec: harness-enforcement-spec,
 HARNESS-wt-cap); every cap has a CLI override.
@@ -18,7 +19,8 @@ import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-DRAFT_WT_ACTIVE_SLOTS = 12
+DRAFT_WT_SLOTS_PER_CHANNEL = 10  # H-059; the total cap (--slots) defaults to this times the channels
+CHANNELS = ("lab", "beta")
 DRAFT_WT_DISK_CAP_GB = 120
 DRAFT_WT_SIZE_ESTIMATE_MB = 700
 DRAFT_WT_FREE_FLOOR_GB = 60
@@ -32,7 +34,7 @@ DRAFT_WT_BUILD_OUTPUTS = [".godot/", "build/", "dist/", "obj/", "obj_dbg/", "*.i
                           "*.uid", "landing-template.md"]  # rev 2, HARNESS-wt-cap-2
 DEFAULT_ROOT = Path.home() / "Projects" / "om-push" / "wt"
 REPO = Path(__file__).resolve().parents[2]
-COLS = ["name", "state", "size_mb", "age_days", "branch", "on_origin", "dirty", "open_files"]
+COLS = ["name", "state", "channel", "size_mb", "age_days", "branch", "on_origin", "dirty", "open_files"]
 
 
 def git(*args, cwd=None):
@@ -88,7 +90,14 @@ def age_days(path) -> float:
 
 
 def read_words(f) -> list:
-    return Path(f).read_text().split()
+    """The words of the first line (the state line); a .wt-state may carry a second `channel <c>` line."""
+    return (Path(f).read_text().splitlines() or [""])[0].split()
+
+
+def channel_of(t) -> str:
+    f = Path(t) / ".wt-state"
+    lines = f.read_text().splitlines() if f.is_file() else []
+    return next((ln.split()[1] for ln in lines[1:] if ln.startswith("channel ") and len(ln.split()) > 1), "lab")
 
 
 def is_build_output(line) -> bool:
@@ -143,20 +152,24 @@ def headroom(root, mbs):
     return f"slots {{}}/{cfg('slots')} wt {sum(mbs.values()) / 1024:.1f}/{cfg('disk_cap_gb'):g} free {free_gb(root):.1f}"
 
 
-def slots_used(root, repo, names):
-    return sum(classify(root, repo, n) in ("active", "unflagged") for n in names)
+def slots_used(root, repo, names, channel=None):
+    return sum(classify(root, repo, n) in ("active", "unflagged") and (channel is None or channel_of(Path(root) / n) == channel)
+               for n in names)
 
 
 def refuse(root, repo, names, mbs, reason):
     print(f"WT REFUSED {reason}")
     for n in names:
         if classify(root, repo, n) == "active":
-            print("  " + (Path(root) / n / ".wt-state").read_text().strip() + f"  [{n}]")
+            print("  " + " ".join(read_words(Path(root) / n / ".wt-state")) + f"  [{n}]")
     print(headroom(root, mbs).format(slots_used(root, repo, names)))
     return 3
 
 
 def cmd_new(a, root, repo):
+    if a.channel not in CHANNELS:
+        print(f"WT REFUSED unknown channel {a.channel!r}: one of {', '.join(CHANNELS)}")
+        return 3
     root.mkdir(parents=True, exist_ok=True)
     with open(root / ".wt.lock", "w") as lk:
         fcntl.flock(lk, fcntl.LOCK_EX)
@@ -167,6 +180,9 @@ def cmd_new(a, root, repo):
         rf = lambda why: refuse(root, repo, names, mbs, why)  # noqa: E731
         if used >= cfg("slots"):
             return rf(f"slot cap: {used} of {cfg('slots')} slots held")
+        in_channel = slots_used(root, repo, names, a.channel)
+        if in_channel >= cfg("slots_per_channel"):
+            return rf(f"channel slot cap: {in_channel} of {cfg('slots_per_channel')} {a.channel} slots held")
         if free_gb(root) < cfg("free_floor_gb"):
             return rf(f"free space {free_gb(root):.1f} GB under the floor {cfg('free_floor_gb'):g}")
         if not migrating and sum(mbs.values()) + cfg("estimate_mb") > cfg("disk_cap_gb") * 1024:
@@ -180,7 +196,7 @@ def cmd_new(a, root, repo):
         if rc:
             print(f"WT ERROR git worktree add failed: {out}")
             return 1
-        (root / a.name / ".wt-state").write_text(f"active {today()} {a.owner} {' '.join(a.purpose)}\n")
+        (root / a.name / ".wt-state").write_text(f"active {today()} {a.owner} {' '.join(a.purpose)}\n" + (f"channel {a.channel}\n" if a.channel != "lab" else ""))
     print(f"WT OK {root / a.name} {branch} " + headroom(root, mbs).format(used + 1))
     return 0
 
@@ -198,7 +214,8 @@ def cmd_done(a, root, repo):
     words = read_words(path / ".wt-state") if (path / ".wt-state").exists() else []
     owner, purpose = (words[2], " ".join(words[3:])) if len(words) > 2 else ("unknown", "-")
     (path / ".wt-done").write_text(f"{today()} {branch} {a.sha}\n")
-    (path / ".wt-state").write_text(f"finished {today()} {owner} {purpose}\n")
+    (path / ".wt-state").write_text(f"finished {today()} {owner} {purpose}\n"
+                                    + (f"channel {channel_of(path)}\n" if channel_of(path) != "lab" else ""))
     print(f"WT OK {path} finished")
     return 0
 
@@ -206,7 +223,7 @@ def cmd_done(a, root, repo):
 def row(root, repo, name, mb):
     t, st = Path(root) / name, classify(root, repo, name)
     r = dict.fromkeys(COLS, "-")
-    r.update(name=name, state=st, size_mb=mb, age_days=round(age_days(t), 1) if st != "not-worktree" else "-")
+    r.update(name=name, state=st, channel=channel_of(t) if st not in ("foreign", "not-worktree") else "-", size_mb=mb, age_days=round(age_days(t), 1) if st != "not-worktree" else "-")
     if st not in ("foreign", "not-worktree"):
         sha = git("rev-parse", "HEAD", cwd=t)[1]
         r.update(branch=git("rev-parse", "--abbrev-ref", "HEAD", cwd=t)[1] or "-", on_origin=bool(sha and on_origin(repo, sha)),
@@ -310,6 +327,7 @@ def main(argv=None) -> int:
     common.add_argument("--root")
     common.add_argument("--repo")
     common.add_argument("--slots", type=int)
+    common.add_argument("--slots-per-channel", type=int)
     common.add_argument("--disk-cap-gb", type=float)
     common.add_argument("--free-floor-gb", type=float)
     common.add_argument("--estimate-mb", type=float)
@@ -319,6 +337,7 @@ def main(argv=None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("new", parents=[common])
     p.add_argument("name")
+    p.add_argument("--channel", default="lab")  # lab|beta; checked in cmd_new so an unknown one exits 3
     p.add_argument("--owner", required=True)
     p.add_argument("--purpose", required=True, nargs="+")
     p.add_argument("--base", default="origin/main")
@@ -338,7 +357,8 @@ def main(argv=None) -> int:
     if not md and (root / ".wt-migration-date").is_file():
         md = (root / ".wt-migration-date").read_text().split()[0]
     pick = lambda v, d: d if v is None else v  # noqa: E731
-    CFG.update(slots=pick(a.slots, DRAFT_WT_ACTIVE_SLOTS), disk_cap_gb=pick(a.disk_cap_gb, DRAFT_WT_DISK_CAP_GB),
+    CFG.update(slots=pick(a.slots, DRAFT_WT_SLOTS_PER_CHANNEL * len(CHANNELS)),
+               slots_per_channel=pick(a.slots_per_channel, DRAFT_WT_SLOTS_PER_CHANNEL), disk_cap_gb=pick(a.disk_cap_gb, DRAFT_WT_DISK_CAP_GB),
                free_floor_gb=pick(a.free_floor_gb, DRAFT_WT_FREE_FLOOR_GB), estimate_mb=pick(a.estimate_mb, DRAFT_WT_SIZE_ESTIMATE_MB),
                cache_min=pick(a.cache_min, DRAFT_WT_SIZE_CACHE_MIN), migration_date=md)
     return {"new": cmd_new, "done": cmd_done, "status": cmd_status, "reap": cmd_reap, "check": cmd_check}[a.cmd](a, root, repo)
