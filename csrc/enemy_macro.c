@@ -957,12 +957,12 @@ void om_mission_check_external_reinforcements(om_world *w) {
         }
 
         /* Grid centred on (spawn_x, spawn_y); rows = ceil(sqrt(count)).
-         * spacing = 2 * OM_UNIT_COLLISION_RADIUS; margin = one radius from edge. */
+         * spacing = 2 * the roster's largest collision radius; margin = one such radius from edge. */
         uint32_t rows = 1;
         while (rows * rows < count) rows++;
         uint32_t n_cols = (count + rows - 1) / rows;
-        double spacing = 2.0 * (double)OM_UNIT_COLLISION_RADIUS;
-        double half = OM_CANVAS_SIZE_RANGES_MEDIUM_HI / 2.0 - (double)OM_UNIT_COLLISION_RADIUS;
+        double spacing = 2.0 * om_move_largest_radius(w);
+        double half = OM_CANVAS_SIZE_RANGES_MEDIUM_HI / 2.0 - om_move_largest_radius(w);
 
         uint32_t unit_ids[OM_COMPOSITION_BASE];
         uint32_t n_spawned = 0;

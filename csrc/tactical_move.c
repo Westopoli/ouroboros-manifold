@@ -62,6 +62,11 @@
 #define OM_MOVE_MAX_UNITS (OM_MAX_UNITS + 1)
 /* PP-unit G5: the six built-in unit types plus unit.c's OM_MAX_CUSTOM_TYPES (64). */
 #define OM_PP_REACH_MAX 70
+/* H-041 DRAFT-radius-bounds: the per-type collision radius, wu. */
+/* The built-in unit types, 0 to 5; the same six as csrc/unit.c OM_UNIT_TYPE_COUNT (that one is file-local). */
+#define OM_MOVE_BUILTIN_TYPES 6
+#define OM_COLLISION_RADIUS_MIN 1.0
+#define OM_COLLISION_RADIUS_MAX 200.0
 #define OM_MOVE_MAX_GROUPS OM_MAX_UNITS
 #define OM_MOVE_MAX_GROUP_MEMBERS OM_MAX_UNITS
 /* Dense density grid (A134): one value per 100 wu cell of the largest canvas, per layer. */
@@ -92,8 +97,10 @@
  * the units). Results never depend on this layout: a query returns exactly
  * the units within its radius. */
 #define OM_MOVE_GRID_MAX_CELLS 65536
-#define OM_MOVE_GRID_BASE_CELL (4.0 * OM_UNIT_COLLISION_RADIUS)
-#define OM_MOVE_GRID_MARGIN (3.0 * OM_UNIT_COLLISION_RADIUS)
+/* H-041: both read the roster's largest collision radius through the `ms` in scope at the use. They stay object-like
+ * because tests/csim/test_PP_grid_margin_exact.py swaps the OM_MOVE_GRID_MARGIN line by text. */
+#define OM_MOVE_GRID_BASE_CELL (4.0 * om_move_largest(ms))
+#define OM_MOVE_GRID_MARGIN (3.0 * om_move_largest(ms))
 #define OM_MOVE_GRID_SPILL_MAX 48
 #define OM_MOVE_GRID_BOUND_PAD 1.0e-6
 #define OM_MOVE_GRID_FAR 1.0e300
@@ -318,6 +325,15 @@ uint32_t col_cur;
     /* The runtime unit collision radius (OM_TP_UNIT_COLLISION_RADIUS), read once per tick and per standalone collision
      * pass by om_move_load_radius; every site that ruling 15 names reads this, never the compile-time default. */
     double   radius;
+    /* H-041: radius_hi is the farthest a pair can reach, the collision pass's search reach: radius scaled by the roster's
+     * largest per-type radius over 15 (radius itself when no type's radius is set). rad_largest is that largest, valid
+     * while rad_n > 0. Per-type radii, a sparse list keyed by type like reach, carried across om_tactical_reset like
+     * reach. See also: om_roster_set_collision_radius. */
+    double   radius_hi;
+    uint32_t rad_n;
+    int32_t  rad_type[OM_PP_REACH_MAX];
+    double   rad_val[OM_PP_REACH_MAX];
+    double   rad_largest;
     /* PP-move (PURSUE_BY_STEERING): the map canvas, 0 x 0 when unset (no clamp); see om_move_set_canvas_size. */
     double   canvas_w, canvas_h;
 
@@ -565,12 +581,60 @@ static int om_move_param_on(const om_move_state *ms, om_tac_param p) {
     return ms->param[p] != 0.0;
 }
 
+/* H-041: a type's base collision radius (never set: OM_UNIT_COLLISION_RADIUS), and the roster's largest, which every site
+ * with no unit type in hand reads (grid cell and margin, spawn grids, production slots). The largest counts the six
+ * built-in types, set or not, and every set type; a registered custom type never set counts at 15 only through
+ * the six not all being set below 15, which a lab roster does not do. */
+static double om_move_type_base(const om_move_state *ms, int type) {
+    uint32_t i;
+    for (i = 0; i < ms->rad_n; i++) {
+        if (ms->rad_type[i] == type) return ms->rad_val[i];
+    }
+    return (double)OM_UNIT_COLLISION_RADIUS;
+}
+
+static double om_move_largest(const om_move_state *ms) {
+    return ms->rad_n ? ms->rad_largest : (double)OM_UNIT_COLLISION_RADIUS;
+}
+
+static void om_move_refresh_largest(om_move_state *ms) {
+    double m = 0.0, v;
+    uint32_t i;
+    int t;
+    for (t = 0; t < OM_MOVE_BUILTIN_TYPES; t++) {
+        v = om_move_type_base(ms, t);
+        if (v > m) m = v;
+    }
+    for (i = 0; i < ms->rad_n; i++) {
+        if (ms->rad_val[i] > m) m = ms->rad_val[i];
+    }
+    ms->rad_largest = m;
+    ms->settle_valid = 0;
+}
+
+double om_move_largest_radius(const om_world *w) {
+    const om_move_state *ms = w ? (const om_move_state *)w->move_state : NULL;
+    return ms ? om_move_largest(ms) : (double)OM_UNIT_COLLISION_RADIUS;
+}
+
+double om_move_type_radius(const om_world *w, int type) {
+    const om_move_state *ms = w ? (const om_move_state *)w->move_state : NULL;
+    return ms ? om_move_type_base(ms, type) : (double)OM_UNIT_COLLISION_RADIUS;
+}
+
 /* A changed radius ends the settle cache: a pass that found no overlap at the old radius may find one at the new. */
 static void om_move_load_radius(om_move_state *ms) {
     const double r = ms->param[OM_TP_UNIT_COLLISION_RADIUS];
-    if (r == ms->radius) return;
+    const double hi = ms->rad_n ? r * (ms->rad_largest / (double)OM_UNIT_COLLISION_RADIUS) : r;
+    if (r == ms->radius && hi == ms->radius_hi) return;
     ms->radius = r;
+    ms->radius_hi = hi;
     ms->settle_valid = 0;
+}
+
+/* One unit's collision radius in a pair push: OM_TP_UNIT_COLLISION_RADIUS times its type's radius over 15. */
+static double om_move_unit_radius(const om_world *w, const om_move_state *ms, uint32_t id) {
+    return ms->radius * (om_move_type_base(ms, om_unit_get_unit_type(w, id)) / (double)OM_UNIT_COLLISION_RADIUS);
 }
 
 /* Internal, not in the header: a cell turned blocked or open outside om_map_set_obstacle_density (om_map_block_rect),
@@ -1628,7 +1692,7 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
     int changed = 0, routed = 0;
     if (ms->col_pursue && ms->start_layer[ia] != ms->start_layer[ib]) return 0;
     dx = bx - ax; dy = by - ay;
-    target = 2.0 * ms->radius;
+    target = ms->rad_n ? om_move_unit_radius(w, ms, ia) + om_move_unit_radius(w, ms, ib) : 2.0 * ms->radius;
     if (dx * dx + dy * dy >= target * target) return 0;
     dist = sqrt(dx * dx + dy * dy);
     if (dist >= target) return 0;
@@ -1685,7 +1749,7 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
  * every lower-id unit within the collision diameter of where a unit moved to (the pair is checked in the
  * lower unit's turn). A skipped turn would have found no overlapping pair and written nothing. */
 static void om_move_collision_mark(om_move_state *ms, uint32_t id) {
-    const double target = 2.0 * ms->radius;
+    const double target = 2.0 * ms->radius_hi;
     const double r2 = target * target;
     const double x = om_move_grid_x(ms, id), y = om_move_grid_y(ms, id);
     int32_t cx0, cx1, cy0, cy1, cy;
@@ -1748,8 +1812,8 @@ static void om_move_collide_pair_marked(om_world *w, om_move_state *ms, uint32_t
  * turn ends when the wider list has no candidate left
  * (om_move_grid_any_above). Returns whether any unit was displaced. */
 static int om_move_collision_once(om_world *w, om_move_state *ms, int first, int last) {
-    const double target = 2.0 * ms->radius;
-    const double slack = ms->radius;
+    const double target = 2.0 * ms->radius_hi;
+    const double slack = ms->radius_hi;
     const double drift2 = slack * slack;
     uint32_t id_i;
     ms->col_moved = 0;
@@ -1769,7 +1833,7 @@ static int om_move_collision_once(om_world *w, om_move_state *ms, int first, int
             om_move_collide_pair_marked(w, ms, id_i, id_j);
             mx = om_move_grid_x(ms, id_i) - ax0; my = om_move_grid_y(ms, id_i) - ay0;
             if (mx * mx + my * my > drift2) {
-                if (k + 1 >= n && !om_move_grid_any_above(w, ms, ax0, ay0, OM_MOVE_LIST_REACH_RADII * ms->radius, id_j)) break;
+                if (k + 1 >= n && !om_move_grid_any_above(w, ms, ax0, ay0, OM_MOVE_LIST_REACH_RADII * ms->radius_hi, id_j)) break;
                 ax0 = om_move_grid_x(ms, id_i); ay0 = om_move_grid_y(ms, id_i);
                 n = om_move_grid_collect(w, ms, ax0, ay0, target + slack, id_j);
                 k = (uint32_t)-1;
@@ -3337,6 +3401,26 @@ int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t
     return 0;
 }
 
+/* H-041. A type never set reads OM_UNIT_COLLISION_RADIUS; -1 for a type that is not built in and not registered, a
+ * radius outside 1 to 200 (a NaN fails the compare), or a full list. Read by the tick through the list, never from a
+ * file. See also: om_roster_set_reach, the setter this sits beside. */
+int om_roster_set_collision_radius(om_world *w, int unit_type, double radius) {
+    om_move_state *ms;
+    uint32_t i;
+    if (!w || unit_type < 0 || om_unit_profile_ability_count(w, unit_type) == 0u) return -1;
+    if (!(radius >= OM_COLLISION_RADIUS_MIN && radius <= OM_COLLISION_RADIUS_MAX)) return -1;
+    ms = om_ms(w);
+    for (i = 0; i < ms->rad_n && ms->rad_type[i] != unit_type; i++) {}
+    if (i == ms->rad_n) {
+        if (i >= OM_PP_REACH_MAX) return -1;
+        ms->rad_n++;
+        ms->rad_type[i] = unit_type;
+    }
+    ms->rad_val[i] = radius;
+    om_move_refresh_largest(ms);
+    return 0;
+}
+
 /* Terrain stage 2: 0 ok; 1 unknown type (or the kind list is full); 2 unknown kind. */
 int om_roster_set_movement_kind(om_world *w, int type, int kind) {
     om_move_state *ms;
@@ -3601,6 +3685,13 @@ static uint64_t om_move_section_hash(const om_world *w) {
         h = mv_word(h, (uint64_t)(int64_t)ms->kind_type[k]);
         h = mv_word(h, (uint64_t)(int64_t)ms->kind_val[k]);
     }
+    if (ms->rad_n) {
+        h = mv_word(h, ms->rad_n);
+        for (k = 0; k < ms->rad_n && k < OM_PP_REACH_MAX; k++) {
+            h = mv_word(h, (uint64_t)(int64_t)ms->rad_type[k]);
+            h = mv_dbl(h, ms->rad_val[k]);
+        }
+    }
     return h;
 }
 typedef struct {
@@ -3708,6 +3799,14 @@ static void mv_save_all(const om_move_state *ms, mv_sw *s) {
     for (k = 0; k < ms->kind_n && k < OM_PP_REACH_MAX; k++) {
         mv_put_i32(s, ms->kind_type[k]);
         mv_put_i32(s, ms->kind_val[k]);
+    }
+    /* H-041: written only when a radius was set, so a save of a world that never set one is unchanged. */
+    if (ms->rad_n) {
+        mv_put_u32(s, ms->rad_n);
+        for (k = 0; k < ms->rad_n && k < OM_PP_REACH_MAX; k++) {
+            mv_put_i32(s, ms->rad_type[k]);
+            mv_put_f64(s, ms->rad_val[k]);
+        }
     }
 }
 static uint32_t om_move_save_size(const om_world *w) {
@@ -3856,6 +3955,14 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
     for (k = 0; k < ms->kind_n && r.ok; k++) {
         ms->kind_type[k] = mv_get_i32(&r);
         ms->kind_val[k] = mv_get_i32(&r);
+    }
+    if (r.ok && r.pos < len) {
+        ms->rad_n = mv_get_count(&r, OM_PP_REACH_MAX);
+        for (k = 0; k < ms->rad_n && r.ok; k++) {
+            ms->rad_type[k] = mv_get_i32(&r);
+            ms->rad_val[k] = mv_get_f64(&r);
+        }
+        if (r.ok) om_move_refresh_largest(ms);
     }
     if (!r.ok || r.pos != len) {
         om_move_state_free_fn(ms);

@@ -212,9 +212,9 @@ Enums are sent as the header's integer values (`om_tier`, `om_archetype`, `om_st
 
 ### hello (server to client, once)
 ```json
-{"type":"hello","abi":9,"layout_ok":true,"seed":1,"n_regions":60,"features":[1,2,3,6],"checksum_cadence":10,"player_faction":-1}
+{"type":"hello","abi":10,"layout_ok":true,"seed":1,"n_regions":60,"features":[1,2,3,6],"checksum_cadence":10,"player_faction":-1}
 ```
-`abi` is `om_abi_version()` (9 since LAB-REV2-E0; 8 since VG-CONTRACT-E7; 7 since VG-K-e5; 6 since VG-K-e; 5 since VG-K0; 4 since PP-contract; 3 since HDR3); `layout_ok` is `om_abi_layout_check(sizeof rows)`; `features` lists the enabled `om_feature` ids. `player_faction` is always -1 at hello time (no world is configured yet; the real value is available via `om_player_faction(w)` after `set_seed`).
+`abi` is `om_abi_version()` (10 since H-041; 9 since LAB-REV2-E0; 8 since VG-CONTRACT-E7; 7 since VG-K-e5; 6 since VG-K-e; 5 since VG-K0; 4 since PP-contract; 3 since HDR3); `layout_ok` is `om_abi_layout_check(sizeof rows)`; `features` lists the enabled `om_feature` ids. `player_faction` is always -1 at hello time (no world is configured yet; the real value is available via `om_player_faction(w)` after `set_seed`).
 
 ### snapshot (server to client, on request and after `load`)
 ```json
