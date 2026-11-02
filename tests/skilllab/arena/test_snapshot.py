@@ -201,3 +201,232 @@ def test_write_refuses_invalid_document_and_writes_nothing(snap, tmp_path):
         snap.write(doc, target)
     assert not target.exists()
     assert list(tmp_path.iterdir()) == []
+
+
+# ================================================================ H-052: fight.json contract v2 (orders and fight end)
+# spec: docs/stories/H-052.md. Quoted: "`schema` becomes `om-fight-2`; `om-fight-1` files still validate (the checker accepts both ...)."
+# "New top-level `orders`: `{"mode": "both_same_point" | "hold_and_attack", "point": [x, y], "attacker": "A" | "B" | null}`." "No other mode
+# exists." "New `result.end`: `"wipe"` ..., `"silence"` (no shot by either side for DRAFT-silence-seconds 10 of sim time), `"cap"` (DRAFT-fight-cap)."
+# "New `result.stall`: true when `end` is `silence` and both sides have survivors. `winner` is then `"stall"`, not `"draw"`; `agree` is false."
+# "The checker rejects an `om-fight-2` file missing `orders` or `result.end`, and a `stall` without `end == "silence"`."
+# The builder adds the v2 example builder; until it exists the v2 documents are built inline from `snapshot.example()` (DRAFT-v2-example-name).
+# Every v2 test first asserts the baseline v2 document validates, so while v2 is missing it fails for that reason and not by accident.
+
+def _v2(snap, end="wipe", stall=False, mode="both_same_point", attacker=None):
+    """`snapshot.example()` as an om-fight-2 document: schema, `orders`, `result.end`, `result.stall`; a stall puts both sides alive in the last frame."""
+    doc = snap.example()
+    doc["schema"] = "om-fight-2"
+    doc["orders"] = {"mode": mode, "point": [120.0, 52.0], "attacker": attacker}
+    doc["result"]["end"] = end
+    doc["result"]["stall"] = stall
+    if stall:
+        last = doc["frames"][-1]
+        for row in last["units"]:
+            row["hp"], row["alive"] = 100.0, True
+        last["alive"] = [2, 2]
+        doc["result"].update({"winner": "stall", "survivors": [2, 2], "agree": False, "predict": "A"})
+    return doc
+
+
+def test_control_v1_example_still_validates(snap):
+    """H-052 Tests: "v1 example still validates." Control, green today and after: the unchanged `snapshot.example()` carries the v1 schema and no
+    `orders`, `result.end` or `result.stall`, and validates clean."""
+    doc = snap.example()
+    assert doc["schema"] == "om-fight-1"
+    assert "orders" not in doc and "end" not in doc["result"] and "stall" not in doc["result"]
+    assert snap.validate(doc) == []
+
+
+def test_v2_example_validates(snap):
+    """H-052 Tests: "v2 example validates." and "`schema` becomes `om-fight-2`": a wipe fight under both_same_point validates clean."""
+    assert snap.validate(_v2(snap)) == []
+
+
+@pytest.mark.parametrize("mode,attacker", [("both_same_point", None), ("hold_and_attack", "B"), ("hold_and_attack", "A")])
+def test_v2_orders_modes_validate(snap, mode, attacker):
+    """H-052: "`{"mode": "both_same_point" | "hold_and_attack", "point": [x, y], "attacker": "A" | "B" | null}`": each mode, with attacker null
+    or A or B, is a valid `orders`."""
+    assert snap.validate(_v2(snap, mode=mode, attacker=attacker)) == []
+
+
+def test_v2_missing_orders_fails_naming_orders(snap):
+    """H-052: "The checker rejects an `om-fight-2` file missing `orders`" and Tests: "v2 missing `orders` fails naming it"."""
+    assert snap.validate(_v2(snap)) == []
+    doc = _v2(snap)
+    del doc["orders"]
+    msgs = snap.validate(doc)
+    assert any("missing orders" in m for m in msgs), msgs
+
+
+def test_v2_missing_result_end_fails_naming_it(snap):
+    """H-052: "The checker rejects an `om-fight-2` file missing `orders` or `result.end`"."""
+    assert snap.validate(_v2(snap)) == []
+    doc = _v2(snap)
+    del doc["result"]["end"]
+    msgs = snap.validate(doc)
+    assert any("missing result.end" in m for m in msgs), msgs
+
+
+def test_v2_stall_with_end_wipe_fails(snap):
+    """H-052: "The checker rejects ... a `stall` without `end == "silence"`" and Tests: "`stall` with `end == "wipe"` fails". The stall document
+    validates with end silence; the same document with end wipe fails with a message naming stall."""
+    assert snap.validate(_v2(snap, end="silence", stall=True)) == []
+    doc = _v2(snap, end="silence", stall=True)
+    doc["result"]["end"] = "wipe"
+    msgs = snap.validate(doc)
+    assert any("stall" in m for m in msgs), msgs
+
+
+def test_v2_stall_with_end_cap_fails(snap):
+    """H-052: "a `stall` without `end == "silence"`": a stall that ended at the cap fails too."""
+    assert snap.validate(_v2(snap, end="silence", stall=True)) == []
+    doc = _v2(snap, end="silence", stall=True)
+    doc["result"]["end"] = "cap"
+    msgs = snap.validate(doc)
+    assert any("stall" in m for m in msgs), msgs
+
+
+def test_v2_winner_stall_allowed_only_with_stall_true(snap):
+    """H-052: "`stall` ... `winner` is then `"stall"`": winner `stall` validates with stall true; a wipe document (stall false) whose winner is
+    `stall` fails (DRAFT-winner-stall: the story does not say which message; the test needs one naming winner or stall)."""
+    assert snap.validate(_v2(snap, end="silence", stall=True)) == []
+    doc = _v2(snap)
+    doc["result"]["winner"] = "stall"
+    doc["result"]["agree"] = False
+    msgs = snap.validate(doc)
+    assert any("stall" in m or "winner" in m for m in msgs), msgs
+
+
+def test_v2_stall_true_needs_winner_stall(snap):
+    """H-052: "`stall`: true when `end` is `silence` and both sides have survivors. `winner` is then `"stall"`, not `"draw"`": a stall whose winner
+    is `draw` fails."""
+    assert snap.validate(_v2(snap, end="silence", stall=True)) == []
+    doc = _v2(snap, end="silence", stall=True)
+    doc["result"]["winner"] = "draw"
+    msgs = snap.validate(doc)
+    assert any("stall" in m or "winner" in m for m in msgs), msgs
+
+
+def test_v2_stall_agree_must_be_false(snap):
+    """H-052: "`agree` is false and the row is flagged": a stall with `agree` true fails (the existing agree rule already forces false while predict
+    is A or B and winner is `stall`; the control is the stall document, which validates)."""
+    assert snap.validate(_v2(snap, end="silence", stall=True)) == []
+    doc = _v2(snap, end="silence", stall=True)
+    doc["result"]["agree"] = True
+    assert snap.validate(doc) != []
+
+
+def test_v2_unknown_mode_is_rejected(snap):
+    """H-052: "No other mode exists": a mode other than both_same_point and hold_and_attack fails, naming mode."""
+    assert snap.validate(_v2(snap)) == []
+    doc = _v2(snap)
+    doc["orders"]["mode"] = "guard"
+    msgs = snap.validate(doc)
+    assert any("mode" in m for m in msgs), msgs
+
+
+def test_v2_unknown_end_is_rejected(snap):
+    """H-052: `result.end` is `"wipe"`, `"silence"` or `"cap"`: any other value fails, naming end."""
+    assert snap.validate(_v2(snap)) == []
+    doc = _v2(snap)
+    doc["result"]["end"] = "timeout"
+    msgs = snap.validate(doc)
+    assert any("end" in m for m in msgs), msgs
+
+
+def test_v2_stall_key_missing_is_rejected(snap):
+    """H-052: "New `result.stall`": a v2 result without `stall` fails naming it (DRAFT-stall-required: the story lists `orders` and `result.end` as the
+    required ones and says `stall` is a new key; the test takes it as required so a stall cannot hide by omission)."""
+    assert snap.validate(_v2(snap)) == []
+    doc = _v2(snap)
+    del doc["result"]["stall"]
+    msgs = snap.validate(doc)
+    assert any("stall" in m for m in msgs), msgs
+
+
+def test_v2_point_must_be_a_pair_of_numbers(snap):
+    """H-052: `"point": [x, y]`: a one-element point fails, naming point."""
+    assert snap.validate(_v2(snap)) == []
+    doc = _v2(snap)
+    doc["orders"]["point"] = [120.0]
+    msgs = snap.validate(doc)
+    assert any("point" in m for m in msgs), msgs
+
+
+def test_v2_write_read_round_trips(snap, tmp_path):
+    """H-052: "`om-fight-1` files still validate (the checker accepts both and the page shows the version)": a v2 file writes and reads back
+    byte-identically on a second write, like a v1 file."""
+    doc = _v2(snap, end="silence", stall=True, mode="hold_and_attack", attacker="B")
+    first, second = tmp_path / "a.fight.json", tmp_path / "b.fight.json"
+    snap.write(doc, first)
+    back = snap.read(first)
+    assert back == doc
+    snap.write(back, second)
+    assert first.read_bytes() == second.read_bytes()
+
+
+def test_v1_file_round_trips_unchanged_beside_v2(snap, tmp_path):
+    """H-052: "`om-fight-1` files still validate": a v1 document written and read keeps schema om-fight-1 and gains no `orders`."""
+    doc = snap.example()
+    path = tmp_path / "v1.fight.json"
+    snap.write(doc, path)
+    back = snap.read(path)
+    assert back["schema"] == "om-fight-1" and "orders" not in back and back == doc
+
+
+def test_frame_ticks_unchanged_by_v2(snap):
+    """H-052 Tests: "`frame_ticks` unchanged": the same two values the H-039 tests pin."""
+    assert snap.frame_ticks(300, 20) == [0, 100, 200, 300]
+    ticks = snap.frame_ticks(12000, 20)
+    assert ticks[0] == 0 and ticks[-1] == 12000 and len(ticks) <= snap.MAX_FRAMES
+
+
+# ================================================================ H-053 defect: range rings need ranges in the fight file
+# Brief to the test writer, 2026-11-02 (the Architect amends H-053's Tests line and SNAPSHOT.md): the replay builds its rows with range 0.0 because an om-fight-2 file carries no
+# range, so no range ring is drawn and the legend says "no range". Intended: a top-level optional `ranges` map {role: range in wu}, still schema om-fight-2; run.py writes it,
+# snapshot.py accepts and documents it, `example(schema=om-fight-2)` carries one. The file without `ranges` stays valid (v1 files and older v2 files).
+
+def _with_ranges(snap, ranges=None):
+    doc = _v2(snap)
+    doc["ranges"] = {"Raider": 200.0} if ranges is None else ranges
+    return doc
+
+
+def test_control_v2_without_ranges_and_v1_example_stay_valid(snap):
+    """Control, green today: an om-fight-2 document with no `ranges` validates and the v1 example carries no `ranges`, so `ranges` is optional and the reds below are the missing key."""
+    assert snap.validate(_v2(snap)) == []
+    assert "ranges" not in snap.example() and snap.validate(snap.example()) == []
+
+
+def test_v2_accepts_a_ranges_map_and_round_trips_it(snap, tmp_path):
+    """Brief 2026-11-02: "snapshot validate accepts a `ranges` map" ({role: range}, numbers, zero or more): a v2 document with {"Raider": 200.0, "Bombard": 1200} validates, writes and reads
+    back equal, and a second write is byte-identical."""
+    doc = _with_ranges(snap, {"Raider": 200.0, "Bombard": 1200})
+    assert snap.validate(doc) == [], snap.validate(doc)
+    first, second = tmp_path / "a.fight.json", tmp_path / "b.fight.json"
+    snap.write(doc, first)
+    back = snap.read(first)
+    assert back["ranges"] == doc["ranges"]
+    snap.write(back, second)
+    assert first.read_bytes() == second.read_bytes()
+
+
+@pytest.mark.parametrize("bad", [{"Raider": "far"}, {"Raider": -1.0}, {"Raider": None}, {"Raider": True}, ["Raider", 200.0], 200.0],
+                         ids=["non-numeric", "negative", "null", "bool", "list", "number"])
+def test_v2_rejects_a_malformed_ranges_map_naming_ranges(snap, bad):
+    """Brief 2026-11-02: "rejects a malformed one (non-numeric, negative)". The well-formed sibling validates first (so this is red until `ranges` is a known key), then each malformed
+    value (a non-numeric or null or bool range, a negative range, a list, a bare number) is rejected with a message that names `ranges`."""
+    assert snap.validate(_with_ranges(snap)) == [], snap.validate(_with_ranges(snap))
+    msgs = snap.validate(_with_ranges(snap, bad))
+    assert msgs and any("ranges" in m for m in msgs), msgs
+
+
+def test_v2_example_carries_a_ranges_map_for_its_roles(snap):
+    """Brief 2026-11-02: "the example() carries one". `example(schema=om-fight-2)` has a `ranges` map that validates, whose keys include every role in its frames and whose values
+    are numbers at or above zero; the v1 example is unchanged (no `ranges`)."""
+    doc = snap.example(schema=snap.SCHEMA_V2)
+    assert snap.validate(doc) == [], snap.validate(doc)
+    roles = {u["role"] for f in doc["frames"] for u in f["units"]}
+    assert "ranges" in doc and roles <= set(doc["ranges"]), (roles, doc.get("ranges"))
+    assert all(isinstance(v, (int, float)) and not isinstance(v, bool) and v >= 0 for v in doc["ranges"].values())
+    assert "ranges" not in snap.example()
