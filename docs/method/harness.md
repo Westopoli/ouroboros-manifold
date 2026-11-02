@@ -57,6 +57,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-059 | "The simulation lab and the beta land through separate gates, so neither blocks the other; we have enough compute to run multiple gates at the same time." | Ready (harness; lab channel; lands after H-057) | `docs/stories/H-059.md` |
 | H-060 | "The main menu, galaxy view, and mission preparation screens are all approved, so those can be ported right in." | Ready (client; beta stage B1; after H-028 is Seen) | `docs/stories/H-060.md` |
 | H-061 | "Start simple just like the simulation lab, with just a layout and no units, and show several versions." | Ready (client; beta stage B2; after H-060 is Seen) | `docs/stories/H-061.md` |
+| H-062 | "After a compaction the chat re-reads every plan file it is executing before it acts, and the method check says so when it did not." | Ready (harness; lab channel; needs the lab staircase plan copied into the repo first) | `docs/stories/H-062.md` |
 | H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | none yet |
 
