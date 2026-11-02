@@ -6,7 +6,7 @@ Quoted. Item 1: "zoomed so a unit is at least 14 px across on the 1920x1080 wind
 Item 2: "one ring per role per side ... with a distinct line style per role ... The legend lists each ring: `<side> <role> <range> wu <style>`. A ring may leave the
 frame ...; an off-frame ring is still listed ... `qa_state()` gains `rings: [{side, role, range, style, centre: [x, y]}]`." Item 3: "Six distinct shapes ... the legend
 shows each. `qa_state()` gains `glyphs: {role: shape}`." Item 5: "`end: A wins (wipe)`, `end: B wins (wipe)`, `end: mutual wipe, no winner`, `end: stall (silence)`,
-`end: cap`; and the HUD rate line reads `rate A <measured> vs predicted <predicted>: AGREE|DISAGREE (band 0.10)`. `qa_state()` gains `end_label` and `rate_label`
+`end: cap`; and the HUD rate line reads `rate A <m> vs target <p> (gap <n> pts, not scored); guess <A|B|draw>: AGREE|DISAGREE` (story quote superseded by the Architect's 2026-11-02 ruling, DEC-stage-scoring-loose-2026-11-02). `qa_state()` gains `end_label` and `rate_label`
 (strings, compared exactly in tests)."
 
 Each scene test is isolation (the scene alone on a hand-written file) and integration (the file goes through snapshot.write/validate, the same path run.py feeds).
@@ -41,7 +41,7 @@ ROLES = ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]
 RANGES = {"Raider": 150.0, "Interceptor": 200.0, "Vanguard": 250.0, "Warden": 400.0, "Bombard": 1200.0, "Bastion": 100.0}
 
 
-def _fight(tmp_path: Path, gap: float = 1000.0, winner: str = "A", end: str = "wipe", name: str = "L-0001-s1") -> tuple[Path, dict]:
+def _fight(tmp_path: Path, gap: float = 1000.0, winner: str = "A", end: str = "wipe", name: str = "L-0001-s1", predict: str = "A") -> tuple[Path, dict]:
     """24 units, two of each of the six roles per side (ids 1..12 A, 13..24 B), 3 frames. A's units sit at x 0 and 50, B's at gap and gap+50, y by role (40 wu apart); the
     second unit of a role is the one nearer the enemy for A (x 50) and the first for B (x gap). Unit 1 of A drifts +20 x and +10 y per frame (so a box over all frames is
     larger than frame 0's). Last frame by `winner`/`end`: A (B all dead), B (A all dead), none (all dead), stall/cap (all alive)."""
@@ -66,7 +66,7 @@ def _fight(tmp_path: Path, gap: float = 1000.0, winner: str = "A", end: str = "w
     doc = snapshot.example(frames=3, schema=snapshot.SCHEMA_V2)
     doc["frames"] = frames
     doc["ranges"] = dict(RANGES)
-    doc["result"].update({"winner": "draw" if cap else winner, "survivors": frames[-1]["alive"], "ticks": 200, "capped": cap, "predict": "A",
+    doc["result"].update({"winner": "draw" if cap else winner, "survivors": frames[-1]["alive"], "ticks": 200, "capped": cap, "predict": predict,
                           "agree": winner == "A", "end": "silence" if stall else ("cap" if cap else end), "stall": stall})
     assert snapshot.validate(doc) == [], snapshot.validate(doc)
     return _write_fight(tmp_path / (name + ".fight.json"), doc), doc
@@ -76,10 +76,10 @@ def _all_positions(doc: dict) -> list[tuple[float, float]]:
     return [(u["x"], u["y"]) for f in doc["frames"] for u in f["units"]]
 
 
-def _rate_file(tmp_path: Path, rate_a: float, predict_rate: float, agree: bool) -> None:
+def _rate_file(tmp_path: Path, rate_a: float, predict_rate: float, agree: bool, mirror: bool = False) -> None:
     (tmp_path / "L-0001.rate.json").write_text(json.dumps(
         {"layout_id": "L-0001", "seeds": [1], "wins_a": 1, "wins_b": 0, "stalls": 0, "stall_seeds": [], "none_seeds": [], "rate_a": rate_a, "predict_rate": predict_rate,
-         "band": 0.1, "agree": agree, "firing_capable": {"A": 1.0, "B": 1.0}, "median_seed": 1}) + "\n")
+         "band": 0.1, "agree": agree, "mirror": mirror, "firing_capable": {"A": 1.0, "B": 1.0}, "median_seed": 1}) + "\n")
 
 
 def _qa(monkeypatch, path: Path, last: bool = False) -> tuple[dict, dict]:
@@ -293,13 +293,13 @@ def test_end_label_on_the_last_frame_is_exactly_the_story_string(winner, label, 
 
 
 @pytest.mark.parametrize("rate_a,predict_rate,agree,label", [
-    (0.75, 0.75, True, "rate A 0.75 vs predicted 0.75: AGREE (band 0.10)"),
-    (0.25, 0.75, False, "rate A 0.25 vs predicted 0.75: DISAGREE (band 0.10)"),
-    (1.0, 0.60, False, "rate A 1.00 vs predicted 0.60: DISAGREE (band 0.10)"),
+    (0.75, 0.75, True, "rate A 0.75 vs target 0.75 (gap 0 pts, not scored); guess A: AGREE"),
+    (0.25, 0.75, False, "rate A 0.25 vs target 0.75 (gap 50 pts, not scored); guess A: DISAGREE"),
+    (1.0, 0.60, False, "rate A 1.00 vs target 0.60 (gap 40 pts, not scored); guess A: DISAGREE"),
 ], ids=["agree", "disagree", "clean-win-disagree"])
-def test_rate_label_names_measured_and_predicted_and_the_verdict(rate_a, predict_rate, agree, label, tmp_path, monkeypatch):
-    """Item 5: with a rate file beside the fight the rate_label is `rate A <measured> vs predicted <predicted>: AGREE|DISAGREE (band 0.10)` compared exactly (two decimals,
-    values chosen to read the same under %.2f, %g and str except 1.0 which the story's own example, L-0104 "1.00 vs 0.60", writes as 1.00); the HUD shows it."""
+def test_rate_label_names_measured_target_gap_guess_and_the_verdict(rate_a, predict_rate, agree, label, tmp_path, monkeypatch):
+    """Item 5 as ruled 2026-11-02: with a rate file beside the fight the rate_label is `rate A <m> vs target <p> (gap <n> pts, not scored); guess <A|B|draw>: AGREE|DISAGREE` compared
+    exactly (m, p two decimals; n whole points = round(|m-p|*100); `guess` is the layout's predict, fights[0].result.predict = A here); the HUD shows it."""
     path, _ = _fight(tmp_path)
     _rate_file(tmp_path, rate_a, predict_rate, agree)
     q, st = _qa(monkeypatch, path, last=True)
@@ -308,12 +308,37 @@ def test_rate_label_names_measured_and_predicted_and_the_verdict(rate_a, predict
     assert label in _hud_lines(st), "no HUD text equal to %r among Label texts %s" % (label, _hud_lines(st))
 
 
+@pytest.mark.parametrize("predict", ["B", "draw"])
+def test_rate_label_guess_shows_the_layouts_predict(predict, tmp_path, monkeypatch):
+    """The `guess` word is the layout's predict read from the fight's result (not hard-wired to A): predict B and draw (not a mirror: rate file mirror false) read
+    `guess B` / `guess draw` with the rate file's AGREE|DISAGREE word. Control: the A case above reads `guess A`."""
+    path, _ = _fight(tmp_path, predict=predict)
+    _rate_file(tmp_path, 0.25, 0.75, False)
+    q, _ = _qa(monkeypatch, path, last=True)
+    assert q.get("rate_label") == "rate A 0.25 vs target 0.75 (gap 50 pts, not scored); guess %s: DISAGREE" % predict, q.get("rate_label")
+
+
+def test_rate_label_exact_mirror_draw_is_not_scored(tmp_path, monkeypatch):
+    """Ruled 2026-11-02: an exact-mirror draw reads `rate A <m> vs target <p> (gap <n> pts, not scored); guess draw: NOT SCORED (mirror)` (rate file mirror true, predict draw), on every frame.
+    Positive control inside: the same fight with mirror false reads AGREE, never NOT SCORED, so the words come from the mirror flag."""
+    path, _ = _fight(tmp_path, predict="draw")
+    _rate_file(tmp_path, 0.5, 0.5, True, mirror=True)
+    want = "rate A 0.50 vs target 0.50 (gap 0 pts, not scored); guess draw: NOT SCORED (mirror)"
+    q0, _ = _qa(monkeypatch, path)
+    q2, st = _qa(monkeypatch, path, last=True)
+    assert q0.get("rate_label") == want and q2.get("rate_label") == want, "%r / %r" % (q0.get("rate_label"), q2.get("rate_label"))
+    assert want in _hud_lines(st), "no HUD text equal to %r among Label texts %s" % (want, _hud_lines(st))
+    _rate_file(tmp_path, 0.5, 0.5, True, mirror=False)
+    q, _ = _qa(monkeypatch, path, last=True)
+    assert q.get("rate_label") == "rate A 0.50 vs target 0.50 (gap 0 pts, not scored); guess draw: AGREE", q.get("rate_label")
+
+
 # ---------------------------------------------------------------- when the labels are set (Architect answers)
 
 def test_rate_label_is_the_layouts_verdict_on_every_frame_and_empty_without_a_rate_file(tmp_path, monkeypatch):
     """Architect: `rate_label` is set on EVERY frame when a rate file exists (frame 0 and the last frame carry the same exact string) and is "" when there is none.
     Control inside: the no-rate-file run reads "" on both frames, so a non-empty value below comes from the file."""
-    label = "rate A 0.75 vs predicted 0.75: AGREE (band 0.10)"
+    label = "rate A 0.75 vs target 0.75 (gap 0 pts, not scored); guess A: AGREE"
     path, _ = _fight(tmp_path, name="L-0001-s1")
     q0, _ = _qa(monkeypatch, path)
     q2, _ = _qa(monkeypatch, path, last=True)
