@@ -279,8 +279,8 @@ def test_a_situation_above_the_current_stage_is_still_converted(tmp_path):
 # when a side carries `arc`, every unit of that side lies within 1 wu of `radius` from `centre`, else ... `R6 arc placement: unit <id> is <d> wu from the centre, radius <r>`."
 # Interfaces 7: "`Expected win rate: <0 to 1, side A>` (required for `Stage: 2` and above, Reject `missing expected win rate` ...), `Orders: both_same_point | hold:A | hold:B`
 # ..., `Orders point: midpoint | <x> <y>` ... Layout keys: `predict_rate` (float), `orders` (the H-052 string), `orders_point` (`[x, y]`, absent for midpoint)."
-# Finding for the Architect: R6 already exists in rules.toml / produce.py ("landscape feature present", standoff). Interfaces 3 names the new rule R6 too; the tests use an
-# open_field layout (existing R6 silent there) and read the rule id "R6" plus the message text "arc placement", so either a shared id or a message-level split satisfies them.
+# Architect ruling (2026-11-01): R6 is the existing wall standoff rule (rules.toml), so arc placement takes the next free id, R7, not the story's R6. The tests use an
+# open_field layout and read the rule id "R7" plus the message text "arc placement: unit <id> is <d> wu from the centre, radius <r>".
 
 ARC_COLUMNS = ("shape", "centre_x", "centre_y", "radius", "start_deg", "end_deg")
 ARC = {"n": 10, "cx": 1500.0, "cy": 2000.0, "r": 400.0, "start": 154.0, "end": 206.0}   # chord 40 at r 400 is a 5.7296 degree step; 9 steps = 51.6 degrees of the 52 given
@@ -414,7 +414,7 @@ def _arc_layout(displace=0.0):
 
 
 def test_control_arc_layout_without_the_arc_record_ignores_a_displaced_unit():
-    """H-053 control, green today: the same layout with a unit 5 wu off the ring and no `arc` record on the side passes check_layout, so the R6 reds below come from the arc rule."""
+    """H-053 control, green today: the same layout with a unit 5 wu off the ring and no `arc` record on the side passes check_layout, so the R7 reds below come from the arc rule."""
     layout = _arc_layout(displace=5.0)
     del layout["side_a"]["arc"]
     assert _check(layout) == []
@@ -426,10 +426,10 @@ def test_arc_layout_with_every_unit_on_the_ring_passes():
 
 
 def test_unit_off_the_ring_is_rejected_as_arc_placement():
-    """Interfaces 3: a unit 5 wu off the ring is rejected: check_layout reports R6 (an open_field layout, so the feature rule is silent), and the violation text reads
+    """Interfaces 3: a unit 5 wu off the ring is rejected: check_layout reports R7 (arc placement; R6 is the wall standoff rule), and the violation text reads
     `arc placement: unit <id> is <d> wu from the centre, radius 400`."""
     from scripts.skilllab.catalogue import produce
     layout = _arc_layout(displace=5.0)
-    assert _check(layout) == ["R6"]
-    details = [d for r, d in produce._violations(layout, presets(), rules()) if r == "R6"]
+    assert _check(layout) == ["R7"]
+    details = [d for r, d in produce._violations(layout, presets(), rules()) if r == "R7"]
     assert details and re.search(r"arc placement: unit \S+ is [\d.]+ wu from the centre, radius 400", details[0]), details
