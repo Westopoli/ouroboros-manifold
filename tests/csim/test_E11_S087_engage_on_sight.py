@@ -313,6 +313,8 @@ def test_control_R_096_01_a_plain_move_past_an_enemy_400_off_takes_no_target_and
     u, enemy = _lone_march(lib, w, plain=True, enemy_hp=5000.0)
     for _ in range(MOVE_FIRST_TICKS + 400):
         step(lib, w)
+        if _d(pos(lib, w, u), (2000.0, 2000.0)) <= ARRIVAL:
+            break   # arrived: the idle unit may now engage under R-087-04 (H-057); the plain-move phase is over
         assert target(lib, w, u) in (-1, 0), "a plain-moving unit took a target"
     assert _d(pos(lib, w, u), (2000.0, 2000.0)) <= ARRIVAL
 

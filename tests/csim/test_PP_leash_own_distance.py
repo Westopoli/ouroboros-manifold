@@ -48,8 +48,9 @@ def test_R_087_05_A188_bombard_acquiring_at_1150_holds_and_fires_until_the_targe
     acquisition to the kill the target is held, the unit does not move, and the target dies.
     RED on the old rule: the target (294 wu from the anchor) is dropped on the next AI tick and the unit walks on."""
     w = world_factory(n_regions=1)
+    assert set_param(lib, w, "OM_TP_TARGET_BY_SIGHT", 0) == 0   # sight is untouched by H-057: a Bombard with sight on and no spotter does not fire beyond 300
     u, enemy, anchor = _acquire(lib, w, switch, -150.0, enemy_hp=100.0, utype=BOMBARD)
-    lib.om_unit_set_hp(w, enemy, 100.0)
+    lib.om_unit_set_hp(w, enemy, 5.0)   # low hp: a Bombard does about 3.5 per 60 ticks, so it can die inside the loop
     lib.om_unit_teleport(w, enemy, anchor[0], anchor[1] - 1150.0, 0)   # 1150 wu from the anchor and from the unit
     assert _dist(anchor, pos(lib, w, enemy)) > 800.0, "fixture: the target must be beyond the leash from the anchor"
     held, moved = 0, 0.0
