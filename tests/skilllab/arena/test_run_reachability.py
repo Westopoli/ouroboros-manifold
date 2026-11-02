@@ -1,3 +1,4 @@
+# Rule pins: none (H-063 names no R-id here; story lines quoted in the docstring, Flag client)
 # spec: docs/stories/H-063.md (arena stage 3); Flag client; Scene res://scenes/proto/fight_replay/fight_replay.tscn
 """H-063, the arena asks the engine for blocking and REJECTs a layout whose attackers cannot reach the defenders (scripts/skilllab/arena/run.py).
 

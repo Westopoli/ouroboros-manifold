@@ -1,3 +1,4 @@
+# Rule pins: R-001-06@9f9051, R-001-07@8f31c3
 # spec: docs/stories/H-063.md (arena stage 3, the ground pushes back); Flag client; Scene res://scenes/proto/fight_replay/fight_replay.tscn
 """H-063, the layout's features become obstacles for the sim (scripts/skilllab/arena/features.py and run.py).
 
