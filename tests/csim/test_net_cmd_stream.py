@@ -1,3 +1,4 @@
+# Rule pins: R-096-07@cc574f, R-140-02@56c964, R-242-01@e377d2
 """Lockstep command stream (docs/northstar/plans/2026-10-05-lockstep-backend-spec.md, lane "cmd").
 
 Rules: E-19 R-140-02 (each peer's commands for a tick are applied in a fixed
