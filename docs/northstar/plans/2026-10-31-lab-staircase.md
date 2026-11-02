@@ -97,6 +97,8 @@ H-031 piece two (portal screen proof), H-038 part 2 (first scene drawn whatever 
 
 Capture radius and mission objectives (ALG-71, ALG-75), hazard discs, staging timers; then the space era (five layers, flyers, the ping), where the parked space lab (`plays_space.py`, conditions) is re-read against stage 6's evidence and kept or retired. Specified only after stage 6 is Seen.
 
+After the staircase and the lab: piecemeal, then whole (planned 2026-11-02): the idea that each configuration is also run in its parts is recorded in `research/layer_dynamics/decomposition.md`; it is not a stage, it adds no 'Arms' to stages 1 to 7 and no 'done when' sentence; the stage 3 with-and-without-ground strips are this idea in miniature and stay as they are.
+
 ## His authoring lane (starts now, independent of every stage)
 
 - Folder `docs/northstar/research/layer_dynamics/situations/`, one file per situation `SIT-0001-<kind>.md` from a template `TEMPLATE.md` (written in the stage 1 spec): kind, field preset, feature geometry in words plus the numbers from the round-two schema, side A and side B rows (role, count, where, facing, range), defender, predicted winner and one sentence why, which stage it is for.

@@ -48,3 +48,7 @@ Rulings 2026-10-13 (rev 2 spec); the positioning rule 2026-10-19 (`feedback-posi
 ## 5. What waits on Westley
 
 Answered 2026-10-27: pass marks as drafted; layer pairs every allowed pair plus the vision-asymmetry plays in batch one; batch one after the combat behaviours; speed marks kept; the Warden aura does not stack (R-083-03, already in the bible). Open: nothing before step 6. At step 6: the batch's first page and diagrams for his reading.
+
+## 6. After the lab (planned 2026-11-02)
+
+When step 10 (the crossings document, read by Westley) is done, the lab's next phase is decomposition: each configuration is run in its parts first and then whole, as described in `docs/northstar/research/layer_dynamics/decomposition.md` (Westley, 2026-11-02, answers recorded in `docs/northstar/story_reviews/westley/2026-11-02-piecemeal-then-whole-proposal.md` section 7a). It adds nothing to sections 1 to 5 and changes no step of the order of work; the strategic-depth preconditions it must keep are in `decomposition.md` section 2.
