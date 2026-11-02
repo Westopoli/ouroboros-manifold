@@ -558,7 +558,9 @@ def test_a_file_with_ranges_draws_a_ring_per_unit_and_the_legend_gives_the_range
     g = _open(monkeypatch, path)
     try:
         g.wait_for_port(timeout=90.0)
-        st = _state(g)
+        _state(g)
+        _key(g, "R")   # per-unit rings are behind key R; the default is per-role rings (H-053 Replay readability item 2)
+        st = _state(g, lambda q: q.get("ring_count") == 4, timeout=15.0, label="per-unit rings on")
         lines = _hud_lines(st)
         assert st["qa"].get("ring_count") == 4, "ring_count %r, qa_state keys %s" % (st["qa"].get("ring_count"), sorted(st["qa"]))
         assert any("Raider: range 200 wu" in t for t in lines), "Label texts %s" % lines
