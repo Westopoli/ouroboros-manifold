@@ -1,0 +1,492 @@
+{
+  "id": "L-0067",
+  "situation": "flank_route",
+  "landscape": "small_tiered",
+  "seed": 3012,
+  "predict": "A",
+  "predict_why": "Two-pronged surround, equal forces (flank-2prong-24v24). Westley's number for this layout: blue wins 95% of the time.",
+  "verdict": "",
+  "feedback": "",
+  "defender": "B",
+  "features": [
+    {
+      "kind": "flank_route",
+      "x": 600.0,
+      "y": 2000.0,
+      "points": [
+        [
+          600.0,
+          2000.0
+        ],
+        [
+          1100.0,
+          1150.0
+        ],
+        [
+          2100.0,
+          1000.0
+        ],
+        [
+          2750.0,
+          1500.0
+        ],
+        [
+          2650.0,
+          2000.0
+        ]
+      ],
+      "ridge": {
+        "x": 1100.0,
+        "y": 2000.0,
+        "w": 300,
+        "h": 1400
+      },
+      "height_band": 1
+    }
+  ],
+  "orders": "hold:B",
+  "side_a": {
+    "headcount": 24,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 1777.23,
+        "y": 2200.93,
+        "facing": -0.7339,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 1752.47,
+        "y": 2169.5,
+        "facing": -0.6004,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1732.12,
+        "y": 2135.07,
+        "facing": -0.467,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 1716.54,
+        "y": 2098.23,
+        "facing": -0.3336,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1705.99,
+        "y": 2059.64,
+        "facing": -0.2001,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 1700.67,
+        "y": 2020.0,
+        "facing": -0.0667,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1700.67,
+        "y": 1980.0,
+        "facing": 0.0667,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 1705.99,
+        "y": 1940.36,
+        "facing": 0.2001,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1716.54,
+        "y": 1901.77,
+        "facing": 0.3336,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 1732.12,
+        "y": 1864.93,
+        "facing": 0.467,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1752.47,
+        "y": 1830.5,
+        "facing": 0.6004,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 1777.23,
+        "y": 1799.07,
+        "facing": 0.7339,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2222.77,
+        "y": 1799.07,
+        "facing": 2.4077,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2247.53,
+        "y": 1830.5,
+        "facing": 2.5411,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2267.88,
+        "y": 1864.93,
+        "facing": 2.6746,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2283.46,
+        "y": 1901.77,
+        "facing": 2.808,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2294.01,
+        "y": 1940.36,
+        "facing": 2.9414,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2299.33,
+        "y": 1980.0,
+        "facing": 3.0749,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2299.33,
+        "y": 2020.0,
+        "facing": -3.0749,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2294.01,
+        "y": 2059.64,
+        "facing": -2.9414,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2283.46,
+        "y": 2098.23,
+        "facing": -2.808,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2267.88,
+        "y": 2135.07,
+        "facing": -2.6746,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2247.53,
+        "y": 2169.5,
+        "facing": -2.5411,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2222.77,
+        "y": 2200.93,
+        "facing": -2.4077,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      }
+    ],
+    "arcs": [
+      {
+        "centre": [
+          2000.0,
+          2000.0
+        ],
+        "radius": 300.0,
+        "start_deg": 137.9519,
+        "end_deg": 222.0481,
+        "count": 12
+      },
+      {
+        "centre": [
+          2000.0,
+          2000.0
+        ],
+        "radius": 300.0,
+        "start_deg": -42.0481,
+        "end_deg": 42.0481,
+        "count": 12
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 24,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 2080.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 2080.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2080.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2080.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 2080.0,
+        "y": 2080.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2040.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2040.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 2040.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2040.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2040.0,
+        "y": 2080.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 2000.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2000.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2000.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 2000.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2000.0,
+        "y": 2080.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1960.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1960.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1960.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1960.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1960.0,
+        "y": 2080.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1920.0,
+        "y": 1920.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1920.0,
+        "y": 1960.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1920.0,
+        "y": 2000.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1920.0,
+        "y": 2040.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      }
+    ]
+  },
+  "what_to_expect": "flank-2prong-24v24: 24 blue against 24 red, red holds the centre; blue's arcs close on it from two or three sides at once, the rear prong having come round the ridge. Westley's number for this layout: blue wins 95% of the time.",
+  "approve_means": "Approve means: this is a fair flank (a subset of the trap): the surround is real and the layout may run in the lab; blue's predicted win rate is 95%.",
+  "deny_means": "Deny means: the prongs, the route or the ratio do not make a flank; your note says what does.",
+  "predict_rate": 0.95
+}
