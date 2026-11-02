@@ -145,6 +145,7 @@ class Engine:
             "om_terrain_dump_bands": ([V, c.c_char_p, u32], u32),
             "om_terrain_walk_mask": ([V, i, c.c_char_p, u32], u32),
             "om_terrain_slope_at": ([V, d, d, V], i),
+            "om_terrain_set_heights": ([V, c.POINTER(c.c_int32), u32, u32], i),
             "om_set_era_kind": ([V, i], i),
             "om_roster_set_movement_kind": ([V, i, i], i),
             "om_unit_profile_movement_kind": ([V, i], i),
@@ -422,6 +423,14 @@ class Engine:
 
     def terrain_walkable_at(self, w, x, y):
         return bool(self._lib.om_terrain_walkable_at(w, float(x), float(y)))
+
+    @_bumps
+    def terrain_set_heights(self, w, cm, cells_w, cells_h):
+        """Replace the generated terrain's height grid (centimetres, row-major) with `cm`; om_terrain_set_heights (csrc/ouroboros_sim.h:166) re-bands the
+        cells and re-derives walkable, slopes and walk masks. Raises when the cell counts differ from the terrain's or the world has none (H-063)."""
+        arr = (ctypes.c_int32 * len(cm))(*[int(v) for v in cm])
+        if self._lib.om_terrain_set_heights(w, arr, int(cells_w), int(cells_h)) != 1:
+            raise ValueError("om_terrain_set_heights(%d x %d cells) refused (terrain_set_heights)" % (cells_w, cells_h))
 
     def terrain_dump_bands(self, w):
         cw, ch = ctypes.c_uint32(), ctypes.c_uint32()
