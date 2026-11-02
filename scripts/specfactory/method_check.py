@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sys
+import tomllib
 
 CODE_EXT = r"(?:c|h|gd|py|sh|tscn)"
 EDIT_TOOLS = ("Edit", "Write", "NotebookEdit")
@@ -23,8 +24,19 @@ CHECKS = [
     ("gate_runs", "both", "DRIFT", "Gates run inside landing clerks, never in a chat (docs/method/clerk.md)."),
     ("live_tree", "both", "DRIFT", "Never touch `~/Projects/ouroboros-manifold` as a working tree; work in a worktree made by `wt.py` (docs/method/builder.md)."),
     ("code_edits", "architect", "DRIFT", "The Fable chat writes no code; builders do. It writes stories, briefs and docs (docs/method/architect.md)."),
-    ("context", "both", "DRIFT", "Restart from memory past 400k context; the compaction is not the restart (docs/method/architect.md)."),
+    ("context", "both", "DRIFT", "Compaction at 400k is the only context rule; a turn past 400k without a compaction is drift (docs/method/architect.md)."),
+    ("plan_reread", "both", "DRIFT", "After a compaction read every file of the reading list before any mutating call (docs/method/reading_list.toml)."),
 ]
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+READING_LIST = "docs/method/reading_list.toml"
+ROADMAP = "docs/northstar/ROADMAP.md"
+PLANS_DIR = "docs/northstar/plans/"
+MUTATING_TOOLS = EDIT_TOOLS + AGENT_TOOLS + ("SendMessage",)
+PLAN_REREAD = ("PLAN RE-READ %s: this plan needs to be re-read, fully, because you are the architect and the plan execution "
+               "depends on your ability to guide the dispatchers in their work and collaborate between them and help them "
+               "when they get stuck. If you don't have full context of the plan, guesses will be made, and the output will "
+               "not be what the plan file required, verifications will fail, and we'll waste time and effort on issues "
+               "that could have been avoided.")
 NEXT = ("METHOD next: quote every DRIFT line to Westley in your first message after this compaction, before any other "
         "work, and stop the behaviour. A DRIFT line is never argued away: a rule change is Westley's to make.")
 
@@ -69,6 +81,58 @@ def load(path):
             if isinstance(e, dict) and e.get("type") in ("assistant", "user") and e.get("isSidechain") is not True:
                 entries.append(e)
     return entries
+
+
+def session_name(path):
+    """The /rename name: the last custom-title or agent-name entry of the transcript."""
+    name = ""
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            try:
+                e = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(e, dict):
+                n = e.get("customTitle") if e.get("type") == "custom-title" else e.get("agentName") if e.get("type") == "agent-name" else None
+                if n:
+                    name = str(n)
+    return name
+
+
+def reading_list(role, name, root):
+    """(files, match-list owner) for the chat, or None when reading_list.toml is missing."""
+    p = os.path.join(root, READING_LIST)
+    if not os.path.exists(p):
+        return None
+    with open(p, "rb") as f:
+        d = tomllib.load(f)
+    if role == "architect":
+        return d["architect"]["files"]
+    beta = d["runner_beta"]
+    return beta["files"] if any(m in name for m in beta.get("match", [])) else d["runner_lab"]["files"]
+
+
+def plans_executed(files, root):
+    """Files of the list under docs/northstar/plans/ that ROADMAP section 1 names (full path or plans/<name>)."""
+    with open(os.path.join(root, ROADMAP), encoding="utf-8") as f:
+        m = re.search(r"^## 1\.[^\n]*\n(.*?)(?=^## |\Z)", f.read(), re.S | re.M)
+    sec = m.group(1) if m else ""
+    return [x for x in files if x.startswith(PLANS_DIR) and ("plans/" + x[len(PLANS_DIR):]) in sec]
+
+
+def is_read(c, cwd, rel, root):
+    path = os.path.join(root, rel)
+    i = c["input"]
+    if c["name"] == "Read":
+        return bool(i.get("file_path")) and resolve(i["file_path"], cwd) == os.path.realpath(path)
+    s = str(i.get("command") or "") if c["name"] == "Bash" else ""
+    return bool(s) and all(w in READERS or w == "cd" for g, w in segments(s)) and (rel in s or path in s)
+
+
+def is_mutating(c):
+    if c["name"] == "Bash":
+        return any(w not in READERS and w != "cd" and w for g, w in segments(str(c["input"].get("command") or "")))
+    return c["name"] in MUTATING_TOOLS
 
 
 def ctx_size(e):
@@ -128,7 +192,7 @@ def matcher(cid, role, live):
     return hit
 
 
-def report(entries, live, threshold, session):
+def report(entries, live, threshold, session, name="", root=REPO_ROOT):
     spans = [[]]
     for e in entries:
         if e["type"] == "user" and e.get("isCompactSummary") is True:
@@ -145,19 +209,45 @@ def report(entries, live, threshold, session):
         if not m.startswith("<") and m not in seen:
             seen.append(m)
     last = next((m for m in ((e.get("message") or {}).get("model") or "" for e in reversed(asst_span)) if not m.startswith("<")), None)
-    role = role_of([last] if last is not None else [])
+    first = next((m for m in ((e.get("message") or {}).get("model") or "" for e in asst_all) if not m.startswith("<")), None)
+    role = role_of([first] if first is not None else [])
     others = [m for m in seen if m != last]
     model = "none" if last is None else last + (" (session also %s)" % ", ".join(others) if others else "")
     since = next((e["timestamp"] for e in span if e.get("timestamp")), "none")
-    out = ["METHOD role %s model %s session %s span %d of %d turns %d since %s"
-           % (role, model, session[:8], k + 1, len(spans), len(asst_span), since)]
+    files = reading_list(role, name, root)
+    out = ["METHOD read first: " + (" ".join(files) if files is not None else "NONE (%s missing)" % READING_LIST)]
+    if role == "architect" and files is not None:
+        out += [PLAN_REREAD % p for p in plans_executed(files, root)]
+    out.append("METHOD role %s model %s session %s span %d of %d turns %d since %s"
+           % (role, model, session[:8], k + 1, len(spans), len(asst_span), since))
     span_ids = {id(e) for e in span}
     drift = False
     for cid, roles, kind, rule in CHECKS:
         if roles != "both" and role != "unknown" and roles != role:
             continue
-        if cid == "context":
-            hits = [(e, {"name": "context", "input": {"command": str(ctx_size(e))}}) for e in asst_all if ctx_size(e) > threshold]
+        if cid == "plan_reread" and k == 0:
+            continue
+        if cid == "plan_reread":
+            hits, unread, first_unread = [], list(files or []), []
+            for e in (span if k > 0 and files is not None else []):
+                if e["type"] != "assistant":
+                    continue
+                for c in calls(e):
+                    if unread and is_mutating(c):
+                        first_unread = first_unread or list(unread)
+                        hits.append((e, c))
+                        break
+                    unread = [x for x in unread if not is_read(c, e.get("cwd") or "", x, root)]
+        elif cid == "context":
+            hits, run = [], []  # a lone turn past the threshold that a compaction follows is the allowed one turn (H-062)
+            for e in entries + [{"type": "end"}]:
+                if e["type"] == "assistant" and ctx_size(e) > threshold:
+                    run.append(e)
+                    continue
+                if e["type"] == "assistant" or e["type"] == "end" or e.get("isCompactSummary") is True:
+                    lone = len(run) == 1 and e.get("isCompactSummary") is True
+                    hits += [] if lone else [(r, {"name": "context", "input": {"command": str(ctx_size(r))}}) for r in run]
+                    run = []
             hits.sort(key=lambda h: -ctx_size(h[0]))
         else:
             hit = matcher(cid, role, live)
@@ -177,6 +267,8 @@ def report(entries, live, threshold, session):
         if cid == "context" and not pool and asst_span:
             big = max(asst_span, key=ctx_size)
             pool = [(big, {"name": "context", "input": {"command": str(ctx_size(big))}})]
+        if cid == "plan_reread" and ns:
+            out.append("  unread at the first mutating call: " + " ".join(first_unread))
         for e, c in pool[:3]:
             if cid == "context":
                 out.append("  %s context %d" % (e.get("timestamp", ""), ctx_size(e)))
@@ -202,7 +294,7 @@ def main():
         path, session = data["transcript_path"], str(data.get("session_id") or "")
     if not path:
         raise ValueError("no transcript given")
-    print("\n".join(report(load(path), live, a.threshold, session)))
+    print("\n".join(report(load(path), live, a.threshold, session, session_name(path))))
 
 
 if __name__ == "__main__":

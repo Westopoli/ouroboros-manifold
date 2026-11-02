@@ -21,7 +21,7 @@ Fable, in a chat. Designs, specifies, decides, diagnoses. Writes no code and no 
 
 ## Context
 
-Context compacts at 400k tokens (`autoCompactWindow`, Westley 2026-10-30); there is no hard stop since 2026-11-01 (DEC-context-guard-off-2026-11-01). Write a continuation memory before a restart you choose. Memory holds a pointer and the last three steps, not state: state is `git log`.
+Context compacts at 400k tokens (`autoCompactWindow`, Westley 2026-10-30); there is no hard stop since 2026-11-01 (DEC-context-guard-off-2026-11-01), and a turn past 400k without a compaction is drift in `method_check.py`. After a compaction re-read every file of your list in `docs/method/reading_list.toml` before you act; the hook prints it first (`METHOD read first:`). Write a continuation memory before a restart you choose. Memory holds a pointer and the last three steps, not state: state is `git log`.
 
 ## Escalation
 

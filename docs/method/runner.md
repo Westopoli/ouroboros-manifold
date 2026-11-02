@@ -10,7 +10,7 @@ Sonnet 5.5, the main chat while stories build. You spend the Architect's judgeme
 4. On a builder stop: a `test-defect:` goes to a clerk with `rulebook.md`; a file outside the list or a number nobody gave goes back to the Architect as a brief under a page; a third round goes to the Architect.
 5. On a green build: a clerk lands it (`clerk.md`). On a landing: one line to Westley with the run line of the scene.
 6. Westley's verdict: a clerk commits `Seen <id>` with the `Verdict:` trailer; a reject returns the story to Ready with his words in the story file, and the Architect writes the fix into the story.
-7. Context compacts at 400k; no hard stop. Before a restart you choose, write your memory (one page: slots, last three steps, what waits on Westley).
+7. Context compacts at 400k; no hard stop, and a turn past 400k without a compaction is drift. After a compaction re-read your list in `docs/method/reading_list.toml` before you act. Before a restart you choose, write your memory (one page: slots, last three steps, what waits on Westley).
 
 ## Never
 
