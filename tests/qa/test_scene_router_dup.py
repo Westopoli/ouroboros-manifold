@@ -75,6 +75,7 @@ func _swap_scene(scene_name: String, params: Dictionary) -> void:
 
 var FADE: float = 0.3
 var r: Node
+var at_finish := -1
 
 
 func _wait(seconds: float) -> void:
@@ -115,11 +116,17 @@ func _run() -> void:
 			r.go_to("settings")
 			await _wait(FADE * 4)
 		"same_scene_same_params_per_frame":
-			r.go_to("settings")
-			for i in 90:
+			# The real loading screen is freed by the swap, so it stops calling then: call every frame only until the router's own swap log
+			# shows the swap (no frame count or wall-clock window), then wait for the transition to finish and for a few more frames.
+			while r.swaps.is_empty():
 				r.go_to("settings")
 				await process_frame
-			await _wait(FADE * 3)
+			var guard := Time.get_ticks_msec() + 5000
+			while r._transitioning and Time.get_ticks_msec() < guard:
+				await process_frame
+			at_finish = r.swaps.size()
+			for i in 10:
+				await process_frame
 		"same_scene_same_params_in_fade_out":
 			r.go_to("settings")
 			await _wait(FADE + 0.1)
@@ -174,7 +181,7 @@ func _idle(case_name: String) -> void:
 func _report() -> void:
 	var cs := current_scene
 	var final_tag := "" if cs == null or not "tag" in cs else str(cs.tag)
-	print("H069_RESULT " + JSON.stringify({"swaps": r.swaps, "final": final_tag}))
+	print("H069_RESULT " + JSON.stringify({"swaps": r.swaps, "final": final_tag, "swaps_at_finish": at_finish}))
 	quit(0)
 '''
 
@@ -247,10 +254,15 @@ def test_same_scene_same_params_burst_is_one_swap_no_warning():
 
 def test_same_scene_same_params_every_frame_is_one_swap_no_warning():
     """H-069 case 1, the loading screen's shape ("scenes/loading_screen/loading_screen.gd:47 (`_process`) calls `SceneRouter.go_to(_target_scene)`
-    every frame"): 90 frames of go_to("settings") are one swap and no warning. The loading screen itself is not asserted (the story: "calls from the
+    every frame"): go_to("settings") every frame until the swap happens is one swap and no warning. The driver stops calling at the swap, as the
+    real loading screen does (it is freed by the swap), detected from the router subclass's swap log, not a frame count or a time window. After the
+    transition finishes no pending request is left: ten more frames and the swap log is still one entry (a second transition never starts on its
+    own). Calls after the router is idle are idle-path requests and transition again (see
+    test_control_idle_same_scene_again_after_finish_transitions_again). The loading screen itself is not asserted (the story: "calls from the
     loading screen are not asserted")."""
     res = run_case("same_scene_same_params_per_frame")
-    assert names(res) == ["settings"], "swap count must be 1: " + fmt(res)
+    assert res["swaps_at_finish"] == 1, "swap count must be 1 when the transition finishes: " + fmt(res)
+    assert names(res) == ["settings"], "swap count must be 1, and still 1 a few frames after the finish (nothing pending): " + fmt(res)
     assert res["warnings"] == [], "no warning: " + fmt(res)
 
 
