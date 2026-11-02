@@ -1,3 +1,4 @@
+# Rule pins: R-087-05@a79833, R-096-03@16d0c4
 """PP-unit: the leash anchor is where the target was ACQUIRED (E-11 R-087-05, E-13 R-096-03;
 ALG-68 "Attack-move leash 200 wu from the acquisition anchor"; rulings-2 A167, A168; contract call
 `om_unit_get_leash_anchor`, docs/northstar/plans/push/pp_contract.md item 16).

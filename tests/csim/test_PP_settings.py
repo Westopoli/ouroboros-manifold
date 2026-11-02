@@ -1,4 +1,4 @@
-# Rule pins: R-005-02@5f9943, R-084-01@e7a835, R-087-05@6cbf99
+# Rule pins: R-005-02@5f9943, R-084-01@e7a835, R-087-05@a79833
 """PP-contract: the run-time settings call and the canvas call (cascade brief section 5 G1; plan appendix,
 docs/northstar/plans/push/pp_contract.md sections 3 to 5).
 

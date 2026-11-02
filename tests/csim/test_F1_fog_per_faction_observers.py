@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@74cc9c
 """F1 (A7 sim-step fix 1, architect rulings 2 Addendum 3 A5/A6; profile docs/northstar/plans/
 2026-10-01-a7-sim-profile.md): om_fog_faction_sees (csrc/fog.c, B11) searches observers of the
 queried faction only, through a read-only per-faction grid accessor added to csrc/unit.c (B10).

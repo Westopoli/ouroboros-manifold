@@ -1,3 +1,4 @@
+# Rule pins: R-008-04@991c79, R-087-04@74cc9c, R-087-05@a79833, R-087-06@45fc58, R-087-08@d94418, R-093-02@652353, R-095-03@f360de, R-096-01@d86536, R-096-02@e8ae96, R-096-03@16d0c4
 """H-057 engage-on-sight (E-11 S-087, R-087-04 rewritten 2026-11-01; E-13 R-096-01/02/03; E-11 R-087-05/06/08).
 
 Rule (docs/stories/H-057.md, "Rule"): "An idle unit (no order, or an attack-move that has arrived) or an
