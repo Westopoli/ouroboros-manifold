@@ -182,6 +182,34 @@ def test_h062_t1_mutation_before_the_marker_is_not_blamed(tmp_path):
     assert reread_verdict(out) == "OK"
 
 
+# ---- H-062 test 1 addendum: cd prefix (DEC-plan-reread-2026-11-02) -------------------------------------------
+
+def bash(cmd):
+    return ("Bash", {"command": cmd})
+
+
+@pytest.mark.parametrize("cmd", ["cd /tmp && rm y", "cd /tmp ; git push"])
+def test_h062_t1_cd_prefix_does_not_hide_a_mutating_call(tmp_path, cmd):
+    root = make_repo(tmp_path)
+    reads = [read(root, f) for f in LISTS["runner_lab"]]
+    out = go(tmp_path, root, after_compaction(root, SONNET, [bash(cmd)] + reads))
+    assert reread_verdict(out) == "DRIFT"
+
+
+def test_h062_t1_cd_prefix_then_cat_of_listed_files_counts_as_read(tmp_path):
+    root = make_repo(tmp_path)
+    cat = bash(f"cd {root} && cat " + " ".join(str(root / f) for f in LISTS["runner_lab"]))
+    out = go(tmp_path, root, after_compaction(root, SONNET, [cat, call(root, MUTATING["Edit"])]))
+    assert reread_verdict(out) == "OK"
+
+
+def test_h062_t1_bare_cd_is_a_reader(tmp_path):
+    root = make_repo(tmp_path)
+    reads = [read(root, f) for f in LISTS["runner_lab"]]
+    out = go(tmp_path, root, after_compaction(root, SONNET, [bash("cd /tmp")] + reads))
+    assert "METHOD plan_reread DRIFT" not in out
+
+
 # ---- H-062 test 2: beta vs lab lists -------------------------------------------------------------------------
 
 def read_only(root, files, mutate=True, session="x", key="agent-name", model=SONNET):
