@@ -16,7 +16,7 @@ Plain-march tick counts are 20 ticks per second at 80 wu/s, i.e. 4 wu per tick.
 import ctypes
 
 from test_PP_attack_move_no_sight_pursuit import ARRIVAL, _centroid, _d, _shape_error
-from test_PP_unit_support import (RAIDER, VANGUARD, attack_move, dest, hp, pos, set_param, spawn, step, target)
+from test_PP_unit_support import (BOMBARD, RAIDER, VANGUARD, attack_move, dest, hp, pos, set_param, spawn, step, target)
 
 SIGHT = "OM_TP_TARGET_BY_SIGHT"
 PURSUE = "OM_TP_PURSUE_BY_STEERING"
@@ -272,6 +272,36 @@ def test_control_R_096_03_walking_enemy_detector_the_plain_move_walks_at_the_pur
     step(lib, w, 50)
     run = _d(pos(lib, w, b), (2000.0, 900.0))
     assert abs(run - 50 * STEP) <= 2 * STEP, "walked %.1f wu in 50 ticks" % run
+
+
+def test_R_087_05_the_leash_is_the_max_of_sensor_and_range_a_bombard_keeps_a_target_to_1200(lib, world_factory):
+    """R-087-05 / S-087 / H-057 + DEC-leash-param-2026-11-01: the leash is max(sensor_radius, attack_range) per type. A Bombard
+    (sensor 300, range 1200, so 1200) attack-moving acquires a target 150 wu ahead, then stands 1150 wu from its anchor with the
+    target 150 wu beside it, in range: it keeps the target on every tick (a leash of its sensor radius 300, or of any Vanguard
+    or Raider number, would drop it). At 1250 wu from the anchor it drops it. Vanguard 700 and Raider 800 are the other two
+    points (tests above). RED now: the leash is 200."""
+    for off, kept in ((1150.0, True), (1250.0, False)):
+        w = _world(lib, world_factory)
+        u = spawn(lib, w, BOMBARD, 0, 0.0, 0.0)
+        enemy = spawn(lib, w, VANGUARD, 1, 0.0, -150.0)
+        lib.om_unit_set_hp(w, enemy, 5000.0)
+        attack_move(lib, w, [u], 0.0, -3000.0)
+        for _ in range(40):
+            step(lib, w)
+            if target(lib, w, u) == enemy:
+                break
+        assert target(lib, w, u) == enemy, "fixture: the Bombard never acquired"
+        ax, ay = pos(lib, w, u)
+        lib.om_unit_teleport(w, u, ax, ay - off, 0)
+        lib.om_unit_teleport(w, enemy, ax + 150.0, ay - off, 0)
+        seen = []
+        for _ in range(3):
+            step(lib, w)
+            seen.append(target(lib, w, u))
+        if kept:
+            assert seen == [enemy] * 3, "a Bombard %.0f wu from its anchor dropped its target: %s" % (off, seen)
+        else:
+            assert -1 in seen, "a Bombard %.0f wu from its anchor kept its target: %s" % (off, seen)
 
 
 # ---- 5. plain move -------------------------------------------------------------------------------------------
