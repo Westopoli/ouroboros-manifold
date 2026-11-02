@@ -25,7 +25,7 @@ A frame:
 Stage 4 adds `seen` (list of enemy ids the unit's side sees) per unit; stage 5 adds `climbing` (float 0 to 1, `transition_progress`). Those keys are absent until their stage; a reader ignores keys it does not know; the checker rejects keys it does not know (so a stage cannot grow the file silently).
 
 `result`:
-- `winner`: `"A"`, `"B"` or `"draw"`. DRAFT-winner: the side with survivors when the other has none; both alive at the cap, or both dead, is `"draw"`.
+- `winner`: `"A"`, `"B"` or `"draw"`. DRAFT-winner: the side with survivors when the other has none; both alive at the cap is `"draw"`. (`om-fight-2` adds `"stall"` and `"none"`, below; both dead on one tick is `"none"` there.)
 - `survivors`: `[a, b]`.
 - `ticks`: int, last tick simulated.
 - `capped`: bool, true when the DRAFT-fight-cap 600 s (12,000 ticks) stopped the fight.
@@ -136,6 +136,7 @@ Schema change:
 - New top-level `orders`: `{"mode": "both_same_point" | "hold_and_attack", "point": [x, y], "attacker": "A" | "B" | null}`. `both_same_point`: every unit of both sides attack-moves to `point`. `hold_and_attack`: the holder (the other side) receives no order and fires from where it stands; the attacker attack-moves every unit to `point`, which is the holder's centre of mass at tick 0. No other mode exists (Westley: "every single layout will follow one of those two rules").
 - New `result.end`: `"wipe"` (one side has no survivors), `"silence"` (no shot by either side for DRAFT-silence-seconds 10 of sim time), `"cap"` (DRAFT-fight-cap 600 s, a backstop that should not be reached).
 - New `result.stall`: true when `end` is `silence` and both sides have survivors. `winner` is then `"stall"`, not `"draw"`; `agree` is false and the row is flagged.
+- H-053 (same schema name): `winner` may also be `"none"`, both sides wiped on the same tick (`end` `"wipe"`, `survivors` `[0, 0]`, `stall` false, `agree` false). Westley's rule is that one force wins, so a `"none"` fight is flagged like a stall and brought to him; the rate file lists it in `none_seeds`.
 - The checker rejects an `om-fight-2` file missing `orders`, `result.end` or `result.stall`, an unknown `mode` or `end`, a `stall` without `end == "silence"` (or without survivors on both sides, or without `winner == "stall"`, or with `agree` true), and `winner == "stall"` with `stall` false.
 
 When silence ends a fight: over the last 10 s of sim time (DRAFT-silence-seconds), no shot was fired by either side AND no living unit was displaced more than 5 world units (DRAFT-silence-move-wu; a jittering stuck unit counts as stopped). The clock runs from tick 0 and the approach keeps it reset because units move. The cap (600 s) is only a backstop. Attribution: Westley 2026-11-01: neither side has fired for 10 seconds; the moving clause is the Architect's reading (DRAFT), his to veto.

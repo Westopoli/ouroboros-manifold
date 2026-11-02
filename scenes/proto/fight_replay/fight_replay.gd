@@ -13,6 +13,9 @@ const REPLAY_LANDSCAPE := "small_flat"  # the stage 1 floor (DEC-lab-stage1-floo
 const BETWEEN_FRAMES := 2  # story: render frames between saved shots
 const DEAD_COLOUR := Color(0.5, 0.5, 0.5)  # DRAFT-replay-dead-grey: a fallen unit's flat marker
 const TARGET_ALPHA := 0.8  # DRAFT-replay-target-alpha: the target line is its side's colour, thin (a one pixel line)
+const SHOT_RING_WU := 30.0  # DRAFT-first-shot-ring-wu (H-053): radius of the ring drawn on the unit hurt on the first-shot frame
+const SHOT_RING_SEGMENTS := 24  # DRAFT-first-shot-ring-segments
+const SHOT_RING_COLOUR := Color(1.0, 0.9, 0.2)  # DRAFT-first-shot-ring-colour
 const HUD_FONT := 22  # DRAFT-replay-hud-font
 const HUD_TOP := 12.0  # DRAFT-replay-hud-top: pixels from the window top
 const HUD_LINE := 32.0  # DRAFT-replay-hud-line: pixels one HUD line takes
@@ -29,6 +32,9 @@ var _glyph_k := 1.0
 var _overlay: Node3D
 var _hud: Label
 var _hud_end: Label
+var _hud_run: Label  # H-053: the seed and the win rate, on a line of their own so the tick line keeps its v1 words
+var _first_shot := -1  # H-053: index of the first frame in which some unit's hp is lower than in the frame before; -1 when none
+var _rate_a = null  # H-053: rate_a from <layout id>.rate.json beside the fight file, null when there is none
 
 
 func _ready() -> void:
@@ -41,6 +47,12 @@ func _ready() -> void:
 		return
 	_fight = parsed
 	_fight_frames = _fight["frames"]
+	_first_shot = _find_first_shot()
+	var rate_path := path.get_base_dir().path_join("%s.rate.json" % String(_fight["layout_id"]))
+	if FileAccess.file_exists(rate_path):
+		var rate = JSON.parse_string(FileAccess.get_file_as_string(rate_path))
+		if rate is Dictionary and rate.has("rate_a"):
+			_rate_a = float(rate["rate_a"])
 	var result: Dictionary = _fight.get("result", {})
 	var rows := {"A": [], "B": []}
 	for u in _fight_frames[0]["units"]:
@@ -68,7 +80,7 @@ func _ready() -> void:
 	_collect_units()
 	_units3d.set_units(_unit_rows(0), _terrain, floors, [])
 	var panel := _add_legend()
-	panel.position.y = HUD_TOP + 2.0 * HUD_LINE
+	panel.position.y = HUD_TOP + 3.0 * HUD_LINE
 	var every_position := _units
 	_units = _every_position()
 	_frame_camera(_ground, panel)  # frames the box of every position in every frame
@@ -85,6 +97,29 @@ func _unit_rows(i: int) -> Array:
 	for u in _fight_frames[i]["units"]:
 		out.append({"id": _ordinal[int(u["id"])], "faction": 0 if u["side"] == "A" else 1, "type": maxi(ROLES.find(String(u["role"])), 0), "x": float(u["x"]),
 				"y": float(u["y"]), "facing": float(u["facing"]), "layer": int(u["layer"])})
+	return out
+
+
+func _find_first_shot() -> int:
+	for i in range(1, _fight_frames.size()):
+		var before := {}
+		for u in _fight_frames[i - 1]["units"]:
+			before[int(u["id"])] = float(u["hp"])
+		for u in _fight_frames[i]["units"]:
+			if float(u["hp"]) < before.get(int(u["id"]), float(u["hp"])):
+				return i
+	return -1
+
+
+## The ids of the units whose hp dropped into frame `i` (the damaged units the first-shot ring marks).
+func _hurt_ids(i: int) -> Array:
+	var out: Array = []
+	var before := {}
+	for u in _fight_frames[i - 1]["units"]:
+		before[int(u["id"])] = float(u["hp"])
+	for u in _fight_frames[i]["units"]:
+		if float(u["hp"]) < before.get(int(u["id"]), float(u["hp"])):
+			out.append(int(u["id"]))
 	return out
 
 
@@ -107,6 +142,10 @@ func _add_hud() -> void:
 	_hud_end.name = "HudEnd"
 	_hud_end.position = Vector2(24.0, HUD_TOP + HUD_LINE)
 	layer.add_child(_hud_end)
+	_hud_run = _label("", Color.WHITE, HUD_FONT)
+	_hud_run.name = "HudRun"
+	_hud_run.position = Vector2(24.0, HUD_TOP + 2.0 * HUD_LINE)
+	layer.add_child(_hud_run)
 
 
 ## Draw frame `i`: bodies at their positions, fallen units grey and flat with no arrow, a thin line from each unit to its target, the HUD.
@@ -131,7 +170,18 @@ func _show(i: int) -> void:
 			var c: Color = SIDE_COLOURS[u["side"]]
 			_overlay.add_child(_line(PackedVector3Array([_at(float(u["x"]), float(u["y"]), GLYPH_LIFT_WU), _at(float(t["x"]), float(t["y"]), GLYPH_LIFT_WU)]),
 					Color(c.r, c.g, c.b, TARGET_ALPHA)))
+	if i == _first_shot:
+		for id in _hurt_ids(i):
+			var h: Dictionary = by_id[id]
+			var ring := PackedVector3Array()
+			for k in SHOT_RING_SEGMENTS + 1:
+				var a := TAU * float(k) / float(SHOT_RING_SEGMENTS)
+				ring.append(_at(float(h["x"]) + SHOT_RING_WU * cos(a), float(h["y"]) + SHOT_RING_WU * sin(a), GLYPH_LIFT_WU))
+			_overlay.add_child(_line(ring, SHOT_RING_COLOUR))
 	_hud.text = "tick %d  A %d  B %d  frame %d/%d" % [int(frame["tick"]), int(frame["alive"][0]), int(frame["alive"][1]), i, _fight_frames.size()]
+	_hud_run.text = "seed %d" % int(_fight.get("seed", 0))
+	if _rate_a != null:
+		_hud_run.text += "  rate %.2f" % _rate_a
 	var res: Dictionary = _fight.get("result", {})
 	if i == _fight_frames.size() - 1:
 		_hud_end.text = "winner %s  predicted %s  %s" % [res.get("winner", ""), res.get("predict", ""), "agree" if res.get("agree", false) else "disagree"]
@@ -195,4 +245,13 @@ func qa_state() -> Dictionary:
 	var frame: Dictionary = _fight_frames[_cursor]
 	return {"scene": REPLAY_SCENE_PATH, "fight_id": String(_fight["layout_id"]), "frame": _cursor, "frame_count": _fight_frames.size(),
 			"tick": int(frame["tick"]), "alive_a": int(frame["alive"][0]), "alive_b": int(frame["alive"][1]), "result": _fight.get("result", {}),
-			"autoplay": _autoplay}
+			"autoplay": _autoplay, "targets": _targets(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a}
+
+
+## [unit id, target id] for each living unit of `frame` that has a target.
+func _targets(frame: Dictionary) -> Array:
+	var out: Array = []
+	for u in frame["units"]:
+		if bool(u["alive"]) and u.get("target") != null:
+			out.append([int(u["id"]), int(u["target"])])
+	return out

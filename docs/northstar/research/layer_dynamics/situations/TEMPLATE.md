@@ -11,12 +11,12 @@ Why: Equal roles and equal counts, but A starts closer to the centre and engages
 
 ## Sides
 
-| side | role     | count | anchor x | anchor y | facing | range | layer |
-|------|----------|-------|----------|----------|--------|-------|-------|
-| A    | Vanguard | 16    | 800      | 2000     | east   | 0     | 0     |
-| B    | Vanguard | 16    | 3200     | 2000     | west   | 0     | 0     |
+| side | role     | count | anchor x | anchor y | facing | range | layer | shape | centre_x | centre_y | radius | start_deg | end_deg |
+|------|----------|-------|----------|----------|--------|-------|-------|-------|----------|----------|--------|-----------|---------|
+| A    | Vanguard | 16    | 800      | 2000     | east   | 0     | 0     | block |          |          |        |           |         |
+| B    | Vanguard | 16    | 3200     | 2000     | west   | 0     | 0     | block |          |          |        |           |         |
 
-One row per block of one role on one side; several rows per side are fine. `count` is 8 to 256 per side in total. `anchor` is the block's centre in world units; units are placed in 40 wu blocks around it. `facing` is one of north, south, east, west or a number in degrees. `range` 0 means the role's own weapon range from the engine. `layer` is 0 on a one-layer field.
+One row per block of one role on one side; several rows per side are fine. `count` is 8 to 256 per side in total. `anchor` is the block's centre in world units; units are placed in 40 wu blocks around it. `facing` is one of north, south, east, west or a number in degrees. `range` 0 means the role's own weapon range from the engine. `layer` is 0 on a one-layer field. `shape` is `block` (the default when blank; the arc columns stay empty) or `arc` (stage 2): the row's units sit on one ring of `radius` around (`centre_x`, `centre_y`) from `start_deg` to `end_deg` (degrees, 0 east, 90 south, running clockwise on screen), neighbours 40 wu apart, each facing the centre; `count` must fit the span at that spacing or the converter prints `arc too small` with the radius it needs; the anchor, facing and block columns are ignored for an arc. Several arc rows of one side (mixed roles) repeat the same arc columns and continue along the ring in row order; a side is all arcs or all blocks.
 
 ## Features
 

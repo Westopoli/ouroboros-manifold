@@ -24,7 +24,7 @@ EDGE_OUTNUMBER = 2  # DRAFT-edge-outnumber-ratio: the side with the positional e
 # DRAFT-role-mixes: front to back, one mix per side per layout
 MIXES = [("Vanguard", "Raider"), ("Bastion", "Warden", "Bombard"), ("Vanguard", "Interceptor", "Bombard"), ("Raider", "Interceptor"),
          ("Warden", "Vanguard", "Bombard")]
-PLANT_RULES = ["R1", "R2", "R3", "R4", "R5", "R6"]
+PLANT_RULES = ["R1", "R2", "R3", "R4", "R5", "R6"]  # R7 (arc placement, H-053) has no planted counterpart
 ONE_PAIRS = [(16, 16), (16, 32), (32, 16)]  # DRAFT-batch-one, history flag only
 
 
@@ -78,6 +78,12 @@ def _violations(layout, presets, rules):
             if abs(u["x"] - r["x"]) < r["w"] / 2 + pad and abs(u["y"] - r["y"]) < r["h"] / 2 + pad:
                 out.append(("R6", "%s unit %d at (%s, %s) is inside a wall, box or building plus %s" % (side, i, u["x"], u["y"], pad)))
                 break
+    for side in ("side_a", "side_b"):  # R7, arc placement (H-053): a side that records an arc has every unit on its ring
+        arc = layout[side].get("arc")
+        for i, u in enumerate(layout[side]["units"] if arc else []):
+            d = math.hypot(u["x"] - arc["centre"][0], u["y"] - arc["centre"][1])
+            if abs(d - arc["radius"]) > rules["R7"]["tolerance"]:
+                out.append(("R7", "arc placement: unit %d is %.1f wu from the centre, radius %g" % (i, d, arc["radius"])))
     return out
 
 
@@ -456,10 +462,18 @@ def dump_toml(layout):
     lines = ["id = %s" % _q(layout["id"]), "situation = %s" % _q(layout["situation"]), "landscape = %s" % _q(layout["landscape"]),
              "seed = %d" % layout["seed"], "predict = %s" % _q(layout["predict"]), "predict_why = %s" % _q(layout["predict_why"]),
              "verdict = %s" % _q(layout["verdict"]), "feedback = %s" % _q(layout["feedback"]), "defender = %s" % _q(layout.get("defender", ""))]
+    if "predict_rate" in layout:  # H-053: P(side A wins), 0 to 1
+        lines.append("predict_rate = %r" % float(layout["predict_rate"]))
+    if "orders_point" in layout:  # H-053: absent means the midpoint
+        lines.append("orders_point = %s" % _tv([float(c) for c in layout["orders_point"]]))
     if "orders" in layout:  # H-052: "both_same_point" or "hold:A" / "hold:B"; absent means both_same_point
         lines.append("orders = %s" % _q(layout["orders"]))
     for side in ("side_a", "side_b"):
         lines += ["", "[%s]" % side, "headcount = %d" % layout[side]["headcount"]]
+        if "arc" in layout[side]:  # H-053
+            a = layout[side]["arc"]
+            lines += ["", "[%s.arc]" % side, "centre = %s" % _tv([float(c) for c in a["centre"]]), "radius = %r" % float(a["radius"]),
+                      "start_deg = %r" % float(a["start_deg"]), "end_deg = %r" % float(a["end_deg"])]
         for u in layout[side]["units"]:
             lines += ["", "[[%s.units]]" % side, "role = %s" % _q(u["role"]), "x = %r" % u["x"], "y = %r" % u["y"], "facing = %r" % u["facing"],
                       "layer = %d" % u["layer"]] + (["range = %r" % u["range"]] if "range" in u else [])  # a round-one row has no range, and none is invented

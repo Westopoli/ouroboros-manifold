@@ -123,7 +123,7 @@ def validate(doc: dict) -> list[str]:
     if isinstance(result, dict):
         spec = dict(_RESULT, end=str, stall=bool) if v2 else _RESULT
         _check_keys(result, spec, "result", out)
-        winners = ("A", "B", "draw", "stall") if v2 else ("A", "B", "draw")
+        winners = ("A", "B", "draw", "stall", "none") if v2 else ("A", "B", "draw")
         if result.get("winner") not in winners and "winner" in result:
             out.append("result.winner is not " + ", ".join(winners[:-1]) + " or " + winners[-1])
         if v2:
