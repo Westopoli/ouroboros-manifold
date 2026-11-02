@@ -20,7 +20,7 @@ import re
 import pytest
 
 from conftest import CSRC_DIR
-from test_PP_unit_support import (RAIDER, VANGUARD, attack_move, dest, hp, pos, set_param, spawn, step, target)
+from test_PP_unit_support import (RAIDER, SUPPLY, VANGUARD, attack_move, dest, hp, pos, set_param, spawn, step, target)
 
 PURSUE = "OM_TP_PURSUE_BY_STEERING"
 _H = (CSRC_DIR / "om_constants.h").read_text()
@@ -201,17 +201,17 @@ def test_R_087_04_A199_a_blocked_cell_between_it_and_an_enemy_in_range_does_not_
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
     assert lib.om_map_set_canvas(w, 4000.0, 4000.0) == 0
     assert lib.om_map_block_rect(w, 2010.0, 1410.0, 2090.0, 1490.0, 0, 4) == 0
-    u = spawn(lib, w, VANGUARD, 0, 1950.0, 500.0)
-    enemy = spawn(lib, w, RAIDER, 1, 2200.0, 1500.0)
+    u = spawn(lib, w, VANGUARD, 0, 1950.0, 1300.0)
+    enemy = spawn(lib, w, SUPPLY, 1, 2200.0, 1500.0)
     attack_move(lib, w, [u], 1950.0, 3000.0)
     walked, last_y = 0, pos(lib, w, u)[1]
     for _ in range(400):
         step(lib, w)
         y = pos(lib, w, u)[1]
         if 1340.0 <= y <= 1490.0:
-            assert hp(lib, w, enemy) == 250.0, "it fired through the blocked cell"
+            assert hp(lib, w, enemy) == 100.0, "it fired through the blocked cell"
             assert y > last_y, "it stopped in the blocked stretch (y %.1f)" % y
             walked += 1
         last_y = y
     assert walked >= 20, "fixture: the unit was not in the blocked stretch long enough (%d ticks)" % walked
-    assert hp(lib, w, enemy) < 250.0, "it never fired once the line cleared"
+    assert hp(lib, w, enemy) < 100.0, "it never fired once the line cleared"
