@@ -1,27 +1,27 @@
-# H-023 unit-scale values file (DRAFT path, docs/stories/H-023.md "Values file"). One table per role.
-# radius: collision radius in world units. DRAFT starting value: OM_UNIT_COLLISION_RADIUS 15 (csrc/om_constants.h:581) for every role.
-# visual_scale: look multiplier. DRAFT starting value 1.0.
-# Rewritten by scenes/proto/unit_scale/unit_scale.tscn on every slider change. The sim does not read this file yet (its own contract piece).
+# H-023 unit-scale values file (docs/stories/H-023.md "Values file"). One table per role.
+# radius: collision radius in world units. visual_scale: look multiplier.
+# Values set by Westley 2026-11-02 for the beta (DEC-unit-scale-values-2026-11-02). The lab keeps its placeholder sizes until he says otherwise.
+# Rewritten by scenes/proto/unit_scale/unit_scale.tscn on every slider change. The sim does not read this file yet (H-041).
 [Raider]
-radius = 15.000
-visual_scale = 1.000
+radius = 4.050
+visual_scale = 0.270
 
 [Interceptor]
-radius = 15.000
-visual_scale = 1.000
+radius = 8.250
+visual_scale = 0.550
 
 [Vanguard]
-radius = 15.000
-visual_scale = 1.000
+radius = 11.250
+visual_scale = 0.750
 
 [Warden]
-radius = 15.000
-visual_scale = 1.000
+radius = 11.550
+visual_scale = 0.770
 
 [Bombard]
-radius = 15.000
-visual_scale = 1.000
+radius = 21.600
+visual_scale = 1.440
 
 [Bastion]
-radius = 15.000
-visual_scale = 1.000
+radius = 30.000
+visual_scale = 2.000
