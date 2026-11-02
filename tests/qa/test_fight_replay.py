@@ -615,13 +615,13 @@ def test_without_a_rate_file_end_line_is_the_old_text_and_empty_before_the_last_
 @pytest.mark.parametrize("rate_a,predict_rate,agree,word", [(0.75, 0.75, True, "AGREE"), (0.25, 0.75, False, "DISAGREE")], ids=["agree", "disagree"])
 def test_with_a_rate_file_the_end_line_is_the_rate_verdict(rate_a, predict_rate, agree, word, tmp_path, monkeypatch):
     """Brief 2026-11-02: "when a rate file is beside the fight (rate_a not null) the end line shows the rate verdict (`rate <rate_a> vs <predict_rate> agree|disagree` from the rate file)".
-    The fight's own result says agree (winner A, predict A), so the old text would say `agree` in both cases; the line must read the rate file's `agree` and carry no `predicted`."""
+    The fight's own result says agree (winner A, predict A), so the old text would say `agree` in both cases; the line must read the rate file's `agree` and carry no `predicted` (label as ruled 2026-11-02: `rate A <m> vs target <p> (gap <n> pts, not scored); guess <A|B|draw>: AGREE|DISAGREE`; this fixture's predict is A)."""
     path = _end_fight(tmp_path, {"rate_a": rate_a, "predict_rate": predict_rate, "agree": agree})
     g = _open(monkeypatch, path)
     try:
         g.wait_for_port(timeout=90.0)
         st = _last_frame(g)
-        want = "rate A %.2f vs predicted %.2f: %s (band 0.10)" % (rate_a, predict_rate, word)
+        want = "rate A %.2f vs target %.2f (gap %d pts, not scored); guess A: %s" % (rate_a, predict_rate, round(abs(rate_a - predict_rate) * 100), word)
         lines = _hud_lines(st)
         assert any(want in t for t in lines), "no HUD text with %r among Label texts %s" % (want, lines)
     finally:
