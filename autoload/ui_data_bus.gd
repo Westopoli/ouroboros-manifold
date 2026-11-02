@@ -12,9 +12,13 @@ const SimSession := preload("res://autoload/sim_session.gd")
 const SETTINGS_PATH := "user://settings.cfg"
 const RESOLUTIONS := [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440), Vector2i(3440, 1440), Vector2i(3840, 2160)]
 const VALID_RESOLUTION_COUNT := 6
+# DRAFT-display-apply-frames: rendered frames to wait before the display block runs (H-038).
+const DISPLAY_APPLY_FRAMES := 2
 
 var _source: RefCounted
 var _settings: Dictionary = {}
+# H-038: engine frame at which the display block ran; -1 until it runs. Read by qa_daemon state().
+var display_settings_applied_frame := -1
 
 
 func _ready() -> void:
@@ -118,13 +122,28 @@ func _apply_stored_settings() -> void:
 		var idx := AudioServer.get_bus_index(bus_name)
 		if idx >= 0:
 			AudioServer.set_bus_volume_db(idx, linear_to_db(float(_settings[buses[bus_name]]) / 100.0))
+	# H-038: the display half must not run inside _ready(). Applying the stored size (equal to the project viewport)
+	# before the first frame left the desktop presenting only the splash (finding 2026-10-31, part 1 launches 3, 4, 7).
+	_apply_display_settings_deferred()
+
+
+func _apply_display_settings_deferred() -> void:
+	for _i in DISPLAY_APPLY_FRAMES:
+		await get_tree().process_frame
+	_apply_display_settings()
+
+
+func _apply_display_settings() -> void:
 	var res_idx := clampi(int(_settings["resolution_index"]), 0, VALID_RESOLUTION_COUNT - 1)
 	if bool(_settings["fullscreen"]):
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-		DisplayServer.window_set_size(RESOLUTIONS[res_idx])
+		# H-038: only when it differs; a request equal to the current size is the case that stuck.
+		if DisplayServer.window_get_size() != RESOLUTIONS[res_idx]:
+			DisplayServer.window_set_size(RESOLUTIONS[res_idx])
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if bool(_settings["vsync"]) else DisplayServer.VSYNC_DISABLED)
+	display_settings_applied_frame = Engine.get_process_frames()
 
 
 func get_settings() -> Dictionary:
