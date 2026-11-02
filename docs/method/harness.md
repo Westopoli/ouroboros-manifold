@@ -65,6 +65,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-069 | "The beta's start does not shout at itself: asking for the same scene twice is not a replacement." | Ready (client; beta channel) | `docs/stories/H-069.md` |
 | H-068 | "A proof run never mistakes a socket talking to itself for a game that is up." | Ready (harness; lab channel; after H-066 and a green sweep) | `docs/stories/H-068.md` |
 | H-070 | Finding (2026-11-02, lab Dispatcher's quiet re-runs, main b0d2727f against the H-057 candidate): FINDING-speed1b-near-limit: `tests/skilllab/integration/test_speed1b_ratio.py::test_stage_1b_speed_ratio_of_the_live_firing_against_the_frozen_reference` (`assert ratio <= limit`, limit 0.68) passes on main (0.670, 0.658) and on the H-057 candidate (0.657, 0.677) but read 0.692 once against its 0.68 limit: timing near a limit, flaky within about 0.02, not an H-057 effect; the limit is Westley's. | Found; Westley's number | none yet |
+| H-071 | "The catalogue applies the verdicts as written." | Spec'd (harness; lab channel; after the stack landing) | `docs/stories/H-071.md` |
 | H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | none yet |
 
