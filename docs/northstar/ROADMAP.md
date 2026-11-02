@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-02 (Architect, Westley's order; om-beta approved, the beta moves into the project he opens in his editor, H-067 finishes B0): section 1 is the two staircases on two gate channels; sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
+Last updated: 2026-11-02 (Architect, Westley's order; B0 approved, B1 starts while H-067 pipes the beta into the project he opens in his editor): section 1 is the two staircases on two gate channels; sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -27,8 +27,8 @@ Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a ti
 | lab | 4 sight; 5 facing, arcs, bands; 6 the scan; 7 objectives, hazards, time, space | | plan only | one at a time |
 | lab | after the lab: piecemeal, then whole | none yet (plan in `research/layer_dynamics/decomposition.md`) | Decided 2026-11-02 as a plan; built after the lab is finished | specified then |
 | harness | two gate channels | H-059 | Ready; lands after H-057 through the single gate | the beta Dispatcher chat starts |
-| beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2), H-067 | Seen 2026-11-02 for om-beta; the project-in-the-editor route (H-067) in flight | his confirmation of the editor route |
-| beta | B1 the approved screens | H-060 | Ready; tests in flight, builds after B0 Seen | after B0 Seen |
+| beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2), H-067 | Seen 2026-11-02; the editor route (H-067) in parallel | none |
+| beta | B1 the approved screens | H-060 | builder started 2026-11-02 | his verdicts on the B1 pictures |
 | beta | B2 the layout, no units, five kinds | H-061 | Ready | after B1 Seen |
 | beta | B3 landscape engine; B4 places; B5 one role in groups; B6 vision; B7 layers (land); B8 all roles, real fights; B9+ economy in pieces | ids when written (H-062 is the plan re-read check) | plan table only; story written one stage ahead | one at a time |
 
