@@ -1,4 +1,5 @@
-"""PP-move: an attack-moving unit holds its slot and route until it can SHOOT, not until it sees (E-11 R-087-04,
+"""PP-move (the A199 "no pursuit on sight" tests that pinned the old rule are retired: H-057 replaced it with R-087-04 rev
+2026-11-01, engage on sight; the replacing tests are tests/csim/test_E11_S087_engage_on_sight.py. See also there.): an attack-moving unit holds its slot and route until it can SHOOT, not until it sees (E-11 R-087-04,
 R-087-05; E-13 R-096-02, R-096-03; ruling A199, docs/northstar/plans/2026-10-01-architect-rulings-2.md Addendum).
 Rule marked for playtest review, A199 (Westley: "something we might change when it comes to play testing").
 
@@ -91,22 +92,6 @@ def _run_line(lib, w, enemy_xy):
     return (miss, arrive), closest, hp(lib, w, enemy), at_hit
 
 
-def test_R_087_04_A199_a_32_unit_line_reaches_its_slots_with_the_shape_intact_past_a_seen_enemy(lib, world_factory):
-    """R-087-04 / R-096-02 / A199: a 32-unit line attack-moves with an idle enemy 450 wu off its east flank
-    (inside sensor 700, outside attack range 300 all the way: nearest path point 450 wu away). Every unit ends
-    within the arrival radius of its own slot (so width and depth are the slots' own), and nothing fires.
-    RED now: P1 makes the seen enemy each unit's goal, the line walks off its route toward it and stops in range."""
-    w = world_factory(n_regions=1)
-    east = LINE_X0 + (LINE_N - 1) * SPACING
-    (shape, arrive), closest, ehp, _ = _run_line(lib, w, (east + 450.0, 2000.0))
-    # TD-PP-A199-shape-measure: R-095-05 ends a group when its centroid arrives, so outer units need not be inside their own
-    # slot radius; A199 claims the shape is held. (1) shape held on every tick of the run (the enemy dies and the line resumes, so the end reading alone
-    # would not tell held from broken-then-reformed), (2) arrival.
-    assert shape <= ARRIVAL, "the chunk's shape broke during the run: a unit's offset from its chunk centroid is %.1f wu off its slot offset (slot radius %.1f): the line walked off to the seen enemy" % (shape, ARRIVAL)
-    # Open flag (ambiguity register, Westley): the engines differ on the centroid radius, C 1.5 x, Python 2 x collision
-    # radius; R-095-05's text does not settle it, so the looser (30) is used.
-    assert arrive <= CENTROID_ARRIVAL, "a chunk's centroid ended %.1f wu from its click (limit %.1f)" % (arrive, CENTROID_ARRIVAL)
-    assert closest > VAN_RANGE and ehp == 250.0, "fixture: the enemy was inside attack range (%.0f wu) or hit" % closest
 
 
 def test_control_R_087_04_A199_the_slot_miss_detector_trips_when_the_route_leads_to_the_enemy(lib, world_factory):
@@ -139,33 +124,8 @@ def _lone(lib, w, enemy_xy, switch=None):
     return u, enemy
 
 
-def _diverted(lib, w, u, goal=(2000.0, 3000.0)):
-    has, x, y = dest(lib, w, u)
-    return has == 1 and _d((x, y), goal) > 1e-6
 
 
-def test_R_087_04_A199_a_lone_attack_mover_keeps_its_goal_and_takes_no_target_for_an_enemy_it_only_sees(lib, world_factory):
-    """R-087-04 / A199: a Vanguard with an idle Raider 450 wu to its side (seen, out of range) keeps its march
-    goal and holds no target for 60 ticks (more than two cohort cycles) and its sideways drift stays inside the
-    arrival radius. RED now: on its cohort turn P1 sets the goal to the Raider and the target to it."""
-    w = world_factory(n_regions=1)
-    u, enemy = _lone(lib, w, (2450.0, 800.0))
-    for _ in range(60):
-        step(lib, w)
-        assert target(lib, w, u) == -1 or target(lib, w, u) == 0, "took the enemy it only sees as its target"
-        assert not _diverted(lib, w, u), "its goal was replaced by the seen enemy's position"
-    assert abs(pos(lib, w, u)[0] - 2000.0) <= ARRIVAL, "it drifted sideways toward the enemy"
-
-
-def test_control_R_087_04_A199_the_diverted_goal_detector_reads_a_changed_order(lib, world_factory):
-    """Positive control (green now and after): with no enemy in sensor range the goal is the click; a new
-    attack-move to another point then reads as diverted, so a True above would be a real change of goal."""
-    w = world_factory(n_regions=1)
-    u, enemy = _lone(lib, w, (3900.0, 3900.0))
-    step(lib, w)
-    assert not _diverted(lib, w, u)
-    attack_move(lib, w, [u], 2500.0, 3000.0)
-    assert _diverted(lib, w, u)
 
 
 def test_R_087_04_A199_halt_and_fire_when_an_enemy_is_in_attack_range(lib, world_factory):
@@ -228,15 +188,6 @@ def test_PP_baseline_switch_0_keeps_the_old_walk_toward_a_seen_enemy(lib, world_
     assert pos(lib, w, u)[0] > 2000.0 + ARRIVAL, "baseline no longer steps toward the seen enemy"
 
 
-def test_R_087_04_A199_an_idle_unit_never_walks_toward_a_seen_enemy(lib, world_factory):
-    """Guard (green now and after): a unit with no order stays where it is with an enemy in sensor range, out
-    of attack range, and takes no target."""
-    w = world_factory(n_regions=1)
-    u = spawn(lib, w, VANGUARD, 0, 2000.0, 500.0)
-    spawn(lib, w, RAIDER, 1, 2450.0, 800.0)
-    step(lib, w, 60)
-    assert _d(pos(lib, w, u), (2000.0, 500.0)) <= 0.5
-    assert target(lib, w, u) in (-1, 0)
 
 
 def test_R_087_04_A199_a_blocked_cell_between_it_and_an_enemy_in_range_does_not_stop_the_march(lib, world_factory):
