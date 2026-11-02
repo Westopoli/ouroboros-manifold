@@ -188,30 +188,66 @@ def test_control_R_096_02_group_of_8_without_an_enemy_reaches_its_slots_in_shape
 
 # ---- 4. leash ------------------------------------------------------------------------------------------------
 
-def test_R_087_05_idle_pursuer_drops_a_target_walking_away_at_its_own_speed_at_the_leash(lib, world_factory):
-    """R-087-05 / R-096-03 / S-087 / H-057: "The 200 wu leash bounds the walk: past it the target is dropped and the
-    unit resumes or holds." An idle Vanguard sees a Vanguard 400 wu off that walks away at the same speed (80 wu/s, a
-    plain move, so it never acquires): the pursuer acquires within 200 ticks, never goes further than the leash (plus one
-    tick's step) from where it started, and at tick 600 is holding where it stopped (same place 40 ticks on).
-    RED now: it never acquires and never moves. See also the gap in the writer's report: an idle unit that drops at the
-    leash with the walker still inside sensor 700 can re-acquire from its new spot."""
-    w = _world(lib, world_factory)
-    a = spawn(lib, w, VANGUARD, 0, 2000.0, 500.0)
-    b = spawn(lib, w, VANGUARD, 1, 2000.0, 900.0)
+COLLISION_RADIUS = 15.0
+RETURN_TOL = 1.5 * COLLISION_RADIUS   # OM_ARRIVAL_TOLERANCE_MULT x OM_UNIT_COLLISION_RADIUS
+
+
+def _chase(lib, w, utype, speed, ticks, gap=400.0):
+    """An idle `utype` at its post (2000, 500) and a same-type enemy `gap` wu north that plain-moves away at the same speed.
+    Returns the per-tick (pursuer position, enemy position, pursuer target, enemy id)."""
+    a = spawn(lib, w, utype, 0, 2000.0, 500.0)
+    b = spawn(lib, w, utype, 1, 2000.0, 500.0 + gap)
     _move(lib, w, [b], 2000.0, 3900.0)
-    start = pos(lib, w, a)
-    acquired, far = None, 0.0
-    for t in range(1, 601):
+    trace = []
+    for _ in range(ticks):
         step(lib, w)
-        if acquired is None and target(lib, w, a) == b:
-            acquired = t
-        far = max(far, _d(pos(lib, w, a), start))
-    p600 = pos(lib, w, a)
-    step(lib, w, 40)
+        trace.append((pos(lib, w, a), pos(lib, w, b), target(lib, w, a)))
+    return a, b, trace
+
+
+def test_R_087_05_idle_pursuer_is_bounded_by_its_sensor_radius_returns_and_holds(lib, world_factory):
+    """R-087-05 / R-096-03 / S-087 / H-057 + DEC-leash-anchor-return-2026-11-01: the leash is the type's own sensor
+    radius, the anchor is set once on acquiring from rest and not reset while pursuing or returning, and after a drop an
+    idle unit walks back to its anchor. An idle Vanguard (sensor 700) at its post sees an enemy 400 wu off that walks away at
+    the same speed (80 wu/s, a plain move, so it never acquires): it acquires within 200 ticks, keeps the target past 200 wu
+    from its anchor, its distance from the anchor never exceeds 700 plus one tick's step, after the drop it is back within
+    1.5 collision radii of its anchor, and once the enemy is out of sensor range it holds no target and does not move for 100
+    ticks. RED now: it never acquires and never moves."""
+    w = _world(lib, world_factory)
+    a, b, trace = _chase(lib, w, VANGUARD, 80.0, 700)
+    anchor = (2000.0, 500.0)
+    acquired = next((i + 1 for i, t in enumerate(trace) if t[2] == b), None)
     assert acquired is not None and acquired <= 200, "no target within 200 ticks (got %s)" % acquired
-    assert far <= LEASH + STEP, "the pursuer walked %.1f wu from its anchor (leash %.0f)" % (far, LEASH)
-    assert far >= LEASH - 3 * STEP, "it stopped at %.1f wu: it did not walk the leash out" % far
-    assert _d(p600, pos(lib, w, a)) <= 0.5, "it was still walking after the leash"
+    held_far = max((_d(t[0], anchor) for t in trace if t[2] == b), default=0.0)
+    assert held_far > 200.0 + STEP, "it dropped the target inside the old 200 wu leash (held out to %.1f wu)" % held_far
+    far = max(_d(t[0], anchor) for t in trace)
+    assert far <= 700.0 + STEP, "the pursuer went %.1f wu from its anchor (leash = sensor radius 700)" % far
+    assert far >= 700.0 - 3 * STEP, "it stopped at %.1f wu: it did not walk its sensor radius out" % far
+    peak = max(range(len(trace)), key=lambda i: _d(trace[i][0], anchor))
+    back = next((i for i in range(peak, len(trace)) if _d(trace[i][0], anchor) <= RETURN_TOL), None)
+    assert back is not None, "after the drop it never came back within %.1f wu of its anchor" % RETURN_TOL
+    assert _d(trace[back][0], trace[back][1]) > 700.0, "fixture: the enemy was still inside sensor range when it got back"
+    p = trace[back][0]
+    for _ in range(100):
+        step(lib, w)
+        assert target(lib, w, a) in (-1, 0), "it took a target again with the enemy out of sensor range"
+        assert _d(pos(lib, w, a), p) <= 0.5, "it moved after getting back to its anchor"
+
+
+def test_R_087_05_the_leash_is_per_type_a_raider_drops_at_its_own_sensor_radius(lib, world_factory):
+    """R-087-05 / S-087 / H-057 + DEC-leash-anchor-return-2026-11-01: "every read of OM_ATTACK_MOVE_LEASH_DIST becomes the
+    unit's profile sensor_radius" (per type, not one number). A Raider (sensor 800, speed 150) chasing a Raider that walks
+    away at its speed reaches 800 wu from its anchor, past the Vanguard's 700, and no further than 800 plus one tick's step.
+    RED now: it never acquires. (No type has a smaller effective radius than the Vanguard's 700: Bastion and Bombard have
+    sensor 300 but range 800 and 1200, see the writer's report.)"""
+    w = _world(lib, world_factory)
+    a, b, trace = _chase(lib, w, RAIDER, 150.0, 400)
+    anchor = (2000.0, 500.0)
+    step_wu = 150.0 / 20.0
+    far = max(_d(t[0], anchor) for t in trace)
+    assert any(t[2] == b for t in trace), "the Raider never acquired the enemy"
+    assert far <= 800.0 + step_wu, "the Raider went %.1f wu from its anchor (its sensor radius is 800)" % far
+    assert far > 700.0 + step_wu, "the Raider stopped at %.1f wu: bounded by the Vanguard's 700, not its own 800" % far
 
 
 def test_R_087_04_idle_pursuer_reaches_and_shoots_a_standing_enemy_400_off(lib, world_factory):
