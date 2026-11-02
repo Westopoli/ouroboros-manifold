@@ -21,7 +21,7 @@ from types import SimpleNamespace
 
 from scripts.skilllab.arena import snapshot
 from scripts.skilllab.arena.rate import rate
-from scripts.skilllab.catalogue.produce import check_layout, presets, rules
+from scripts.skilllab.catalogue.produce import _roster_ranges, check_layout, presets, rules
 from scripts.skilllab.engine import Engine
 from scripts.skilllab.fight import TICKS_PER_SECOND, _register_types
 
@@ -137,7 +137,9 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders):
         shown = Path(layout_path).resolve().relative_to(ROOT).as_posix()
     except ValueError:
         shown = Path(layout_path).as_posix()
-    return {"schema": snapshot.SCHEMA_V2, "layout_id": layout["id"], "layout_path": shown, "seed": seed, "tick_rate": TICKS_PER_SECOND,
+    roster = _roster_ranges()
+    roles = {u["role"] for u in frames[0]["units"]}
+    return {"schema": snapshot.SCHEMA_V2, "ranges": {r: roster[r] for r in sorted(roles)}, "layout_id": layout["id"], "layout_path": shown, "seed": seed, "tick_rate": TICKS_PER_SECOND,
             "snapshot_every": every, "sight": sight, "orders": orders, "frames": [frames[t] for t in ticks],
             "result": {"winner": winner, "survivors": survivors, "ticks": last, "capped": end == "cap", "end": end, "stall": stall,
                        "predict": layout["predict"],

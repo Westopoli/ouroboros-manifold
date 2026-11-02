@@ -20,14 +20,16 @@ def first_shot(doc):
 
 
 def _firing_capable(doc, ranges):
-    """{"A": n, "B": n} for one fight (Interfaces 5), or None when no shot was fired."""
+    """{"A": n, "B": n} for one fight, or None when no shot was fired. DRAFT-firing-capable-at-first-shot (pending Architect; amends Interfaces 5, which read frame 0):
+    the units ALIVE at the first-shot frame, at their positions in that frame, whose roster range reaches the first-contact point."""
     shot = first_shot(doc)
     if shot is None:
         return None
     frame, uid = shot
-    point = next(u for u in doc["frames"][frame]["units"] if u["id"] == uid)
+    units = doc["frames"][frame]["units"]
+    point = next(u for u in units if u["id"] == uid)
     count = {"A": 0, "B": 0}
-    for u in doc["frames"][0]["units"]:
+    for u in units:
         if u["alive"] and math.hypot(u["x"] - point["x"], u["y"] - point["y"]) <= ranges[u["role"]]:
             count[u["side"]] += 1
     return count

@@ -24,6 +24,7 @@ from pathlib import Path
 from scripts.skilllab.arena.snapshot import read
 
 STRIP_HEIGHT = 240     # story: frame strip 240 px high
+STAGE2_THUMB_PX = 480  # DRAFT-stage2-thumb-px: a stage 2 strip image is at least this tall (stage 1 stays STRIP_HEIGHT); Westley rules
 FALL_HEIGHT = 480      # DRAFT-fall-map-height: "the last frame larger"; Westley rules
 
 STYLE = ("<style>.agree{background:#bfe8bf}.disagree{background:#f0b8b8}.none{background:#cccccc}td.stall,a.stall{background:#f5d76e}.shot img{outline:4px solid #e6c200}"
@@ -99,7 +100,7 @@ def _strip(stem, frames, src_dir="", marker=-1):
     """The frame figures of one fight; the figure of frame `marker` (the first shot) is outlined."""
     out = []
     for i, f in enumerate(frames):
-        fig = _figure("%s%sframe-%d.png" % (src_dir, "/" if src_dir else "", i), f["tick"], f["alive"], STRIP_HEIGHT)
+        fig = _figure("%s%sframe-%d.png" % (src_dir, "/" if src_dir else "", i), f["tick"], f["alive"], STAGE2_THUMB_PX)
         out.append('<span class="shot">%s</span>' % fig if i == marker else fig)
     return "".join(out)
 

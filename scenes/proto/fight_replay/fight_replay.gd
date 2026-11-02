@@ -34,6 +34,9 @@ var _hud: Label
 var _hud_end: Label
 var _hud_run: Label  # H-053: the seed and the win rate, on a line of their own so the tick line keeps its v1 words
 var _first_shot := -1  # H-053: index of the first frame in which some unit's hp is lower than in the frame before; -1 when none
+var _ring_count := 0  # H-053: unit range rings drawn on the current frame (a role's range comes from the fight file's `ranges`; none without it)
+var _end_line := ""  # H-053: the end HUD line text on the last frame, "" on any other
+var _rate_verdict := ""  # H-053: `rate <rate_a> vs <predict_rate> agree|disagree` from the rate file, "" when there is no rate file
 var _rate_a = null  # H-053: rate_a from <layout id>.rate.json beside the fight file, null when there is none
 
 
@@ -53,10 +56,12 @@ func _ready() -> void:
 		var rate = JSON.parse_string(FileAccess.get_file_as_string(rate_path))
 		if rate is Dictionary and rate.has("rate_a"):
 			_rate_a = float(rate["rate_a"])
+			_rate_verdict = "rate %.2f vs %.2f %s" % [_rate_a, float(rate.get("predict_rate", 0.0)), "agree" if rate.get("agree", false) else "disagree"]
 	var result: Dictionary = _fight.get("result", {})
+	var ranges: Dictionary = _fight.get("ranges", {})  # om-fight-2 H-053: {role: range wu}; absent in older files
 	var rows := {"A": [], "B": []}
 	for u in _fight_frames[0]["units"]:
-		rows[u["side"]].append({"role": u["role"], "x": u["x"], "y": u["y"], "facing": u["facing"], "layer": u["layer"], "range": 0.0})
+		rows[u["side"]].append({"role": u["role"], "x": u["x"], "y": u["y"], "facing": u["facing"], "layer": u["layer"], "range": float(ranges.get(u["role"], 0.0))})
 	var id := 0
 	for side in ["A", "B"]:
 		for u in _fight_frames[0]["units"]:
@@ -170,6 +175,14 @@ func _show(i: int) -> void:
 			var c: Color = SIDE_COLOURS[u["side"]]
 			_overlay.add_child(_line(PackedVector3Array([_at(float(u["x"]), float(u["y"]), GLYPH_LIFT_WU), _at(float(t["x"]), float(t["y"]), GLYPH_LIFT_WU)]),
 					Color(c.r, c.g, c.b, TARGET_ALPHA)))
+	_ring_count = 0
+	var ranges: Dictionary = _fight.get("ranges", {})
+	for u in frame["units"]:  # a ring follows each living unit whose role has a range in the fight file
+		var rng := float(ranges.get(u["role"], 0.0))
+		if rng > 0.0 and bool(u["alive"]):
+			var c: Color = SIDE_COLOURS[u["side"]]
+			_overlay.add_child(_ring(Vector2(float(u["x"]), float(u["y"])), rng, Color(c.r, c.g, c.b, 0.55)))
+			_ring_count += 1
 	if i == _first_shot:
 		for id in _hurt_ids(i):
 			var h: Dictionary = by_id[id]
@@ -184,7 +197,10 @@ func _show(i: int) -> void:
 		_hud_run.text += "  rate %.2f" % _rate_a
 	var res: Dictionary = _fight.get("result", {})
 	if i == _fight_frames.size() - 1:
-		_hud_end.text = "winner %s  predicted %s  %s" % [res.get("winner", ""), res.get("predict", ""), "agree" if res.get("agree", false) else "disagree"]
+		if _rate_a != null:  # a rate file beside the fight: the rate verdict, as the page says it
+			_hud_end.text = _rate_verdict
+		else:
+			_hud_end.text = "winner %s  predicted %s  %s" % [res.get("winner", ""), res.get("predict", ""), "agree" if res.get("agree", false) else "disagree"]
 		if res.has("end"):  # om-fight-2 only; a v1 file has no end word
 			_hud_end.text += "  end: %s" % res["end"]
 		if res.get("stall", false):
@@ -192,6 +208,7 @@ func _show(i: int) -> void:
 	else:
 		_hud_end.text = ""
 	_hud_end.visible = _hud_end.text != ""
+	_end_line = _hud_end.text
 
 
 func _step(d: int) -> void:
@@ -245,7 +262,7 @@ func qa_state() -> Dictionary:
 	var frame: Dictionary = _fight_frames[_cursor]
 	return {"scene": REPLAY_SCENE_PATH, "fight_id": String(_fight["layout_id"]), "frame": _cursor, "frame_count": _fight_frames.size(),
 			"tick": int(frame["tick"]), "alive_a": int(frame["alive"][0]), "alive_b": int(frame["alive"][1]), "result": _fight.get("result", {}),
-			"autoplay": _autoplay, "targets": _targets(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a}
+			"autoplay": _autoplay, "targets": _targets(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a, "ring_count": _ring_count, "end_line": _end_line}
 
 
 ## [unit id, target id] for each living unit of `frame` that has a target.
