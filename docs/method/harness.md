@@ -61,6 +61,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-063 | "Walls, buildings, cover boxes and slopes shape where units can walk and how fast; still everyone sees everyone." | Ready (client; lab stage 3; H-053 Seen 2026-11-02) | `docs/stories/H-063.md` |
 | H-065 | "The sweep is green again: the two tests that pinned the old ROADMAP match the roadmap Westley ordered rewritten." | Ready (harness; lab channel; Fixes-sweep d914f2e0; lands before H-057) | `docs/stories/H-065.md` |
 | H-066 | "Two gates running at the same time never play on each other's game." | Ready (harness; lab channel; after H-059 lands) | `docs/stories/H-066.md` |
+| H-067 | "I'd like to set up the beta to be a godot project I open in the ouroboros directory. Something I can open in the editor myself, not run through a command." | Spec'd (harness; beta channel; waits on Westley's go; after H-060 ruling 7) | `docs/stories/H-067.md` |
 | H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | none yet |
 
