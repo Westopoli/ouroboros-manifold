@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-27 (Architect): section 1 gains the sim lane pieces, the two mockups and the probes; section 2 step 6 macOS done; section 3 points at the decision pack; 3b T5 to T9, T18 restated, T19 added. Before that, 2026-10-07: section 2b added, the order of work after the beta workflow (Westley).
+Last updated: 2026-11-02 (Architect): section 1 rewritten as the two staircases on two gate channels; section 2 points at the beta staircase; earlier: 2026-10-27 section 1 gained the sim lane pieces, the two mockups and the probes; section 2 step 6 macOS done; section 3 points at the decision pack; 3b T5 to T9, T18 restated, T19 added. Before that, 2026-10-07: section 2b added, the order of work after the beta workflow (Westley).
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -59,31 +59,29 @@ If a scene prints "Could not find type" errors, the folder has not been imported
 | Chronicle mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/chronicle/chronicle_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/chronicle/` |
 | Skill lab chart: Formation Read (a web page, not a scene) | open https://claude.ai/artifact/GcVZDf8481tppLwSHE6Bqz | 2026-10-04; private to Westley | `research/layer_dynamics/runs/README.md` |
 
-## 1. Now building
+## 1. Now building: two staircases, two gate channels
 
-GATE (Westley 2026-10-30): no story that builds a scene, a prototype or the beta launches until proof by eyes is fixed and proved working: H-031. Westley, verbatim: "the 'no-window' gap has been persistent for long enough. Before we launch *any* more specs for building the beta the verification via *eyes* for both prototypes/scenes and the beta itself needs to be fixed and proved working. Make sure that's the case in roadmap.md"
+Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a time, each step ending in something he looks at in a scene he plays, approve or deny, before the next starts. Two staircases run side by side on separate gate channels (DEC-two-gate-channels-2026-11-02, H-059): the **simulation lab** (`plans/` plan file `~/.claude/plans/cheerful-baking-codd.md` as DEC-lab-staircase-2026-10-31; stories H-039, H-040, H-052, H-053) and the **beta** (`plans/2026-11-02-beta-staircase.md`; stories H-028, H-059, H-060, H-061, then one per stage). Each row is one story; its words and done-when live in the story file; this table is the order and the state only. Whoever moves a stage rewrites its row in the same commit.
 
-Held behind it: H-024 (landing), H-028 (beta), any H-025 round two, the lab runs. Not held: harness stories with no scene (H-016, H-017, H-029). H-023 and H-025 are landed but unverified until H-031's capture proves them.
+| Staircase | Stage | Story | State (2026-11-02) | Next |
+|---|---|---|---|---|
+| lab | 1 two blobs on a flat field | H-040 (+H-039, H-052) | Seen 2026-11-01 (Westley on the L-0054 preview under H-057); landing waits on the screen proof | land |
+| lab | engine rule from stage 1: engage on sight, per-type leash | H-057 | built, landing (goldens re-record, gate) | land; L-0054 record run on main |
+| lab | 2 roles, ranges, win rates over seeds | H-053 | built, pre-gated; stage 2 fights running on the H-057 engine; pictures to `arena_stage2/` | his verdicts |
+| lab | catalogue round three (arcs, mouth coverage, priority kinds) | H-025 round three | batch 1 pushed c5fddbc9 (29 pictures); producer continues | his verdicts |
+| lab | 3 the ground pushes back | next id | Spec'd in the plan only | story after stage 2 is Seen |
+| lab | 4 sight; 5 facing, arcs, bands; 6 the scan; 7 objectives, hazards, time, space | | plan only | one at a time |
+| harness | two gate channels | H-059 | Ready; lands after H-057 through the single gate | the beta Dispatcher chat starts |
+| beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2, H-031 piece three) | Ready, beta channel; proof needs the monitors (wake rule) | he runs `om-beta` |
+| beta | B1 the approved screens | H-060 | Ready | after B0 Seen |
+| beta | B2 the layout, no units, five kinds | H-061 | Ready | after B1 Seen |
+| beta | B3 landscape engine; B4 places; B5 one role in groups; B6 vision; B7 layers (land); B8 all roles, real fights; B9+ economy in pieces | H-062 to H-068 | plan table only; story written one stage ahead | one at a time |
 
-Branches only; main gets a piece only through the merge gate. Method rev 2 (`plans/retro_2026-10-10/README.md`): a Sonnet Dispatcher runs the programme, the Architect is on call by brief, every lane lands a skeleton with a shot before it fans out.
+Channels: lab = `gate-lab.lock`, Dispatcher chat `ouroboros-manifold-lab` (today `ouroboros-manifold-90`); beta = `gate-beta.lock`, Dispatcher chat `ouroboros-manifold-beta` (Westley opens it; first brief in the beta plan). Until H-059 lands both use `gate.lock`, one landing at a time. The Architect chat `rewrite-method-git-record` briefs both and rules; Westley vetoes by a word.
 
-| Plan | Doc | State (2026-10-13) | Next |
-|---|---|---|---|
-| **Plans of record** (DEC-plans-of-record-2026-10-27): the simulation lab, then the beta | `plans/2026-10-27-lab-plan-of-record.md` (status head = the lab's state); `plans/2026-10-07-visible-game-programme.md` (PAUSED; lane table = the beta's state) | lab paused for the method fixes; beta paused for the lab | the lab resumes on Westley's word after the first planned day; `plans/2026-10-27-lab-only-programme-spec.md` is the how |
-| **The visible game programme**: every approved prototype into the game, the economy play, Steam phase B; stories acted out as the acceptance | `docs/northstar/plans/2026-10-07-visible-game-programme.md` (lane table = status), spec `plans/2026-10-07-visible-game-spec.md` rev 12f on `push/vg-kp-lots-spec` | IN FLIGHT since 2026-10-07, method rev 2 since 10-10; six lanes A to F plus contracts, harness and W walk routes; about 120 pieces landed, 0 stories Seen; every lane's second look (after the method fix) is in section 3 "Now" | lanes advance on Westley's verdicts; the record batch `push/vg-rec-12e` lands, then spec rev 13 (provenance tags) |
-| Simulation viewer and the simulation lane (ROADMAP 2b step 1, started early) | `plans/2026-10-12-simviewer-plan.md`, `plans/2026-10-12-sim-lane-context.md` | SV-1 to SV-3 landed (d7d01f40); first findings pass run 2026-10-15 on the Mac: 17 ledger rows in `plans/sim_lane_2026-10-12/README.md` (mission swaps, opening relevance 0, chronicle family and chain entries missing, blank shells, 37 ALG rows untested) | Westley reads the ledger; `Q-` rows for rows 3, 10, 13; SV-0 and the pipe gaps queue behind VG-CONTRACT-E7 |
-| Space lab: layout search | `plans/2026-10-06-layout-search-spec.md` rev 4 | run 1 landed a9ee5897; chart waits on Westley (`research/layer_dynamics/README.md` open list) | run 2 after the category table; the ground lab spec |
-| Skill lab rev 2 (LAB-REV2): the measure's blind spots closed, the 2026-10-13 rulings built, the first coarse knob batch | `plans/2026-10-14-skill-lab-rev2-spec.md`, `plans/2026-10-14-skill-lab-rev2-decisions.md`; record `research/layer_dynamics/README.md` | lab pieces L1 to L6, L8, BASE and S built on the integration branch `push/labrev2-lab`; L7 (this record, the harness spec and the register rows) in review; E0, E2 and E4 (arc, cone, radius guard) wait for batch two | one lab landing with E1 and E1b and the golden re-record (`TD-LAB-REV2-golden`), the smoke run as its check, then the first coarse knob batch and the analysis artifact for Westley |
-| Walk-route fix piece (`FINDING-walk-route-replan`) | none yet | W1 planner landed 6621ef96 (600-walker tick 64 ms to 10 ms); W2 stored routes queued (save 10 to 11, contract piece) | W2 builds; the fix piece is specced after W2's report |
-| Sim lane pieces: SIM-LOGS, then the call sites, then chronicle.c rows 7 to 9, then CHRON-CONTEXT | `plans/2026-10-15-sim-logs-spec.md` rev 4 (three Sonnet audits spent); `sim_lane_2026-10-12/README.md` ledger | specced; W1, W2, W4 and the second-Fable audit route in the decision pack (B1 to B5); ring and append tests being written on the Mac 2026-10-18 | Westley's W rulings; Linux for the gate; CHRON-CONTEXT specced from the 2026-10-18 scout |
-| Transition mockup, S-108 (prototype gate) | `plans/2026-10-15-transition-mockup-spec.md`; `push/proto-transition` 5537d3cb | pass 1b built on the Mac, 27 tests green; shots in `story_reviews/westley/` | Westley's verdict (pack B14); on approval an integration lane row here (guard 4) |
-| Terrain obeys the layout, S-191 and S-189 (prototype gate; lane P rev 6 follows it) | `plans/2026-10-15-terrain-obeys-mockup-spec.md`; `push/proto-terrain-obeys` 804f666b | pass 1 built on the Mac: pads, choke and vantage produced and measured; routes not, the engine must carve them; pass 2 (`push/proto-terrain-obeys-2`) approved by Westley 2026-10-21 | pass 3 and lane P rev 6 from the approved facts; integration lane in the next row |
-| Terrain obeys the layout (prototype pass 2 approved 2026-10-21) | `plans/2026-10-15-terrain-obeys-mockup-spec.md`; lane P in `plans/2026-10-07-visible-game-spec.md` | approved, not integrated (CLAUDE.md guard 4) | integration = lane P after P3 (P4 contract, then the generator's layout_requests piece); owner Architect; position after VG-P3 |
-| Sim viewer probes and the offline runner | `scripts/simviewer/probes/` (03cd9502) | landed 2026-10-18; `offline_run.sh` runs the two sweeps, the csim suite and a lab layout-search batch unattended | results read after the offline window |
-| Steam shipping, steps 6 to 8 of section 2 | `plans/2026-10-06-steam-multiplayer-wiring-spec.md` rev 6 | phase A landed e63483f6; phase B is lane F (skeleton lobby and net first tick on main); mingw-w64 and wine64 installed 2026-10-06 | per-OS pipe build after lane F's tactical hookup |
+Held behind nothing now: the 2026-10-30 "no scene story until proof by eyes" gate is answered by H-031 pieces one and two (landed) plus the wake rule; piece three (crop to the window) is B0's.
 
-Landed and closed since the last rewrite: terrain stages 2 and 3 (008de465, 0304d821), Steam phase A (e63483f6), the programme guard pieces (reach lint, lane plays, play split, daemon verb), the harness pieces of method rev 2 (pre-gate, status check, journal, provenance lint), unit scale (53ede72), the Sonnet briefs B1 to B11 (their branches `docs/method`, `docs/military-doctrine`, `docs/era-pack-form`, `docs/map-design-pillars` wait on Westley's reading, section 3b).
-- Layered landing gate (spec 2026-10-29): HARNESS-suite-inputs-trim first free slot; gate-tiers and gate-flag as lane H units 4 and 5; sweep-timer and bisect-clerk after the stack. Status: the Dispatcher's table. Section 9 fixes: HARNESS-pregate-pins next free slot; HARNESS-gate-combined-ids after gate-flag; HARNESS-rulepins-split last.
+Not in a staircase, still owed: H-023 unit-size tuning session (Westley); the thresholds batch (`story_reviews/westley/thresholds_batch_2026-11-01.md`, six rows); H-042/H-043 findings; H-044, H-046, H-048, H-049, H-051, H-054, H-055, H-056 Spec'd harness stories; the earlier programme rows below are history until a staircase reaches them.
 
 ## 1b. Westley's log: what he pointed out, and what became of it
 
@@ -104,6 +102,8 @@ Statuses: `logged` (recorded, nobody on it) · `investigating` (someone is findi
 | W8 | 2026-10-27 | Method: "maybe we should amend the screenshot rule to a prototype/scene rule." His rule to make; nothing changes until he says so. | logged | Architect, to put to him with the W0 report: the look rule (Visible-game guard 1) would read "a scene he can pan" for motion and depth questions, a still for layout | |
 
 ## 2. The beta critical path
+
+Superseded for the build order by the beta staircase (`plans/2026-11-02-beta-staircase.md`, section 1 above): B0 to B8 assemble the game; rows 5 to 8 below (Steam) follow B8. Rows 1 to 4 are history.
 
 Before any step here resumes after the lab: section 1b, W0 first, and the Architect reminds Westley in chat (his word, 2026-10-27). Target: a private Steam beta with multiplayer and every approved prototype integrated. Westley 2026-10-07: no date; "done right than fast"; efficiency, parallelism and no drift are the measures. Steps 1 to 5 are carried by the programme; this table keeps the Steam-side steps.
 

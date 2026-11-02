@@ -1,0 +1,570 @@
+{
+  "id": "L-0060",
+  "situation": "chokepoint",
+  "landscape": "small_flat",
+  "seed": 3005,
+  "predict": "A",
+  "predict_why": "Red comes in two blocks from the north-west and south-west, 1:2 (choke-20v40-two). No win rate is given for this ratio; predict is blue only because blue holds the better position.",
+  "verdict": "",
+  "feedback": "",
+  "defender": "A",
+  "features": [
+    {
+      "kind": "chokepoint",
+      "x": 2000.0,
+      "y": 2000.0,
+      "gap": 200,
+      "radius": 600,
+      "walls": [
+        {
+          "x": 2000.0,
+          "y": 1650.0,
+          "w": 200,
+          "h": 500
+        },
+        {
+          "x": 2000.0,
+          "y": 2350.0,
+          "w": 200,
+          "h": 500
+        }
+      ]
+    }
+  ],
+  "orders": "hold:A",
+  "side_a": {
+    "headcount": 20,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 2287.82,
+        "y": 1835.01,
+        "facing": 2.4208,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2311.73,
+        "y": 1867.08,
+        "facing": 2.581,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2330.22,
+        "y": 1902.55,
+        "facing": 2.7412,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2342.82,
+        "y": 1940.51,
+        "facing": 2.9013,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2349.2,
+        "y": 1980.0,
+        "facing": 3.0615,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2349.2,
+        "y": 2020.0,
+        "facing": -3.0615,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2342.82,
+        "y": 2059.49,
+        "facing": -2.9013,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2330.22,
+        "y": 2097.45,
+        "facing": -2.7412,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2311.73,
+        "y": 2132.92,
+        "facing": -2.581,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 0
+      },
+      {
+        "role": "Warden",
+        "x": 2287.82,
+        "y": 2164.99,
+        "facing": -2.4208,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2335.83,
+        "y": 1831.22,
+        "facing": 2.5204,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2356.81,
+        "y": 1865.28,
+        "facing": 2.6585,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2372.9,
+        "y": 1901.9,
+        "facing": 2.7965,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2383.81,
+        "y": 1940.38,
+        "facing": 2.9345,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2389.31,
+        "y": 1980.0,
+        "facing": 3.0726,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2389.31,
+        "y": 2020.0,
+        "facing": -3.0726,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2383.81,
+        "y": 2059.62,
+        "facing": -2.9345,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2372.9,
+        "y": 2098.1,
+        "facing": -2.7965,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2356.81,
+        "y": 2134.72,
+        "facing": -2.6585,
+        "layer": 0,
+        "range": 300.0,
+        "arc": 1
+      },
+      {
+        "role": "Warden",
+        "x": 2335.83,
+        "y": 2168.78,
+        "facing": -2.5204,
+        "layer": 0,
+        "range": 350.0,
+        "arc": 1
+      }
+    ],
+    "arcs": [
+      {
+        "centre": [
+          2100.0,
+          2000.0
+        ],
+        "radius": 250.0,
+        "start_deg": -41.2971,
+        "end_deg": 41.2971,
+        "count": 10
+      },
+      {
+        "centre": [
+          2100.0,
+          2000.0
+        ],
+        "radius": 290.0,
+        "start_deg": -35.5911,
+        "end_deg": 35.5911,
+        "count": 10
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 40,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 1380.0,
+        "y": 1390.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1380.0,
+        "y": 1430.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1380.0,
+        "y": 1470.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1380.0,
+        "y": 1510.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1340.0,
+        "y": 1390.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1340.0,
+        "y": 1430.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1340.0,
+        "y": 1470.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1340.0,
+        "y": 1510.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1300.0,
+        "y": 1390.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1300.0,
+        "y": 1430.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1300.0,
+        "y": 1470.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1300.0,
+        "y": 1510.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1260.0,
+        "y": 1390.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1260.0,
+        "y": 1430.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1260.0,
+        "y": 1470.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1260.0,
+        "y": 1510.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1220.0,
+        "y": 1390.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1220.0,
+        "y": 1430.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1220.0,
+        "y": 1470.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1220.0,
+        "y": 1510.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1380.0,
+        "y": 2490.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1380.0,
+        "y": 2530.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1380.0,
+        "y": 2570.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1380.0,
+        "y": 2610.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1340.0,
+        "y": 2490.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1340.0,
+        "y": 2530.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1340.0,
+        "y": 2570.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1340.0,
+        "y": 2610.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1300.0,
+        "y": 2490.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1300.0,
+        "y": 2530.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1300.0,
+        "y": 2570.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1300.0,
+        "y": 2610.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1260.0,
+        "y": 2490.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1260.0,
+        "y": 2530.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1260.0,
+        "y": 2570.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1260.0,
+        "y": 2610.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1220.0,
+        "y": 2490.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1220.0,
+        "y": 2530.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 250.0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1220.0,
+        "y": 2570.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 300.0
+      },
+      {
+        "role": "Raider",
+        "x": 1220.0,
+        "y": 2610.0,
+        "facing": 0.0,
+        "layer": 0,
+        "range": 200.0
+      }
+    ]
+  },
+  "what_to_expect": "choke-20v40-two: 20 blue against 40 red, blue holds the exit of a 200 wu gap in a wall in an arc whose weapon range reaches the mouth; red must come through the gap. No win rate is given for this ratio; predict is blue only because blue holds the better position.",
+  "approve_means": "Approve means: this is a fair chokepoint: the arc is flush on the exit, the mouth is inside the arc's range, and the layout may run in the lab; blue's predicted win rate is not set (none given).",
+  "deny_means": "Deny means: the arc, the gap or the ratio does not read as a chokepoint; your note says what it needs."
+}
