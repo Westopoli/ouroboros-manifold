@@ -4,7 +4,7 @@ Spec of record: `docs/northstar/plans/2026-10-29-layered-gate-spec.md` (Westley 
 
 ## Per landing, under ten minutes
 
-Stages 0 to 3 run under `gate.lock`; stage 4 runs after it, off the lock, before the push.
+Stages 0 to 3 run under the story's channel lock, `gate-lab.lock` or `gate-beta.lock` (the story's `Channel:` Machine line, `lab` when absent; H-059): one landing in flight per channel, and the two channels gate at the same time. Stage 4 runs after it, off the gate lock, before the push. What stays shared between channels: `play.lock` (every real-display `play.sh` run and capture), `push.lock` (fetch, merge, `pre_gate` re-check and `git push HEAD:main`, in `land_push.sh`), `records.lock`, the worktree disk cap, and the sweep. `gate_runs.csv` rows are appended under `flock`, cache and candidate-result files are written to a `mktemp` name and renamed. `status_check.py --story <id> --lock <lock>` reports `STATUS channel DRIFT <id>` when the clerk took the other channel's lock.
 
 0. Base: the candidate contains the current `origin/main`, else reject in seconds.
 1. Pre-gate (also run before every push, off the lock): make, every lint, the footprint fence, noise check, the story's own tests; with any `csrc/` change, the pinned csim files. A lint or noise reject never costs a gate.
