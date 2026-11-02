@@ -10,13 +10,15 @@ checked` and exit 0:
                         `Land <id>` commit on main
   seen_without_verdict  a `Seen <id>` commit has no Verdict: trailer
   seen_without_commit   a story marked Seen has no `Seen <id>` commit
+  channel               with --story <id> --lock gate-lab.lock|gate-beta.lock (H-059): the story's `Channel:` Machine
+                        line (default lab when absent) names the other lock than the one the clerk took
 Every check looks only at history after the anchor: a story counts only if a commit after
 it changed its own row (a diff of stories.md and harness.md from the anchor to ref has an added or
 removed line starting `| <id> |`; a mention of the id inside another row does not count);
 stories marked by the old method before it are history. Anchor: the sha in the first
 sweep commit's `Base:` trailer on first-parent main, else the commit that added
 docs/method/README.md. Arguments: --repo, --base (the ref read; default origin/main, else
-HEAD). See also: scripts/method/status.sh, merge_gate.sh.
+HEAD), --story and --lock (together; the story file is read from the --repo tree). See also: scripts/method/status.sh, merge_gate.sh.
 """
 import argparse
 import datetime
@@ -85,10 +87,22 @@ def check_sweep_due(repo, ref):
     return f"STATUS sweep OK {why}", False
 
 
+def check_channel(repo, story, lock):
+    """`STATUS channel DRIFT <id>` when the story's Channel: line (default lab) names the other lock than `lock`."""
+    try:
+        text = open(f"{repo}/docs/stories/{story}.md").read()
+    except OSError:
+        return None
+    m = re.search(r"^Channel:\s*(\S+)", text, re.M)
+    return None if f"gate-{m.group(1) if m else 'lab'}.lock" == lock else f"STATUS channel DRIFT {story}"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", default=".")
     ap.add_argument("--base", default=None)
+    ap.add_argument("--story")
+    ap.add_argument("--lock", choices=["gate-lab.lock", "gate-beta.lock"])
     a = ap.parse_args()
     repo = a.repo
     ref = a.base or ("origin/main" if git(repo, "rev-parse", "-q", "--verify", "origin/main") else "HEAD")
@@ -124,6 +138,8 @@ def main():
             drift.append(f"STATUS tested_without_land DRIFT {sid}")
         if st.startswith("Seen") and sid not in seen:
             drift.append(f"STATUS seen_without_commit DRIFT {sid}")
+    if a.story and a.lock and (d := check_channel(repo, a.story, a.lock)):
+        drift.append(d)
     line, sweep_drift = check_sweep_due(repo, ref)
     if sweep_drift:
         drift.append(line)

@@ -5,6 +5,11 @@
 # `CAPTURE REJECT portal denied` and exits 2; a flat capture prints `CAPTURE REJECT uniform` and exits 3.
 set -uo pipefail
 [[ $# -eq 1 ]] || { echo "usage: screen_capture.sh <out.png>" >&2; exit 64; }
+# H-059: a capture of the real display takes play.lock unless play.sh (which holds it) called us.
+# See also: scripts/play.sh
+if [[ -z "${PLAY_LOCK_HELD:-}" ]]; then
+    mkdir -p "$HOME/Projects/om-push" && exec 8>>"$HOME/Projects/om-push/play.lock" && flock 8 || exit 1
+fi
 exec python3 - "$1" <<'PY'
 import re, shutil, subprocess, sys
 from urllib.parse import unquote, urlparse

@@ -4,7 +4,7 @@ Sonnet 5.5, the main chat while stories build. You spend the Architect's judgeme
 
 ## Loop
 
-1. Westley says go. `scripts/method/status.sh` shows what is in flight and what is Ready. Fill the slots: DRAFT-build-slots builds, one landing.
+1. Westley says go. One runner chat per channel (`lab`, `beta`), each named for its channel; each fills only its own channel's slots and has one landing in flight, and the two channels land through separate gate locks. `scripts/method/status.sh` shows what is in flight and what is Ready. Fill the slots: DRAFT-build-slots builds, one landing in your channel.
 2. For each Ready story with a committed spec and red tests: pre-flight the story file's preconditions by reading or running, tell Westley in one line, launch the Workflow (or the cascade the story names).
 3. Wait on the notification. No wakeups, no gate-log reads, no status turns, no tables. One sentence when something lands.
 4. On a builder stop: a `test-defect:` goes to a clerk with `rulebook.md`; a file outside the list or a number nobody gave goes back to the Architect as a brief under a page; a third round goes to the Architect.
