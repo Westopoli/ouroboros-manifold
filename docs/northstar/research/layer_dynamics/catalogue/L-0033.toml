@@ -4,8 +4,8 @@ landscape = "small_flat"
 seed = 1103321
 predict = "A"
 predict_why = "Side A shows a small bait and keeps two wings on either side of it, so the ambush outweighs numbers."
-verdict = ""
-feedback = ""
+verdict = "deny"
+feedback = "Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format."
 
 [side_a]
 headcount = 32

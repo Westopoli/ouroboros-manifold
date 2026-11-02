@@ -1,0 +1,533 @@
+id = "L-0040"
+situation = "objective"
+landscape = "small_flat"
+seed = 1033288
+predict = "draw"
+predict_why = "Neither side holds a positional edge in objective and the numbers are even."
+verdict = ""
+feedback = ""
+defender = "A"
+
+[side_a]
+headcount = 32
+
+[[side_a.units]]
+role = "Warden"
+x = 1900.0
+y = 2100.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1900.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1900.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1900.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1900.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1900.0
+y = 1900.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1940.0
+y = 2100.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1940.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1940.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1940.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Warden"
+x = 1940.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+range = 350.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1940.0
+y = 1900.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 2100.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 1900.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 2100.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2020.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2020.0
+y = 1900.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2060.0
+y = 2100.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2060.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2060.0
+y = 2020.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2060.0
+y = 1980.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2060.0
+y = 1940.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2060.0
+y = 1900.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2100.0
+y = 2100.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2100.0
+y = 2060.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[side_b]
+headcount = 32
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1100.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1100.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1100.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1100.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1100.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1100.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1060.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1060.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1060.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1060.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1060.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1060.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1020.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1020.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1020.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1020.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 300.0
+
+[[side_b.units]]
+role = "Raider"
+x = 1020.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 1020.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 980.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 980.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 980.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 980.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 980.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 980.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 940.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 940.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 940.0
+y = 1980.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 940.0
+y = 2020.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 940.0
+y = 2060.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 940.0
+y = 2100.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 900.0
+y = 1900.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[side_b.units]]
+role = "Raider"
+x = 900.0
+y = 1940.0
+facing = 0.0
+layer = 0
+range = 200.0
+
+[[features]]
+kind = "objective"
+x = 2000.0
+y = 2000.0
+radius = 300

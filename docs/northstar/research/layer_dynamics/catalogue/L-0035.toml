@@ -4,8 +4,8 @@ landscape = "large_flat"
 seed = 1111728
 predict = "B"
 predict_why = "Neither side holds a positional edge in open_field, so side B wins on numbers."
-verdict = ""
-feedback = ""
+verdict = "deny"
+feedback = "Batch one denied as a set (DEC-catalogue-batch1-denied-2026-10-31): no landscape geometry in the layout format."
 
 [side_a]
 headcount = 16
