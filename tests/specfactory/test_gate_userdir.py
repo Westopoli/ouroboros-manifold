@@ -465,8 +465,9 @@ def _clean_env(monkeypatch, home: Path, xdg: Path | None) -> None:
         monkeypatch.setenv("XDG_DATA_HOME", str(xdg))
 
 
-def _make_game(port: int = 47590):
-    return dc.GodotGame(qa_port=port, seed=1)
+def _make_game():
+    # See also: docs/stories/H-068.md part 3 (the old fixed qa ports sat in the ephemeral range and collided across runs)
+    return dc.GodotGame(qa_port=dc.pick_free_port(), seed=1)
 
 
 def _drop(game) -> None:
@@ -516,9 +517,9 @@ def test_4c_two_games_under_different_environments_keep_different_user_dirs(tmp_
     a.mkdir()
     b.mkdir()
     _clean_env(monkeypatch, home, a)
-    g1 = _make_game(47591)
+    g1 = _make_game()
     _clean_env(monkeypatch, home, b)
-    g2 = _make_game(47592)
+    g2 = _make_game()
     try:
         assert getattr(g1, "user_dir", None) == a / "data", "first game user_dir = %r" % (getattr(g1, "user_dir", None),)
         assert getattr(g2, "user_dir", None) == b / "data", \
@@ -544,7 +545,7 @@ def test_4d_write_privacy_flag_is_an_instance_method_under_user_dir(tmp_path, mo
         _drop(g)
     # with XDG unset the flag lands in the game's scratch xdg
     _clean_env(monkeypatch, home, None)
-    g = _make_game(47593)
+    g = _make_game()
     try:
         g.write_privacy_flag()
         assert (Path(g.scratch) / "xdg" / "data" / "privacy_accepted").is_file()
