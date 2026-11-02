@@ -163,14 +163,14 @@ def test_predict_zero_disagrees_on_the_same_seeds():
 
 
 def test_the_band_is_ten_points_not_fifteen():
-    """Story "Agree when `|rate_a - predict_rate| <= DRAFT-rate-band 0.10`" (Interfaces 6: the band is 0.10, not the earlier 0.15). 16 of 20 is 0.8: predicted 0.75 agrees (5 points),
-    predicted 0.60 does not (20 points); predicted 0.67 (13 points) does not, which is what separates 0.10 from 0.15."""
+    """Scoring: the band is the number that colours the gap, not the verdict ("`agree` no longer reads them"); the key `band` stays 0.10. 16 of 20 is 0.8 with A guessed and A the majority winner:
+    predicted 0.75 (5 points), 0.67 (13 points) and 0.60 (20 points) all agree."""
     mod = load_rate()
     fights = [fight(s, "A" if s <= 16 else "B", 1000) for s in range(1, 21)]
-    assert mod.rate(fights, 0.75)["rate_a"] == 0.8
+    assert mod.rate(fights, 0.75)["rate_a"] == 0.8 and mod.rate(fights, 0.75)["band"] == 0.10
     assert mod.rate(fights, 0.75)["agree"] is True
-    assert mod.rate(fights, 0.60)["agree"] is False
-    assert mod.rate(fights, 0.67)["agree"] is False
+    assert mod.rate(fights, 0.60)["agree"] is True
+    assert mod.rate(fights, 0.67)["agree"] is True
 
 
 def test_a_stall_seed_is_counted_and_listed_and_blocks_agree():
