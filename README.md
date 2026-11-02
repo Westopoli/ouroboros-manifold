@@ -52,6 +52,10 @@ python3 scripts/specfactory/status_check.py         # the drift check
 
 The desktop driver is `tests/qa/desktop/daemon_client.py`; story plays live in `tests/qa/desktop/plays/`. The skill lab, which measures tactical combat on the real sim, is `scripts/skilllab/` (see its `README.md`).
 
+### Open in the editor
+
+Run `scripts/setup_editor.sh` once, and again after any pull that changes `csrc/` (it rebuilds a stale pipe, fills `addons/godotsteam/` and imports the project once). Then open `project.godot` in the Godot editor and press F5. The editor, the test gate and the beta export are all Godot 4.6.3. A stale pipe is refused at the galaxy with a message that says to run the script again. `scripts/setup_editor.sh --check` lists the steps and changes nothing.
+
 ## Read next
 
 - [`docs/METHOD.md`](docs/METHOD.md): how this repo is run
