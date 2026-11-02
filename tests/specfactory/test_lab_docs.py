@@ -1,4 +1,4 @@
-# Rule pins: R-087-06@2b0850
+# Rule pins: R-087-06@45fc58
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces row L7 (LAB-REV2-L7)
 """Doc tests for the skill lab rev 2 record: README output rule (ruling 12), the retired gap-table
 rows (E3 fog and cross-layer fire land in the engine), register rows Q-008-03 / Q-008-07 (ruling 5)
@@ -147,14 +147,34 @@ def test_q_lab_03_has_rev2_note():
 
 # --- ROADMAP section 1 row ---
 
-def test_roadmap_section1_has_lab_rev2_row():
-    text = ROADMAP.read_text()
+def _roadmap_section1_problems(text: str) -> list[str]:
     m = re.search(r"^## 1\. .*?$(.*?)(?=^## |\Z)", text, re.M | re.S)
-    assert m, "ROADMAP has no section 1"
-    rows = [ln for ln in m.group(1).splitlines()
-            if ln.startswith("|") and ("LAB-REV2" in ln or "skill-lab-rev2-spec" in ln)]
-    assert rows, "ROADMAP section 1 has no LAB-REV2 row"
-    assert any("2026-10-14-skill-lab-rev2-spec.md" in r for r in rows), "row does not point at the spec"
+    if not m:
+        return ["ROADMAP has no section 1"]
+    body = m.group(1)
+    out = []
+    rows = [[c.strip() for c in ln.strip().strip("|").split("|")]
+            for ln in body.splitlines() if ln.startswith("|")]
+    if not any(len(r) >= 3 and r[0] == "lab" and "H-0" in r[2] for r in rows):
+        out.append("ROADMAP section 1 has no row with first cell 'lab' and an H-0 story id")
+    if "2026-10-31-lab-staircase.md" not in body:
+        out.append("ROADMAP section 1 intro does not name 2026-10-31-lab-staircase.md")
+    return out
+
+
+# Test-defect: ROADMAP section 1 rewritten as the two staircases by Westley's order of 2026-11-02;
+# the lab rev 2 row it pinned is history (DEC-beta-staircase-2026-11-02)
+def test_roadmap_section1_has_lab_row():
+    problems = _roadmap_section1_problems(ROADMAP.read_text())
+    assert not problems, problems
+
+
+def test_control_roadmap_section1_without_lab_row_fails():
+    planted = ("## 1. Now building\n\nplans/2026-10-31-lab-staircase.md\n\n"
+               "| Staircase | Stage | Story |\n|---|---|---|\n| beta | B0 | H-028 |\n\n## 2. Next\n")
+    assert _roadmap_section1_problems(planted), "planted text without a lab row must fail"
+    good = planted.replace("| beta | B0 | H-028 |", "| lab | 1 | H-040 |")
+    assert not _roadmap_section1_problems(good)
 
 
 # --- pieces.toml invariants ---
@@ -396,12 +416,9 @@ def test_q_lab_01_marked_superseded_by_q_lab_03():
 
 # --- ROADMAP rows that the elimination ruling and L6 make stale ---
 
-def test_roadmap_t14_row_follows_q_lab_03():
-    rows = [ln for ln in ROADMAP.read_text().splitlines() if ln.startswith("| T14 |")]
-    assert rows, "ROADMAP has no T14 row"
-    assert "not yet recorded" not in rows[0], "T14 still says outcome classes are not yet recorded"
-    assert "Q-LAB-03" in rows[0], "T14 does not cite Q-LAB-03 (elimination only, cap as defect)"
-    assert "Q-LAB-01" not in rows[0], "T14 still cites Q-LAB-01 (superseded by Q-LAB-03; decision 39 item 6)"
+# test_roadmap_t14_row_follows_q_lab_03 retired with ROADMAP section 3b (Westley 2026-11-02);
+# parity: test_q_lab_03_has_rev2_note.
+# Test-defect: retired with ROADMAP section 3b (Westley 2026-11-02); parity test_q_lab_03_has_rev2_note
 
 
 def test_roadmap_highground_instrument_is_not_listed_as_live():

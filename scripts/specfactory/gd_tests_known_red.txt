@@ -25,3 +25,6 @@ tests/csim/test_PP_target_policy_per_side.py::test_A196_A99_guard_positive_contr
 tests/csim/test_PP_target_policy_per_side.py::test_A196_policy_0_explicit_equals_the_recorded_A99_hashes :: TD-VG-E-26
 tests/specfactory/test_method_weekly.py::test_6_settings_has_the_session_start_hook_line_for_metrics_last :: METHOD-rev3-mm-1c-landing (HARNESS-mm-6 halted behind HARNESS-context-guard-2; entry leaves when mm-6 attaches)
 tests/csim/test_F2_nearest_hostile_search.py::test_F2_search_does_not_distance_test_same_faction_candidates :: thresholds_batch_2026-11-01 row 7, DEC-f2-budget-known-red-2026-11-02
+tests/csim/test_E11_S085_long_enough_to_think.py::test_R_085_02_fight_lasts_150_to_200 :: thresholds_batch_2026-11-01 row 5, DEC-s085-known-red-2026-11-02
+tests/skilllab/integration/test_speed.py::test_fight_planted_slowdown_control_an_engine_that_sleeps_per_tick_fails_the_1_5_second_mark :: thresholds_batch_2026-11-01 row 8, DEC-planted-slowdown-known-red-2026-11-02
+tests/transport/test_pipe_u_observable.py::test_eliminate_force_objective_tracks_enemy_hp :: thresholds_batch_2026-11-01 row 9, DEC-engage-effect-known-red-2026-11-02

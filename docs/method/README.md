@@ -23,14 +23,16 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 2. **Spec.** The Architect writes one page, `docs/stories/<id>.md`, and commits it on the branch: `<id> spec: <what>`.
 3. **Verification.** A test writer, never the builder, commits red tests with the failing line pasted and one green positive control: `<id> tests: <n> red, <m> control`.
 4. **Build.** One builder on one worktree builds until the story's tests are green, runs `pre_gate.sh`, pushes, stops. A round is one build and its gate; after the third reject the Architect hears of it.
-5. **Verify.** A clerk merges main, runs the layered gate under `gate.lock` (`gate.md`), under ten minutes.
+5. **Verify.** A clerk merges main, runs the layered gate under the story's channel lock, `gate-lab.lock` or `gate-beta.lock` (`gate.md`), under ten minutes.
 6. **Land.** The clerk opens the merged game with `scripts/play.sh` and reaches the story's scene; a game that does not open is a REJECT whatever the tests said. The merge commit carries the trailers. Westley's verdict is a `Seen <id>` commit.
 
 ## Numbers
 
 | Name | Value | Owner |
 |---|---|---|
-| DRAFT-build-slots | 3 builds in flight, 1 landing | Westley |
+| DRAFT-build-slots | 3 builds in flight, 1 landing per channel | Westley |
+| DRAFT-wt-slots-per-channel | 10 worktree slots per channel (`lab`, `beta`) | Architect, H-059 |
+| Locks (`~/Projects/om-push/`) | `gate-lab.lock`, `gate-beta.lock` (stages 0 to 3, one per channel); `push.lock` (land_push.sh); `play.lock` (real-display runs); `records.lock` (records pushes) | Architect, H-059 |
 | Build plus tests share of weekly model spend | at least 50% | Westley, 2026-10-29 |
 | Fable share of weekly model spend | DRAFT 25% | method rev 3 G04 |
 | Story size cap | 1,000 implementation lines | Westley, 2026-10-30 |
@@ -43,7 +45,7 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 | DRAFT-pregate-pins-timeout-s | 600 s for the pre-gate csrc pins step (build plus pinned csim files) | Westley, 2026-10-29 layered-gate spec section 9 |
 | DRAFT-token-report-tolerance | 3 points on shares, 5% on calls and tokens, for the 2026-10-29 fixture | Architect, DEC-token-report-day-2026-10-30 |
 | Agent context stop | 120k per builder, test writer or clerk; 60k for the on-call architect agent | method rev 2 |
-| Architect context | compaction at 400k is the only context rule; the guard hook is removed (DEC-context-guard-off-2026-11-01) | Westley, 2026-11-01 |
+| Architect context | compaction at 400k is the only context rule; a turn past 400k without a compaction (more than one lone turn before it) is drift in `method_check.py`; the guard hook is removed (DEC-context-guard-off-2026-11-01) | Westley, 2026-11-01 |
 
 ## Status
 

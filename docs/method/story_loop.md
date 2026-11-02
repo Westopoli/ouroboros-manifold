@@ -32,7 +32,7 @@ One builder, one worktree from `wt.py new`, reads `builder.md` and the story fil
 
 ## 5. Verify
 
-The clerk merges `origin/main` into the branch, runs `pre_gate.sh`, takes `~/Projects/om-push/gate.lock`, runs the layered gate (`gate.md`): the flag layer, the story's tests, the selected fast tier, under ten minutes. The full suite runs as the sweep on main off the lock; a red sweep bisects with `git bisect run --first-parent` on the failing test and reverts the culprit landing.
+The clerk merges `origin/main` into the branch, runs `pre_gate.sh`, takes the story's channel lock (`~/Projects/om-push/gate-lab.lock` or `gate-beta.lock`), runs the layered gate (`gate.md`): the flag layer, the story's tests, the selected fast tier, under ten minutes. The full suite runs as the sweep on main off the lock; a red sweep bisects with `git bisect run --first-parent` on the failing test and reverts the culprit landing.
 
 ## 6. Land
 
@@ -69,4 +69,4 @@ Playing main is the same script with no arguments. The 30B plays main nightly wi
 
 ## Slots and waits
 
-DRAFT-build-slots: three builds in flight, one landing. Waits are `flock -w`; no chat polls a gate or schedules a wakeup. A builder pushes and stops; a fresh clerk lands. Every agent reports once, at the end, in its card's schema, and stops past 120k context.
+DRAFT-build-slots: three builds in flight, one landing per channel. Waits are `flock -w`; no chat polls a gate or schedules a wakeup. A builder pushes and stops; a fresh clerk lands. Every agent reports once, at the end, in its card's schema, and stops past 120k context.

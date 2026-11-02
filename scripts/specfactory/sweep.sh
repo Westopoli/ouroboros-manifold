@@ -1,6 +1,6 @@
 #!/bin/bash
 # Slow-tier sweep of origin/main: worktree, merge_gate.sh --tier slow over the Land ids since the last PASS/BASE row,
-# sweeps.md row + empty `Sweep` commit pushed under records.lock; an early reject (no result file) still writes its row, `early <stage>` in the last column. Takes no gate.lock (a sweep and a landing gate run at once).
+# sweeps.md row + empty `Sweep` commit pushed under records.lock; an early reject (no result file) still writes its row, `early <stage>` in the last column. Takes no gate lock (a sweep and a landing gate run at once).
 # See also: docs/stories/H-014.md, docs/northstar/plans/2026-10-29-layered-gate-spec.md sections 4, 8 B2 and B3.
 # See also: docs/stories/H-034.md (row on early reject), docs/stories/H-021.md.
 set -u

@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-02 (Architect, Westley's order): section 1 is the two staircases on two gate channels; sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
+Last updated: 2026-11-02 (Architect, Westley's order; beta B0 built and proved, awaiting his verdict): section 1 is the two staircases on two gate channels; sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -9,7 +9,7 @@ Rules for this file:
 - Rewrite, never append. History is `git log`.
 - A row points to a plan doc and never restates it. No design text here.
 - A plan enters "Queued" only when it has a doc path. An idea without a doc goes in "Not planned yet".
-- Whoever starts, finishes or reorders a plan updates this file in the same commit.
+- Whoever starts, finishes or reorders a plan updates this file in the same commit; whoever starts or ends a plan also edits `docs/method/reading_list.toml` in the same commit as the ROADMAP row.
 - File ownership stays in `plans/push/pieces.toml`. Open questions stay in `ambiguity_register.md`. Rulings stay in `plans/2026-10-01-architect-rulings-2.md` and, for the programme, in the spec's `[W ...]` tags.
 - Lane status lives in one place, the lane table of `plans/2026-10-07-visible-game-programme.md`; this file never copies it.
 
@@ -26,16 +26,16 @@ Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a ti
 | lab | 3 the ground pushes back | H-063 | Ready 2026-11-02; tests first | his verdicts on the chokepoint and slope fights |
 | lab | 4 sight; 5 facing, arcs, bands; 6 the scan; 7 objectives, hazards, time, space | | plan only | one at a time |
 | harness | two gate channels | H-059 | Ready; lands after H-057 through the single gate | the beta Dispatcher chat starts |
-| beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2, H-031 piece three) | Ready, beta channel; proof needs the monitors (wake rule) | he runs `om-beta` |
-| beta | B1 the approved screens | H-060 | Ready | after B0 Seen |
+| beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2) | Built and proved 2026-11-02 (build 1c2cce20 published, `om-beta` installed, PROOF OK); waits on his verdict | he runs `om-beta`, reaches the main menu, says Seen |
+| beta | B1 the approved screens | H-060 | Ready; tests in flight, builds after B0 Seen | after B0 Seen |
 | beta | B2 the layout, no units, five kinds | H-061 | Ready | after B1 Seen |
 | beta | B3 landscape engine; B4 places; B5 one role in groups; B6 vision; B7 layers (land); B8 all roles, real fights; B9+ economy in pieces | ids when written (H-062 is the plan re-read check) | plan table only; story written one stage ahead | one at a time |
 
 Channels: lab = `gate-lab.lock`, Dispatcher chat `ouroboros-manifold-lab` (today `ouroboros-manifold-90`); beta = `gate-beta.lock`, Dispatcher chat `ouroboros-manifold-beta` (Westley opens it; first brief in the beta plan). Until H-059 lands both use `gate.lock`, one landing at a time. The Architect chat `rewrite-method-git-record` briefs both and rules; Westley vetoes by a word.
 
-Held behind nothing now: the 2026-10-30 "no scene story until proof by eyes" gate is answered by H-031 pieces one and two (landed) plus the wake rule; piece three (crop to the window) is B0's.
+Held behind nothing now: the 2026-10-30 "no scene story until proof by eyes" gate is answered by H-031 pieces one and two (landed) plus the wake rule; piece three (crop to the window) is a Spec'd harness improvement, not a B0 precondition.
 
-Not in a staircase, still owed: H-023 unit-size tuning session (Westley); the thresholds batch (`story_reviews/westley/thresholds_batch_2026-11-01.md`, six rows); H-042/H-043 findings; H-044, H-046, H-048, H-049, H-051, H-054, H-055, H-056 Spec'd harness stories; the earlier programme rows below are history until a staircase reaches them.
+Not in a staircase, still owed: H-023 unit-size tuning session (Westley); the thresholds batch (`story_reviews/westley/thresholds_batch_2026-11-01.md`, nine rows); H-042/H-043 findings; H-044, H-046, H-048, H-049, H-051, H-054, H-055, H-056 Spec'd harness stories; the earlier programme rows below are history until a staircase reaches them.
 
 ## 1b. Westley's log: what he pointed out, and what became of it
 

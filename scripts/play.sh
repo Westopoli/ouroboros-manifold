@@ -96,7 +96,11 @@ done
 wait "$ipid"; rc=$?
 if [[ $rc -ne 0 ]]; then tail -20 "$implog"; echo "play.sh: Godot import failed (exit $rc)" >&2; exit 1; fi
 
-# 5. Launch on the real display
+# 5. Launch on the real display. H-059: one real-display run at a time across both gate channels; play.lock is held
+# until this script exits (the game itself is started with fd 8 closed so it never keeps the lock).
+# See also: scripts/specfactory/screen_capture.sh
+mkdir -p "$HOME/Projects/om-push" && exec 8>>"$HOME/Projects/om-push/play.lock" && flock 8 || exit 1
+export PLAY_LOCK_HELD=1
 port=""
 if [[ $check -eq 1 ]]; then
   port=$(python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1])')
@@ -105,7 +109,7 @@ fi
 log="$tree/.play.log"
 [[ $check -eq 1 ]] && mkdir -p "$tree/xdg"
 pflag=(); [[ $wayland -eq 1 ]] && pflag=(--print-fps)
-setsid nohup ${envp:+env "${envp% }"} "$GODOT" --path "$tree" $dflags "${pflag[@]}" ${scene:+"$scene"} -- "${extra[@]}" >"$log" 2>&1 &
+setsid nohup ${envp:+env "${envp% }"} "$GODOT" --path "$tree" $dflags "${pflag[@]}" ${scene:+"$scene"} -- "${extra[@]}" >"$log" 2>&1 8>&- &
 gpid=$!
 
 # qa_scene <port>: the scene the QA daemon reports, empty when it does not answer.

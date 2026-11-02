@@ -2,7 +2,7 @@
 # scripts/specfactory/pre_gate.sh <candidate_worktree> <base_ref> <piece_ids> [<test path> ...]
 #
 # Method rev 2, the two-tier gate: the cheap pre-gate a builder runs before the
-# push and a landing clerk runs before taking gate.lock, so a full gate is never
+# push and a landing clerk runs before taking a gate lock, so a full gate is never
 # spent on noise or lint rejects. Prints one line per step,
 # `PRE_GATE <step> OK|REJECT|WARN <detail>`, and ends `PRE_GATE verdict OK`
 # (exit 0) or `PRE_GATE verdict REJECT` (exit 1). Exit 2: usage.
@@ -11,7 +11,7 @@
 # (3) tests (each given .py / pytest id or .gd file), (4) pins (rule pins of the
 # diff's tests); H-017 adds `PRE_GATE pins OK skipped|OK|REJECT` after the tests step. H-006: no owner-row or provenance step; `PRE_GATE story OK <n> paths` names the story's Tests paths,
 # which run as the piece's tests when none are given.
-# Never takes ~/Projects/om-push/gate.lock, never pushes, never writes in <wt> (but the csrc pins step builds pipe/ouroboros_pipe there).
+# Never takes a gate lock (gate-lab.lock, gate-beta.lock), never pushes, never writes in <wt> (but the csrc pins step builds pipe/ouroboros_pipe there).
 #
 # See also: merge_gate.sh --revert
 set -uo pipefail
