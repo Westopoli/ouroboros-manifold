@@ -2,6 +2,28 @@
 
 One word per picture: approve, reject, or a short note. Answer in the chat or in `answers.md`. When a verdict is recorded, the picture and its row are removed from here; past verdicts live in `verdicts_2026-10.md`, the rulings in `decisions.md`.
 
+Everything Westley has to look at, judge or decide lives in this directory and nowhere else (2026-11-02): proposals, verdict logs, threshold batches, pictures and proof captures. Chat context files and plans for the Dispatchers stay in `docs/northstar/plans/`.
+
+## What is here (newest first, by the day each was added; names are relative to this directory)
+
+- `beta_stage0/`: B0: the standing beta build (`beta-proof.png`).
+- `crossings.md`: Lines-crossing log: why each fight goes the way it does (Westley's reasoning, per picture).
+- `2026-11-02-piecemeal-then-whole-proposal.md`: Piecemeal, then whole: a draft proposal for amending the lab documents.
+- `H-025-r3-L-0055-*.png` to `H-025-r3-L-0083-*.png`: round three layout pictures (rows in the Round three batch 1 section below).
+- `thresholds_batch_2026-11-01.md`: Nine red tests that are yours to rule (batch of 2026-11-01, rows 5 to 9 added 2026-11-02).
+- `arena_stage1/`: stage 1 flat-field fight pictures and fight files, with `index.html` and `results.md` (rows in the table below).
+- `H-025-r2-L-0037-*.png` to `H-025-r2-L-0048-*.png`: round two layout pictures (rows in the table below).
+- `display_debug_2026-10-31.md`: Display fault: context for the debugging chat (2026-10-31).
+- `H-023-unit-scale-scene.png`: the unit-scale comparison stage at true game scale (row in the table below).
+- `method_audit_2026-10-27.md`: The method tests, audited.
+- `verdicts_2026-10.md`: Verdicts already given (moved from README.md on 2026-10-26).
+- `method_retro_2026-10-24.md`: Is the method the bottleneck? Retro 2026-10-24, for Westley.
+- `wt_reap_dryrun_2026-10-24.md`: Worktree reap dry run, second run, 2026-10-24.
+- `decisions.md`: Architect decisions (Westley may veto).
+- `README.md`: this page, Shots waiting on Westley.
+
+## Pictures waiting on you
+
 Name form: `<lane>-<story>-<what it shows>.png`. One row per picture.
 
 | Picture | Story | What it shows | What to look for | Approve means / reject means |

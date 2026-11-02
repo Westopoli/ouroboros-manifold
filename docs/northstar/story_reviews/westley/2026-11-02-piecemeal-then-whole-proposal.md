@@ -11,7 +11,7 @@ After the stage 2 pictures, 2026-11-02: "only testing *all* the variables might 
 - `docs/northstar/plans/2026-10-27-lab-plan-of-record.md` section 1: the lab is finished when the crossings are documented for every knob family and every skill (landscape, formation, layers, enemy position, unit-type matchup): the regions where the skilled smaller force wins, the crossing points as headcount ratio against the knob. Every run in that plan is a whole fight: all five skills' plays are variations of one full fight with everything on; a skill is measured against its matched control arm, not against the other skills taken alone.
 - `docs/northstar/research/layer_dynamics/README.md` section 2 (principle: number of units firing decides; "with everything identical the larger force wins" is the control), section 3 (five skills), section 4 (the measure: break-even headcount, margin, units firing, and two predictions per fight, count-only and type-weighted, both read from the opening window of a fight that ran whole), section 5 (how results are read: one page, a diagram per notable).
 - `docs/northstar/plans/2026-10-31-lab-staircase.md` (the staircase): adds one factor per stage. This is incremental, and each stage's fights run with all factors added so far. Nothing keeps the earlier stage's result as a column beside the later one, and nothing tests a role interaction on its own: stage 2 puts all six roles on one field in mixed layouts. Stage 6 (the scan) scales headcounts of complete layouts only.
-- `docs/northstar/research/layer_dynamics/heuristics.md` and `crossings.md`: his percentages per layout kind and his per-picture reasoning (new today).
+- `docs/northstar/research/layer_dynamics/heuristics.md` and `docs/northstar/story_reviews/westley/crossings.md`: his percentages per layout kind and his per-picture reasoning (new today).
 
 ## 3. The gap
 
@@ -30,7 +30,7 @@ For each configuration (an era's roster values, plus a layout and orders when on
 | P: factor pairs (selected) | two factors together where a stage suspects an interaction (arc plus choke) | whether two factors that fail alone cross together |
 | W: whole | everything on, the layout as authored | the result the lab reports today |
 
-Reporting, one table per configuration, in `crossings.md` (its columns grow by `parts` and `whole`): rows are the arms, columns are the winner, the margin, the firing counts, and a flag column. Four readings, each named in words on the page: all pass; the parts pass and the whole fails; a part fails and the whole crosses (Westley's case); all fail. Flags are signals, never verdicts (his L-0104 words); a configuration is invalid only by a rule he states (the triangle at 2:1).
+Reporting, one table per configuration, in `docs/northstar/story_reviews/westley/crossings.md` (its columns grow by `parts` and `whole`): rows are the arms, columns are the winner, the margin, the firing counts, and a flag column. Four readings, each named in words on the page: all pass; the parts pass and the whole fails; a part fails and the whole crosses (Westley's case); all fail. Flags are signals, never verdicts (his L-0104 words); a configuration is invalid only by a rule he states (the triangle at 2:1).
 
 Era configuration check (the L-0102 rule made mechanical): arm R run over a roster file prints, per role pair, PASS or FLAG against the triangle; a roster with a FLAG on a triangle edge is "invalid: the lines are not crossing" and goes back to him, not to a release.
 
@@ -42,7 +42,7 @@ What stays as it is: fights end by elimination or a flagged stall; seeds are det
 2. `docs/northstar/research/layer_dynamics/README.md`: section 2 gains a bullet "Parts and whole" (a configuration is judged by its parts and by its whole, and a part may fail where the whole crosses); section 4 gains "The decomposition arms" with the table above and a pointer to `decomposition.md`; section 5 gains the interaction table as a page form; section 12 gains the open questions of section 7 below.
 3. New `docs/northstar/research/layer_dynamics/decomposition.md`: the arm definitions, the triangle invariants in his words, the flag rule ("signal, not conclusion"), the report table.
 4. `docs/northstar/plans/2026-10-31-lab-staircase.md`: every stage's layout block gains "Arms": the stage's layouts also run with the stage's new factor off (the stage 3 control strip of H-063 is the pattern, generalised), and stage 6's scan runs on arms F and W as well as complete layouts; "Done when" for each stage adds that the page shows the with and without strips.
-5. `docs/northstar/research/layer_dynamics/crossings.md`: columns `parts` and `whole`.
+5. `docs/northstar/story_reviews/westley/crossings.md`: columns `parts` and `whole`.
 6. Story template (`docs/method/`, lab stage stories H-053, H-063 and after): a `Arms:` line per layout naming the arms the page must show.
 7. A story for arm R and the era check (the cheapest first deliverable, section 6), and a later one for arm F as the staircase factors exist.
 
