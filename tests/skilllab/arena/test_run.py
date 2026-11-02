@@ -31,6 +31,7 @@ The runner module is imported through no top-level import, so while it is missin
 control tests (test_control_*) still run green."""
 import ast
 import importlib.util
+import json
 import math
 import subprocess
 import sys
@@ -53,7 +54,8 @@ TICK_RATE = 20
 PITCH = 40.0   # H-025 round two block pitch (DRAFT-block-pitch); R2 min spacing is 30
 
 # Imports the story allows the runner (scripts.* only; the standard library is checked separately).
-ALLOWED = {"scripts.skilllab.engine", "scripts.skilllab.fight", "scripts.skilllab.catalogue.produce", "scripts.skilllab.arena.snapshot"}
+ALLOWED = {"scripts.skilllab.engine", "scripts.skilllab.fight", "scripts.skilllab.catalogue.produce", "scripts.skilllab.arena.snapshot",
+           "scripts.skilllab.arena.rate"}   # rate: H-053 Interfaces 1, run.py --seeds calls rate.rate
 
 # The trim report's "Not needed for that answer" paragraph names these as prose; each is mapped here to the module that holds it (mapping by the Architect's
 # words, one comment per row). The ALLOWED check above is the strict one and covers all of these; this list only gives the failure a name.
@@ -571,7 +573,7 @@ def test_run_wipe_fixture_ends_by_wipe_well_under_the_cap(tmp_path):
     res = snapshot.read(fight_file(tmp_path / "out", "L-9102"))["result"]
     assert res["end"] == "wipe" and res["stall"] is False and res["capped"] is False
     assert res["ticks"] < snapshot.CAP_SECONDS * TICK_RATE // 2 and min(res["survivors"]) == 0
-    assert res["winner"] in ("A", "B", "draw")
+    assert res["winner"] in ("A", "B", "draw", "none")   # "none": both sides wiped on the same tick (H-053 audit item 2)
     assert not any("STALL" in line for line in _stdout_lines(proc))
 
 
