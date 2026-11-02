@@ -1009,7 +1009,7 @@ static double om_tac_leash(const om_world *w, const om_unit_row *u) {
     if (p != 0.0) return p;
     /* Switch 0 (the pre-H-057 baseline arm) keeps the old literal 200 wu, so its goldens stand (H-057, DEC-leash-param-2026-11-01).
      * See also: OM_ATTACK_MOVE_LEASH_DIST is now 0.0 in om_constants.h */
-    if (!om_tac_pursue(w)) return 200.0;
+    if (!om_tac_pursue(w)) return OM_ATTACK_MOVE_LEASH_BASELINE;
     prof = om_get_profile((om_world *)w, u->unit_type);
     r = prof ? prof->sensor_radius : 0.0;
     return r > u->attack_range ? r : u->attack_range;
