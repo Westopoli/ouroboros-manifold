@@ -67,7 +67,7 @@ def _fight(tmp_path: Path, gap: float = 1000.0, winner: str = "A", end: str = "w
     doc["frames"] = frames
     doc["ranges"] = dict(RANGES)
     doc["result"].update({"winner": "draw" if cap else winner, "survivors": frames[-1]["alive"], "ticks": 200, "capped": cap, "predict": predict,
-                          "agree": winner == "A", "end": "silence" if stall else ("cap" if cap else end), "stall": stall})
+                          "agree": ("draw" if cap else winner) == predict, "end": "silence" if stall else ("cap" if cap else end), "stall": stall})
     assert snapshot.validate(doc) == [], snapshot.validate(doc)
     return _write_fight(tmp_path / (name + ".fight.json"), doc), doc
 
