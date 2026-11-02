@@ -41,7 +41,7 @@ Rewritten by whoever moves a stage, in the same commit (ROADMAP.md section 1 car
 
 | Stage | State 2026-11-02 |
 |---|---|
-| B0 | H-028 Ready on the beta channel; waits on H-031 piece three and H-038 part 2 (lab channel landings in flight) |
-| B1 | H-060 Ready |
+| B0 | Built and proved: H-038 part 2 (d914f2e0) and H-028 (93815871) landed; build 1c2cce20 published at `~/Projects/om-push/beta/current`, `om-beta` and the desktop entry installed, `PROOF OK`; waits only on Westley's verdict (Seen). H-031 piece three is not a precondition and stays Spec'd |
+| B1 | H-060 Ready; tests round 2 in flight on `s/H-060-beta-b1-approved-screens`; builds after B0 Seen |
 | B2 | H-061 Ready; builds after B1 is Seen |
 | B3 to B9 | Spec'd in this table only; story files written one stage ahead |
