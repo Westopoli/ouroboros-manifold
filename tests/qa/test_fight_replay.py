@@ -357,8 +357,8 @@ def test_control_v2_fixture_documents_are_well_formed_json(tmp_path):
         assert back["frames"][-1]["alive"] == back["result"]["survivors"]
 
 
-@pytest.mark.parametrize("end,stall", [("wipe", False), ("silence", True), ("cap", False)])
-def test_hud_prints_the_end_word_on_the_last_frame_and_stall_only_for_a_stall(end, stall, tmp_path, monkeypatch):
+@pytest.mark.parametrize("end,stall,label", [("wipe", False, "end: A wins (wipe)"), ("silence", True, "end: stall (silence)"), ("cap", False, "end: cap")])
+def test_hud_prints_the_end_word_on_the_last_frame_and_stall_only_for_a_stall(end, stall, label, tmp_path, monkeypatch):
     """H-040 "Orders and fight end": "The replay HUD prints `end: wipe|silence|cap` and `STALL` on the last frame." Frame 0 shows neither `end:` nor `STALL`; stepping to
     the last frame shows a Label text containing `end: <end>`, and a Label text containing `STALL` if and only if the fight is a stall (end silence with both sides alive)."""
     path, doc = _v2_fight(end, stall, tmp_path)
@@ -373,7 +373,7 @@ def test_hud_prints_the_end_word_on_the_last_frame_and_stall_only_for_a_stall(en
         _key(g, "Space")
         st = _state(g, lambda q: q["frame"] == 2, timeout=15.0, label="frame 2")
         lines = _hud_lines(st)
-        assert any("end: %s" % end in t for t in lines), "no HUD text with 'end: %s' among Label texts %s" % (end, lines)
+        assert any(label in t for t in lines), "no HUD text with %r among Label texts %s" % (label, lines)
         assert any("STALL" in t for t in lines) is stall, "STALL expected %s among Label texts %s" % (stall, lines)
     finally:
         g.stop()
