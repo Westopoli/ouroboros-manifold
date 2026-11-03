@@ -4,6 +4,22 @@ One word per picture: approve, reject, or a short note. Answer in the chat; each
 
 Everything Westley has to look at, judge or decide lives in this directory and nowhere else (2026-11-02): proposals, verdict logs, threshold batches, pictures and proof captures. Chat context files and plans for the Dispatchers stay in `docs/northstar/plans/`.
 
+## Waiting on you (the one list; the Architect keeps it current)
+
+Everything that waits on a word, a look or a command of yours is in this table and nowhere else (brought up to date 2026-11-02). Seven items. None blocks a Dispatcher except item 5, which is what closes B0. The per-picture tables further down carry the detail of the pictures.
+
+| Item | What it is, in player terms | What it blocks | Where to look |
+|---|---|---|---|
+| 1. Round three layout pictures (29) | Twenty-nine pictures of the chokepoint, vantage, flank route, city and trap situations (L-0055 to L-0083). Each asks: is this a fair instance of the situation? Approve or deny. | Your verdicts decide which layouts enter the catalogue: blocks catalogue acceptance and layout authoring. The stage 3 pictures reuse L-0055 and L-0073. | The rows in the section "Round three batch 1" of this file; pictures `H-025-r3-L-0055-*.png` to `H-025-r3-L-0083-*.png` |
+| 2. L-0048 open field (round two) | The one round two picture you have not ruled on: 32 blue against 16 red on open ground, no feature by design. You asked what approving it means; the answer (a fair instance of the situation, no redraw) is in its row. Approve or deny. | Sending that layout to the lab. | `ruled.md` (row L-0048, answered-awaiting-him); `H-025-r2-L-0048-open_field.png` and its row in "Pictures waiting on you" |
+| 3. Stage 1 pictures: tidy-up and the L-0054 re-run | Two things. Stage 1 is Seen, so: your word to remove the frame folders and fight files of L-0049 to L-0053 (about 3.7 MB of frames and 0.9 MB of fight files) and their rows. And a verdict on the current L-0054 picture set (128 against 128): it ends with A winning, 9 survivors, at tick 8954, where the scratch preview you approved ended with B winning at tick 8167. Is it still the fight you approved? | Tidying this directory. The L-0054 record run on main follows the H-057 landing. | `arena_stage1/index.html`, `arena_stage1/results.md`; the L-0054 row in "Pictures waiting on you" |
+| 4. Thresholds batch (ten rows) | Ten numbers or tolerances that are yours. Rows 5 to 8 are red tests on the known-red list, gone red because units now engage on sight. Row 9 (also on the known-red list) asks whether engage-on-sight stays as it is or is tuned. Row 10 is a new tolerance: how close a drawn unit must be to the radius you tuned (draft: 5 percent). | Nothing now: the sweep only rejects new reds. | `thresholds_batch_2026-11-01.md` |
+| 5. B0 editor check | After H-067 lands: follow `beta_stage0/editor-setup.md` in your own checkout, open the project in your editor, press F5 and walk the chain (privacy screen, menu, galaxy, a mission, Deploy, a 2D match, end of mission). Also confirm in a real editor F5 that the `[editor]` `run/main_run_args` line makes F5 start beta mode (its key spelling is unverified; fallback: start the editor with `OM_BETA=1`). | Closes the B0 editor route. B1 does not wait for it. | `beta_stage0/editor-setup.md` (H-067 writes it; it is not on main yet); the `run/main_run_args` line arrives with the last commit of H-060 (B1) |
+| 6. Two things on your machine | Stop the ollama service for good: `sudo systemctl disable --now ollama` (its model was unloaded 2026-11-02 and a client may reload it, which starved the gate of GPU memory). A nightly Agora digest job can reload the ollama model; ask the Architect for the options. And delete the dead untracked `Answers.md` in your checkout (`docs/northstar/story_reviews/westley/Answers.md`; its verdicts are recorded). | Nothing; the first protects the slow gate's GPU runs. | Your machine |
+| 7. Four old documents | Four documents in this directory that may be archived on your word: `display_debug_2026-10-31.md`, `method_audit_2026-10-27.md`, `method_retro_2026-10-24.md`, `wt_reap_dryrun_2026-10-24.md`. | Nothing. | The files named, in this directory |
+
+Not waiting on you, although it may look like it: the piecemeal-then-whole plan (answered, built after the lab; `2026-11-02-piecemeal-then-whole-proposal.md` is its history); the unit scale values (recorded; H-041 builds them); the stage 3 pictures (they come after the H-063 landing, each with its own row here).
+
 ## What is here (newest first, by the day each was added; names are relative to this directory)
 
 - `ruled.md`: the verdict ledger: every verdict of Westley's, one row per picture or layout id, his words verbatim with the chat date, any owed action, and the git command that brings back a removed picture.
@@ -39,15 +55,6 @@ Name form: `<lane>-<story>-<what it shows>.png`. One row per picture.
 | `arena_stage1/index.html` (L-0054 row; fight `arena_stage1/L-0054-s1.fight.json`, frames `arena_stage1/L-0054-s1/`) | H-057 | Preview: engine H-057 at 3d371e7a, not landed; pre-scale-lock; L-0054 seed 1; re-run on main after the landing for the record. Stage 1 flat-field fight L-0054, 128:128, predicted draw. FIGHT winner A, survivors 9:0, 8954 ticks, end wipe, NOT a stall; predicted draw (disagree, thin margin: even grind 94:94...47:47 to tick 5600, then a small melee, 9 blue left). LOOK OK L-0054 (2026-11-02). What to expect: the two 128-strong blobs meet at the centre, grind down evenly, then a small melee decides it; no standoff at the end. | Do the two blobs now fight to a finish, and is the result plausible? | Approve means: the two blobs now fight to a finish and the result is plausible. Deny means: they still stand off, or the finish looks wrong for a reason you name. |
 
 To see motion live rather than in a still (your rule of 2026-10-22): ask the chat for the run line; it is two commands.
-
-## Pages waiting on you
-
-| Page | What it asks |
-|---|---|
-| `method_audit_2026-10-27.md` | Eight yes-or-no questions and 24 thresholds from the audit of the method tests |
-| `wt_reap_dryrun_2026-10-24.md` | Second dry run of the worktree clean-up: your word to remove the listed trees. |
-| `method_retro_2026-10-24.md` | The method investigation: which of the drop, keep and try lists you take. Superseded in part by the rev 3 plan you approved on 2026-10-26; the thresholds come to you after the audit. |
-| `thresholds_batch_2026-11-01.md` | H-037 | Red tests whose numbers are yours, and one new tolerance: the batch now has ten rows (rows 5 to 10 added 2026-11-02, see the batch file's own header); each bisected, nothing edited. | After stage 1 is Seen. | Say keep, move (number), or retire per row; row 10 is a draft tolerance: keep, tighten or loosen. |
 
 ## Round three batch 1
 
