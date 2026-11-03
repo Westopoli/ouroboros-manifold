@@ -101,7 +101,9 @@ def test_control_fixture_and_sleep_child(E):
     p = subprocess.Popen(["sleep", "300"], start_new_session=True)
     E.pids.append(p.pid)
     assert _alive(p.pid) and _ticks(p.pid).isdigit()
-    assert str(E.push).startswith(str(E.push.parent)) and "om-push" not in str(E.push)
+    live = (Path.home() / "Projects" / "om-push").resolve()
+    assert str(E.push).startswith(str(E.push.parent)) and E.push.resolve() != live
+    assert not str(E.push.resolve()).startswith(str((live / "procs").resolve()))
 
 
 def test_start_detach_writes_record(E):
