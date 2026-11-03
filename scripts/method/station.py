@@ -5,11 +5,12 @@ Every 2 s it re-reads the registry (docs/method/agents.toml, or $OM_AGENTS_TOML)
 and no flag yet, touches mail/<agent>/flag when an unread has a class in the agent's `wake` (default block, ask,
 westley), or the oldest unread is older than `linger_min` (DRAFT-mail-linger 20), or the unread count is at least
 `batch` (DRAFT-mail-batch 5). Each raise is one line of mail/station.log. It never reads text and never moves mail.
-`--once` runs one loop and exits. No model is called. See also: mail.py, docs/stories/H-077.md.
+Once a minute it also runs `proc.py reap` (H-081; not under `--once`). `--once` runs one loop and exits. No model is called. See also: mail.py, docs/stories/H-077.md.
 """
 import argparse
 import datetime
 import os
+import subprocess
 import sys
 import time
 
@@ -53,11 +54,29 @@ def loop():
                 log.write(f"{mail.now()} flag {name} {why} unread={len(unread)}\n")
 
 
+def reap():
+    """Once a minute: proc.py reap (H-081). A failure goes to station.log and never stops the loop."""
+    try:
+        r = subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.realpath(__file__)), "proc.py"), "reap"],
+                           capture_output=True, text=True, timeout=120)
+        bad = r.returncode != 0
+        why = f"exit {r.returncode} {r.stderr.strip()[:200]}"
+    except Exception as ex:
+        bad, why = True, f"{type(ex).__name__}: {ex}"
+    if bad:
+        with open(os.path.join(mail.mail_root(), "station.log"), "a") as log:
+            log.write(f"{mail.now()} reap FAIL {why}\n")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true")
     a = ap.parse_args()
+    last = time.monotonic() - 60
     while True:
+        if not a.once and time.monotonic() - last >= 60:
+            last = time.monotonic()
+            reap()
         try:
             loop()
         except Exception as ex:  # a bad registry edit must not stop the daemon
