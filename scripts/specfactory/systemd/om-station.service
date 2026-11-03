@@ -1,0 +1,13 @@
+# See also: scripts/method/station.py, docs/method/communication.md, docs/stories/H-077.md
+[Unit]
+Description=Mail station: raises the wake flag of a chat mailbox (no model is called)
+
+[Service]
+Type=simple
+Restart=on-failure
+WorkingDirectory=/home/westopoli/Projects/om-push/main
+Environment=PATH=/home/westopoli/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/python3 /home/westopoli/Projects/om-push/main/scripts/method/station.py
+
+[Install]
+WantedBy=default.target

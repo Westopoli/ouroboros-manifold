@@ -65,7 +65,7 @@ This table is the register for every `DRAFT-` named in this directory. Status is
 - `architect.md`, `builder.md`, `test_writer.md`, `clerk.md`, `runner.md`, `westley.md`: role cards.
 - `rulebook.md`: the test-defect procedure.
 - `gate.md`: the layered gate in brief; spec of record `docs/northstar/plans/2026-10-29-layered-gate-spec.md`.
-- `communication.md`: mail, station, wake rule, gate queue, process register (H-077 to H-081); registry `agents.toml` once H-077 lands.
+- `communication.md`: mail, station, wake rule, gate queue, process register (H-077 to H-081); registry `agents.toml`.
 - `harness.md`: the `H-` stories.
 - `history.md`: what was retired and where it is.
 - Decisions: `docs/northstar/story_reviews/westley/decisions.md`, unchanged.
