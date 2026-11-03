@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 """H-079 one-workflow-per-landing: land_story.js with a stub agent().
 
 Story H-079: "A story goes from Ready to landed on one launch; the runner hears
