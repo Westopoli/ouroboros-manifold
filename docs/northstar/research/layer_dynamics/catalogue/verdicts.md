@@ -74,3 +74,4 @@ The other 24 batch-one layouts (denied as a set, same defect):
 | L-0045 | redraw | Westley 2026-11-01: "slope: spread out blue in an arc, blue expected to win 60% of the time." |
 | L-0046 | redraw | Westley 2026-11-01: "city: Place blue inside the city, and many more buildings. Blue should have an arc on red when its forces enter the city, blue expected to win 75% of the time." |
 | L-0044 | out | Westley 2026-11-01: "hazard anchor out for now" |
+| L-0048 | out | Westley 2026-11-02: no stated purpose, every layout must measure something; the role mixes were drawn at random (`produce.py` `_layout2`, `rng.choice(MIXES)`), so headcount and roles are confounded; retired from the lab (his words: `ruled.md`). |
