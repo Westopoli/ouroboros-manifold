@@ -73,6 +73,10 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-076 | "Each layout should measure something, not just be randomly placed." | Spec'd (harness; lab channel; after the stack, H-068, H-071, H-073, H-074; the validation strictness is Westley's) | `docs/stories/H-076.md` |
 | H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | none yet |
+| H-077 | "ERROR: Condition "!FileAccess::exists(path)" is true. Returning: ERR_FILE_NOT_FOUND" | Spec'd | `nightly/2026-11-02.log` |
+| H-078 | "ERROR: Condition "!FileAccess::exists(path)" is true. Returning: ERR_FILE_NOT_FOUND" | Spec'd | `nightly/2026-11-02.log` |
+| H-079 | "ERROR: GDExtension dynamic library not found: 'res://addons/godotsteam/godotsteam.gdextension'." | Spec'd | `nightly/2026-11-02.log` |
+| H-080 | "ERROR: Error loading extension: 'res://addons/godotsteam/godotsteam.gdextension'." | Spec'd | `nightly/2026-11-02.log` |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
 
