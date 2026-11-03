@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 # spec: docs/stories/H-077.md (mail-and-station), Tests 10; rule 3 of docs/method/communication.md
 """H-077 .claude/hooks/mail-guard.sh. Rule: "No chat is pushed a message." PreToolUse hook on `SendMessage`: allows
 `to` equal to `main` or a sub-agent id (`^a[0-9a-f]{8,}`), denies the rest with

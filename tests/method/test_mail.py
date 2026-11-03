@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 # spec: docs/stories/H-077.md (mail-and-station), Tests 1 to 8; rule 2 of docs/method/communication.md
 """H-077 scripts/method/mail.py. Rule: "Mailboxes exist only for the named chats in the registry
 `docs/method/agents.toml`." Every test uses a temp OM_PUSH_DIR and a fixture registry (tests/method/mailfix.py).

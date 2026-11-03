@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 # spec: docs/stories/H-077.md (mail-and-station), Tests 9; rule 4 of docs/method/communication.md
 """H-077 scripts/method/station.py. Rule: "The station decides every flag; no model does." Unread age is set by writing
 old `ts` values into the inbox (the story's "fake clock" without a new interface); `--once` runs one loop.

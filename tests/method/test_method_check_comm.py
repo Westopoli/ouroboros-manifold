@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 # spec: docs/stories/H-077.md (mail-and-station), Tests 11; rules 1 and 3 of docs/method/communication.md
 """H-077 method_check.py rules comm_send, comm_state_checks, comm_mail_first, and the `wakeups` / `polling` changes.
 Rules: "No chat is pushed a message" (comm_send: a `SendMessage` whose `to` is not `main` or a sub-agent id);
