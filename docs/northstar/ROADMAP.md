@@ -27,7 +27,7 @@ Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a ti
 | lab | 3 the ground pushes back | H-063 | built, tests green; in the stack | land, then four fights for his verdicts |
 | lab | 4 sight; 5 facing, arcs, bands; 6 the scan; 7 objectives, hazards, time, space | | plan only | one at a time |
 | lab | after the lab: piecemeal, then whole | none yet (plan in `research/layer_dynamics/decomposition.md`) | Decided 2026-11-02 as a plan; built after the lab is finished | specified then |
-| harness | two gate channels | H-059 | landed 2026-11-02 (e23c303f) with H-062 (plan re-read check) and H-066 (qa port self-connect fix); Spec'd after the stack: H-068 (Ready, shell port waiters), H-071 (review apply words), H-073 (GPU preflight), H-074 (gate scratch on disk) | H-068, H-071, H-073, H-074 after the stack lands |
+| harness | two gate channels | H-059 | landed 2026-11-02 (e23c303f) with H-062 (plan re-read check) and H-066 (qa port self-connect fix); Ready, landing after the stack, H-068 first: H-068 (shell port waiters), H-071 (review apply words), H-073 (GPU preflight), H-074 (gate scratch on disk) | H-068, H-071, H-073, H-074 after the stack lands |
 | beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2), H-067 | Seen 2026-11-02 for om-beta; the editor route (H-067) built, landing queued | his editor check (`story_reviews/westley/beta_stage0/editor-setup.md`) |
 | beta | B1 the approved screens | H-060 | build done (17 tests green), landing queued on the beta gate | his verdicts on the B1 pictures |
 | beta | unit scale | H-041 (+H-023 Seen 2026-11-02) | contract built, consumers after; Westley's per-role sizes in `data/unit_scale.toml` | consumers, then the sizes in the beta |
