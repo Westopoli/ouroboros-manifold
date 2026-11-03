@@ -33,6 +33,8 @@ ruled: true|false (when ruling), trailer or brief path
 worktrees: done <sha>
 ```
 
+StructuredOutput fields when launched by `land_story`: `{ok: bool, landed: string, summary: string, played: string, worktrees: string}`.
+
 ## Look review (2026-10-31)
 
 Before copying any picture or scene of the landing to `docs/northstar/story_reviews/westley/`, spawn one fresh read-only `engineer` (Sonnet 5.5, no sub-agents) with the story's Scene section and the picture paths; it opens each and reports `LOOK OK` or `LOOK REJECT <what is missing>` per picture. A reject is a landing REJECT for that story (back to the builder, with the reviewer's line); OK pictures are copied with the reviewer's line in the README row. The README row also carries one sentence "Approve means: ..." and one "Deny means: ..." specific to that picture (DEC-picture-approval-doc-2026-11-01); a picture without them is not sent. The Architect does not open pictures (DEC-architect-views-shots-2026-10-31, amended by Westley).
