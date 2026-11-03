@@ -126,11 +126,15 @@ def test_t1_unset_tmpdir_becomes_push_root_tmp(fx, name):
 
 
 def test_t1_merge_gate_prints_gate_tmpdir_line_with_push_root(fx):
-    """H-074 Change 1: "`merge_gate.sh` prints the value in force ... as its first log line, `GATE tmpdir <path>`"."""
+    """H-074 Change 1: "`merge_gate.sh` prints the value in force ... as its first log line, `GATE tmpdir <path>`".  Position ruled: right after `GATE tier <name>` (docs/stories/H-074.md:25)."""
     r, _ = _merge_gate(fx, None)
     assert _gate_tmpdir_lines(r) == [f"GATE tmpdir {fx['expect']}"], f"stdout:\n{r.stdout}"
     gate = [ln for ln in r.stdout.splitlines() if ln.startswith("GATE ")]
-    assert gate[0].startswith("GATE tmpdir "), f"GATE tmpdir not the first GATE line: {gate[:2]}"  # see Q-1 in report
+    ti = next(i for i, ln in enumerate(gate) if ln.startswith("GATE tmpdir "))
+    tiers = [i for i, ln in enumerate(gate) if ln.startswith("GATE tier ")]
+    bases = [i for i, ln in enumerate(gate) if ln.startswith("GATE base")]
+    assert all(t < ti for t in tiers), f"GATE tmpdir must come after GATE tier: {gate[:3]}"
+    assert all(ti < b for b in bases), f"GATE tmpdir must come before GATE base: {gate[:4]}"
 
 
 # ---- test 2: caller TMPDIR on real disk is kept -----------------------------------------------------------------------
