@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 """H-081 tests (kill-guard hook). Story: docs/stories/H-081.md, Interfaces: "denies a command whose segments start
 with `kill`, `pkill`, `killall`, or `fuser -k`, with `denied: processes are killed through scripts/method/proc.py
 reap (docs/stories/H-081.md)`; allows `proc.py reap`."
