@@ -1,0 +1,13 @@
+# See also: scripts/specfactory/gate_queue.py, docs/stories/H-080.md
+[Unit]
+Description=Gate queue: one worker per channel gates tickets in order and pauses on a red sweep (no model is called)
+
+[Service]
+Type=simple
+Restart=on-failure
+WorkingDirectory=/home/westopoli/Projects/om-push/main
+Environment=PATH=/home/westopoli/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/python3 /home/westopoli/Projects/om-push/main/scripts/specfactory/gate_queue.py
+
+[Install]
+WantedBy=default.target

@@ -79,6 +79,9 @@ if [ -s "$csv" ]; then
     awk -F, 'NR==1{for(i=1;i<=NF;i++)c[$i]=i} END{if(c["wakeups_per_landing"])print "wakeups_per_landing " $c["wakeups_per_landing"] "  messages_per_landing " $c["messages_per_landing"]}' "$csv" | ind
 else echo "no report yet" | ind; fi
 
+echo "GATE QUEUE"
+python3 "$(dirname "$0")/../specfactory/gate_queue.py" status 2>/dev/null | ind
+
 echo "LAST PLAYED"
 git -C "$HOME/Projects/om-push/main" rev-parse HEAD 2>/dev/null | ind
 exit 0
