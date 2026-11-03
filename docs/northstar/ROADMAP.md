@@ -19,7 +19,7 @@ Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a ti
 
 | Staircase | Stage | Story | State (2026-11-02) | Next |
 |---|---|---|---|---|
-| Westley | waiting on you | story_reviews/westley/README.md (section Waiting on you) | six items, none blocks a Dispatcher except the B0 editor check for closing B0 | your answers |
+| Westley | waiting on you | story_reviews/westley/README.md (section Waiting on you) | seven items, none blocks a Dispatcher except the B0 editor check for closing B0 and the locked-screen question (four landings wait at their play proof) | your answers |
 | lab | 1 two blobs on a flat field | H-040 (+H-039, H-052) | Seen 2026-11-01; built; lands in the stack gate after H-057 (stack of H-040, H-053 and H-063 gated once, three merges: DEC-stack-gating-2026-11-02) | land; L-0054 record run on main |
 | lab | engine rule from stage 1: engage on sight, per-type leash | H-057 | built, re-pins and goldens done; slow gate passed every stage except lane_plays, which failed on GPU memory held by a local ollama model (unloaded 2026-11-02 evening); rerun next | land |
 | lab | 2 roles, ranges, win rates over seeds | H-053 | Seen 2026-11-02 (per-picture verdicts in `docs/northstar/story_reviews/westley/crossings.md`); stacked behind stage 1 | land; fixed pictures go under `research/layer_dynamics/arena/stage2/` (not his directory) |
