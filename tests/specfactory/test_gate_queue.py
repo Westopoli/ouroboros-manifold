@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 # spec: docs/stories/H-080.md (gate-queue; DEC-gate-queue-2026-11-03)
 """H-080: a landing hands its candidate to the gate queue and comes back for the verdict; the gate works its own
 queue and a red main pauses it instead of failing everyone behind it.
