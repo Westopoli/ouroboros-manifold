@@ -29,3 +29,5 @@ summary: the story's test lines verbatim, the PRE_GATE line
 red_ids: []
 stop_reason: none | test-defect: ... | file outside list: ... | number nobody gave: ...
 ```
+
+StructuredOutput fields when launched by `land_story`: `{ok: bool, pushed_sha: string, blocked: bool, reason: string, test_defect: string}`.
