@@ -24,6 +24,19 @@ Stacked stories (2026-11-02, DEC-stack-gating-2026-11-02): when finished stories
 - Baseline: before the first build after the method lands, and after every change to the gate, a sweep on `origin/main` records `Base: <sha>`; every later sweep and bisect measures from it.
 - Bisect: a red sweep runs `git bisect run --first-parent` on the failing test between the last green sweep and head, reverts the culprit landing (`Revert Land <id>`, trailer `Finding:`), and the story returns to Ready. Main is green when the last sweep is green.
 
+## Records pushes
+
+A records-only push (docs, the ledger, the register, decisions, story review pages, a `Seen <id>` commit; no code, no tests) takes `~/Projects/om-push/records.lock` and never waits behind a gate (DEC-records-lock-2026-10-23). It merges the branch into main's tip, never main into the branch (DEC-records-push-first-parent-2026-11-02): `status_check.py` reads the first-parent subjects of main (`Land`, `Seen`), and a branch built by merging `origin/main` into it and then pushed puts first-parent main on the branch, so the commits pushed just before drop off the line it reads (a `Seen H-023` did, and showed `seen_without_commit DRIFT`).
+
+Under the lock, from a detached HEAD so first-parent stays main's own history:
+
+1. `git fetch -q origin`, then `git switch -q --detach origin/main`.
+2. `git merge --no-ff --no-edit <the records branch>`. When origin/main's tip is on the branch's own first-parent line (cut from it, nothing landed since), skip the merge and push the branch tip: a fast-forward is fine.
+3. `python3 scripts/specfactory/status_check.py --base HEAD | tail -4`. Without `--base` it reads `origin/main`, which does not hold the push yet. Any DRIFT stops the push.
+4. `git push -q origin HEAD:main`. Rejected as non-fast-forward means another records push landed: fetch and redo from step 1.
+
+A `Seen <id>` commit is made empty (`git commit --allow-empty`, subject exactly `Seen <id>`, `Verdict:` trailer) directly on the then-current origin/main tip in the same way, under the lock, and pushed at once; it is never made inside a branch that is merged later.
+
 ## Flag source
 
 The flag is the `Flag:` line of the story file and the `Flag:` trailer of the merge message; the gate reads neither pieces.toml nor an owner table (H-006).

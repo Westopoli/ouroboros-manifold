@@ -49,7 +49,7 @@ Gate: 412s fast
 Flag: sim
 ```
 
-The same merge flips the story to Tested in `stories.md`. Westley's verdict is a one-line commit `Seen <id>` with trailer `Verdict: approve <his words>`, or `Verdict: reject <his words>`, after which the story returns to Ready with the reason written into its story file.
+The same merge flips the story to Tested in `stories.md`. Westley's verdict is a one-line empty commit `Seen <id>`, made directly on the then-current `origin/main` tip (`gate.md`, Records pushes), with trailer `Verdict: approve <his words>`, or `Verdict: reject <his words>`, after which the story returns to Ready with the reason written into its story file.
 
 ## Scenes, not screenshots
 
