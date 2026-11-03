@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 """H-081 tests (proc.py register and reaper). Story: docs/stories/H-081.md, "Every process the harness starts is
 written down with who started it and why, and a finished one is cleaned up by the evidence, not by asking me."
 
