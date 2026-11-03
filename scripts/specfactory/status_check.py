@@ -22,9 +22,12 @@ HEAD), --story and --lock (together; the story file is read from the --repo tree
 """
 import argparse
 import datetime
+import json
+import os
 import re
 import subprocess
 import sys
+import tomllib
 
 SWEEPS = "docs/northstar/plans/push/sweeps.md"
 # DRAFT-slow-tier-batch, DRAFT-slow-tier-hours, DRAFT-slow-tier-drift-mult (tests/specfactory/test_gate_tiers.py:75).
@@ -87,6 +90,35 @@ def check_sweep_due(repo, ref):
     return f"STATUS sweep OK {why}", False
 
 
+def check_mail(repo):
+    """H-077: `STATUS mail DRIFT <agent> <class> unread <min>m` for a `block` or `ask` unread past DRAFT-mail-stale (30 min),
+    `STATUS mail DRIFT sender <name>` for a `from` that is neither a registry name nor a sub-agent id, else `STATUS mail OK <n> unread`."""
+    try:
+        with open(os.environ.get("OM_AGENTS_TOML") or f"{repo}/docs/method/agents.toml", "rb") as f:
+            names = tomllib.load(f)
+    except OSError:
+        return [], False  # a tree without the registry (before H-077) has no mailboxes to check
+    root = os.path.join(os.environ.get("OM_PUSH_DIR") or os.path.expanduser("~/Projects/om-push"), "mail")
+    now = datetime.datetime.now(datetime.timezone.utc)
+    drift, n, senders = [], 0, []
+    for agent in names:
+        try:
+            msgs = [json.loads(x) for x in open(f"{root}/{agent}/inbox.jsonl") if x.strip()]
+        except (OSError, ValueError):
+            continue
+        n += len(msgs)
+        for m in msgs:
+            t = datetime.datetime.strptime(m["ts"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+            age = int((now - t).total_seconds() / 60)
+            if m["class"] in ("block", "ask") and age > 30:
+                drift.append(f"STATUS mail DRIFT {agent} {m['class']} unread {age}m")
+            frm = str(m["from"])
+            if frm not in names and not re.match(r"a[0-9a-f]{8,}", frm) and frm not in senders:
+                senders.append(frm)
+                drift.append(f"STATUS mail DRIFT sender {frm}")
+    return drift or [f"STATUS mail OK {n} unread"], bool(drift)
+
+
 def check_channel(repo, story, lock):
     """`STATUS channel DRIFT <id>` when the story's Channel: line (default lab) names the other lock than `lock`."""
     try:
@@ -143,8 +175,13 @@ def main():
     line, sweep_drift = check_sweep_due(repo, ref)
     if sweep_drift:
         drift.append(line)
+    mail_lines, mail_drift = check_mail(repo)
+    if mail_drift:
+        drift += mail_lines
     for d in drift:
         print(d)
+    if mail_lines and not mail_drift:
+        print(mail_lines[0])
     if not sweep_drift:
         print(line)
     if drift:

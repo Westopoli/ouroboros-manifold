@@ -9,14 +9,18 @@ import argparse
 import collections
 import datetime as dt
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-PROJ = ".claude/projects/-home-westopoli-Projects-ouroboros-manifold"
+PROJ = ".claude/projects"
+DIR_GLOB = "-home-westopoli-Projects-*"
+OWN_DIRS = ("-home-westopoli-Projects-ouroboros-manifold", "-home-westopoli-Projects-om-push")
+OWN_CWDS = ("/home/westopoli/Projects/ouroboros-manifold", "/home/westopoli/Projects/om-push")
 REPO = Path(__file__).resolve().parents[2]
 HEADER = ("window,calls,weighted_tokens,builder_share,tests_share,build_plus_tests_share,"
-          "fable_share,landings,seen,tokens_per_landed_line")
+          "fable_share,landings,seen,tokens_per_landed_line,wakeups_per_landing,messages_per_landing,dirs")
 # First matching rule wins; substrings of the sidechain's first user line (story table).
 RULES = (("builder", ("builder.md", "subagent_type: doer")), ("tests", ("test_writer.md",)),
          ("clerk", ("clerk.md", "landing", "records")))
@@ -58,9 +62,77 @@ def window_of(args):
     return "%d-W%02d" % (y, w), lambda x: tuple(x.isocalendar()[:2]) == (y, w)
 
 
-def tally(root, inwin, verbose):
+def under(cwd, prefixes):
+    return any(cwd == p or cwd.startswith(p + "/") for p in prefixes)
+
+
+def file_cwd_state(path):
+    """H-078: 'own' when any record's cwd is under this project, 'other' when records carry only other cwds,
+    None when no record carries a cwd."""
+    state = None
+    with open(path, errors="replace") as f:
+        for line in f:
+            if '"cwd"' not in line:
+                continue
+            try:
+                cwd = json.loads(line).get("cwd")
+            except ValueError:
+                continue
+            if not isinstance(cwd, str):
+                continue
+            if under(cwd, OWN_CWDS):
+                return "own"
+            state = "other"
+    return state
+
+
+def project_files(base):
+    """H-078: (files to tally, dirs scanned, dirs active, dirs skipped) over every session directory of the project.
+    A file with no cwd record is kept when its directory name is this project's; a directory that cannot be read, or
+    whose cwd cannot be determined, is skipped."""
+    files, scanned, active, skipped = [], 0, 0, 0
+    for d in sorted(base.glob(DIR_GLOB)):
+        if not d.is_dir():
+            continue
+        scanned += 1
+        own_name = d.name.startswith(OWN_DIRS)
+        try:
+            found = sorted(d.glob("**/*.jsonl"))
+            os.listdir(d)
+            states = [(f, file_cwd_state(f)) for f in found]
+        except OSError:
+            skipped += 1
+            continue
+        kept = [f for f, st in states if st == "own" or (st is None and own_name)]
+        if states and not kept and all(st is None for _, st in states):
+            skipped += 1
+        if kept:
+            active += 1
+            files.extend(kept)
+    return files, scanned, active, skipped
+
+
+def mail_messages(inwin):
+    """H-078: lines of every om-push mail inbox.jsonl and delivered.jsonl whose ts falls in the window."""
+    n = 0
+    for path in sorted((Path.home() / "Projects/om-push/mail").glob("*/*.jsonl")):
+        if path.name not in ("inbox.jsonl", "delivered.jsonl"):
+            continue
+        with open(path, errors="replace") as f:
+            for line in f:
+                try:
+                    day = dt.datetime.fromisoformat(json.loads(line)["ts"].replace("Z", "+00:00")).astimezone(
+                        dt.timezone.utc).date()
+                except (ValueError, KeyError, TypeError, AttributeError):
+                    continue
+                n += bool(inwin(day))
+    return n
+
+
+def tally(files, inwin, verbose):
     seen, tok, calls, others = set(), collections.Counter(), 0, collections.Counter()
-    for path in sorted(root.glob("**/*.jsonl")):
+    wakes = 0
+    for path in files:
         side = "subagents" in path.parts
         cls = sidechain_class(first_prompt(path)) if side else None
         with open(path, errors="replace") as f:
@@ -94,7 +166,8 @@ def tally(root, inwin, verbose):
                     others[first_prompt(path)[:80].replace("\n", " ") if side else m.get("model", "")] += 1
                 tok[c] += w
                 calls += 1
-    return calls, tok, others
+                wakes += not side
+    return calls, tok, others, wakes
 
 
 def git_counts(inwin):
@@ -125,23 +198,30 @@ def main():
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
     label, inwin = window_of(args)
-    calls, tok, others = tally(Path.home() / PROJ, inwin, args.verbose)
+    files, scanned, active, skipped = project_files(Path.home() / PROJ)
+    calls, tok, others, wakes = tally(files, inwin, args.verbose)
     total = sum(tok.values())
     pct = lambda n: 100.0 * n / total if total else 0.0
     b, t = pct(tok["builder"]), pct(tok["tests"])
     fa = pct(tok["fable"])
     land, seen, lines = git_counts(inwin)
     tpl = "%.0f" % (total / lines) if lines else ""
-    row = "%s,%d,%d,%.1f,%.1f,%.1f,%.1f,%d,%d,%s" % (label, calls, round(total), b, t, b + t, fa,
-                                                    land, seen, tpl)
+    wpl = "%.2f" % (wakes / land) if land else ""
+    mpl = "%.2f" % (mail_messages(inwin) / land) if land else ""
+    row = "%s,%d,%d,%.1f,%.1f,%.1f,%.1f,%d,%d,%s,%s,%s,%d/%d/%d" % (
+        label, calls, round(total), b, t, b + t, fa, land, seen, tpl, wpl, mpl, scanned, active, skipped)
     out = Path.home() / "Projects/om-push/metrics" / (label + ".csv")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(HEADER + "\n" + row + "\n")
     print(row)
+    print("TOKENS dirs scanned %d active %d skipped %d" % (scanned, active, skipped))
+    if skipped:
+        print("STATUS tokens DRIFT skipped %d" % skipped)
     print("build+tests %.1f%% %s (50%%)   fable %.1f%% %s (25%%)" % (
         b + t, "OK" if b + t >= 50 else "UNDER", fa, "OK" if fa >= 25 else "UNDER"))
     for k, n in others.most_common(20):
         print("other: %5d  %s" % (n, k))
+    return 1 if skipped else 0
 
 
 if __name__ == "__main__":

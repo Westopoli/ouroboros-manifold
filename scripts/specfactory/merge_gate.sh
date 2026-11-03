@@ -117,6 +117,8 @@ gate_row() {
     if [[ "$label" == *[,\"]* ]]; then label="\"${label//\"/\"\"}\""; fi
     row="$(date +%F),$label,$(git -C "$CANDIDATE" rev-parse --abbrev-ref HEAD 2>/dev/null),$base,$cand,${MERGE_GATE_QUEUE_S:-0},$((STAGE_SUM_DS / 10)).$((STAGE_SUM_DS % 10)),$rc,$ROW_STAGES,$ROW_CAUSES,$p,$t,$d,$l"
     echo "GATE row $row"
+    # H-078: a toy run never appends to the default log. See also: tests/specfactory/gate_toy_root.py gate_env
+    if [[ "${MERGE_GATE_TOY:-}" == 1 && -z "${MERGE_GATE_RUNS_CSV:-}" ]]; then echo "GATE row SKIP toy"; return 0; fi
     local csv="${MERGE_GATE_RUNS_CSV:-${HOME:-$SCRATCH_ROOT}/Projects/om-push/gate_runs.csv}"
     mkdir -p "$(dirname "$csv")"
     # H-059: two gates (lab and beta) append at once; the row goes in under flock on the csv.
