@@ -8,6 +8,7 @@ Expected win rate: 0.98     (the better side's probability, your heuristic; see 
 Orders: both_same_point     (both_same_point, hold:A or hold:B; see docs/stories/H-052.md)
 Orders point: midpoint      (midpoint, or x y in world units: the exact spot both sides attack-move to)
 Why: Equal roles and equal counts, but A starts closer to the centre and engages first.
+Measures: Whether starting closer to the centre decides a fight between equal forces: A winning means the closer start is worth the walk it saves, B winning or a draw means it is not.   (required, one sentence: what this situation tests and what each result would mean; no Measures, no layout, H-076)
 
 ## Sides
 
