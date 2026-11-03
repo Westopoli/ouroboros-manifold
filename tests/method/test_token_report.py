@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 """H-003 tests. Story: docs/stories/H-003.md, "Every night the token report writes
 the four numbers for the week, and the share of spend that went into building and
 testing is the first of them."
