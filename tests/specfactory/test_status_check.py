@@ -609,3 +609,78 @@ def test_h050_own_row_status_edit_counts(tmp_path):
     _h050_repo(tmp_path, "| S-114 | x | Ready | none |\n", "| S-114 | x | Seen | none |\n")
     res = _h050_run(tmp_path)
     assert "STATUS seen_without_commit DRIFT S-114" in res.stdout.splitlines(), res.stdout
+
+
+# ---------------------------------------------------------------- H-077: check `mail`
+# H-077 (docs/stories/H-077.md, Tests 12): "an unread `block` aged 31 minutes prints `STATUS mail DRIFT`; aged 5 minutes
+# prints `STATUS mail OK 1 unread`; an unknown `from` prints the sender DRIFT." DRAFT-mail-stale is 30 minutes
+# (README Numbers). Interfaces: `STATUS mail DRIFT <agent> <class> unread <min>m`, `STATUS mail DRIFT sender <name>`,
+# else `STATUS mail OK <n> unread`; exit 1 on DRIFT. UNSTATED INTERFACE (reported): the mail root is
+# $OM_PUSH_DIR/mail and the registry is $OM_AGENTS_TOML (tests/method/mailfix.py).
+# Controls (green today): the fixture builder and the unread-line writer produce a parseable inbox.
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "method"))
+from mailfix import lines as _mail_lines, make_env as _mail_env, put_mail as _put_mail  # noqa: E402
+
+
+def _mail_run(tmp_path, env):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _h050_repo(repo, "| S-1 | x | Ready | none |\n", "| S-1 | x | Ready | edited |\n")
+    return subprocess.run([sys.executable, str(SCRIPT), "--repo", str(repo), "--base", "main"],
+                          capture_output=True, text=True, cwd=repo, timeout=60, env=env)
+
+
+def _mail_lines_of(res):
+    return [ln for ln in res.stdout.splitlines() if ln.startswith("STATUS mail ")]
+
+
+def test_h077_control_unread_fixture_is_parseable(tmp_path):
+    env, root = _mail_env(tmp_path)
+    _put_mail(root, "architect", cls="block", minutes_ago=31)
+    got = _mail_lines(root / "architect" / "inbox.jsonl")
+    assert len(got) == 1 and got[0]["class"] == "block" and got[0]["read"] is None
+
+
+def test_h077_unread_block_aged_31_minutes_is_drift_and_exit_1(tmp_path):
+    env, root = _mail_env(tmp_path)
+    _put_mail(root, "architect", cls="block", minutes_ago=31)
+    res = _mail_run(tmp_path, env)
+    hits = _mail_lines_of(res)
+    assert len(hits) == 1 and hits[0].startswith("STATUS mail DRIFT architect block unread 3"), res.stdout
+    assert res.returncode == 1, res.stdout
+
+
+def test_h077_unread_ask_aged_31_minutes_is_drift(tmp_path):
+    env, root = _mail_env(tmp_path)
+    _put_mail(root, "architect", cls="ask", minutes_ago=31)
+    hits = _mail_lines_of(_mail_run(tmp_path, env))
+    assert hits and hits[0].startswith("STATUS mail DRIFT architect ask unread"), hits
+
+
+def test_h077_unread_block_aged_5_minutes_is_ok_one_unread(tmp_path):
+    env, root = _mail_env(tmp_path)
+    _put_mail(root, "architect", cls="block", minutes_ago=5)
+    res = _mail_run(tmp_path, env)
+    assert _mail_lines_of(res) == ["STATUS mail OK 1 unread"], res.stdout
+
+
+def test_h077_old_info_is_not_stale(tmp_path):
+    """Rule: only an unread `block` or `ask` goes stale."""
+    env, root = _mail_env(tmp_path)
+    _put_mail(root, "architect", cls="info", minutes_ago=90)
+    assert _mail_lines_of(_mail_run(tmp_path, env)) == ["STATUS mail OK 1 unread"]
+
+
+def test_h077_unknown_sender_is_drift(tmp_path):
+    env, root = _mail_env(tmp_path)
+    _put_mail(root, "architect", cls="info", frm="some-stranger")
+    hits = _mail_lines_of(_mail_run(tmp_path, env))
+    assert "STATUS mail DRIFT sender some-stranger" in hits, hits
+
+
+def test_h077_registry_name_and_sub_agent_id_senders_are_not_drift(tmp_path):
+    env, root = _mail_env(tmp_path)
+    _put_mail(root, "architect", cls="info", frm="runner-lab")
+    _put_mail(root, "architect", cls="info", frm="a93eaf778770b83ac")
+    assert _mail_lines_of(_mail_run(tmp_path, env)) == ["STATUS mail OK 2 unread"]

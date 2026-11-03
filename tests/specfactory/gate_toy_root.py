@@ -42,6 +42,7 @@ def gate_env(tmp_path, pieces, **extra):
     placeholders.write_text("")
     return {"HOME": str(tmp_path / "home"), "MERGE_GATE_PIECES": str(pieces),
             "MERGE_GATE_PLACEHOLDERS": str(placeholders), "MERGE_GATE_RUNS_CSV": str(tmp_path / "runs.csv"),
+            "MERGE_GATE_TOY": "1",
             "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin", **extra}
 
 

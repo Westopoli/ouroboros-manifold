@@ -485,3 +485,38 @@ def test_h035_control_desktop_id_still_triggers_the_import(tmp_path):
     """H-035 positive control (green today): the existing tests/qa/desktop/ behaviour stays."""
     out, godot_log = _h035_gate_run(tmp_path, "tests/qa/desktop/toy_x.py", "# desktop play stub\n")
     _h035_assert_import_before_acceptance(out, godot_log)
+
+
+# H-078 (docs/stories/H-078.md, Tests 6): "A toy gate run with `MERGE_GATE_TOY=1` prints `GATE row SKIP toy` and
+# leaves the default CSV byte-identical." The default CSV is $HOME/Projects/om-push/gate_runs.csv with
+# MERGE_GATE_RUNS_CSV unset; HOME is a temp dir, so the live log is never touched.
+# See also: tests/specfactory/test_gate_row.py (row shape, STOP_AFTER=base pattern)
+def _h078_toy_gate(tmp_path: Path, **extra):
+    repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
+    (repo / "csrc" / "more.c").write_text("int om_more(void) { return 1; }\n")
+    _git(repo, "add", "-A")
+    _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "cand")
+    home = tmp_path / "home"
+    csv_path = home / "Projects" / "om-push" / "gate_runs.csv"
+    csv_path.parent.mkdir(parents=True)
+    csv_path.write_text("date,label\n2026-11-03,SEED\n")
+    env = {"PATH": "/usr/bin:/bin", "HOME": str(home), "MERGE_GATE_STOP_AFTER": "base", **extra}
+    proc = subprocess.run(["bash", str(GATE), str(repo), "origin/main", "HARNESS-h078-toy"],
+                          capture_output=True, text=True, env=env, timeout=120)
+    return proc, csv_path
+
+
+def test_h078_control_gate_without_toy_appends_to_the_default_csv(tmp_path):
+    """Positive control, green today: with MERGE_GATE_TOY unset the same run prints a `GATE row` line and appends
+    it to the default CSV, so the harness reaches the row writer (H-078 Tests 6)."""
+    proc, csv_path = _h078_toy_gate(tmp_path)
+    assert "GATE row 20" in proc.stdout, proc.stdout + proc.stderr
+    assert csv_path.read_text().splitlines()[-1].split(",")[1] == "HARNESS-h078-toy", csv_path.read_text()
+
+
+def test_h078_toy_run_skips_the_default_csv(tmp_path):
+    """H-078 Tests 6: "A toy gate run with `MERGE_GATE_TOY=1` prints `GATE row SKIP toy` and leaves the default CSV
+    byte-identical." (Change 5: `merge_gate.sh` refuses to append to the default CSV when `MERGE_GATE_TOY=1`.)"""
+    proc, csv_path = _h078_toy_gate(tmp_path, MERGE_GATE_TOY="1")
+    assert "GATE row SKIP toy" in proc.stdout, proc.stdout + proc.stderr
+    assert csv_path.read_bytes() == b"date,label\n2026-11-03,SEED\n", csv_path.read_text()
