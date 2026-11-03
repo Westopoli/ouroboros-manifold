@@ -30,7 +30,14 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 
 | Name | Value | Owner |
 |---|---|---|
-| DRAFT-build-slots | 3 builds in flight, 1 landing per channel | Westley |
+| DRAFT-build-slots | 8 builds in flight (four per channel), 1 landing per channel | Westley, 2026-11-03 |
+| DRAFT-mail-linger | 20 min before an unread `info` raises the flag | Architect, DEC-mail-station-2026-11-03 |
+| DRAFT-mail-batch | 5 unread lines raise the flag before the linger | Architect, DEC-mail-station-2026-11-03 |
+| DRAFT-mail-max | 1,500 characters per mail; longer is a file | Architect, DEC-mail-station-2026-11-03 |
+| DRAFT-mail-stale | 30 min unread `block` or `ask` is `STATUS mail DRIFT` | Architect, DEC-mail-station-2026-11-03 |
+| DRAFT-wakeups-per-landing | 10 chat turns per Land commit per week; over is a method defect | Westley, 2026-11-03 |
+| DRAFT-proc-ttl | 14,400 s default before a recorded process may be reaped on time alone | Architect, DEC-proc-reaper-2026-11-03 |
+| DRAFT-queue-lookahead | 1 candidate prepared ahead per channel in the gate queue | Architect, DEC-gate-queue-2026-11-03 |
 | DRAFT-wt-slots-per-channel | 10 worktree slots per channel (`lab`, `beta`) | Architect, H-059 |
 | Locks (`~/Projects/om-push/`) | `gate-lab.lock`, `gate-beta.lock` (stages 0 to 3, one per channel); `push.lock` (land_push.sh); `play.lock` (real-display runs); `records.lock` (records pushes) | Architect, H-059 |
 | Build plus tests share of weekly model spend | at least 50% | Westley, 2026-10-29 |
@@ -49,7 +56,7 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 
 ## Status
 
-This table is the register for every `DRAFT-` named in this directory. Status is computed, never written: `scripts/method/status.sh` reads `git log` and prints stories in flight, landed this week, waiting on Westley, test defects, sweeps and the four weekly numbers (build plus tests share, landings, stories Seen, Fable share). `scripts/method/token_report.py` writes the numbers nightly to `~/Projects/om-push/metrics/<week>.csv`. Under 50% build plus tests for a week is a method defect: the Architect names the class that grew and proposes the cut before specifying the next story.
+This table is the register for every `DRAFT-` named in this directory. Status is computed, never written: `scripts/method/status.sh` reads `git log` and prints stories in flight, landed this week, waiting on Westley, test defects, sweeps and the four weekly numbers (build plus tests share, landings, stories Seen, Fable share). `scripts/method/token_report.py` writes the numbers nightly to `~/Projects/om-push/metrics/<week>.csv`. Under 50% build plus tests for a week is a method defect: the Architect names the class that grew and proposes the cut before specifying the next story. Over DRAFT-wakeups-per-landing is a method defect the same way: the Architect names the wake source that grew and proposes the cut.
 
 ## Files
 
@@ -58,6 +65,7 @@ This table is the register for every `DRAFT-` named in this directory. Status is
 - `architect.md`, `builder.md`, `test_writer.md`, `clerk.md`, `runner.md`, `westley.md`: role cards.
 - `rulebook.md`: the test-defect procedure.
 - `gate.md`: the layered gate in brief; spec of record `docs/northstar/plans/2026-10-29-layered-gate-spec.md`.
+- `communication.md`: mail, station, wake rule, gate queue, process register (H-077 to H-081); registry `agents.toml` once H-077 lands.
 - `harness.md`: the `H-` stories.
 - `history.md`: what was retired and where it is.
 - Decisions: `docs/northstar/story_reviews/westley/decisions.md`, unchanged.
