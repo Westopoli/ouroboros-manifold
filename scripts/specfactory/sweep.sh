@@ -8,6 +8,10 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 SWEEPS=docs/northstar/plans/push/sweeps.md
 PUSHDIR="$HOME/Projects/om-push"
+# H-074: gate scratch lives on the real disk, not the quota-limited /tmp tmpdisk. A caller TMPDIR is kept only when it is not
+# /tmp or under /tmp. See also: docs/stories/H-074.md, tests/specfactory/test_gate_scratch.py (inlined in four scripts: land_push.sh is copied alone in tests)
+case "${TMPDIR:-}" in ""|/tmp|/tmp/*) TMPDIR="$HOME/Projects/om-push/tmp" ;; esac
+mkdir -p "$TMPDIR" && export TMPDIR
 DRY=0; [[ "${1:-}" == --dry-run ]] && DRY=1
 STAMP=$(date -u +%Y%m%d-%H%M%S)
 

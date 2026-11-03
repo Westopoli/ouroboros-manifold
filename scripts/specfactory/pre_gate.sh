@@ -25,6 +25,10 @@ if [[ ! -d "$1" ]]; then
     exit 2
 fi
 
+# H-074: gate scratch lives on the real disk, not the quota-limited /tmp tmpdisk. A caller TMPDIR is kept only when it is not
+# /tmp or under /tmp. See also: docs/stories/H-074.md, tests/specfactory/test_gate_scratch.py (inlined in four scripts: land_push.sh is copied alone in tests)
+case "${TMPDIR:-}" in ""|/tmp|/tmp/*) TMPDIR="$HOME/Projects/om-push/tmp" ;; esac
+mkdir -p "$TMPDIR" && export TMPDIR
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WT="$(cd "$1" && pwd)"
 BASE="$2"

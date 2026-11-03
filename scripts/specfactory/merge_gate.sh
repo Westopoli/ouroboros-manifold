@@ -3,7 +3,7 @@
 #
 # F6 item 1 (two-day push, decision 8 "whole_suite"). Every step prints one
 # line `GATE <step> OK|REJECT|WARN|HARNESS <detail>`. Exit codes: 0 every
-# step OK/WARN, 1 at least one REJECT, 3 a harness error (make timeout or
+# step OK/WARN, 1 at least one REJECT, 3 a harness error or `GATE <stage> RETRY SCRATCH-FULL` (retry; make timeout or
 # a real compile failure -- never counted as a regression, and the run stops
 # immediately since nothing downstream is meaningful without a build).
 #
@@ -27,7 +27,7 @@
 #   slow  the sweep: every stage, with <base_ref> (the last green sweep's main sha) kept as the regression base and
 #         the diff stages run over the union diff base...HEAD; the piece id is a comma list. A regression reject names
 #         the first-parent landings since <base_ref>.
-# `GATE tier <name>` is the first GATE line. See also: tests/specfactory/test_gate_tiers.py,
+# `GATE tier <name>` is the first GATE line, `GATE tmpdir <path>` the second (H-074). See also: tests/specfactory/test_gate_tiers.py,
 # Flag (HARNESS-gate-flag): the story's `Flag:` line (docs/stories/<id>.md on the candidate, `gate_flag.py story-impact`; H-006) adds the stage `flag` right after
 #   make (`GATE flag SKIP revert mode` under --revert; a story file missing `Flag:` or `Tests:` is `GATE story REJECT missing <key>`). Without --tier an
 #   explicit key picks the tier: sim and contract run `fast`; harness runs fast plus the specfactory suite and no csim or
@@ -91,6 +91,10 @@ export MERGE_GATE_PIECE_ID="$PIECE_ID"
 # agora-side change. See merge_gate_support.py's regression_check.
 MERGE_ROOT="$(dirname "$CANDIDATE")"
 
+# H-074: gate scratch lives on the real disk, not the quota-limited /tmp tmpdisk. A caller TMPDIR is kept only when it is not
+# /tmp or under /tmp. See also: docs/stories/H-074.md, tests/specfactory/test_gate_scratch.py (inlined in four scripts: land_push.sh is copied alone in tests)
+case "${TMPDIR:-}" in ""|/tmp|/tmp/*) TMPDIR="$HOME/Projects/om-push/tmp" ;; esac
+mkdir -p "$TMPDIR" && export TMPDIR
 SCRATCH_ROOT="$(mktemp -d -t merge_gate.XXXXXX)"
 # GATE row (HARNESS-mm-2): one csv line per run on every exit, also appended to MERGE_GATE_RUNS_CSV.
 # See also: docs/northstar/plans/method_rev3_2026-10-26/spec.md "Design" item 1, docs/northstar/plans/push/gate_runs.csv
@@ -178,6 +182,13 @@ reg_detail() { if grep -q TimeoutExpired "$1"; then echo "suite-timeout ${SUITE_
 ok()     { gate_line "$1" OK "${*:2}"; }
 warn()   { gate_line "$1" WARN "${*:2}"; }
 harness() { gate_line "$1" HARNESS "${*:2}"; }
+# SCRATCH-FULL (H-074): the scratch disk or quota is full; retryable (exit 3, like GPU-MEMORY), not a reject. See also: scratch_full.py
+scratch_full_exit() {
+    if grep -q '^REJECT SCRATCH-FULL' "$2"; then
+        gate_line "$1" RETRY "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$2" | tr '\n' ' ')"
+        exit 3
+    fi
+}
 
 tail_oneline() { tail -n "${2:-8}" "$1" 2>/dev/null | tr '\n' ' '; }
 
@@ -210,6 +221,7 @@ case "$FLAG_PICKS" in
 esac
 
 echo "GATE tier $TIER"
+echo "GATE tmpdir $TMPDIR"
 
 # -------------------------------------------------------------- 0. base
 # The clerk merges origin/main inside the channel gate lock (gate-lab.lock or gate-beta.lock); a candidate gated against a main that has since
@@ -705,6 +717,7 @@ PT_LOG="$SCRATCH_ROOT/playthrough.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" playthrough "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "${MERGE_GATE_PLAYTHROUGH_TIMEOUT:-900}" >"$PT_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
+    scratch_full_exit playthrough "$PT_LOG"
     reject playthrough "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$PT_LOG" | tr '\n' ' ')"
     sed -n 's/^EVIDENCE /GATE evidence kept: /p' "$PT_LOG"
 else
@@ -718,6 +731,7 @@ LP_LOG="$SCRATCH_ROOT/lane_plays.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" lane_plays "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "${MERGE_GATE_PLAY_TIMEOUT:-900}" >"$LP_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
+    scratch_full_exit lane_plays "$LP_LOG"
     reject lane_plays "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$LP_LOG" | tr '\n' ' ')"
     sed -n 's/^EVIDENCE /GATE evidence kept: /p' "$LP_LOG"
 elif grep -q '^OK skipped' "$LP_LOG"; then

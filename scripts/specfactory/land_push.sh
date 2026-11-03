@@ -6,6 +6,10 @@
 set -uo pipefail
 [[ $# -eq 2 ]] || { echo "usage: land_push.sh <worktree> <id>" >&2; exit 64; }
 WT="$1"; ID="$2"
+# H-074: gate scratch lives on the real disk, not the quota-limited /tmp tmpdisk. A caller TMPDIR is kept only when it is not
+# /tmp or under /tmp. See also: docs/stories/H-074.md, tests/specfactory/test_gate_scratch.py (inlined in four scripts: land_push.sh is copied alone in tests)
+case "${TMPDIR:-}" in ""|/tmp|/tmp/*) TMPDIR="$HOME/Projects/om-push/tmp" ;; esac
+mkdir -p "$TMPDIR" && export TMPDIR
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # LAND_PUSH_LOCK_TIMEOUT_S is a test seam: tests shorten the 600 s default to prove the fail-closed path.
 TIMEOUT_S="${LAND_PUSH_LOCK_TIMEOUT_S:-600}"

@@ -297,7 +297,7 @@ def run_batch(tree: Path, control_paths: list[Path], *, neutralize: bool,
 def _real_run_pair(control_file: Path, *, scratch_root: Optional[Path] = None,
                     python_exe: Optional[str] = None,
                     project: Optional[Path] = None) -> tuple[Outcome, Outcome]:
-    scratch_root = Path(scratch_root) if scratch_root else Path("/tmp/om_control_liveness")
+    scratch_root = Path(scratch_root) if scratch_root else Path(os.environ.get("TMPDIR") or "/tmp") / "om_control_liveness"
     tree = ensure_scratch_tree(scratch_root, project)
     as_written = run_batch(tree, [control_file], neutralize=False, python_exe=python_exe)
     neutralized = run_batch(tree, [control_file], neutralize=True, python_exe=python_exe)
@@ -321,7 +321,7 @@ def sweep(control_paths: Optional[list[Path]] = None, *, scratch_root: Optional[
     two pytest collect-and-run passes, not 2*N process starts."""
     if control_paths is None:
         control_paths = sorted(CONTROLS_DIR.glob("test_control_*.py"))
-    scratch_root = Path(scratch_root) if scratch_root else Path("/tmp/om_control_liveness")
+    scratch_root = Path(scratch_root) if scratch_root else Path(os.environ.get("TMPDIR") or "/tmp") / "om_control_liveness"
 
     start = time.perf_counter()
     tree = ensure_scratch_tree(scratch_root, project)
