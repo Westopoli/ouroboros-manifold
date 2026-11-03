@@ -39,7 +39,7 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 | DRAFT-proc-ttl | 14,400 s default before a recorded process may be reaped on time alone | Architect, DEC-proc-reaper-2026-11-03 |
 | DRAFT-queue-lookahead | 1 candidate prepared ahead per channel in the gate queue | Architect, DEC-gate-queue-2026-11-03 |
 | DRAFT-wt-slots-per-channel | 10 worktree slots per channel (`lab`, `beta`) | Architect, H-059 |
-| Locks (`~/Projects/om-push/`) | `gate-lab.lock`, `gate-beta.lock` (stages 0 to 3, one per channel); `push.lock` (land_push.sh); `play.lock` (real-display runs); `records.lock` (records pushes) | Architect, H-059 |
+| Locks (`~/Projects/om-push/`) | `gate-lab.lock`, `gate-beta.lock` (stages 0 to 3, one per channel, held by `om-gate-queue`); `push.lock` (land_push.sh); `play.lock` (real-display runs); `records.lock` (records pushes) | Architect, H-059 |
 | Build plus tests share of weekly model spend | at least 50% | Westley, 2026-10-29 |
 | Fable share of weekly model spend | DRAFT 25% | method rev 3 G04 |
 | Story size cap | 1,000 implementation lines | Westley, 2026-10-30 |

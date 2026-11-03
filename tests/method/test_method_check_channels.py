@@ -21,8 +21,8 @@ def _polling(tmp_path, *cmds):
 
 
 def test_c1_old_gate_lock_name_in_a_non_reader_command_still_counts(tmp_path):
-    """Control: the existing behaviour (a non-reader segment naming gate.lock is polling) is what the new names copy."""
-    assert _polling(tmp_path, "watch -n 5 ls ~/Projects/om-push/gate.lock") == ("DRIFT", 1)
+    """Control: the existing behaviour (a non-reader segment naming a gate lock is polling) is what the new names copy."""
+    assert _polling(tmp_path, "watch -n 5 ls ~/Projects/om-push/gate-lab.lock") == ("DRIFT", 1)
 
 
 def test_c2_reader_segments_naming_a_channel_lock_count_for_nothing(tmp_path):

@@ -208,7 +208,7 @@ def comm_hits(cid, entries):
 
 
 # H-059: the retired single lock and the two channel locks all mean "a chat waits on a gate".
-GATE_LOCKS = ("gate.lock", "gate-lab.lock", "gate-beta.lock")
+GATE_LOCKS = ("gate-lab.lock", "gate-beta.lock")
 
 
 def matcher(cid, role, live):

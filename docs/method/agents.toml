@@ -22,3 +22,8 @@ rules = false
 role = "westley.md"
 rules = false
 senders = []
+
+[gate-queue]
+role = "none"
+rules = false
+senders = []
