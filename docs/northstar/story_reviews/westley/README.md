@@ -1,17 +1,17 @@
 # Shots waiting on Westley
 
-One word per picture: approve, reject, or a short note. Answer in the chat or in `answers.md`. When a verdict is recorded, the picture and its row are removed from here; past verdicts live in `verdicts_2026-10.md`, the rulings in `decisions.md`.
+One word per picture: approve, reject, or a short note. Answer in the chat; each verdict is written to `ruled.md` the turn you give it (the Architect does this). When a verdict is recorded, the picture and its row are removed from here; past verdicts live in `verdicts_2026-10.md`, the rulings in `decisions.md`.
 
 Everything Westley has to look at, judge or decide lives in this directory and nowhere else (2026-11-02): proposals, verdict logs, threshold batches, pictures and proof captures. Chat context files and plans for the Dispatchers stay in `docs/northstar/plans/`.
 
 ## What is here (newest first, by the day each was added; names are relative to this directory)
 
-- `ruled.md`: pictures Westley has ruled on, removed 2026-11-02; his verdicts and the git command that brings each back.
+- `ruled.md`: the verdict ledger: every verdict of Westley's, one row per picture or layout id, his words verbatim with the chat date, any owed action, and the git command that brings back a removed picture.
 - `beta_stage0/`: B0: the standing beta build (`beta-proof.png`).
 - `crossings.md`: Lines-crossing log: why each fight goes the way it does (Westley's reasoning, per picture).
 - `2026-11-02-piecemeal-then-whole-proposal.md`: Piecemeal, then whole: a draft proposal for amending the lab documents.
 - `H-025-r3-L-0055-*.png` to `H-025-r3-L-0083-*.png`: round three layout pictures (rows in the Round three batch 1 section below).
-- `thresholds_batch_2026-11-01.md`: Nine red tests that are yours to rule (batch of 2026-11-01, rows 5 to 9 added 2026-11-02).
+- `thresholds_batch_2026-11-01.md`: Ten items that are yours to rule: nine red tests and one new tolerance (batch of 2026-11-01, rows 5 to 10 added 2026-11-02).
 - `arena_stage1/`: stage 1 flat-field fight pictures and fight files, with `index.html` and `results.md` (rows in the table below).
 - `H-025-r2-L-0048-open_field.png`: the one round two layout picture with no ruling yet (his only word on it is a question; row in the table below).
 - `display_debug_2026-10-31.md`: Display fault: context for the debugging chat (2026-10-31).
@@ -47,7 +47,7 @@ To see motion live rather than in a still (your rule of 2026-10-22): ask the cha
 | `method_audit_2026-10-27.md` | Eight yes-or-no questions and 24 thresholds from the audit of the method tests |
 | `wt_reap_dryrun_2026-10-24.md` | Second dry run of the worktree clean-up: your word to remove the listed trees. |
 | `method_retro_2026-10-24.md` | The method investigation: which of the drop, keep and try lists you take. Superseded in part by the rev 3 plan you approved on 2026-10-26; the thresholds come to you after the audit. |
-| `thresholds_batch_2026-11-01.md` | H-037 | Red tests whose numbers are yours: the batch now has nine rows (rows 5 to 9 added 2026-11-02, see the batch file's own header); each bisected, nothing edited. | After stage 1 is Seen. | Say keep, move (number), or retire per row. |
+| `thresholds_batch_2026-11-01.md` | H-037 | Red tests whose numbers are yours, and one new tolerance: the batch now has ten rows (rows 5 to 10 added 2026-11-02, see the batch file's own header); each bisected, nothing edited. | After stage 1 is Seen. | Say keep, move (number), or retire per row; row 10 is a draft tolerance: keep, tighten or loosen. |
 
 ## Round three batch 1
 

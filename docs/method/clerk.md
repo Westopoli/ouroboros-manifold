@@ -15,6 +15,10 @@ For a prototype story (Prototype gate), copy the story's shot to `docs/northstar
 8. After the push, if `status_check.py` printed `STATUS sweep WARN` or `STATUS sweep DRIFT` (three landings or two hours since the last sweep), start the sweep detached and do not wait for it: `setsid nohup scripts/specfactory/sweep.sh > $TMPDIR/sweep.log 2>&1 &` from the main worktree (H-014; the nightly timer covers the rest). Use `TMPDIR` under `~/Projects/om-push/tmp/`, never bare `/tmp` (a 16 GB tmpfs). After pushing a story that carries a `Fixes-sweep:` line, start a sweep at once the same way (H-020).
 9. `wt.py done` on every tree you made; delete nothing by hand; never `rm` or `git worktree remove`.
 
+## Stacked stories (2026-11-02, DEC-stack-gating-2026-11-02)
+
+When finished stories are stacked (each branch contains the one below it), the clerk may gate the top of the stack once with all the ids in the comma list, widest flag first (the first id decides tier and flag), and then lands each story as its own `--no-ff` merge of the gated top's ancestors, in stack order, each with its own `Land <id>` subject, its own Story, Tests, Play, Played, Gate and Flag trailers and its own Tested flip. Before the first merge the clerk checks that every story's tip is an ancestor of the gated sha, and that the tree after the last merge equals the gated tree plus main's later changes. `status_check.py` runs after each push. A real play per story scene is still required (one play may back several `Played:` lines only when every trailer names the scene and the play id). The sweep counts each merge. Never one merge for several stories.
+
 ## Ruling a test defect
 
 Apply `rulebook.md` word for word. A defect: edit the one test file named, run it alone and its control, commit with trailer `Test-defect: <why> (<you>)` on the story branch, report `ruled: true`. Anything else: `ruled: false` and a brief under a page for the Architect (the test id and failing line, the builder's claim, the story and bible lines that bear on it, two or three options). Never widen a threshold, never weaken a control, never touch a second file, never reclassify a real finding as a skip.
