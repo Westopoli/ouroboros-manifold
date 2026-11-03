@@ -11,6 +11,7 @@ What to expect: A closes and wins    (optional, one sentence: what the replay sh
 Approve means: The role numbers are right    (optional: what an approve says about the game)
 Deny means: The role numbers need tuning    (optional: what a deny says)
 Why: Equal roles and equal counts, but A starts closer to the centre and engages first.
+Measures: Whether starting closer to the centre decides a fight between equal forces: A winning means the closer start is worth the walk it saves, B winning or a draw means it is not.   (required, one sentence: what this situation tests and what each result would mean; no Measures, no layout, H-076)
 
 ## Sides
 

@@ -16,7 +16,7 @@ The beta is the Godot project at the repository root, `~/Projects/ouroboros-mani
 
 The lab and the beta land through separate gates so neither blocks the other (Westley 2026-11-02: "we have enough compute to run multiple gates at the same time"). `gate-lab.lock` and `gate-beta.lock` replace `gate.lock` for the gate stages; one short `push.lock` serialises fetch, merge, pre_gate re-check and the push; `play.lock` serialises every real-display play and capture (one window on his desktop at a time). Shared files made safe: `gate_runs.csv` appended under a flock; `baseline_cache` and `candidate_results` written through `mktemp` names. Worktree slots per channel. Each story carries a `Channel:` Machine line. A Dispatcher chat serves one channel: `ouroboros-manifold-lab` (today's `ouroboros-manifold-90`) and `ouroboros-manifold-beta` (new; Westley opens it; its context file is `plans/2026-11-02-beta-dispatcher-context.md`). The sweep stays one per main; a REJECT row blocks both channels, since a red main is red for both.
 
-Until H-059 is on main (it lands through today's single gate, after H-057), the beta channel does records-only work.
+H-059 landed on 2026-11-02 (e23c303f): the beta channel has its own gate, `gate-beta.lock`.
 
 ## The stages
 
@@ -39,7 +39,7 @@ Stories written Ready today: H-059 (channels), H-028 (B0, rewritten), H-060 (B1)
 
 ## Beta Dispatcher brief (the first message of the `ouroboros-manifold-beta` chat)
 
-Read `docs/method/runner.md`, then this file. Your channel is `beta`; your lock is `gate-beta.lock` once H-059 is on main, `gate.lock` before (one landing at a time with the lab until then). H-028 (93815871) and H-038 part 2 (d914f2e0) landed, build 1c2cce20 is published and proved, and Westley approved `om-beta` on 2026-11-02 and B0 as a stage with it (Seen 2026-11-02); the editor route (H-067) is finished in parallel (section Where the beta lives). Queue: H-060 (B1) now; H-067 and H-069 landing through the beta gate; H-041 (the sim reads Westley's per-role unit radius, a contract story, Ready) in parallel; H-061 (B2) after B1 is Seen. Standing rules: one report per landing group to the Architect (`beta-staircase-gate-channel`, ref 845ad1); stop rules in each story bind; no polling; every picture through the Sonnet look reviewer with the three sentences; Westley's checkout is fast-forwarded only when clean. H-031 piece three (crop the proof to the game window) stays Spec'd and is not a B0 precondition.
+Read `docs/method/runner.md`, then this file. Your channel is `beta`; your lock is `gate-beta.lock`. H-028 (93815871) and H-038 part 2 (d914f2e0) landed, build 1c2cce20 is published and proved, and Westley approved `om-beta` on 2026-11-02 and B0 as a stage with it (Seen 2026-11-02); the editor route (H-067) is finished in parallel (section Where the beta lives). Queue: H-060 (B1) now; H-067 and H-069 landing through the beta gate; H-041 (the sim reads Westley's per-role unit radius, a contract story, Ready) in parallel; H-061 (B2) after B1 is Seen. Standing rules: one report per landing group to the Architect (`beta-staircase-gate-channel`, ref 845ad1); stop rules in each story bind; no polling; every picture through the Sonnet look reviewer with the three sentences; Westley's checkout is fast-forwarded only when clean. H-031 piece three (crop the proof to the game window) stays Spec'd and is not a B0 precondition.
 
 ## Where things stand
 
@@ -48,6 +48,6 @@ Rewritten by whoever moves a stage, in the same commit (ROADMAP.md section 1 car
 | Stage | State 2026-11-02 |
 |---|---|
 | B0 | Seen 2026-11-02 (Westley: 'I saw B0 and approved it'). The editor route (H-067) is finished in parallel: builder done, landing queued on the beta gate. |
-| B1 | H-060 Ready; builder started 2026-11-02 (hold lifted by Westley); tests r4 pushed (8 red, 7 control); the last commit adds the editor beta flag (ruling 8). |
+| B1 | H-060 build done (17 tests green); landing queued on the beta gate behind H-069 and H-067; the landings are blocked on environment faults (GPU memory held by a local ollama model, /tmp quota), not on code. |
 | B2 | H-061 Ready; builds after B1 is Seen |
 | B3 to B9 | Spec'd in this table only; story files written one stage ahead |

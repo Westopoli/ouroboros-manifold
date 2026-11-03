@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-02 (Architect, Westley's order; B0 approved, B1 starts while H-067 pipes the beta into the project he opens in his editor): section 1 is the two staircases on two gate channels; sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
+Last updated: 2026-11-02 (Architect, Westley's question "Is all that's blocked on me listed in roadmap?"): section 1 is the two staircases on two gate channels, brought up to current state, with a first row pointing to the one list of what waits on Westley (`story_reviews/westley/README.md`, section Waiting on you); sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -19,24 +19,26 @@ Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a ti
 
 | Staircase | Stage | Story | State (2026-11-02) | Next |
 |---|---|---|---|---|
-| lab | 1 two blobs on a flat field | H-040 (+H-039, H-052) | Seen 2026-11-01 (Westley on the L-0054 preview under H-057); landing waits on the screen proof | land |
-| lab | engine rule from stage 1: engage on sight, per-type leash | H-057 | built, landing (goldens re-record, gate) | land; L-0054 record run on main |
-| lab | 2 roles, ranges, win rates over seeds | H-053 | Seen 2026-11-02 (per-picture verdicts in `docs/northstar/story_reviews/westley/crossings.md`); readability and scoring build in progress, then the gate | land; fixed pictures to `arena_stage2/` as the record |
-| lab | catalogue round three (arcs, mouth coverage, priority kinds) | H-025 round three | batch 1 pushed c5fddbc9 (29 pictures); producer continues | his verdicts |
-| lab | 3 the ground pushes back | H-063 | Ready 2026-11-02; tests first | his verdicts on the chokepoint and slope fights |
+| Westley | waiting on you | story_reviews/westley/README.md (section Waiting on you) | seven items, none blocks a Dispatcher except the B0 editor check for closing B0 and the locked-screen question (four landings wait at their play proof) | your answers |
+| lab | 1 two blobs on a flat field | H-040 (+H-039, H-052) | Seen 2026-11-01; built; lands in the stack gate after H-057 (stack of H-040, H-053 and H-063 gated once, three merges: DEC-stack-gating-2026-11-02) | land; L-0054 record run on main |
+| lab | engine rule from stage 1: engage on sight, per-type leash | H-057 | built, re-pins and goldens done; slow gate passed every stage except lane_plays, which failed on GPU memory held by a local ollama model (unloaded 2026-11-02 evening); rerun next | land |
+| lab | 2 roles, ranges, win rates over seeds | H-053 | Seen 2026-11-02 (per-picture verdicts in `docs/northstar/story_reviews/westley/crossings.md`); stacked behind stage 1 | land; fixed pictures go under `research/layer_dynamics/arena/stage2/` (not his directory) |
+| lab | catalogue round three (arcs, mouth coverage, priority kinds) | H-025 round three | batch 1 pushed c5fddbc9 (29 pictures) and waiting on his verdicts | his verdicts |
+| lab | 3 the ground pushes back | H-063 | built, tests green; in the stack | land, then four fights for his verdicts |
 | lab | 4 sight; 5 facing, arcs, bands; 6 the scan; 7 objectives, hazards, time, space | | plan only | one at a time |
 | lab | after the lab: piecemeal, then whole | none yet (plan in `research/layer_dynamics/decomposition.md`) | Decided 2026-11-02 as a plan; built after the lab is finished | specified then |
-| harness | two gate channels | H-059 | Ready; lands after H-057 through the single gate | the beta Dispatcher chat starts |
-| beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2), H-067 | Seen 2026-11-02; the editor route (H-067) in parallel | none |
-| beta | B1 the approved screens | H-060 | builder started 2026-11-02 | his verdicts on the B1 pictures |
+| harness | two gate channels | H-059 | landed 2026-11-02 (e23c303f) with H-062 (plan re-read check) and H-066 (qa port self-connect fix); Ready, landing after the stack, H-068 first: H-068 (shell port waiters), H-071 (review apply words), H-073 (GPU preflight), H-074 (gate scratch on disk) | H-068, H-071, H-073, H-074 after the stack lands |
+| beta | B0 the build exists (`om-beta`) | H-028 (+H-038 part 2), H-067 | Seen 2026-11-02 for om-beta; the editor route (H-067) built, landing queued | his editor check (`story_reviews/westley/beta_stage0/editor-setup.md`) |
+| beta | B1 the approved screens | H-060 | build done (17 tests green), landing queued on the beta gate | his verdicts on the B1 pictures |
+| beta | unit scale | H-041 (+H-023 Seen 2026-11-02) | contract built, consumers after; Westley's per-role sizes in `data/unit_scale.toml` | consumers, then the sizes in the beta |
 | beta | B2 the layout, no units, five kinds | H-061 | Ready | after B1 Seen |
 | beta | B3 landscape engine; B4 places; B5 one role in groups; B6 vision; B7 layers (land); B8 all roles, real fights; B9+ economy in pieces | ids when written (H-062 is the plan re-read check) | plan table only; story written one stage ahead | one at a time |
 
-Channels: lab = `gate-lab.lock`, Dispatcher chat `ouroboros-manifold-lab` (today `ouroboros-manifold-90`); beta = `gate-beta.lock`, Dispatcher chat `ouroboros-manifold-beta` (Westley opens it; first brief in the beta plan). Until H-059 lands both use `gate.lock`, one landing at a time. The Architect chat `rewrite-method-git-record` briefs both and rules; Westley vetoes by a word.
+Channels: lab = `gate-lab.lock`, Dispatcher chat `ouroboros-manifold-lab` (today `ouroboros-manifold-90`); beta = `gate-beta.lock`, Dispatcher chat `ouroboros-manifold-beta` (Westley opens it; first brief in the beta plan). H-059 landed 2026-11-02: the two channels gate at the same time, one landing in flight per channel (`docs/method/gate.md`). The Architect chat `rewrite-method-git-record` briefs both and rules; Westley vetoes by a word.
 
 Held behind nothing now: the 2026-10-30 "no scene story until proof by eyes" gate is answered by H-031 pieces one and two (landed) plus the wake rule; piece three (crop to the window) is a Spec'd harness improvement, not a B0 precondition.
 
-Not in a staircase, still owed: H-023 unit-size tuning session (Westley); the thresholds batch (`story_reviews/westley/thresholds_batch_2026-11-01.md`, ten rows); H-042/H-043 findings; H-044, H-046, H-048, H-049, H-051, H-054, H-055, H-056 Spec'd harness stories; the earlier programme rows below are history until a staircase reaches them.
+Not in a staircase, still owed: the thresholds batch (`story_reviews/westley/thresholds_batch_2026-11-01.md`, ten rows); H-042/H-043 findings; H-044, H-046, H-048, H-049, H-051, H-054, H-055, H-056 Spec'd harness stories; the earlier programme rows below are history until a staircase reaches them.
 
 ## 1b. Westley's log: what he pointed out, and what became of it
 
