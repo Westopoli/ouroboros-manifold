@@ -171,3 +171,167 @@ def test_control_existing_timer_parses():
     t = REPO / "scripts/specfactory/systemd/om-method-metrics.timer"
     p = subprocess.run(["systemd-analyze", "verify", str(t)], capture_output=True, text=True)
     assert p.returncode == 0, p.stderr
+
+
+# ---- H-078: the report sees every directory of the project (docs/stories/H-078.md) ----------------------------
+# Premises (dumped from the real ~/.claude/projects tree, 2026-11-03): session directories are named
+# `-home-westopoli-Projects-ouroboros-manifold` and `-home-westopoli-Projects-om-push-wt-<name>`; every record
+# carries `cwd`. Mail lines (docs/stories/H-077.md "Mail line") carry `ts` as ISO-8601 UTC.
+# Every H-078 test runs under a temp HOME and a toy repo holding a copy of the script (REPO = parents[2] of the
+# script), so the live ~/.claude/projects and ~/Projects/om-push are never read or written.
+import shutil
+import stat
+
+MAIN_DIR = "-home-westopoli-Projects-ouroboros-manifold"
+WT_DIR = "-home-westopoli-Projects-om-push-wt-x"
+OTHER_DIR = "-home-westopoli-Projects-other"
+MAIN_CWD = "/home/westopoli/Projects/ouroboros-manifold"
+WT_CWD = "/home/westopoli/Projects/om-push/wt/x"
+OTHER_CWD = "/home/westopoli/Projects/other"
+IN_WIN = "2026-10-28T10:00:00.000Z"  # ISO week 2026-W44
+WEEK = "2026-W44"
+
+
+def _turn(cwd, rid, ts=IN_WIN, side=False, tokens=1000):
+    d = _call("claude-fable-5-1", ts, tokens, 0, 0, 0, rid, side)
+    d["cwd"] = cwd
+    return d
+
+
+def _toy(tmp_path, lands=0):
+    """A toy repo holding a copy of token_report.py with `lands` first-parent `Land` commits dated in W44 on
+    refs/remotes/origin/main. Returns the copied script."""
+    toy = tmp_path / "toy"
+    (toy / "scripts" / "method").mkdir(parents=True)
+    script = toy / "scripts" / "method" / "token_report.py"
+    shutil.copy(SCRIPT, script)
+    env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
+               GIT_COMMITTER_EMAIL="t@t", GIT_COMMITTER_DATE="2026-10-28T09:00:00Z",
+               GIT_AUTHOR_DATE="2026-10-28T09:00:00Z")
+    run = lambda *a: subprocess.run(["git", "-C", str(toy), *a], check=True, capture_output=True, env=env)
+    run("init", "-q", "-b", "main")
+    run("add", "-A")
+    run("commit", "-q", "-m", "base")
+    for i in range(lands):
+        (toy / ("f%d.txt" % i)).write_text("x\n")
+        run("add", "-A")
+        run("commit", "-q", "-m", "Land H-%03d toy" % i)
+    run("update-ref", "refs/remotes/origin/main", "HEAD")
+    return script
+
+
+def _go(home, script, week=WEEK):
+    p = subprocess.run([sys.executable, str(script), "--week", week], cwd=script.parents[2],
+                       env=dict(os.environ, HOME=str(home)), capture_output=True, text=True)
+    csvp = Path(home) / "Projects/om-push/metrics" / (week + ".csv")
+    rec = next(csv.DictReader(csvp.open()), None) if csvp.exists() else None
+    return p, rec
+
+
+def test_h078_control_one_transcript_under_the_main_directory_is_counted(tmp_path):
+    """Positive control, green today (H-078 Tests 1): the same transcript under the main directory gives
+    weighted_tokens 1000 through the toy-repo harness."""
+    script = _toy(tmp_path)
+    _write(tmp_path / "home" / ".claude/projects" / MAIN_DIR / "s.jsonl", [_turn(MAIN_CWD, "r1")])
+    p, rec = _go(tmp_path / "home", script)
+    assert p.returncode == 0, p.stderr
+    assert int(rec["weighted_tokens"]) == 1000
+
+
+def test_h078_worktree_directory_transcript_is_counted(tmp_path):
+    """H-078 Tests 1: "A fixture transcript under a fake `-home-westopoli-Projects-om-push-wt-x` directory with
+    `cwd` `/home/westopoli/Projects/om-push/wt/x` and a timestamp in the window is counted in `weighted_tokens`
+    (positive control: the same transcript under the main directory gives the same total)." """
+    script = _toy(tmp_path)
+    _write(tmp_path / "home" / ".claude/projects" / WT_DIR / "s.jsonl", [_turn(WT_CWD, "r1")])
+    p, rec = _go(tmp_path / "home", script)
+    assert p.returncode == 0, p.stderr
+    assert int(rec["weighted_tokens"]) == 1000
+    assert "TOKENS dirs scanned 1 active 1 skipped 0" in p.stdout
+
+
+def test_h078_other_project_directory_is_not_counted(tmp_path):
+    """H-078 Tests 2: "A fixture transcript under `-home-westopoli-Projects-other` is not counted." Change 1: a
+    session file is kept when any record's `cwd` is under ouroboros-manifold or om-push; the report prints
+    `TOKENS dirs scanned <n> active <m> skipped <k>`. The other directory is scanned but not active."""
+    script = _toy(tmp_path)
+    proj = tmp_path / "home" / ".claude/projects"
+    _write(proj / MAIN_DIR / "s.jsonl", [_turn(MAIN_CWD, "r1")])
+    _write(proj / OTHER_DIR / "s.jsonl", [_turn(OTHER_CWD, "r2", tokens=5000)])
+    p, rec = _go(tmp_path / "home", script)
+    assert p.returncode == 0, p.stderr
+    assert int(rec["weighted_tokens"]) == 1000
+    assert "TOKENS dirs scanned 2 active 1 skipped 0" in p.stdout
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root reads any directory")
+def test_h078_unreadable_directory_is_drift_and_row_is_still_written(tmp_path):
+    """H-078 Tests 3: "An unreadable directory prints `TOKENS dirs ... skipped 1` and `STATUS tokens DRIFT
+    skipped 1`, exit 1, and the CSV row is still written." The `dirs` column holds `<n>/<m>/<k>`."""
+    script = _toy(tmp_path)
+    proj = tmp_path / "home" / ".claude/projects"
+    _write(proj / MAIN_DIR / "s.jsonl", [_turn(MAIN_CWD, "r1")])
+    bad = proj / WT_DIR
+    _write(bad / "s.jsonl", [_turn(WT_CWD, "r2")])
+    bad.chmod(0)
+    try:
+        p, rec = _go(tmp_path / "home", script)
+    finally:
+        bad.chmod(stat.S_IRWXU)
+    assert "TOKENS dirs scanned 2 active 1 skipped 1" in p.stdout, p.stdout + p.stderr
+    assert "STATUS tokens DRIFT skipped 1" in p.stdout
+    assert p.returncode == 1
+    assert rec is not None and int(rec["weighted_tokens"]) == 1000
+    assert rec["dirs"] == "2/1/1"
+
+
+def test_h078_control_header_keeps_its_ten_columns_first(tmp_path):
+    """Positive control, green today (H-078 Tests 4/5): the existing ten columns stay first and the row carries the
+    landing count of the toy repo, so a red on the new columns means they are missing, not that the toy is broken."""
+    script = _toy(tmp_path, lands=2)
+    _write(tmp_path / "home" / ".claude/projects" / MAIN_DIR / "s.jsonl", [_turn(MAIN_CWD, "r1")])
+    p, rec = _go(tmp_path / "home", script)
+    assert p.returncode == 0, p.stderr
+    assert list(rec)[:10] == ["window", "calls", "weighted_tokens", "builder_share", "tests_share",
+                              "build_plus_tests_share", "fable_share", "landings", "seen",
+                              "tokens_per_landed_line"]
+    assert rec["landings"] == "2"
+
+
+def test_h078_wakeups_per_landing(tmp_path):
+    """H-078 Tests 4: "On a toy repo with two `Land` commits in the window and a transcript with 40 non-sidechain
+    assistant turns, `wakeups_per_landing` is 20; with no `Land` the field is empty." Change 2: assistant turns of
+    non-sidechain sessions, counted once per requestId (3 repeated lines and 5 sidechain turns must not count)."""
+    turns = [_turn(MAIN_CWD, "r%d" % i) for i in range(40)]
+    dup = [_turn(MAIN_CWD, "r0")] * 3
+    side = [_turn(MAIN_CWD, "s%d" % i, side=True) for i in range(5)]
+    for lands, want in ((2, 20.0), (0, None)):
+        t = tmp_path / ("l%d" % lands)
+        script = _toy(t, lands=lands)
+        proj = t / "home" / ".claude/projects" / MAIN_DIR
+        _write(proj / "s.jsonl", turns + dup)
+        _write(proj / "s" / "subagents" / "agent-a.jsonl", side)
+        p, rec = _go(t / "home", script)
+        assert p.returncode == 0, p.stderr
+        got = rec["wakeups_per_landing"]  # KeyError while the column is missing
+        if want is None:
+            assert got == ""
+        else:
+            assert float(got) == want
+
+
+def test_h078_messages_per_landing_counts_inbox_and_delivered_by_ts(tmp_path):
+    """H-078 Tests 5: "`messages_per_landing` counts fixture inbox and delivered lines by `ts`." Change 2: lines of
+    every `~/Projects/om-push/mail/*/inbox.jsonl` plus `delivered.jsonl` with `ts` in the window, divided by the
+    window's `Land` commits. 4 in-window lines over 2 landings is 2; out-of-window lines do not count."""
+    script = _toy(tmp_path, lands=2)
+    home = tmp_path / "home"
+    _write(home / ".claude/projects" / MAIN_DIR / "s.jsonl", [_turn(MAIN_CWD, "r1")])
+    mail = home / "Projects/om-push/mail"
+    out = "2026-10-20T10:00:00Z"
+    _write(mail / "a" / "inbox.jsonl", [{"id": "1", "ts": IN_WIN}, {"id": "2", "ts": IN_WIN}, {"id": "3", "ts": out}])
+    _write(mail / "a" / "delivered.jsonl", [{"id": "4", "ts": IN_WIN}, {"id": "5", "ts": out}])
+    _write(mail / "b" / "inbox.jsonl", [{"id": "6", "ts": IN_WIN}])
+    p, rec = _go(home, script)
+    assert p.returncode == 0, p.stderr
+    assert float(rec["messages_per_landing"]) == 2.0  # KeyError while the column is missing
