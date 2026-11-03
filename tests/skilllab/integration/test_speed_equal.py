@@ -430,7 +430,7 @@ READ_ONLY = {"type_id", "type_stats", "profile_reach", "visible_enemies", "seen_
 MUTATORS = {"new_world", "free_world", "register_unit_type", "set_reach", "set_cone", "disable_abilities", "spawn", "ping", "set_layer",
             "set_emission", "set_ping_params", "order_attack_move", "order_move", "order_group_move", "order_guard", "clear_orders",
             "step", "set_param", "add_blocker", "set_canvas", "block_rect", "add_cover", "terrain_generate", "set_era_kind",
-            "set_movement_kind"}
+            "set_movement_kind", "terrain_set_heights"}
 STATS = {"category": 1, "role": "x", "max_hp": 10.0, "base_damage": 1.0, "attack_interval": 1.0, "attack_range": 100.0, "speed": 1.0,
          "sensor_radius": 1.0, "layer_transition_time": 1.0, "aoe_radius": 0.0, "ability_id": 0}
 CALLS = {   # one valid call per public method: name -> f(engine)
@@ -458,6 +458,7 @@ CALLS = {   # one valid call per public method: name -> f(engine)
     "set_canvas": lambda e: e.set_canvas(W, 10.0, 10.0), "block_rect": lambda e: e.block_rect(W, 0.0, 0.0, 1.0, 1.0, 0, 1),
     "add_cover": lambda e: e.add_cover(W, 1.0, 1.0, 5.0, 1), "terrain_generate": lambda e: e.terrain_generate(W, 1, 100.0),
     "set_era_kind": lambda e: e.set_era_kind(W, 1), "set_movement_kind": lambda e: e.set_movement_kind(W, 0, 1),
+    "terrain_set_heights": lambda e: e.terrain_set_heights(W, [0], 1, 1),
 }
 
 
@@ -486,7 +487,8 @@ class _FakeLib:
 def bare_engine():
     """Engine.__new__ + _bind only: the make_engine idiom of tests/skilllab/test_firing.py. Nothing __init__ sets exists on it."""
     eng = engine_mod.Engine.__new__(engine_mod.Engine)
-    eng._lib = _FakeLib({"om_world_new": 5, "om_map_add_cover": 1, "om_unit_spawn": 3})
+    eng._lib = _FakeLib({"om_world_new": 5, "om_map_add_cover": 1, "om_unit_spawn": 3,
+                         "om_terrain_set_heights": 1})
     eng._bind()
     return eng
 
