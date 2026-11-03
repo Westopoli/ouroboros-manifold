@@ -2010,10 +2010,6 @@ int om_command_set_layer(om_world *w, const uint32_t *unit_ids, uint32_t n_units
 double om_unit_transition_progress(const om_world *w, uint32_t unit);
 uint32_t om_unit_get_target_layer(const om_world *w, uint32_t unit);
 int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t layers_down);
-/* H-041: the collision radius of a unit type, in world units; a pair pushes apart at the sum of its two radii (ALG-68).
- * Returns 0, or -1 for an unknown type or a radius outside 1 to 200. A type never set stays at OM_UNIT_COLLISION_RADIUS
- * (15), so a world that never calls this is byte-identical to one before it existed. Set it at roster time, not in the
- * tick. OM_TP_UNIT_COLLISION_RADIUS multiplies the per-type value (see the knob). */
 int om_roster_set_collision_radius(om_world *w, int unit_type, double radius);
 int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32_t *down);
 uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit);
