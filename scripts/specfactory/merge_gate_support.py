@@ -30,6 +30,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import suite_regression as sr  # noqa: E402
+from gpu_preflight import gpu_memory_only  # noqa: E402
 from red_check import is_placeholder_control  # noqa: E402
 from pieces import SHARED_RECORD_GLOBS  # noqa: E402
 
@@ -1304,6 +1305,9 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
     if bad:
         if evidence_out is not None:
             _keep_evidence("playthrough", proc.stdout, pngs_before, bad, evidence_out)
+        # See also: gpu_preflight.py gpu_memory_only (H-073)
+        if gpu_memory_only(proc.stdout):
+            return False, f"GPU-MEMORY: {','.join(bad)} ({notes})"
         return False, f"red outside known-red list: {','.join(bad)} ({notes})"
     return True, f"{notes}; known red: {','.join(sorted(red)) or 'none'}"
 
@@ -1340,6 +1344,7 @@ def lane_plays_check(candidate: Path, base_ref: str, *, python_exe: str, timeout
     passed, red = set(), set()
     pngs_before = _qa_pngs() if evidence_out is not None else {}
     red_out = ""  # the output of the red plays only, each under a `### play:` header
+    red_gpu = []  # per red play: its output carries only GPU-memory reds (H-073)
     for play in plays:
         rel = play.relative_to(candidate).as_posix()
         try:
@@ -1362,12 +1367,16 @@ def lane_plays_check(candidate: Path, base_ref: str, *, python_exe: str, timeout
             red.add(rel + "::<nothing ran>")
         if len(red) > red_before or not found:
             red_out += f"### play: {rel}\n{proc.stdout}\n"
+            red_gpu.append(gpu_memory_only(proc.stdout))
     known = {l.split("#")[0].strip() for l in known_red_path.read_text().splitlines()
              if l.strip() and not l.startswith("#")} if known_red_path.exists() else set()
     bad = sorted(red - known)
     if bad:
         if evidence_out is not None:
             _keep_evidence("lane_plays", red_out, pngs_before, bad, evidence_out)
+        # See also: gpu_preflight.py gpu_memory_only (H-073)
+        if red_gpu and all(red_gpu):
+            return False, f"GPU-MEMORY: {','.join(bad)}"
         return False, f"red outside known-red list: {','.join(bad)}"
     stale = sorted(passed & known)
     if stale:

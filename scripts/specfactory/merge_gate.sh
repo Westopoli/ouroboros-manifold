@@ -3,7 +3,7 @@
 #
 # F6 item 1 (two-day push, decision 8 "whole_suite"). Every step prints one
 # line `GATE <step> OK|REJECT|WARN|HARNESS <detail>`. Exit codes: 0 every
-# step OK/WARN, 1 at least one REJECT, 3 a harness error (make timeout or
+# step OK/WARN, 1 at least one REJECT, 3 a harness error or `GATE <stage> GPU-LOW`/`GPU-MEMORY` (retry; make timeout or
 # a real compile failure -- never counted as a regression, and the run stops
 # immediately since nothing downstream is meaningful without a build).
 #
@@ -156,6 +156,28 @@ gate_line() {
     echo "GATE $name $status $detail [$((el / 10)).$((el % 10))s]"
 }
 
+# gpu_wait begin (H-073): the plays launch godot.real on the real GPU; wait for free graphics memory, never fake a test red.
+# DRAFT-gpu-wait 1200 s and the 30 s poll are Westley's drafts; the 3000 MiB need is in gpu_preflight.py.
+# Still low after the wait: `GATE <stage> GPU-LOW`, exit 3 (retryable, not a reject). See also: docs/method/gate.md.
+gpu_wait() {
+    local stage="$1" t0=$SECONDS waited=0 wait_s="${MERGE_GATE_GPU_WAIT_S:-1200}" poll_s="${MERGE_GATE_GPU_POLL_S:-30}" line
+    while true; do
+        line="$("$PYTHON" "$GATE_DIR/gpu_preflight.py")" && return 0
+        waited=$((SECONDS - t0))
+        [[ "$waited" -ge "$wait_s" ]] && break
+        sleep "$poll_s"
+    done
+    gate_line "$stage" GPU-LOW "$line after ${waited}s"
+    exit 3
+}
+# gpu_wait end
+# GPU-MEMORY (a play hit a GPU signature): retryable, not a reject.
+gpu_memory_exit() {
+    if grep -q '^REJECT GPU-MEMORY' "$2"; then
+        gate_line "$1" GPU-MEMORY "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$2" | tr '\n' ' ')"
+        exit 3
+    fi
+}
 reject() {
     local c="${*:2}"
     gate_line "$1" REJECT "$c"; REJECTED=1
@@ -702,9 +724,11 @@ if [[ "$RUN_PT" -eq 1 ]]; then
 # Runs on the merged tree only when the diff touches game code; red outside
 # playthrough_known_red.txt rejects. See merge_gate_support.py playthrough_check.
 PT_LOG="$SCRATCH_ROOT/playthrough.log"
+gpu_wait playthrough
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" playthrough "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "${MERGE_GATE_PLAYTHROUGH_TIMEOUT:-900}" >"$PT_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
+    gpu_memory_exit playthrough "$PT_LOG"
     reject playthrough "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$PT_LOG" | tr '\n' ' ')"
     sed -n 's/^EVIDENCE /GATE evidence kept: /p' "$PT_LOG"
 else
@@ -715,9 +739,11 @@ fi
 # Runs the plays of each lane whose globs (lane_plays.toml) the diff touches; red outside
 # lane_plays_known_red.txt rejects. Shared paths (lane_plays.toml [shared]) run the lanes listed there. See merge_gate_support.py lane_plays_check.
 LP_LOG="$SCRATCH_ROOT/lane_plays.log"
+gpu_wait lane_plays
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" lane_plays "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "${MERGE_GATE_PLAY_TIMEOUT:-900}" >"$LP_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
+    gpu_memory_exit lane_plays "$LP_LOG"
     reject lane_plays "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$LP_LOG" | tr '\n' ' ')"
     sed -n 's/^EVIDENCE /GATE evidence kept: /p' "$LP_LOG"
 elif grep -q '^OK skipped' "$LP_LOG"; then
