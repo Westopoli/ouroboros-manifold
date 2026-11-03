@@ -135,7 +135,7 @@ def test_script_compiles(runner):
 
 @pytest.mark.parametrize("builder", [
     {**BUILD_OK, "ok": False, "blocked": True, "reason": "needs ruling"},
-    {**BUILD_OK, "ok": False, "test_defect": "test_x line 4 contradicts R-001-01"},
+    {**BUILD_OK, "ok": False, "test_defect": "test_x line 4 contradicts story line 4"},
 ])
 def test_blocked_builder_returns_at_once(runner, builder):
     """H-079 pt 2: "`blocked` or `test_defect` returns at once with the stage's fields:
