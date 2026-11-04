@@ -35,7 +35,7 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 | DRAFT-mail-batch | 5 unread lines raise the flag before the linger | Architect, DEC-mail-station-2026-11-03 |
 | DRAFT-mail-max | 1,500 characters per mail; longer is a file | Architect, DEC-mail-station-2026-11-03 |
 | DRAFT-mail-stale | 30 min unread `block` or `ask` is `STATUS mail DRIFT` | Architect, DEC-mail-station-2026-11-03 |
-| DRAFT-mail-wait-max | 4 h: a `mail.py wait` without `--max` ends with `MAIL idle` | Architect, DEC-mailbox-fixes-2026-11-04 |
+| DRAFT-mail-undelivered | 2 h: unread mail of any class makes the station send the Architect one `UNDELIVERED` alert | Architect, Westley 2026-11-04, DEC-mailbox-fixes-2026-11-04 |
 | DRAFT-wakeups-per-landing | 10 chat turns per Land commit per week; over is a method defect | Westley, 2026-11-03 |
 | DRAFT-proc-ttl | 14,400 s default before a recorded process may be reaped on time alone | Architect, DEC-proc-reaper-2026-11-03 |
 | DRAFT-queue-lookahead | 1 candidate prepared ahead per channel in the gate queue | Architect, DEC-gate-queue-2026-11-03 |

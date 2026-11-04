@@ -27,3 +27,8 @@ senders = []
 role = "none"
 rules = false
 senders = []
+
+[station]                           # H-086: the undelivered watch sends `block` alerts to the Architect
+role = "none"
+rules = false
+senders = []

@@ -32,6 +32,8 @@ Context compacts at 400k tokens (`autoCompactWindow`, Westley 2026-10-30); there
 
 A builder's third round, a clerk's `ruled: false`, a sweep red the bisect cannot place, a contract change, a new rule: these reach you as one `ask` mail naming a brief under a page. You answer with one ruling, a decision row, and the files it applies to; a clerk applies it.
 
+An `UNDELIVERED` mail from `station` (mail unread for 2 hours) is yours to look into at once: the recipient's chat (alive? a wait armed, the `WAIT` line of its last `read`?), the station, the flag; then resolve the fault, or bring it to Westley with the recipient, the mail and how long it waited. Never type into the recipient's chat, never touch its mailbox files by hand.
+
 ## Tool per story
 
 A `/manager-mode` cascade for a sim-side cluster of three or more file-disjoint units that share one spec, one contract and one umbrella test, every unit a failing test that runs without a frame; a Workflow for anything that ends in a frame, any single piece, any contract piece, and every landing. The cascade recipe is `.claude-swarm.toml`.
