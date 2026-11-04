@@ -92,7 +92,7 @@ def _violations(layout, presets, rules):
 
 
 def check_layout(layout, presets, rules):
-    """The rule ids violated, empty when valid."""
+    """The rule ids violated, empty when valid. R1 to R7 only: R8 (reachability) needs the layout's orders and is the arena runner's (scripts/skilllab/arena/run.py)."""
     return sorted({r for r, _ in _violations(layout, presets, rules)})
 
 

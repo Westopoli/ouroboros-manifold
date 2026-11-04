@@ -26,6 +26,8 @@ const FIT_MARGIN := 0.10  # DRAFT-stage2-look (story): the fit box is the box of
 const FIT_MIN_WU := 100.0  # DRAFT-stage2-fit-min-wu: the least margin, for a fight whose units never move apart
 const RING_ALPHA := 0.9  # DRAFT-stage2-ring-alpha: a role ring's line, in its side's colour
 const FACING_MIN_PX := 8.0  # story: the facing tick is as long as the glyph, never under this
+const BLOCKED_RING_WU := 45.0  # DRAFT-blocked-ring-wu (H-063): radius of the ring on a unit blocked by the ground, wider than the first-shot ring
+const BLOCKED_COLOUR := Color(1.0, 0.45, 0.0)  # DRAFT-blocked-colour (H-063)
 const Marks := preload("res://scenes/proto/fight_replay/replay_marks.gd")
 
 var _fight: Dictionary = {}
@@ -55,6 +57,7 @@ var _fit: Array = [0.0, 0.0, 0.0, 0.0]  # the world box the camera shows: the wh
 var _unit_px := 0.0
 var _meshes: Dictionary = {}  # (role, side) -> glyph mesh
 var _tick_mesh: ArrayMesh
+var _feature_layer: Node3D  # H-063: the layout's features, drawn once through the layout shot's _add_feature
 var _rate_a = null  # H-053: rate_a from <layout id>.rate.json beside the fight file, null when there is none
 
 
@@ -94,6 +97,7 @@ func _ready() -> void:
 	_layout = {"id": String(_fight["layout_id"]), "situation": "fight_replay", "landscape": REPLAY_LANDSCAPE, "defender": "",
 			"predict": String(result.get("predict", "")),
 			"side_a": {"headcount": rows["A"].size(), "units": rows["A"]}, "side_b": {"headcount": rows["B"].size(), "units": rows["B"]}}
+	_features = _load_features()
 	var preset := _preset(REPLAY_LANDSCAPE)
 	var floors: Array = [0.0]
 	_terrain = _tiered_terrain(int(preset["width"]), int(preset["height"]), floors)
@@ -103,6 +107,11 @@ func _ready() -> void:
 	_units3d = GroundUnits.new()
 	_units3d.local_faction = 0
 	_ground.add_layer(_units3d)
+	_feature_layer = Node3D.new()
+	_ground.add_layer(_feature_layer)
+	_add_tier_tint(_feature_layer)
+	for f in _features:
+		_add_feature(_feature_layer, f)
 	_overlay = Node3D.new()
 	_ground.add_layer(_overlay)
 	_collect_units()
@@ -112,6 +121,29 @@ func _ready() -> void:
 	_setup_camera(panel)
 	_add_hud()
 	_show(0)
+
+
+## The features of the layout the fight file names, from the layout's JSON twin beside its TOML (H-063; the fight file carries no features). [] when the twin is not there.
+func _load_features() -> Array:
+	var path := String(_fight.get("layout_path", ""))
+	if path == "":
+		return []
+	path = path.get_basename() + ".json"
+	if not path.is_absolute_path():
+		path = "res://" + path
+	if not FileAccess.file_exists(path):
+		return []
+	var twin = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var raw = twin.get("features", []) if twin is Dictionary else []
+	return raw if raw is Array else []
+
+
+## The unit ids the fight file lists as blocked on `frame` (the optional `blocked` key); [] when absent.
+func _blocked_ids(frame: Dictionary) -> Array:
+	var out: Array = []
+	for id in frame.get("blocked", []):
+		out.append(int(id))
+	return out
 
 
 ## The rows GroundUnits draws for frame `i`, ids renumbered to the layout shot's.
@@ -232,6 +264,14 @@ func _show(i: int) -> void:
 				var a := TAU * float(k) / float(SHOT_RING_SEGMENTS)
 				ring.append(_at(float(h["x"]) + SHOT_RING_WU * cos(a), float(h["y"]) + SHOT_RING_WU * sin(a), GLYPH_LIFT_WU))
 			_overlay.add_child(_line(ring, SHOT_RING_COLOUR))
+	for id in _blocked_ids(frame):  # H-063: a unit the ground has held still for more than 2 s wears an orange ring
+		if by_id.has(id):
+			var b: Dictionary = by_id[id]
+			var ring := PackedVector3Array()
+			for k in SHOT_RING_SEGMENTS + 1:
+				var a := TAU * float(k) / float(SHOT_RING_SEGMENTS)
+				ring.append(_at(float(b["x"]) + BLOCKED_RING_WU * cos(a), float(b["y"]) + BLOCKED_RING_WU * sin(a), GLYPH_LIFT_WU))
+			_overlay.add_child(_line(ring, BLOCKED_COLOUR))
 	_hud.text = "tick %d  A %d  B %d  frame %d/%d" % [int(frame["tick"]), int(frame["alive"][0]), int(frame["alive"][1]), i, _fight_frames.size()]
 	_hud_run.text = "seed %d" % int(_fight.get("seed", 0))
 	if _rate_a != null:
@@ -307,7 +347,16 @@ func qa_state() -> Dictionary:
 			"tick": int(frame["tick"]), "alive_a": int(frame["alive"][0]), "alive_b": int(frame["alive"][1]), "result": _fight.get("result", {}),
 			"autoplay": _autoplay, "targets": _targets(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a, "ring_count": _ring_count,
 			"camera": {"fit": _fit, "unit_px": _unit_px}, "facing_px": maxf(FACING_MIN_PX, _unit_px), "rings": _ring_state(frame), "glyphs": _glyph_state(),
-			"end_label": _end_label if _cursor == _fight_frames.size() - 1 else "", "rate_label": _rate_label}
+			"end_label": _end_label if _cursor == _fight_frames.size() - 1 else "", "rate_label": _rate_label,
+			"features": _features_state(), "blocked_units": _blocked_ids(frame)}
+
+
+## The layout shot's `features` entry: {kind, x, y} per feature drawn.
+func _features_state() -> Array:
+	var out: Array = []
+	for f in _features:
+		out.append({"kind": f["kind"], "x": f["x"], "y": f["y"]})
+	return out
 
 
 ## [unit id, target id] for each living unit of `frame` that has a target.
@@ -409,6 +458,10 @@ func _setup_camera(panel: Control) -> void:
 	for p in _every_position():
 		lo = Vector2(minf(lo.x, p["x"]), minf(lo.y, p["y"]))
 		hi = Vector2(maxf(hi.x, p["x"]), maxf(hi.y, p["y"]))
+	for f in _features:  # the ground is part of the picture: the fit box holds it too
+		for p in _feature_points(f):
+			lo = Vector2(minf(lo.x, p.x), minf(lo.y, p.y))
+			hi = Vector2(maxf(hi.x, p.x), maxf(hi.y, p.y))
 	var m := maxf(FIT_MARGIN * maxf(hi.x - lo.x, hi.y - lo.y), FIT_MIN_WU)
 	var box_lo := lo - Vector2(m, m)
 	var box_hi := hi + Vector2(m, m)

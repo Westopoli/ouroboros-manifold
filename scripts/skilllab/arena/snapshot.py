@@ -100,7 +100,9 @@ def validate(doc: dict) -> list[str]:
             if not isinstance(frame, dict):
                 out.append(f"bad type {where}")
                 continue
-            ok = _check_keys(frame, _FRAME, where, out)
+            ok = _check_keys(frame, dict(_FRAME, blocked=list) if v2 and "blocked" in frame else _FRAME, where, out)   # H-063: optional, unit ids
+            if v2 and isinstance(frame.get("blocked"), list) and not all(_kind_ok(b, int) for b in frame["blocked"]):
+                out.append(f"bad type {where}.blocked (want a list of unit ids)")
             if _kind_ok(frame.get("tick"), int):
                 ticks.append(frame["tick"])
             if isinstance(frame.get("alive"), list):
