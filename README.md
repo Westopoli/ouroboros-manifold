@@ -1,56 +1,122 @@
 # Ouroboros Manifold
 
-A multi-era real-time strategy game set in a living, stochastic galaxy. A simulation written in C drives factions, regions and history; between missions decades pass and the galaxy moves on without you, and the chronicle writes down what happened. In a mission you command a task force on a generated land or space map, and a smaller force that holds the high ground and the right layer beats a larger one that does not. You are a commander, not a god, and the world does not wait. No names, places or plot come from existing fiction.
+A multi-era real-time strategy game: a stochastic galaxy simulated in C, a Godot 4 client over a JSON pipe, deterministic to the byte across platforms. That is the product. The reason this repository is worth a look is how it is built: about 5,600 commits in two months, nearly all written by Claude agents, under a build harness that I designed, measured, broke, and rebuilt three times. Most of my engineering time went into the harness, not the game, and the harness is what this README is about.
 
 | The galaxy between missions | The multiplayer lobby |
 |---|---|
 | ![The star map: owner-coloured systems, translucent faction shells and filaments](docs/northstar/story_reviews/shots/20261013-1406-59a24b4/S-106.png) | ![The lobby showing the one era two players share](docs/northstar/story_reviews/shots/run-20261020T144745Z/S-143_common_eras_pair.png) |
 
-*Left: 80 systems in faction colours, seen from inside the ball. Right: two players with different era packs are shown the one era they share. Plain placeholder lobby, and proud of it.*
+## The harness at a glance
 
-## Architecture
+**Roles, not models.** Work is split into tiers: an *Architect* (Fable) that writes specs, rulings and briefs and never writes code; a *Dispatcher* (Sonnet) that launches and lands work and decides nothing about rules or tests; *Engineers* that write tests, audits and clerk work; *Doers* that code against a written spec; and a local 30B model for mechanical cards overnight. Every spawn names its model, sub-agents never spawn sub-agents, and the human answers only two kinds of question: what a picture should look like, and what a rule means where nobody has recorded his words. Everything else the Architect decides and logs, and the human may veto.
 
-- **A C simulation.** The stochastic equations are kept verbatim from the bible's `algorithms.md`. The frozen contract is `csrc/ouroboros_sim.h`.
-- **A Godot 4 client over a JSON pipe.** The client draws; the sim decides. The pipe frames are documented in [`docs/architecture.md`](docs/architecture.md).
-- **Determinism.** The same seed and command stream give a byte-identical trace on every platform: no fast-math, no platform transcendentals, no hash-order or wall-clock input. The gate compares an `-O0` build against an `-O2` build to keep it honest.
-- **No runtime model calls.** The game never asks a model anything. Missing library content falls back to a placeholder.
+**Tests are the spec.** Every story exists as failing tests before any code, in fenced paths builders cannot edit, each naming the story or rule it proves. Every detector ships with a positive control, so a check that cannot fail is itself a defect. A test is changed only when it is classed as a test-defect with a ledger row. Thresholds and tolerances belong to the human: narrowing one is allowed, loosening one needs him.
 
-What the game is lives in the bible: start at [`docs/bible/game_bible.md`](docs/bible/game_bible.md).
+**Frozen contracts, one owner per file.** The C header and the pipe frames change only as their own documented piece. A table names the owner of every file, and two in-flight pieces never own the same one. New systems go in new files behind a frozen header; wiring them in is a separate, queued piece.
 
-## How it is built
+**A merge gate that is the only way to main.** Twenty-odd stages: build, lints that keep the C faithful to the bible's equations and the header's signatures, a reachability lint ("wired, not just tested"), ownership and fence checks, three test suites, a scripted playthrough of the real client under xvfb, story plays with screenshots, and an `-O0` versus `-O2` checksum trace that catches any non-determinism. A cheap pre-gate runs before every push so a lint reject never costs a full gate.
 
-Requirements are epics, stories and rules in the bible. A story is built only after it passes a Definition of Ready, and every story exists as failing tests first.
+**Two build tools, chosen per piece.** A *Workflow* script (Claude Code's orchestration) for anything that ends in a frame, any single piece, anything that must stop for a human, and every landing. A *manager-mode cascade* (my own parallel TDD skill, in its own repo) for clusters of three or more file-disjoint units that share one spec, one contract and one umbrella test. Six questions in every spec decide which, because the two were measured against each other and neither wins everywhere.
 
-- **Tests are the spec.** Tests sit in fenced paths builders cannot edit, and each names the `S-###` or `R-###-##` it proves. Every detector ships with a positive control.
-- **One owner per file.** `docs/northstar/plans/push/pieces.toml` names the owner of every file; two in-flight pieces never own the same one.
-- **The merge gate** (`scripts/specfactory/merge_gate.sh`) runs, among others: build, libm lint, algorithm-constants lint, footprint fence, symbol-ownership and reachability lints, single-owner lint, rule pins, the csim, t1 and transport suites, the Godot import, the playthrough, lane plays, `-O0` versus `-O2` checksum and tactical traces, and a status check. `look` (a blank or near-uniform frame check) currently only warns.
-- **The playthrough gate.** Every landing is run through a scripted end-to-end playthrough of the real client under xvfb.
-- **Drift check and method check.** `status_check.py` diffs the programme's lane table, `pieces.toml` and the review queue against git after every landing. `method_check.py` reads a chat's own transcript at each compaction and prints `DRIFT` lines for rules it broke; a DRIFT line is quoted, never argued away.
-- **The ledger and the ambiguity register.** Decisions and rulings are recorded as they happen. Ambiguity is flagged in the register, never guessed, and an epic with an open flag is not built.
-- **Workflow or manager-mode.** Which tool builds a piece is chosen by six questions, written into its spec.
+**Token discipline as an engineering constraint.** Cost is context size times calls, and a cached re-read still costs a tenth of fresh input. So: many short-lived agents with small contexts ("width, not length"), run back to back while the cache is warm; builders push and stop, a fresh clerk lands; nobody polls from a large chat. Enforced, not just written: a hook blocks every tool call once a chat passes 400k tokens, the project compacts at 200k, shell output is compressed before it reaches the model, and the status line shows cost and context live.
 
-The ten-minute version, with links to every source of truth, is [`docs/METHOD.md`](docs/METHOD.md).
+**Drift checks on the process itself.** After every landing a script diffs the one status table, the ownership table and the review queue against git and fails on a mismatch. At every compaction a hook re-reads the chat's own transcript and prints, per method rule, how many turns broke it. A drift line is quoted to the human before any other work and is never argued away. Weekly, a fresh auditor that has not seen anyone's reasoning checks rulings against every epic they touch.
 
-## Status
+**A story is done when a human has seen it.** Green tests shipped grey squares once. Now every player-facing piece asserts a deterministic element inventory from the running client, attaches a screenshot to its landing, and waits in a review queue for one word from the human. A story moves to *Seen* only on his approval, and the gate flags a blank or near-uniform frame (warn-only until the rejection threshold is set).
 
-- **Beta engineering:** in flight since 2026-10-07 under the programme's lane table ([`docs/northstar/plans/2026-10-07-visible-game-programme.md`](docs/northstar/plans/2026-10-07-visible-game-programme.md)), which is the only status location. Some lanes are stubs: the layout engine's `om_layout_places` is on main but not yet called by the game, and the lobby's team-size choice is a stub until team scaling.
-- **Player acceptance:** 8 of 240 stories are `Seen` (a human looked at the picture and said yes). The terrain-obeys prototype was approved on 2026-10-21 and is approved, not integrated.
+**QA that plays like the user.** A desktop driver runs the real client at native resolution with real input and a live clock, and scripted story plays judge each story against its own words. API-driven QA at 720p once missed "nothing moves"; it does not run first-look QA any more.
 
-## Run it
+**Memory and handoffs.** Chats restart often. Each role keeps continuation files and feedback rules in persistent memory, every decision is a logged row with its rule and context, and the journal is `git log`, never hand-written. A new Architect reads one file and continues.
 
-Needs a C compiler, Python 3, pytest, and Godot 4 on `PATH` (the project's tests use 4.6.3).
+## What we learned
 
-```
-make                                  # build libouroboros.so and the debug library
-make test                             # build, then the fenced C-sim suite (pytest tests/csim)
-make pipe/ouroboros_pipe              # the JSON pipe server the client talks to
-scripts/run_godot_tests.sh tests/test_c_bridge.gd   # one headless Godot test
-python3 -m pytest tests/transport     # pipe tests (build the pipe first)
-python3 -m pytest tests/qa/desktop    # desktop driver: the real client, run under xvfb-run
-python3 scripts/specfactory/status_check.py         # the drift check
-```
+Each of these is a scar, and the fix is in the repo. The incident records, with dates, commits and the owner's words, are in [`docs/northstar/lessons.md`](docs/northstar/lessons.md).
 
-The desktop driver is `tests/qa/desktop/daemon_client.py`; story plays live in `tests/qa/desktop/plays/`. The skill lab, which measures tactical combat on the real sim, is `scripts/skilllab/` (see its `README.md`).
+- **A harness that cannot fail will lie to you.** A build card was marked done overnight after a segfault, because an empty pytest run scored as zero failures, and it auto-merged. Now every detector has a positive control, every new test is proven red before the code exists, and a crashed run is a harness error, not a pass.
+- **Context is the cost.** In the first three-day programme the two Architect sessions polled gates at 300k to 900k tokens of context and spent $1,130 of the programme's $1,487. Their judgement turns paid for themselves; their waiting turns did not. Waiting moved to a Sonnet Dispatcher, judgement comes from Fable by a one-page brief, and a hook now makes the limit physical.
+- **A fork inherits everything.** One fork spawned late in a long session cost about 800k tokens. Fresh agents get a self-contained brief instead.
+- **Spawn control is not optional.** One research brief grew a tree of fifteen agents, with model drift to the most expensive one on resume. Every brief now carries a no-spawn line and names its model.
+- **Sonnet needs a role, not a plan.** Handed a design document, it turned it into a build list and did bookkeeping instead of running the game. Briefs are role-shaped, bounded and under a page.
+- **One checkout per agent.** Shared checkouts leaked one agent's commit onto another's branch. Every agent works in its own worktree, made and reaped through one script with a disk cap, after the worktree count reached 558 and 258 GB.
+- **Green is not seen.** With every test green, the owner played main and found 24-pixel squares on grey. Seven visible-game guards followed, from screenshots per piece to a two-column status (works in tests, seen by a player).
+- **Measure the tools against each other.** Over one week, 32 Workflow runs produced 2 clean completions and 20 stops on spec or records gaps, at about $160 per landed piece; the one manager-mode cascade built 9 leaves in 90 minutes with no reverts, but admitted on the umbrella test alone. The answer was a hybrid with a written rule for choosing.
+- **Ceremony has a cost curve.** The third retro asked whether the method had become the bottleneck: 348 test-defect rulings in five weeks, 2.24 test lines per game line, product commits falling from 397 to 18 a week. The verdict kept frozen contracts and fenced sim tests, and dropped tests-first for client pieces that are judged by eye.
+- **Ambiguity is flagged, never guessed.** The first feature that shipped unverifiable was under-defined. Every open question is now a register row with two or three candidates, and an epic with an open flag is not built.
+
+## By the numbers
+
+| | |
+|---|---|
+| Commits since 2026-09-01 | about 5,600 |
+| C simulation | about 40k lines (2,200 to 31,800 in one two-day push) |
+| Godot client | about 84k lines of GDScript |
+| Tests | 833 test files, about 155k lines; 2.24 test lines per game line |
+| Method and design docs | about 66k lines of Markdown against 87k of game code |
+| Three-day programme, 2026-10-07 | 98 of 118 pieces landed, 430 Sonnet agents, 847M tokens, $1,487 |
+| Workflow week, 2026-10-14 | 32 runs, 2 clean, about $160 per landed piece |
+| One manager-mode cascade | 9 leaves, 90 minutes, 0 reverts |
+| Context-guard evidence | 638 of 1,456 Dispatcher calls above 400k tokens before the hook |
+
+## Deep dive: where to look
+
+**The rules the agents run under**
+- [`CLAUDE.md`](CLAUDE.md): the short rule list every agent loads. Tiers, usage discipline, workflow pre-flight, the bible, architecture rules, tests, visible-game guards, git.
+- [`docs/METHOD.md`](docs/METHOD.md): the ten-minute tour with a pointer to every source of truth.
+- [`.claude/agents/`](.claude/agents/): the Architect (read-only), Engineer and Doer definitions, each pinned to a model.
+- [`workflows_2026-10-07/rules.md`](docs/northstar/plans/workflows_2026-10-07/rules.md) and [`dispatcher.md`](docs/northstar/plans/workflows_2026-10-07/dispatcher.md): shared agent rules and the Dispatcher role.
+- [`docs/northstar/agile.md`](docs/northstar/agile.md): Definition of Ready and the Prototype gate.
+
+**Hooks and guards**
+- [`.claude/hooks/context_guard.py`](.claude/hooks/context_guard.py): blocks every prompt and tool call past 400k tokens of context, letting only a handoff memory write through. Spec: [`2026-10-19-harness-enforcement-spec.md`](docs/northstar/plans/2026-10-19-harness-enforcement-spec.md).
+- [`.claude/hooks/git-guard.sh`](.claude/hooks/git-guard.sh) and the deny list in [`.claude/settings.json`](.claude/settings.json): no force pushes, resets, rebases or amends from an agent.
+- [`.claude/settings.json`](.claude/settings.json): the `autoCompactWindow`, and the compaction hook that runs the method check.
+
+**The gate**
+- [`scripts/specfactory/merge_gate.sh`](scripts/specfactory/merge_gate.sh) and [`pre_gate.sh`](scripts/specfactory/pre_gate.sh): the full gate and the cheap tier.
+- [`reach_lint.py`](scripts/specfactory/reach_lint.py): behaviour must be reachable from the tick, the jump or a pipe handler, not only from tests.
+- [`parent_patch_fence.py`](scripts/specfactory/parent_patch_fence.py): builders cannot touch tests.
+- [`alg_constants.py`](scripts/specfactory/alg_constants.py) and [`sig_table.py`](scripts/specfactory/sig_table.py): the C stays faithful to [`docs/bible/algorithms.md`](docs/bible/algorithms.md) and the frozen header [`csrc/ouroboros_sim.h`](csrc/ouroboros_sim.h).
+- [`checksum_trace.py`](scripts/specfactory/checksum_trace.py): the `-O0` versus `-O2` determinism check.
+- [`owner_lint.py`](scripts/specfactory/owner_lint.py) over [`pieces.toml`](docs/northstar/plans/push/pieces.toml): one owner per file.
+
+**Tests as the spec**
+- [`tests/csim/`](tests/csim/): the C sim suite, named by story and rule. [`tests/transport/`](tests/transport/): pipe contract tests. [`tests/qa/desktop/`](tests/qa/desktop/): the desktop driver and the story plays.
+- [`red_check.py`](scripts/specfactory/red_check.py) and [`green_check.py`](scripts/specfactory/green_check.py): prove a test fails before the code exists, then passes on the reference.
+- [`control_liveness.py`](scripts/specfactory/control_liveness.py): every positive control still fires.
+- [`spec_provenance.py`](scripts/specfactory/spec_provenance.py): every number in a spec traces to a source or a named draft.
+- [`autoload/qa_daemon.gd`](autoload/qa_daemon.gd): the in-game daemon that answers `qa_state()` for the driver.
+
+**The two build tools**
+- [`scripts/specfactory/workflows/`](scripts/specfactory/workflows/): about seventy Workflow scripts, each a lane with tests-first, a ruler, gate agents and STOP rules.
+- [`2026-10-21-tool-split-spec.md`](docs/northstar/plans/2026-10-21-tool-split-spec.md): the six questions that choose Workflow or cascade.
+- [claude-manager-mode](https://github.com/Westopoli/claude-manager-mode): the cascade skill itself. Spec, contract and umbrella test locked first; a separate writer per shard writes failing tests; fresh auditors and a saboteur prove the tests go red against wrong code; leaves build in isolated worktrees; ten admission gates per leaf.
+- [`retro_2026-10-21/workflows_vs_manager_mode.md`](docs/northstar/plans/retro_2026-10-21/workflows_vs_manager_mode.md): the measured comparison.
+
+**Drift and method checks**
+- [`status_check.py`](scripts/specfactory/status_check.py): twelve checks after every landing.
+- [`method_check.py`](scripts/specfactory/method_check.py): the transcript check at compaction. Rules: [`method_check.md`](docs/northstar/plans/workflows_2026-10-07/method_check.md).
+- [`method_metrics.py`](scripts/specfactory/method_metrics.py) with [`method_thresholds.toml`](scripts/specfactory/method_thresholds.toml): twenty-four measures of the method from git and the ledgers, run weekly.
+- [`drift_audit.md`](docs/northstar/plans/workflows_2026-10-07/drift_audit.md): the weekly fresh-auditor procedure.
+
+**Cost, worktrees, memory**
+- [`retro_2026-10-10/tokens.md`](docs/northstar/plans/retro_2026-10-10/tokens.md), [`retro_2026-10-24/coordinator_tokens.md`](docs/northstar/plans/retro_2026-10-24/coordinator_tokens.md) and [`method_cost.md`](docs/northstar/plans/retro_2026-10-24/method_cost.md): where the money went, by model and by role.
+- [`wt.py`](scripts/specfactory/wt.py): the only way to make, finish or reap a worktree; active-slot and disk caps.
+- [`sdk_engineer.py`](scripts/specfactory/sdk_engineer.py) and [`batch_review.py`](scripts/specfactory/batch_review.py): clerk work and half-price batch reviews on API credit instead of the subscription ([`README_credits.md`](scripts/specfactory/README_credits.md)).
+- [`scripts/journal.sh`](scripts/journal.sh): the journal is the git log.
+
+**Records and retros**
+- [`story_reviews/westley/decisions.md`](docs/northstar/story_reviews/westley/decisions.md): every decision with its rule and context.
+- [`ambiguity_register.md`](docs/northstar/ambiguity_register.md): about five hundred open or answered questions, each with candidates.
+- [`push_ledger_2026-09-22.md`](docs/northstar/plans/push_ledger_2026-09-22.md): what landed, why, and every test-defect ruling.
+- The three retros: [2026-10-10](docs/northstar/plans/retro_2026-10-10/README.md) (the three-day programme and method rev 2), [2026-10-21](docs/northstar/plans/retro_2026-10-21/workflows_vs_manager_mode.md) (tools), [2026-10-24](docs/northstar/story_reviews/westley/method_retro_2026-10-24.md) (is the method the bottleneck).
+- [`PLAN.md`](docs/northstar/PLAN.md) "The Factory": the failure modes the harness guards against, written after the first harness defect investigation ([`research/harness_defects_2026-09-17/`](docs/northstar/research/harness_defects_2026-09-17/)).
+- [`2026-10-07-visible-game-programme.md`](docs/northstar/plans/2026-10-07-visible-game-programme.md): the seven guards and the lane table.
+- [`docs/northstar/lessons.md`](docs/northstar/lessons.md): the incidents behind every rule, with evidence.
+
+**The local-model side**
+- [`card_lint.py`](scripts/specfactory/card_lint.py), [`gen_card.py`](scripts/specfactory/gen_card.py), [`dor_check.py`](scripts/specfactory/dor_check.py): cards for the local 30B, linted and checked against the Definition of Ready before they are queued. The queue and the overnight loop live in a separate project, Agora, which runs local models unattended and leaves Claude the judgement work.
+
+**Not in this repo.** The cascade skill is its own repo above. Agent memory, the worktree workspace, gate locks and the overnight loop live on the build machine; the incidents in "What we learned" were copied out of that memory into [`docs/northstar/lessons.md`](docs/northstar/lessons.md).
 
 ## Read next
 
@@ -58,10 +124,3 @@ The desktop driver is `tests/qa/desktop/daemon_client.py`; story plays live in `
 - [`docs/README.md`](docs/README.md): a map of `docs/`
 - [`docs/bible/game_bible.md`](docs/bible/game_bible.md): what the game is
 - [`docs/architecture.md`](docs/architecture.md): the pipe and the contracts
-- [`docs/northstar/README.md`](docs/northstar/README.md): the development method in full
-- [`CLAUDE.md`](CLAUDE.md): the rules the agents work under
-- [`CONTRIBUTING.md`](CONTRIBUTING.md)
-
-## Licence
-
-MIT. See [`LICENSE`](LICENSE).
