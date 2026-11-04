@@ -79,6 +79,10 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-082 | Finding (2026-11-03, sweep of d24245d8 run by hand): FINDING-size-lint-real-examples: `tests/specfactory/test_size_lint.py::test_real_examples_from_the_repo` is red on main (it lints two pinned commits against a moving `origin/main`; it was the single red of the 05:11 PASS row and the one "new" red of the 18:17 REJECT row); the 118 other reds are the 92 placeholder controls and 26 pre-existing E17 terrain tests. Westley 2026-11-03: "it's ok to be red and we move forward"; fixed after the communication migration (H-077 to H-081). Until then `STATUS sweep DRIFT` stays and records pushes go over it on his word (DEC-push-over-sweep-drift-2026-11-03). | Found; todo after the migration | none yet |
 | H-029 | "No code in the gate still reads pieces.toml: the dead pieces-based functions and their tests are gone." | Tested | `docs/stories/H-029.md` |
 | H-030 | `undertest-from-stories`: the undertest check reads every landed story's Tests line (git log trailers or docs/stories) instead of an ownership table and warns on a test file no story names. | Ready, no story yet | none yet |
+| H-083 | "ERROR: Condition "!FileAccess::exists(path)" is true. Returning: ERR_FILE_NOT_FOUND" | Spec'd | `nightly/2026-11-03.log` |
+| H-084 | "ERROR: Condition "!FileAccess::exists(path)" is true. Returning: ERR_FILE_NOT_FOUND" | Spec'd | `nightly/2026-11-03.log` |
+| H-085 | "ERROR: GDExtension dynamic library not found: 'res://addons/godotsteam/godotsteam.gdextension'." | Spec'd | `nightly/2026-11-03.log` |
+| H-086 | "ERROR: Error loading extension: 'res://addons/godotsteam/godotsteam.gdextension'." | Spec'd | `nightly/2026-11-03.log` |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
 
