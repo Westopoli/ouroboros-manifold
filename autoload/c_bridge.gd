@@ -21,6 +21,9 @@ const LIVE_READ_TIMEOUT_MSEC := 5000
 const _FrameDecode := preload("res://autoload/bridge/frame_decode.gd")
 const _DumpDecode := preload("res://autoload/bridge/dump_decode.gd")
 const DEFAULT_N_REGIONS := 80
+# The pipe ABI this client speaks: OM_ABI_VERSION in csrc/ouroboros_sim.h, carried by the pipe's hello frame
+# (docs/architecture.md). tests/qa/test_pipe_abi_check.py pins this equal to the header.
+const EXPECTED_ABI := 9
 # Every strategic om_feature id (csrc/ouroboros_sim.h OM_FEAT_EVENTS ..
 # OM_FEAT_LIFECYCLE); OM_FEAT_TACTICAL (8) stays off. With [6] alone nothing
 # ever changes owner (docs/architecture.md "session commands (v1.1)").
@@ -232,7 +235,7 @@ func open_session(seed: int, n_regions: int, features: Array, new_campaign: bool
 	_last_error = ""
 	var exe := _pipe_path()
 	if not FileAccess.file_exists(exe):
-		_last_error = "pipe binary missing"
+		_last_error = "pipe binary missing: run scripts/setup_editor.sh"
 		return false
 	var result: Dictionary = OS.execute_with_pipe(exe, PackedStringArray())
 	if result.is_empty() or not result.has("pid"):
@@ -280,6 +283,10 @@ func pump() -> int:
 	for frame in frames:
 		var changed := false
 		match String(frame.get("type", "")):
+			"hello":
+				var abi := int(frame.get("abi", -1))
+				if abi != EXPECTED_ABI:
+					_last_error = "pipe binary is out of date (abi %d, expected %d): run scripts/setup_editor.sh" % [abi, EXPECTED_ABI]
 			"snapshot":
 				_snapshot = frame
 				_region_index = {}
@@ -394,7 +401,8 @@ func ensure_session(seed: int, n_regions: int, features: Array, new_campaign: bo
 	while Time.get_ticks_msec() < deadline_msec and _last_error == "" and (_snapshot.get("regions", []) as Array).is_empty():
 		pump()
 		OS.delay_msec(5)
-	if (_snapshot.get("regions", []) as Array).is_empty():
+	# A stale pipe's hello sets _last_error even when its snapshot arrived in the same batch.
+	if _last_error != "" or (_snapshot.get("regions", []) as Array).is_empty():
 		if _last_error == "":
 			_last_error = "timed out waiting for the first snapshot"
 		close_session()
