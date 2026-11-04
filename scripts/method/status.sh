@@ -74,7 +74,13 @@ git log --since="$SINCE" --grep='^Decision:' --format='%h %(trailers:key=Decisio
 
 echo "NUMBERS $WEEK"
 csv="$HOME/Projects/om-push/metrics/$WEEK.csv"
-if [ -s "$csv" ]; then tail -1 "$csv" | ind; else echo "no report yet" | ind; fi
+if [ -s "$csv" ]; then
+    tail -1 "$csv" | ind
+    awk -F, 'NR==1{for(i=1;i<=NF;i++)c[$i]=i} END{if(c["wakeups_per_landing"])print "wakeups_per_landing " $c["wakeups_per_landing"] "  messages_per_landing " $c["messages_per_landing"]}' "$csv" | ind
+else echo "no report yet" | ind; fi
+
+echo "GATE QUEUE"
+python3 "$(dirname "$0")/../specfactory/gate_queue.py" status 2>/dev/null | ind
 
 echo "LAST PLAYED"
 git -C "$HOME/Projects/om-push/main" rev-parse HEAD 2>/dev/null | ind

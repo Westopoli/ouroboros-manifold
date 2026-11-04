@@ -69,4 +69,4 @@ Playing main is the same script with no arguments. The 30B plays main nightly wi
 
 ## Slots and waits
 
-DRAFT-build-slots: three builds in flight, one landing per channel. Waits are `flock -w`; no chat polls a gate or schedules a wakeup. A builder pushes and stops; a fresh clerk lands. Every agent reports once, at the end, in its card's schema, and stops past 120k context.
+DRAFT-build-slots: eight builds in flight, four per channel, one landing per channel. Waits are `flock -w` inside scripts; a chat waits only on `mail.py wait`; no chat polls a gate or schedules a wakeup. A builder pushes and stops; a fresh clerk lands. Every agent reports once, at the end, in its card's schema, and stops past 120k context.

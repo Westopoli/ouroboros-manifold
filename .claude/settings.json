@@ -53,6 +53,19 @@
           {
             "type": "command",
             "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/git-guard.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/kill-guard.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "SendMessage",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/mail-guard.sh"
           }
         ]
       }
