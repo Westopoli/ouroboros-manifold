@@ -11,7 +11,7 @@ In the week of 2026-10-27 the chat layer (Architect, two Dispatchers) cost seven
 1. **Blackboard first.** State lives in git and is read with `scripts/method/status.sh`. A message that says something git can answer (landed, pushed, in flight, slots, sweep result) is not sent; `mail.py` refuses it. Rulings go into the story file and `decisions.md`; the message, if any, is one line pointing there.
 2. **Mail, not messages.** Chats write to each other only through `scripts/method/mail.py send`. Cross-session `SendMessage` is denied by a hook (H-077). Sub-agents have no mailbox: they report once and stop.
 3. **Woken, never polling.** A chat wakes on its own background completion (a Workflow or Agent result) or on its flag. The station raises the flag at once for a `block`, an `ask` to an agent with `rules = true`, and Westley's words; `info` waits for DRAFT-mail-linger or DRAFT-mail-batch. No Monitor, no scheduled wakeup, no `flock` wait, no `status.sh` turn.
-4. **Every wakeup drains the mailbox.** The first tool call of every turn is `mail.py read --me <agent>`; a turn that leaves work in flight ends with one background `mail.py wait --me <agent>`, whose completion is the next wake. A chat with nothing in flight and no unread mail stops; Westley's `go` restarts it.
+4. **Every wakeup drains the mailbox.** The first tool call of every turn is `mail.py read --me <agent>`; a turn that leaves work in flight ends with one background `mail.py wait --me <agent>`, whose completion is the next wake, but only when the `read` ended with `WAIT none` (with `WAIT armed <n>` a wait is already armed and a second is not). A chat with nothing in flight and no unread mail stops; Westley's `go` restarts it.
 5. **One launch per landing.** The runner launches `land_story` once per Ready story and hears about it once (H-079). The gate is a queue the clerk hands a ticket to (H-080).
 6. **Kills are evidenced.** Processes are started through `proc.py start` and ended only by `proc.py reap` on recorded evidence (H-081).
 
@@ -57,9 +57,18 @@ A planner that hands files to the Architect is `[planner]` with `rules = false`,
 
 Mail is one JSON line in `~/Projects/om-push/mail/<agent>/inbox.jsonl`: `id`, `ts`, `from`, `to`, `class`, `re` (story id), `text` (under DRAFT-mail-max characters; longer text is a file and the mail carries the path), `attach`, `read`. The station logs every flag with its reason in `~/Projects/om-push/mail/station.log`. `mail.py` and `station.py` interfaces in full: `docs/stories/H-077.md`.
 
+## Reading and waiting
+
+Amended 2026-11-04 by H-086 (DEC-mailbox-fixes-2026-11-04) after a measured review of the shipped H-077 code against the plan. Until H-086 lands this section is a design: the code still cuts the digest at 200 characters, leaves the flag up after a read and lets waits pile up.
+
+- **The digest is whole.** `read` and `wait` print every unread mail with its full text, one `MAIL <class> <from> <re> <ts>: <text>` line each, then `[attach: <paths>]`. The 1,500-character limit is enforced when sending, so nothing is cut when reading. (Before: the text was cut at 200 characters with no mark, and a ruling in the cut part never arrived.)
+- **A read lowers the flag.** `read` moves the unread lines to `delivered.jsonl` and removes `mail/<agent>/flag`, under the agent's lock. The station takes the same lock, looks at the inbox again and raises the flag only if mail is still unread, so a flag never outlives the mail it was raised for. (Before: a chat that read at the top of a turn and then armed a wait was woken at once by an empty flag.)
+- **One wait per chat, and a flag is taken once.** `wait` records itself in `mail/<agent>/waits/<pid>` (pid, start time, expiry, the chat process it belongs to). Of several waits armed for one agent only the one whose own removal of the flag succeeds returns with the mail; the others keep waiting. `read` ends its output with `WAIT none` or `WAIT armed <n>`; a chat arms a wait only after `WAIT none`. A record whose process is gone is dropped by whoever reads it.
+- **A wait ends.** Without `--max` a wait ends after DRAFT-mail-wait-max (4 h) with `MAIL idle <s>s`. A wait whose chat process has ended exits at once and silently, never taking a flag or reading mail, so a restarted chat's mail is not swallowed by a wait nobody hears. `OM_MAIL_ANCHOR_PID` names the chat process in tests.
+
 ## Numbers
 
-In the README register: DRAFT-build-slots 8, DRAFT-mail-linger 20 min, DRAFT-mail-batch 5, DRAFT-mail-max 1,500 characters, DRAFT-mail-stale 30 min, DRAFT-wakeups-per-landing 10, DRAFT-proc-ttl 4 h, DRAFT-queue-lookahead 1. The nightly report prints `wakeups_per_landing` and `messages_per_landing` (H-078) beside the week-of-10-27 baseline, 94 and 17.
+In the README register: DRAFT-build-slots 8, DRAFT-mail-linger 20 min, DRAFT-mail-batch 5, DRAFT-mail-max 1,500 characters, DRAFT-mail-stale 30 min, DRAFT-mail-wait-max 4 h, DRAFT-wakeups-per-landing 10, DRAFT-proc-ttl 4 h, DRAFT-queue-lookahead 1. The nightly report prints `wakeups_per_landing` and `messages_per_landing` (H-078) beside the week-of-10-27 baseline, 94 and 17.
 
 ## Enforcement
 
