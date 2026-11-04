@@ -16,10 +16,17 @@ fixture teardown, by pid, from Python, only after checking /proc that the pid st
 Out of scope, named here as the story's Change 1 asks: a SIGKILL of play.sh itself cannot be trapped, so
 no test sends one.
 
-Not tested, no rule states it (reported as gaps): what a play.sh WITHOUT --check does to the game when it
-exits (today it leaves the game open for the human to play); how play.sh tells a Scene-env value that is
-a path from one that is not; what the dry run prints for a story that has a Scene-env line; whether the
-missing-input path is printed relative or resolved.
+The rulings of 2026-11-04 (docs/stories/H-084.md, Rulings; DEC-h084-rulings-2026-11-04) are tested too: a
+plain run for a human keeps its game, a Scene-env value with "/" is a path in the tree and one without is plain,
+a path may not leave the tree, the missing-file line prints the value as written, the dry run shows the
+assignments.
+
+Not tested, no rule states it (reported as gaps): a Scene-env path that contains ".." but stays inside the tree,
+and an absolute value that points inside the tree (the ruling names "..", and an absolute value, as leaving
+the tree); which of "missing" and "outside tree" wins for a value that is both (the outside-tree tests plant
+the file, so only "outside" applies); the dry run for a story whose Scene-env input is missing; the dry-run
+position of the assignments relative to a `--check` run's `XDG_DATA_HOME=` prefix (the dry-run test does not
+pass --check).
 """
 import json
 import os
@@ -414,13 +421,14 @@ def scene_env_story(line):
 def test_scene_env_missing_file_rejects_before_the_build(rig):
     """H-084 Finding 4 / Tests: "a story file with `Scene-env: OM_FIGHT=docs/none.fight.json` (file absent)
     makes `play.sh --story X --check` exit 5 with `PLAY REJECT scene input missing OM_FIGHT`". Change 2:
-    "prints `PLAY REJECT scene input missing <KEY> <path>` and exits 5 before the build." The line is on
-    stdout like every `PLAY REJECT`; the build stub leaves no mark and the game is never launched."""
+    "prints `PLAY REJECT scene input missing <KEY> <path>` and exits 5 before the build." Rulings 2: "The
+    missing-file line prints the value as written", so the whole line is pinned, the value relative as in the
+    story file. The line is on stdout like every `PLAY REJECT`; the build stub leaves no mark and the game is never launched."""
     env, tree = rig.make(wayland=True, x_window=False, stories=scene_env_story("Scene-env: OM_FIGHT=docs/none.fight.json"))
     r = rig.play(env, tree, "--story", "T-084", "--check")
     assert r.returncode == 5, f"Finding 4: exit {r.returncode}, want 5\n" + r.stdout + r.stderr
-    lines = [l for l in r.stdout.splitlines() if l.startswith("PLAY REJECT scene input missing OM_FIGHT")]
-    assert lines and "none.fight.json" in lines[0], r.stdout
+    # Rulings 2: "The missing-file line prints the value as written."
+    assert "PLAY REJECT scene input missing OM_FIGHT docs/none.fight.json" in r.stdout.splitlines(), r.stdout
     assert not (rig.base / "build-mark").exists(), "the build ran before the missing input was caught"
     assert not rig.pids(), "the game was launched with its input missing"
 
@@ -428,9 +436,10 @@ def test_scene_env_missing_file_rejects_before_the_build(rig):
 def test_scene_env_present_file_reaches_the_game_as_an_absolute_path_in_the_tree(rig):
     """H-084 Finding 4 / Tests: "with the file present the stub Godot's environment holds
     `OM_FIGHT=<absolute path in the tree>`". Change 2: "A value that is a path in the tree is resolved
-    against the tree before launch. The game starts with those variables set." The stub records its
-    environment at launch: OM_FIGHT is absolute, ends with the story's path, lies under the tree play.sh
-    was given or its scratch clone, and names a file that existed when the game started."""
+    against the tree before launch. The game starts with those variables set." Rulings 2: "A path is resolved
+    against the tree the game is launched from (the scratch clone when `--tree` is used) to an absolute path
+    before launch." The stub records its environment at launch: OM_FIGHT is the scratch clone's path of
+    docs/h084.fight.json (not the given tree's), and names a file that existed when the game started."""
     env, tree = rig.make(wayland=True, x_window=False, stories=scene_env_story("Scene-env: OM_FIGHT=docs/h084.fight.json"),
                          files={"docs/h084.fight.json": "{}\n"})
     r = rig.play(env, tree, "--story", "T-084", "--check")
@@ -438,8 +447,9 @@ def test_scene_env_present_file_reaches_the_game_as_an_absolute_path_in_the_tree
     rec = json.loads((rig.base / "stub-env.json").read_text())
     got = rec["env"].get("OM_FIGHT")
     assert got, "Finding 4: the game started without OM_FIGHT in its environment"
-    assert os.path.isabs(got) and got.endswith("docs/h084.fight.json"), got
-    assert got.startswith((str(tree) + "/", str(scratch_of(r.stdout)) + "/")), (got, str(tree))
+    want = str(scratch_of(r.stdout) / "docs" / "h084.fight.json")
+    assert os.path.isabs(got) and os.path.realpath(got) == os.path.realpath(want), \
+        f"Rulings 2: OM_FIGHT={got}, want the scratch clone's {want}"
     assert rec["OM_FIGHT_exists"], f"OM_FIGHT={got} named no file when the game started"
 
 
@@ -455,3 +465,95 @@ def test_scene_env_two_pairs_both_reach_the_game(rig):
     got = json.loads((rig.base / "stub-env.json").read_text())["env"]
     assert got.get("OM_SEED") == "7", f"Finding 4: OM_SEED in the game's environment is {got.get('OM_SEED')!r}"
     assert got.get("OM_FIGHT", "").endswith("docs/h084.fight.json"), got.get("OM_FIGHT")
+
+
+def test_scene_env_plain_value_passes_unchanged_even_when_a_file_has_that_name(rig):
+    """H-084 Rulings 2: "a value without `/` is plain text and passes unchanged." One plain value that no file
+    carries (`7`: not rejected as a missing input) and one that a file in the tree root carries by name
+    (`h084plain`: not resolved to that file's path). Both reach the game as written. (Red on main only because
+    main drops every Scene-env variable; the positive control for the recorder is
+    test_control_stub_records_its_environment_without_scene_env.)"""
+    env, tree = rig.make(wayland=True, x_window=False, stories=scene_env_story("Scene-env: OM_SEED=7 OM_NAME=h084plain"),
+                         files={"h084plain": "x\n"})
+    r = rig.play(env, tree, "--story", "T-084", "--check")
+    assert r.returncode == 0, r.stdout + r.stderr
+    got = json.loads((rig.base / "stub-env.json").read_text())["env"]
+    assert got.get("OM_SEED") == "7", f"Rulings 2: OM_SEED is {got.get('OM_SEED')!r}, want '7'"
+    assert got.get("OM_NAME") == "h084plain", f"Rulings 2: OM_NAME is {got.get('OM_NAME')!r}, want 'h084plain'"
+
+
+@pytest.mark.parametrize("kind", ["dotdot", "nested-dotdot", "absolute"])
+def test_scene_env_path_outside_the_tree_is_rejected_before_the_build(rig, kind):
+    """H-084 Rulings 2: a path "must not leave the tree (`..` or an absolute value: `PLAY REJECT scene input
+    outside tree <KEY>`, exit 5)"; Change 2: exit 5 "before the build". Three values, each naming a file that
+    EXISTS (planted outside the tree and outside the scratch clone, so "outside tree" is the only reason to
+    reject): `../outside.fight.json`, `docs/../../outside.fight.json`, and the absolute path of a planted file."""
+    value = {"dotdot": "../outside.fight.json", "nested-dotdot": "docs/../../outside.fight.json",
+             "absolute": str(rig.base / "outside.fight.json")}[kind]
+    env, tree = rig.make(wayland=True, x_window=False, stories=scene_env_story(f"Scene-env: OM_FIGHT={value}"),
+                         files={"docs/h084.fight.json": "{}\n"})
+    for planted in (rig.base / "outside.fight.json", rig.base / "tmp" / "outside.fight.json"):
+        planted.write_text("{}\n")
+    r = rig.play(env, tree, "--story", "T-084", "--check")
+    assert r.returncode == 5, f"Rulings 2: exit {r.returncode}, want 5 for {value}\n" + r.stdout + r.stderr
+    assert any(l.startswith("PLAY REJECT scene input outside tree OM_FIGHT") for l in r.stdout.splitlines()), r.stdout
+    assert not (rig.base / "build-mark").exists(), "the build ran before the outside input was caught"
+    assert not rig.pids(), "the game was launched with an input outside the tree"
+
+
+def test_dry_run_shows_the_resolved_scene_env_ahead_of_the_godot_command(rig):
+    """H-084 Rulings 3: "The `launch:` line shows the resolved assignments (`OM_FIGHT=<absolute path> ...`)
+    ahead of the Godot command, so a human sees what the scene gets." A dry run (no --check, so no
+    `XDG_DATA_HOME=` prefix) of a story with `Scene-env: OM_FIGHT=docs/h084.fight.json OM_SEED=7`: the line is
+    the old launch line with `OM_FIGHT=<tree>/docs/h084.fight.json OM_SEED=7 ` in front of the Godot command,
+    pairs in the story's order, a plain value as written. (A dry run makes no scratch clone, so the tree is the
+    one given.) Control: test_control_story_without_scene_env_launches_exactly_as_today."""
+    env, tree = rig.make(stories=scene_env_story("Scene-env: OM_FIGHT=docs/h084.fight.json OM_SEED=7"),
+                         files={"docs/h084.fight.json": "{}\n"})
+    r = rig.play(env, tree, "--story", "T-084", "--dry-run")
+    assert r.returncode == 0, r.stdout + r.stderr
+    want = (f"launch: OM_FIGHT={tree}/docs/h084.fight.json OM_SEED=7 {rig.base}/home/.local/bin/godot.real "
+            f"--path {tree} --windowed --resolution {RES} {SCENE} -- ")
+    assert want in r.stdout.splitlines(), f"Rulings 3: want {want!r}\n" + r.stdout
+
+
+# ---------------------------------------------------------------------------------------------
+# Rulings 1: a run for a human keeps its game after the window check, and ends it on every reject
+# ---------------------------------------------------------------------------------------------
+
+def test_control_plain_run_hands_the_game_over_after_the_x11_window_check(rig):
+    """H-084 Rulings 1: "Plain `play.sh` without `--check` hands the game to the person after the window
+    check; that success stays running by design ... It is cleared at the moment of a successful non-`--check`
+    handoff." Test: "a non-`--check` run that passes the window check leaves the stub alive (control)". X11
+    path, xdotool finds the window, xwininfo says IsViewable: play.sh prints `PLAY window <s>s`, exits 0, and
+    the stub is alive afterwards. Green on main; the trap must not take it away."""
+    env, tree = rig.make(map_state="IsViewable")
+    r = rig.play(env, tree, "--scene", SCENE)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert re.search(r"^PLAY window \d+s$", r.stdout, re.M), r.stdout
+    assert wait_for(rig.base / "stub-ready", 20), "the game never came up, or was ended at the handoff"
+    assert rig.alive(rig.stub_pid()), "Rulings 1: the game was ended at a successful non-check handoff"
+
+
+def test_control_plain_run_hands_the_game_over_after_the_wayland_window_check(rig):
+    """H-084 Rulings 1, the Wayland path of the same handoff (green on main): the last 3 fps lines are at or
+    above 30, so play.sh prints `PLAY window <s>s wayland`, exits 0 without --check, and the stub is alive."""
+    env, tree = rig.make(wayland=True, x_window=False)
+    r = rig.play(env, tree, "--scene", SCENE)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert re.search(r"^PLAY window \d+s wayland$", r.stdout, re.M), r.stdout
+    assert wait_for(rig.base / "stub-ready", 20), "the game never came up, or was ended at the handoff"
+    assert rig.alive(rig.stub_pid()), "Rulings 1: the game was ended at a successful non-check handoff"
+
+
+def test_plain_run_rejected_at_the_window_check_leaves_no_game(rig):
+    """H-084 Rulings 1: "The cleanup trap ends the game on every other exit: any `PLAY REJECT`". Test: "the
+    same run rejected at the window check leaves none". The same plain (no --check) X11 run, but xdotool finds
+    no window: `PLAY REJECT no window after ...`, exit 2, and the stub must be gone within TERM_S."""
+    env, tree = rig.make(wayland=False, x_window=False)
+    r = rig.play(env, tree, "--scene", SCENE, timeout=200)
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert any(l.startswith("PLAY REJECT no window") for l in r.stdout.splitlines()), r.stdout
+    pid = rig.stub_pid()
+    assert rig.gone(pid, TERM_S) is not None, \
+        f"Rulings 1: stub {pid} still alive {TERM_S}s after a plain run's `PLAY REJECT no window` (exit 2)"
