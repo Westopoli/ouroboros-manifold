@@ -18,9 +18,13 @@ The fake tree carries copies of scripts/specfactory/ and scripts/method/proc.py 
 `hidden_desktop.sh` and `hidden_capture.py` run as built. The stubs record every call (argv, environment, time) in one
 log; the fake portal and fake Mutter record theirs. One run of play.sh is shared by every test that reads it.
 
-Not tested, no number or sentence in the story pins it (reported as gaps): the "about 3 s" between the two frames;
-the hidden desktop's life after play.sh ends ("ends by timeout, never by hand"); `--real` without `--check`; whether
-the "no display" exit of play.sh still applies in hidden mode.
+Not tested (H-085 Rulings 8): the "about 3 s" between the two frames; the hidden desktop's life after play.sh ends
+("ends by timeout, never by hand"); `--real` without `--check`.
+
+Added after the coordinator's rulings of 2026-11-04 (H-085 Rulings 2, 3, 4): the scrub (the caller's HOME, session bus,
+runtime dir, display variables and XAUTHORITY reach neither `hidden_desktop.sh` nor the game, seen through a recording wrapper
+in front of the real script and the stub game), hidden mode with no DISPLAY and no WAYLAND_DISPLAY, and the Escape window
+(any time after the qa port answers and before the first frame).
 """
 import fcntl
 import json
@@ -45,7 +49,6 @@ DISPLAY_NAME = "wayland-dark"  # H-085 Tests: "`WAYLAND_DISPLAY=wayland-dark`"
 ESCAPE = 0xFF1B  # the X11 keysym of Escape
 NODE_ID = 42
 PLAY_PATIENCE_S = 150  # test patience only: how long the harness waits before it calls one play.sh run hung
-SETTLE_S = int(re.search(r"^SETTLE_S=(\d+)", PLAY.read_text(), re.M).group(1))  # DRAFT-play-settle-s, read from play.sh
 
 # Every stub shares this head: it logs argv, environment, time to one file, and `hold()` waits for the stop file.
 STUB_RUNTIME = '''
@@ -98,6 +101,20 @@ elif loc:
     shutil.copy(src, loc)
 note(invocation=k, src=src, location=loc, n=n)
 '''
+# A recording wrapper in front of the real hidden_desktop.sh (H-085 Rulings 2): it logs argv and environment like the stubs, then runs
+# the real script, renamed hidden_desktop_real.sh beside it. Written in bash so a caller that runs it by `bash <path>` still works.
+WRAPPER_PY = '''
+import json, os, sys, time
+with open(LOG, "a") as f:
+    f.write(json.dumps({"stub": "hidden_desktop", "argv": sys.argv[1:], "env": dict(os.environ), "t": time.time(), "pid": os.getpid()}) + "\\n")
+'''
+
+
+def wrapper_source(log):
+    return (f"#!/usr/bin/env bash\n{PY3} - \"$@\" <<'PY'\nLOG = {str(log)!r}\n{WRAPPER_PY}PY\n"
+            'exec bash "$(dirname "$0")/hidden_desktop_real.sh" "$@"\n')
+
+
 # The stub Godot: logs like the others, exits at once for --import, answers the QA port with the scene, prints FPS lines.
 GODOT_BODY = '''
 import socket, threading
@@ -116,6 +133,7 @@ if "--qa-port" in argv:
                 if not d: break
                 b += d
             c.sendall(json.dumps({"result": {"scene": scene}}).encode() + b"\\n"); c.close()
+            note(qa_answered=True)
     threading.Thread(target=serve, daemon=True).start()
 end = time.time() + LIFE
 while time.time() < end and not os.path.exists(STOP):
@@ -406,11 +424,16 @@ def reap_marked(marker):
 
 class Run:
     """One world and one play.sh run in it. `frames` are the PNG kinds the stub gst writes for its first, second, ... call;
-    `portal_png` is what the fake portal would write; `real` adds --real; `lock_probe` samples play.lock while it runs."""
+    `portal_png` is what the fake portal would write; `real` adds --real; `check=False` is the plain real-display run of a human;
+    `display=False` takes DISPLAY and WAYLAND_DISPLAY out of the caller's environment; `scrub=True` plants a real-looking session
+    in the caller's environment (a dead /run/user bus, other display names) and puts the recording wrapper in front of
+    hidden_desktop.sh; `lock_probe` samples play.lock while it runs."""
 
-    def __init__(self, frames=("varied", "varied2"), portal_png="varied", real=False, lock_probe=False, wayland=True):
+    def __init__(self, frames=("varied", "varied2"), portal_png="varied", real=False, lock_probe=False, wayland=True,
+                 check=True, display=True, scrub=False):
         self.base = Path(tempfile.mkdtemp(prefix="h85-")).resolve()
         self.real, self.lock_probe, self.frames_kind, self.portal_kind, self.wayland = real, lock_probe, frames, portal_png, wayland
+        self.check, self.display, self.scrub = check, display, scrub
         self.procs, self.services = [], []
         self.lock_held_samples, self.lock_free_after = 0, None
         self.rc, self.timed_out = None, False
@@ -418,6 +441,7 @@ class Run:
     def setup(self):
         """Builds the world. Separate from __init__ so a failure half way is still torn down (the caller registers the run first)."""
         b, frames, portal_png, wayland = self.base, self.frames_kind, self.portal_kind, self.wayland
+        scrub, display = self.scrub, self.display
         self.home = b / "home"; (self.home / ".local" / "bin").mkdir(parents=True)
         self.tmp = b / "tmp"; self.tmp.mkdir()
         self.bin = b / "bin"; self.bin.mkdir()
@@ -443,6 +467,13 @@ class Run:
         env.update(self.portal.env)  # HOME (the fake home the stub Godot lives in), the caller's session bus (the fake portal's), XDG_CONFIG_HOME
         if wayland:
             env["WAYLAND_DISPLAY"] = "wayland-99"
+        # Variables a clean hidden run must not pass on (H-085 Rulings 2). The planted bus is a dead address that merely looks real
+        # (uid 999999 has no /run/user): nothing that connects to it can reach a real session.
+        env.update(XAUTHORITY=str(b / "xauth-probe"), SSH_AUTH_SOCK=f"/tmp/h85-leak-ssh-{os.getpid()}", OM_LEAK_PROBE=f"h85-leak-{os.getpid()}")
+        if scrub:
+            env.update(DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/999999/bus", DISPLAY=":77", WAYLAND_DISPLAY="wayland-77")
+        if not display:
+            env.pop("DISPLAY", None); env.pop("WAYLAND_DISPLAY", None)
         self.env = env
         self.lock_path = self.home / "Projects" / "om-push" / "play.lock"
 
@@ -453,6 +484,11 @@ class Run:
         shutil.copytree(ROOT / "scripts" / "specfactory", tree / "scripts" / "specfactory",
                         ignore=shutil.ignore_patterns("__pycache__"))
         shutil.copy(ROOT / "scripts" / "method" / "proc.py", tree / "scripts" / "method" / "proc.py")
+        if self.scrub:
+            real = tree / "scripts" / "specfactory" / "hidden_desktop.sh"
+            if real.exists():
+                real.rename(real.with_name("hidden_desktop_real.sh"))
+            real.write_text(wrapper_source(self.log)); real.chmod(0o755)
         (tree / "project.godot").write_text('config_version=5\n[application]\nrun/main_scene="%s"\n' % SCENE)
         g = ["git", "-C", str(tree), "-c", "user.name=t", "-c", "user.email=t@t"]
         subprocess.run(g[:3] + ["init", "-q"], check=True)
@@ -471,8 +507,13 @@ class Run:
 
     def launch(self):
         """The stub Godot's launch row (the one that is not the --import)."""
-        rows = [r for r in self.calls("godot") if "--import" not in r["argv"]]
+        rows = [r for r in self.calls("godot") if "argv" in r and "--import" not in r["argv"]]
         return rows[0] if rows else None
+
+    def qa_first_answer(self):
+        """Time of the stub game's first answer on its qa port, or None."""
+        rows = [r for r in self.calls("godot") if r.get("qa_answered")]
+        return rows[0]["t"] if rows else None
 
     def try_lock(self):
         """True when play.lock is held by someone else right now."""
@@ -490,7 +531,8 @@ class Run:
             os.close(fd)
 
     def execute(self):
-        args = ["--tree", str(self.tree), "--scene", SCENE, "--check", "--keep"] + (["--real"] if self.real else [])
+        args = (["--tree", str(self.tree), "--scene", SCENE] + (["--check"] if self.check else []) + ["--keep"]
+                + (["--real"] if self.real else []))
         out = open(self.base / "play-out.txt", "w")
         p = subprocess.Popen(["bash", str(PLAY), *args], cwd=ROOT, env=self.env, stdout=out, stderr=subprocess.STDOUT,
                              stdin=subprocess.DEVNULL, start_new_session=True)
@@ -554,6 +596,11 @@ def runs():
         "hidden_second_flat": dict(frames=("varied", "uniform")),
         "hidden_first_flat": dict(frames=("uniform", "varied2")),
         "real_ok": dict(real=True, portal_png="varied", frames=("varied", "varied2")),
+        "hidden_scrub": dict(scrub=True),
+        "hidden_nodisplay": dict(display=False),
+        "real_nodisplay": dict(real=True, display=False),
+        "plain_ok": dict(check=False),
+        "plain_nodisplay": dict(check=False, display=False),
     }
     cache, made = {}, []
 
@@ -781,20 +828,21 @@ def test_check_launches_the_game_into_the_hidden_desktop(runs):
     assert env.get("XDG_DATA_HOME") == f"{r.scratch}/xdg", env.get("XDG_DATA_HOME")
 
 
-def test_check_sends_escape_through_the_private_remote_desktop_before_the_first_frame(runs):
+def test_check_sends_escape_through_the_private_remote_desktop_between_the_qa_answer_and_the_first_frame(runs):
     """H-085 Measured: "The private shell starts in its Overview: an Escape key through the private
     `org.gnome.Mutter.RemoteDesktop` leaves it." Change 2: "the Escape key, `SETTLE_S`, then `hidden_capture.py` takes two
-    frames". On the fake Mutter's bus the Escape keysym was pressed and released (and no other key), before the first frame was
-    taken, and the first frame came at least SETTLE_S after the game was launched."""
+    frames". Rulings 4: "Escape is sent after the qa port answers and before the first frame ... Tests accept any Escape inside
+    that interval". On the fake Mutter's bus the Escape keysym was pressed and released (and no other key), after the stub game's
+    qa port first answered and before the first frame was taken."""
     r = runs("hidden_ok")
     assert r.rc == 0, r.stdout
     keys = [c for c in r.mutter.calls() if c["method"] == "NotifyKeyboardKeysym"]
     assert keys, "no key was sent through the private RemoteDesktop: " + repr(r.mutter.calls())
     assert all(c["args"][0] == ESCAPE for c in keys), [c["args"] for c in keys]
     assert [c["args"][1] for c in keys][:2] == [True, False], [c["args"] for c in keys]
-    first_frame = r.gst_calls()[0]["t"]
-    assert keys[0]["t"] < first_frame, "Escape came after the first frame"
-    assert first_frame - r.launch()["t"] >= SETTLE_S, f"first frame {first_frame - r.launch()['t']:.1f}s after launch, SETTLE_S {SETTLE_S}"
+    qa, first_frame = r.qa_first_answer(), r.gst_calls()[0]["t"]
+    assert qa is not None, "the stub game's qa port never answered"
+    assert qa < keys[0]["t"] < first_frame, f"Escape at {keys[0]['t'] - qa:+.1f}s from the qa answer, first frame at {first_frame - qa:+.1f}s"
 
 
 def test_check_starts_the_hidden_desktop_through_proc_py_with_a_ttl(runs):
@@ -869,3 +917,86 @@ def test_real_check_calls_the_portal_and_prints_portal(runs):
     assert not r.calls("gnome-shell") and not r.gst_calls() and not r.mutter.calls(), "--real started the hidden desktop"
     env = r.launch()["env"]
     assert env.get("WAYLAND_DISPLAY") == "wayland-99" and env.get("DBUS_SESSION_BUS_ADDRESS") == r.portal.address, env
+
+
+# ---------------------------------------------------------------------------------------------
+# Rulings 2: play.sh scrubs the caller's session; Rulings 3: hidden mode needs no real display
+# ---------------------------------------------------------------------------------------------
+
+SESSION_PLANTED = ("HOME", "DBUS_SESSION_BUS_ADDRESS", "XDG_RUNTIME_DIR", "WAYLAND_DISPLAY", "DISPLAY", "XAUTHORITY")
+LEAK_PROBES = ("OM_LEAK_PROBE", "SSH_AUTH_SOCK")
+
+
+def test_check_passes_none_of_the_callers_session_to_the_hidden_desktop_or_the_game(runs):
+    """H-085 Rulings 2: "`play.sh` starts `hidden_desktop.sh` and the game with a clean environment: only `PATH`, `TMPDIR`, `LANG`, the
+    software-EGL variables and the hidden session's own values; never the caller's `HOME`, `DBUS_SESSION_BUS_ADDRESS`,
+    `XDG_RUNTIME_DIR`, `WAYLAND_DISPLAY`, `DISPLAY`, `XAUTHORITY`." The caller's environment carries a fake real HOME (the fake home
+    the stub game lives in), a dead `unix:path=/run/user/999999/bus`, a XDG_RUNTIME_DIR, `wayland-77`, `:77` and an XAUTHORITY, plus an
+    ssh socket and a probe variable. A recording wrapper in front of the real hidden_desktop.sh and the stub game record their
+    environments: neither holds any of those values (a different value, or none, is fine: the hidden session's own).
+    Control: test_real_check_game_sees_the_callers_session_variables (a `--real` run's game holds every one of them)."""
+    r = runs("hidden_scrub")
+    wrapper = r.calls("hidden_desktop")
+    assert wrapper, "play.sh never ran hidden_desktop.sh: " + r.stdout
+    for name in SESSION_PLANTED + LEAK_PROBES:
+        assert wrapper[0]["env"].get(name) != r.env[name], f"hidden_desktop.sh was handed the caller's {name}={r.env[name]}"
+    game = r.launch()
+    assert game, "play.sh never launched the game: " + r.stdout
+    for name in SESSION_PLANTED + LEAK_PROBES:
+        assert game["env"].get(name) != r.env[name], f"the game was handed the caller's {name}={r.env[name]}"
+    assert r.rc == 0 and (r.proof_line() or ("", ""))[1] == "hidden", "the scrubbed run did not prove: " + r.stdout
+
+
+def test_real_check_game_sees_the_callers_session_variables(runs):
+    """H-085 Rulings 2 control: the variables the hidden run must scrub are visible to a `--real` run's game (the real display
+    keeps the caller's session; `--real` is today's behaviour, Change 3). The stub game of the `--real` run holds the caller's HOME,
+    session bus, runtime dir, WAYLAND_DISPLAY, DISPLAY and XAUTHORITY, so their absence in the hidden run is the scrub and
+    not a stub that cannot see them."""
+    r = runs("real_ok")
+    assert r.rc == 0, "`--real` is not accepted or the run failed: " + r.stdout
+    env = r.launch()["env"]
+    for name in SESSION_PLANTED:
+        assert env.get(name) == r.env[name], f"the --real game lost {name}: {env.get(name)!r} != {r.env[name]!r}"
+
+
+def test_control_plain_run_game_sees_the_callers_session_variables(runs):
+    """H-085 Rulings 2 control, green today: a plain `play.sh` (no `--check`, the human's real-display run) launches the stub game
+    with the caller's HOME, session bus, runtime dir, WAYLAND_DISPLAY, DISPLAY and XAUTHORITY intact, so the stub game does record
+    them when they are passed."""
+    r = runs("plain_ok")
+    assert r.rc == 0 and r.launch(), "the plain run did not launch the game: " + r.stdout
+    env = r.launch()["env"]
+    for name in SESSION_PLANTED:
+        assert env.get(name) == r.env[name], f"the plain run's game lost {name}: {env.get(name)!r} != {r.env[name]!r}"
+
+
+def test_check_without_any_display_variable_runs_and_proves_hidden(runs):
+    """H-085 Rulings 3: "Hidden mode needs no real session. `play.sh --check` (hidden) works from a shell with no `DISPLAY` and no
+    `WAYLAND_DISPLAY` (a clerk at night)". The caller's environment has neither; the run does not exit `play.sh: no display`, reaches
+    the scene and prints `PLAY proof <path> hidden`. Control: test_control_plain_run_without_any_display_variable_exits_no_display
+    (the same environment, a real-display run, exits `no display`)."""
+    r = runs("hidden_nodisplay")
+    assert "DISPLAY" not in r.env and "WAYLAND_DISPLAY" not in r.env, "the rig left a display variable in: " + repr(r.env)
+    assert "play.sh: no display" not in r.stdout, "hidden mode asked for a real display: " + r.stdout
+    assert r.rc == 0, r.stdout
+    proof = r.proof_line()
+    assert proof and proof[1] == "hidden" and f"PLAY scene {SCENE} reached" in r.lines, r.stdout
+
+
+def test_real_check_without_any_display_variable_exits_no_display(runs):
+    """H-085 Rulings 3: "only `--real` still exits `play.sh: no display`" ("`--real` with both unset exits \\"no display\\""). With neither
+    DISPLAY nor WAYLAND_DISPLAY, `play.sh --check --real` prints `play.sh: no display`, exits non-zero and launches nothing."""
+    r = runs("real_nodisplay")
+    assert "DISPLAY" not in r.env and "WAYLAND_DISPLAY" not in r.env, "the rig left a display variable in: " + repr(r.env)
+    assert "play.sh: no display" in r.lines, "`--real` without a display did not exit `no display`: " + r.stdout
+    assert r.rc not in (0, None) and r.launch() is None, (r.rc, r.stdout)
+
+
+def test_control_plain_run_without_any_display_variable_exits_no_display(runs):
+    """H-085 Rulings 3 control, green today and after: a plain real-display `play.sh` with neither DISPLAY nor WAYLAND_DISPLAY prints
+    `play.sh: no display`, exits non-zero and launches nothing (DEC-play-display-check-first-2026-10-30), so the hidden run above
+    got past a check that the real-display run still fails."""
+    r = runs("plain_nodisplay")
+    assert "DISPLAY" not in r.env and "WAYLAND_DISPLAY" not in r.env, "the rig left a display variable in: " + repr(r.env)
+    assert "play.sh: no display" in r.lines, r.stdout
+    assert r.rc not in (0, None) and r.launch() is None, (r.rc, r.stdout)
