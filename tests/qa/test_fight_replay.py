@@ -357,8 +357,8 @@ def test_control_v2_fixture_documents_are_well_formed_json(tmp_path):
         assert back["frames"][-1]["alive"] == back["result"]["survivors"]
 
 
-@pytest.mark.parametrize("end,stall", [("wipe", False), ("silence", True), ("cap", False)])
-def test_hud_prints_the_end_word_on_the_last_frame_and_stall_only_for_a_stall(end, stall, tmp_path, monkeypatch):
+@pytest.mark.parametrize("end,stall,label", [("wipe", False, "end: A wins (wipe)"), ("silence", True, "end: stall (silence)"), ("cap", False, "end: cap")])
+def test_hud_prints_the_end_word_on_the_last_frame_and_stall_only_for_a_stall(end, stall, label, tmp_path, monkeypatch):
     """H-040 "Orders and fight end": "The replay HUD prints `end: wipe|silence|cap` and `STALL` on the last frame." Frame 0 shows neither `end:` nor `STALL`; stepping to
     the last frame shows a Label text containing `end: <end>`, and a Label text containing `STALL` if and only if the fight is a stall (end silence with both sides alive)."""
     path, doc = _v2_fight(end, stall, tmp_path)
@@ -373,7 +373,256 @@ def test_hud_prints_the_end_word_on_the_last_frame_and_stall_only_for_a_stall(en
         _key(g, "Space")
         st = _state(g, lambda q: q["frame"] == 2, timeout=15.0, label="frame 2")
         lines = _hud_lines(st)
-        assert any("end: %s" % end in t for t in lines), "no HUD text with 'end: %s' among Label texts %s" % (end, lines)
+        assert any(label in t for t in lines), "no HUD text with %r among Label texts %s" % (label, lines)
         assert any("STALL" in t for t in lines) is stall, "STALL expected %s among Label texts %s" % (stall, lines)
+    finally:
+        g.stop()
+
+
+# ================================================================ H-053 stage 2 (arena-stage2-roles-ranges-winrates)
+# spec: docs/stories/H-053.md "Replay" and "Interfaces" 4; Flag client; Scene res://scenes/proto/fight_replay/fight_replay.tscn.
+# Interfaces 4, quoted: "Replay `qa_state` gains `targets` (list of `[unit_id, target_id]` for the living units of the current frame that have a target), `first_shot_frame`
+# (frame index, not tick, of the first frame in which any unit's hp is lower than in the previous frame; -1 when none), `seed` (the fight's `seed`) and `rate_a` (from
+# `<id>.rate.json` beside the fight file when it exists, else `null`). HUD line appends `seed <n>` and, when a rate file exists, `rate <0.00>`. The first-shot marker is a ring
+# on the damaged unit on that frame." Tests line: "target lines present in `qa_state`, first-shot frame index equals the first hp drop in the file".
+# Visible-only, no test (the marker ring and target line are drawn, qa_state carries no pixels): reported as a gap, judged by eye at the story's play.
+# Fixture premise (dumped by the control below): 4 frames of snapshot.example(schema om-fight-2), 2 units a side with ids 1,2 (A) and 3,4 (B); hp is 100.0 on frames 0 and 1,
+# B unit 3 drops to 60.0 on frame 2 (the first hp drop, so first_shot_frame 2), A unit 1 targets unit 3 from frame 1 on; unit 2 never has a target.
+
+H053_KEYS = {"targets", "first_shot_frame", "seed", "rate_a"}
+
+
+def _shot_fight(tmp_path: Path, seed: int = 7, drop: bool = True) -> tuple[Path, dict]:
+    doc = snapshot.example(frames=4, schema=snapshot.SCHEMA_V2)
+    doc["seed"] = seed
+    doc["result"]["survivors"] = [2, 0]
+    for n, frame in enumerate(doc["frames"]):
+        for u in frame["units"]:
+            if u["id"] == 1 and n >= 1:
+                u["target"] = 3
+        if drop and n == 2:
+            for u in frame["units"]:
+                if u["id"] == 3:
+                    u["hp"] = 60.0
+    if not drop:   # nobody is ever hurt: undo the example's last-frame deaths, a capped draw with all four alive
+        for u in doc["frames"][-1]["units"]:
+            u["hp"], u["alive"] = 100.0, True
+        doc["frames"][-1]["alive"] = [2, 2]
+        doc["result"].update({"winner": "draw", "survivors": [2, 2], "capped": True, "end": "cap", "agree": False})
+    assert snapshot.validate(doc) == [], snapshot.validate(doc)
+    return _write_fight(tmp_path / ("L-0001-s%d.fight.json" % seed), doc), doc
+
+
+def _first_hp_drop(doc: dict) -> int:
+    for n in range(1, len(doc["frames"])):
+        before = {u["id"]: u["hp"] for u in doc["frames"][n - 1]["units"]}
+        if any(u["hp"] < before[u["id"]] for u in doc["frames"][n]["units"]):
+            return n
+    return -1
+
+
+def test_control_shot_fixture_has_its_first_hp_drop_on_frame_two_and_a_target_from_frame_one(tmp_path):
+    """H-053 control, green today: the fixture validates, its first hp drop (computed here from the file) is frame 2, unit 1 has target 3 on frames 1 to 3, and the
+    drop-less variant has none, so a red below is the missing qa_state keys and not the fixture. Also: today's qa_state does not yet carry the H-053 keys is the red's reason."""
+    path, doc = _shot_fight(tmp_path)
+    assert _first_hp_drop(doc) == 2
+    assert [next(u for u in f["units"] if u["id"] == 1)["target"] for f in doc["frames"]] == [None, 3, 3, 3]
+    _, quiet = _shot_fight(tmp_path, seed=8, drop=False)
+    assert _first_hp_drop(quiet) == -1
+
+
+def test_qa_state_carries_the_stage2_keys_and_the_seed(tmp_path, monkeypatch):
+    """Interfaces 4: qa_state has `targets`, `first_shot_frame`, `seed`, `rate_a`; `seed` is the file's seed (7); with no rate file beside the fight `rate_a` is null."""
+    path, doc = _shot_fight(tmp_path)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        qa = _state(g)["qa"]
+        assert H053_KEYS <= set(qa), "qa_state keys %s lack %s" % (sorted(qa), sorted(H053_KEYS - set(qa)))
+        assert qa["seed"] == 7 and qa["rate_a"] is None
+    finally:
+        g.stop()
+
+
+def test_first_shot_frame_equals_the_first_hp_drop_in_the_file(tmp_path, monkeypatch):
+    """Tests line "first-shot frame index equals the first hp drop in the file": `first_shot_frame` is the frame index (2), not the tick, and is the same from frame 0 on."""
+    path, doc = _shot_fight(tmp_path)
+    assert _first_hp_drop(doc) == 2 and doc["frames"][2]["tick"] != 2
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        assert _state(g)["qa"]["first_shot_frame"] == 2
+    finally:
+        g.stop()
+
+
+def test_first_shot_frame_is_minus_one_when_no_hp_ever_drops(tmp_path, monkeypatch):
+    """Interfaces 4: `first_shot_frame` is -1 when no frame has an hp drop (the detector's negative case)."""
+    path, _ = _shot_fight(tmp_path, seed=8, drop=False)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        assert _state(g)["qa"]["first_shot_frame"] == -1
+    finally:
+        g.stop()
+
+
+def test_targets_list_the_living_units_with_a_target_on_the_current_frame(tmp_path, monkeypatch):
+    """Tests line "target lines present in `qa_state`": frame 0 has no target (`targets` empty); after one step (frame 1) it is [[1, 3]], unit 1 targeting unit 3."""
+    path, _ = _shot_fight(tmp_path)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        assert st["qa"].get("targets") == [], "frame 0 targets %r" % (st["qa"].get("targets"),)
+        _key(g, "Space")
+        st = _state(g, lambda q: q["frame"] == 1, timeout=15.0, label="frame 1")
+        assert [list(t) for t in st["qa"].get("targets", [])] == [[1, 3]]
+    finally:
+        g.stop()
+
+
+def test_rate_a_comes_from_the_rate_file_beside_the_fight_and_the_hud_shows_seed_and_rate(tmp_path, monkeypatch):
+    """Interfaces 4: with `L-0001.rate.json` beside the fight file, `rate_a` is that file's value (0.75) and the HUD line carries `seed 7` and `rate 0.75`; without the rate file the
+    HUD has `seed 7` and no `rate`."""
+    path, _ = _shot_fight(tmp_path)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        lines = _hud_lines(_state(g))
+        assert any("seed 7" in t for t in lines), "no 'seed 7' among Label texts %s" % lines
+        assert not any("rate " in t for t in lines), "a rate shown with no rate file: %s" % lines
+    finally:
+        g.stop()
+    (tmp_path / "L-0001.rate.json").write_text(json.dumps({"layout_id": "L-0001", "seeds": [7], "rate_a": 0.75, "predict_rate": 0.75}) + "\n")
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        assert st["qa"].get("rate_a") == 0.75
+        lines = _hud_lines(st)
+        assert any("seed 7" in t for t in lines) and any("rate 0.75" in t for t in lines), "HUD Label texts %s" % lines
+    finally:
+        g.stop()
+
+
+# ================================================================ H-053 defects found at the stage 2 look review (brief to the test writer, 2026-11-02)
+# (1) Range rings: the replay builds its rows with range 0.0 and the fight file carried none, so no ring is drawn and the legend prints "<role>: no range". Intended: the fight file
+#     has a top-level `ranges` map {role: range} (snapshot.py, run.py) and the replay reads the role's range from it. New qa_state key, named here: `ring_count` = the number of unit
+#     range rings the scene has drawn (one per unit whose role has a range above 0; 0 for a file without `ranges`). The legend text is read from the Label texts, as the HUD is.
+# (3) End line: the last frame printed the per-fight `winner <w>  predicted <p>  agree|disagree` (the old A/B/draw) even beside a rate file, which contradicts the page. Intended: with a
+#     rate file beside the fight (`rate_a` not null) the end line is the rate verdict `rate <rate_a> vs <predict_rate> agree|disagree` from the rate file; with no rate file the old text.
+#     New qa_state key, named here: `end_line` = the end HUD line's text on the last frame, "" on any other frame. Floats are written with two decimals (the HUD's `rate %.2f`); the
+#     tests use values (0.25, 0.75) that read the same under %.2f, %g and str(), so the number format is not pinned.
+
+def _ranged_fight(tmp_path: Path, ranges: dict | None) -> Path:
+    doc = snapshot.example(frames=3, schema=snapshot.SCHEMA_V2)
+    if ranges is not None:
+        doc["ranges"] = ranges
+    else:
+        doc.pop("ranges", None)
+    return _write_fight(tmp_path / "L-0001-s1.fight.json", doc)
+
+
+def test_control_without_ranges_the_legend_says_no_range_and_the_fixture_has_four_raiders(tmp_path, monkeypatch):
+    """Control, green today: a v2 fight file with no `ranges` replays with a legend line `Raider: no range` (the v1 behaviour that must survive for old files) and 4 units on
+    frame 0 (the fixture premise for the ring count below)."""
+    path = _ranged_fight(tmp_path, None)
+    assert sum(len(f["units"]) for f in json.loads(path.read_text())["frames"][:1]) == 4
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        lines = _hud_lines(_state(g))
+        assert any("Raider: no range" in t for t in lines), "Label texts %s" % lines
+    finally:
+        g.stop()
+
+
+def test_a_file_without_ranges_has_no_rings(tmp_path, monkeypatch):
+    """Control for the ring count (red today only because the key is missing): a file with no `ranges` draws 0 rings, `ring_count` 0, and keeps the `no range` legend line."""
+    path = _ranged_fight(tmp_path, None)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        assert st["qa"].get("ring_count") == 0, "qa_state keys %s" % sorted(st["qa"])
+        assert any("Raider: no range" in t for t in _hud_lines(st))
+    finally:
+        g.stop()
+
+
+def test_a_file_with_ranges_draws_a_ring_per_unit_and_the_legend_gives_the_range(tmp_path, monkeypatch):
+    """Brief 2026-11-02: "a replay of a fight with ranges has rings and the legend text has no 'no range' line". With `ranges` {"Raider": 200.0} the four Raiders have four rings
+    (`ring_count` 4), the legend line reads `Raider: range 200 wu`, and no Label text says `no range`."""
+    path = _ranged_fight(tmp_path, {"Raider": 200.0})
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        _state(g)
+        _key(g, "R")   # per-unit rings are behind key R; the default is per-role rings (H-053 Replay readability item 2)
+        st = _state(g, lambda q: q.get("ring_count") == 4, timeout=15.0, label="per-unit rings on")
+        lines = _hud_lines(st)
+        assert st["qa"].get("ring_count") == 4, "ring_count %r, qa_state keys %s" % (st["qa"].get("ring_count"), sorted(st["qa"]))
+        assert any("Raider: range 200 wu" in t for t in lines), "Label texts %s" % lines
+        assert not any("no range" in t for t in lines), "a 'no range' line with ranges in the file: %s" % lines
+    finally:
+        g.stop()
+
+
+def _end_fight(tmp_path: Path, rate: dict | None) -> Path:
+    path, _ = _shot_fight(tmp_path)   # winner A, predict A, agree true on the last frame (the old text would read "winner A  predicted A  agree")
+    if rate is not None:
+        (tmp_path / "L-0001.rate.json").write_text(json.dumps(dict({"layout_id": "L-0001", "seeds": [7]}, **rate)) + "\n")
+    return path
+
+
+def _last_frame(g: ReplayGame) -> dict:
+    _state(g)
+    _key(g, "Space")
+    _key(g, "Space")
+    _key(g, "Space")
+    return _state(g, lambda q: q["frame"] == 3, timeout=15.0, label="last frame")
+
+
+def test_control_without_a_rate_file_the_end_line_is_the_old_text(tmp_path, monkeypatch):
+    """Control, green today: with no rate file beside the fight the last frame's HUD says `winner A  predicted A  agree` (the old per-fight verdict stays for v1 files)."""
+    path = _end_fight(tmp_path, None)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        lines = _hud_lines(_last_frame(g))
+        assert any(t.startswith("winner A  predicted A  agree") for t in lines), "Label texts %s" % lines
+    finally:
+        g.stop()
+
+
+def test_without_a_rate_file_end_line_is_the_old_text_and_empty_before_the_last_frame(tmp_path, monkeypatch):
+    """H-053 Replay readability item 5 (`end_label`, `rate_label`; the old `end_line` key is superseded): with no rate file `rate_label` is "" on every frame, `end_label` is "" on frame 0
+    and `end: A wins (wipe)` on the last frame (this fixture: winner A, survivors [2, 0], end wipe)."""
+    path = _end_fight(tmp_path, None)
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _state(g)
+        assert st["qa"].get("end_label") == "" and st["qa"].get("rate_label") == "", "qa_state keys %s" % sorted(st["qa"])
+        st = _last_frame(g)
+        assert st["qa"].get("end_label") == "end: A wins (wipe)", st["qa"].get("end_label")
+        assert st["qa"].get("rate_label") == "", st["qa"].get("rate_label")
+    finally:
+        g.stop()
+
+
+@pytest.mark.parametrize("rate_a,predict_rate,agree,word", [(0.75, 0.75, True, "AGREE"), (0.25, 0.75, False, "DISAGREE")], ids=["agree", "disagree"])
+def test_with_a_rate_file_the_end_line_is_the_rate_verdict(rate_a, predict_rate, agree, word, tmp_path, monkeypatch):
+    """Brief 2026-11-02: "when a rate file is beside the fight (rate_a not null) the end line shows the rate verdict (`rate <rate_a> vs <predict_rate> agree|disagree` from the rate file)".
+    The fight's own result says agree (winner A, predict A), so the old text would say `agree` in both cases; the line must read the rate file's `agree` and carry no `predicted` (label as ruled 2026-11-02: `rate A <m> vs target <p> (gap <n> pts, not scored); guess <A|B|draw>: AGREE|DISAGREE`; this fixture's predict is A)."""
+    path = _end_fight(tmp_path, {"rate_a": rate_a, "predict_rate": predict_rate, "agree": agree})
+    g = _open(monkeypatch, path)
+    try:
+        g.wait_for_port(timeout=90.0)
+        st = _last_frame(g)
+        want = "rate A %.2f vs target %.2f (gap %d pts, not scored); guess A: %s" % (rate_a, predict_rate, round(abs(rate_a - predict_rate) * 100), word)
+        lines = _hud_lines(st)
+        assert any(want in t for t in lines), "no HUD text with %r among Label texts %s" % (want, lines)
     finally:
         g.stop()

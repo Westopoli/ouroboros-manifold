@@ -1,7 +1,9 @@
 """The arena runner: one layout, one seed, one fight, written down as a `fight.json` (spec: docs/stories/H-040.md "Part 2: arena runner";
 file format: docs/stories/H-039.md, scripts/skilllab/arena/snapshot.py).
 
-CLI: python3 -m scripts.skilllab.arena.run --layout <toml> --seed <int> --out <dir> [--sight off|on] [--cap-seconds 600]
+CLI: python3 -m scripts.skilllab.arena.run --layout <toml> --seed <int> --out <dir> [--seeds N] [--sight off|on] [--cap-seconds 600]
+H-053: `--seeds N` runs seeds S..S+N-1 from `--seed S`, one fight file each, then writes `<id>.rate.json` beside them (rate.py; the layout's `predict_rate`
+is required). Layout key `orders_point` = [x, y] replaces the midpoint for both_same_point. Both sides wiped on the same tick is winner "none".
 Stage 1 floor (DEC-lab-stage1-floor-2026-10-31): sight off (`OM_TP_TARGET_BY_SIGHT` 0, csrc/unit.c:1175), no defender, no guard, fight cap
 DRAFT-fight-cap (snapshot.CAP_SECONDS). Orders (H-052, docs/stories/H-040.md "Orders and fight end"): layout key `orders` = "both_same_point" (default;
 every unit of both sides attack-moves to the midpoint of the tick-0 centroids) or "hold:<A|B>" (that side gets no order, the other attack-moves to its centroid).
@@ -11,13 +13,15 @@ Exit 0 with a FIGHT line, exit 2 with REJECT lines.
 Known gap: `Engine.spawn` takes no facing and engine.py does not bind `om_unit_set_facing`, so the layout's per-row `facing` is not applied; units
 start at the engine default and attack-move turns them toward the enemy."""
 import argparse
+import json
 import sys
 import tomllib
 from pathlib import Path
 from types import SimpleNamespace
 
 from scripts.skilllab.arena import snapshot
-from scripts.skilllab.catalogue.produce import check_layout, presets, rules
+from scripts.skilllab.arena.rate import rate
+from scripts.skilllab.catalogue.produce import _roster_ranges, check_layout, presets, rules
 from scripts.skilllab.engine import Engine
 from scripts.skilllab.fight import TICKS_PER_SECOND, _register_types
 
@@ -77,7 +81,7 @@ def fight(layout, seed, sight, cap_seconds):
         centre = {f: _centroid(engine, w, ids[f]) for f in ids}
         orders = layout.get("orders", "both_same_point")
         if orders == "both_same_point":
-            point = ((centre[0][0] + centre[1][0]) / 2, (centre[0][1] + centre[1][1]) / 2)
+            point = tuple(layout["orders_point"]) if "orders_point" in layout else ((centre[0][0] + centre[1][0]) / 2, (centre[0][1] + centre[1][1]) / 2)
             engine.order_attack_move(w, ids[0], *point)
             engine.order_attack_move(w, ids[1], *point)
             doc_orders = {"mode": "both_same_point", "point": [round(point[0], 2), round(point[1], 2)], "attacker": None}
@@ -128,16 +132,32 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders):
     survivors = frames[last]["alive"]
     a, b = survivors
     stall = end == "silence" and a > 0 and b > 0
-    winner = "A" if a > 0 and b == 0 else "B" if b > 0 and a == 0 else "stall" if stall else "draw"
+    winner = "A" if a > 0 and b == 0 else "B" if b > 0 and a == 0 else "stall" if stall else "none" if end == "wipe" else "draw"
     try:
         shown = Path(layout_path).resolve().relative_to(ROOT).as_posix()
     except ValueError:
         shown = Path(layout_path).as_posix()
-    return {"schema": snapshot.SCHEMA_V2, "layout_id": layout["id"], "layout_path": shown, "seed": seed, "tick_rate": TICKS_PER_SECOND,
+    roster = _roster_ranges()
+    roles = {u["role"] for u in frames[0]["units"]}
+    return {"schema": snapshot.SCHEMA_V2, "ranges": {r: roster[r] for r in sorted(roles)}, "layout_id": layout["id"], "layout_path": shown, "seed": seed, "tick_rate": TICKS_PER_SECOND,
             "snapshot_every": every, "sight": sight, "orders": orders, "frames": [frames[t] for t in ticks],
             "result": {"winner": winner, "survivors": survivors, "ticks": last, "capped": end == "cap", "end": end, "stall": stall,
                        "predict": layout["predict"],
                        "agree": winner == layout["predict"]}}
+
+
+def is_mirror(layout):
+    """True when side B is side A reflected across the line or point midway between their centroids (same roles, same positions); H-053 Scoring: such a layout with
+    Predict draw is not scored. DRAFT-mirror-test, the Architect's reading of "exact mirror"."""
+    ua, ub = layout["side_a"]["units"], layout["side_b"]["units"]
+    if len(ua) != len(ub):
+        return False
+    cx = (sum(u["x"] for u in ua) + sum(u["x"] for u in ub)) / (2 * len(ua))
+    cy = (sum(u["y"] for u in ua) + sum(u["y"] for u in ub)) / (2 * len(ua))
+    key = lambda pts: sorted((role, round(x, 3), round(y, 3)) for role, x, y in pts)
+    a = [(u["role"], u["x"], u["y"]) for u in ua]
+    return any(key(a2) == key((u["role"], u["x"], u["y"]) for u in ub)
+               for a2 in ([(r, 2 * cx - x, y) for r, x, y in a], [(r, x, 2 * cy - y) for r, x, y in a], [(r, 2 * cx - x, 2 * cy - y) for r, x, y in a]))
 
 
 def main(argv=None):
@@ -145,6 +165,7 @@ def main(argv=None):
     ap.add_argument("--layout", required=True, type=Path)
     ap.add_argument("--seed", required=True, type=int)
     ap.add_argument("--out", required=True, type=Path)
+    ap.add_argument("--seeds", type=int, default=0, help="run N seeds from --seed and write <id>.rate.json (H-053)")
     ap.add_argument("--sight", choices=("off", "on"), default="off")
     ap.add_argument("--cap-seconds", type=int, default=snapshot.CAP_SECONDS)
     args = ap.parse_args(argv)
@@ -155,22 +176,34 @@ def main(argv=None):
         for rule in broken:
             print("REJECT %s %s" % (layout.get("id", args.layout.stem), rule))
         return 2
-    frames, last, end, orders = fight(layout, args.seed, args.sight, args.cap_seconds)
-    doc = _document(layout, args.layout, args.seed, args.sight, frames, last, end, orders)
+    count = args.seeds or 1
+    if args.seeds and "predict_rate" not in layout:
+        print("REJECT %s missing predict_rate (--seeds writes a rate file)" % layout["id"])
+        return 2
     args.out.mkdir(parents=True, exist_ok=True)
-    snapshot.write(doc, args.out / ("%s-s%d.fight.json" % (layout["id"], args.seed)))
-    res = doc["result"]
-    results = args.out / "results.md"
-    row = "| %s | %d:%d | %s | %s | %d:%d | %d | %s |\n" % (
-        layout["id"], len(layout["side_a"]["units"]), len(layout["side_b"]["units"]), res["predict"], res["winner"],
-        res["survivors"][0], res["survivors"][1], res["ticks"], "yes" if res["agree"] else "no")
-    head = "" if results.exists() and results.stat().st_size else RESULTS_HEAD
-    with open(results, "a", encoding="utf-8") as f:
-        f.write(head + row)
-    if res["stall"]:
-        print("FIGHT %s seed %d STALL ticks %d" % (layout["id"], args.seed, res["ticks"]))
-        return 0
-    print("FIGHT %s seed %d winner %s ticks %d agree %s" % (layout["id"], args.seed, res["winner"], res["ticks"], "yes" if res["agree"] else "no"))
+    fights = []
+    for seed in range(args.seed, args.seed + count):
+        frames, last, end, orders = fight(layout, seed, args.sight, args.cap_seconds)
+        doc = _document(layout, args.layout, seed, args.sight, frames, last, end, orders)
+        snapshot.write(doc, args.out / ("%s-s%d.fight.json" % (layout["id"], seed)))
+        fights.append(snapshot.read(args.out / ("%s-s%d.fight.json" % (layout["id"], seed))))
+        res = doc["result"]
+        results = args.out / "results.md"
+        row = "| %s | %d:%d | %s | %s | %d:%d | %d | %s |\n" % (
+            layout["id"], len(layout["side_a"]["units"]), len(layout["side_b"]["units"]), res["predict"], res["winner"],
+            res["survivors"][0], res["survivors"][1], res["ticks"], "yes" if res["agree"] else "no")
+        head = "" if results.exists() and results.stat().st_size else RESULTS_HEAD
+        with open(results, "a", encoding="utf-8") as f:
+            f.write(head + row)
+        if res["stall"]:
+            print("FIGHT %s seed %d STALL ticks %d" % (layout["id"], seed, res["ticks"]))
+        else:
+            print("FIGHT %s seed %d winner %s ticks %d agree %s" % (layout["id"], seed, res["winner"], res["ticks"], "yes" if res["agree"] else "no"))
+    if args.seeds:
+        summary = rate(fights, layout["predict_rate"], mirror=is_mirror(layout))
+        (args.out / ("%s.rate.json" % layout["id"])).write_text(json.dumps(summary, indent=2) + "\n")
+        print("RATE %s seeds %d rate_a %s predict_rate %s agree %s" % (layout["id"], len(fights), summary["rate_a"], summary["predict_rate"],
+                                                                      {True: "yes", False: "no", None: "not scored (mirror)"}[summary["agree"]]))
     return 0
 
 
