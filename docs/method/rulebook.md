@@ -26,6 +26,7 @@ Then: edit the one file, run the touched test alone and its control, commit with
 | A test asserting a feature the story removes | only with a parity test green on the replacement first (no deletion without parity) |
 | A pixel or frame threshold | Westley's; park in a `*_park_*` file, never edit |
 | A play red because a premise changed (economy zero, no units, clock stopped) | fix the premise in the play, say so |
+| A new public Engine method that the epoch guard (`tests/skilllab/integration/test_speed_equal.py`) does not classify | add the name to `MUTATORS` (it bumps `Engine.epoch`) or `READ_ONLY` (it does not), add one `CALLS` entry, and when the sample call needs a C symbol the test's fake lib does not return, add that symbol's return to the fake lib; nothing else in the file |
 
 ## Known red
 

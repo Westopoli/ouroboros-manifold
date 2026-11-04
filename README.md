@@ -2,7 +2,7 @@
 
 A multi-era real-time strategy game set in a living, stochastic galaxy. A simulation written in C drives factions, regions and history; between missions decades pass and the galaxy moves on without you, and the chronicle writes down what happened. In a mission you command a task force on a generated land or space map, and a smaller force that holds the high ground and the right layer beats a larger one that does not. You are a commander, not a god, and the world does not wait. No names, places or plot come from existing fiction.
 
-| The galaxy between missions (B-S106, approved) | The multiplayer lobby (F-S143, approved) |
+| The galaxy between missions | The multiplayer lobby |
 |---|---|
 | ![The star map: owner-coloured systems, translucent faction shells and filaments](docs/northstar/story_reviews/shots/20261013-1406-59a24b4/S-106.png) | ![The lobby showing the one era two players share](docs/northstar/story_reviews/shots/run-20261020T144745Z/S-143_common_eras_pair.png) |
 

@@ -21,3 +21,7 @@ Row format (spec `docs/northstar/plans/2026-10-29-layered-gate-spec.md` section 
 | 2026-11-02 17:50 | 4dbb0f68c756d56758ac92e7816dc1accaf8213d | REJECT | new: tests/qa/test_present_on_boot.py::test_planted_1920x1080_settings_apply_after_the_first_frame | red: 1 | early acceptance |
 | 2026-11-02 19:10 | cc34c657e44cec5782d5edd2aec2adf4cafab957 | REJECT | new: none | red: 1 | early lane_plays |
 | 2026-11-02 20:39 | 199a6b6dc58bf5ecc64fb4c74eb4611efd808a12 | PASS | new: none | red: 121 | docs/northstar/plans/push/sweeps/2026-11-02-199a6b6dc58bf5ecc64fb4c74eb4611efd808a12.txt |
+| 2026-11-03 05:11 | 559fdfcf5f74eb59ad2385b0b486d9587803cd11 | PASS | new: none | red: 1 | tests/specfactory/test_size_lint.py::test_real_examples_from_the_repo |
+| 2026-11-03 18:17 | d24245d83fc8d6743a6c30ac9aa351f7466ca55d | REJECT | new: tests/specfactory/test_size_lint.py::test_real_examples_from_the_repo | red: 119 | docs/northstar/plans/push/sweeps/2026-11-03-d24245d83fc8d6743a6c30ac9aa351f7466ca55d.txt |
+| 2026-11-03 20:08 | b44f6943a4f89e4f154f49ea99ca9ecff8d3d1f4 | PASS | new: none | red: 118 | docs/northstar/plans/push/sweeps/2026-11-03-b44f6943a4f89e4f154f49ea99ca9ecff8d3d1f4.txt |
+| 2026-11-04 05:05 | fbd8beb30a5b1edc48b1f2074f89b3fe94b2dfc0 | PASS | new: none | red: 0 |  |

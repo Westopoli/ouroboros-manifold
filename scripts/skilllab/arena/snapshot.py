@@ -1,5 +1,6 @@
-"""The `om-fight-1` fight file: one arena fight written down as a small file of snapshots (spec: docs/stories/H-039.md,
-format for readers: docs/northstar/research/layer_dynamics/arena/SNAPSHOT.md).
+"""The `om-fight-1` and `om-fight-2` fight file: one arena fight written down as a small file of snapshots (spec: docs/stories/H-039.md,
+format for readers: docs/northstar/research/layer_dynamics/arena/SNAPSHOT.md;
+v2 adds orders and the fight end: docs/stories/H-052.md).
 
 Every number is an Architect draft dated 2026-10-31 that Westley rules: DRAFT-snapshot-count (MAX_FRAMES, MIN_FRAMES),
 DRAFT-snapshot-seconds (5 s between frames), DRAFT-fight-cap (CAP_SECONDS), DRAFT-winner."""
@@ -10,7 +11,9 @@ from pathlib import Path
 
 from scripts.skilllab.contract import TICKS_PER_SECOND
 
-SCHEMA = "om-fight-1"
+SCHEMA = "om-fight-1"      # the v1 name; see also SCHEMA_V2, SCHEMAS (v1 files still validate, H-052)
+SCHEMA_V2 = "om-fight-2"   # H-052: adds top-level orders, result.end, result.stall
+SCHEMAS = (SCHEMA, SCHEMA_V2)
 MAX_FRAMES = 20     # DRAFT-snapshot-count
 MIN_FRAMES = 10     # DRAFT-snapshot-count; advisory, not enforced (a short fight writes fewer)
 CAP_SECONDS = 600   # DRAFT-fight-cap
@@ -21,6 +24,9 @@ _FRAME = {"tick": int, "alive": list, "units": list}
 _UNIT = {"id": int, "side": str, "role": str, "x": "num", "y": "num", "layer": int, "facing": "num", "hp": "num",
          "alive": bool, "target": "int_or_null"}
 _RESULT = {"winner": str, "survivors": list, "ticks": int, "capped": bool, "predict": str, "agree": bool}
+_ORDERS = {"mode": str, "point": list, "attacker": "side_or_null"}
+_ORDER_MODES = ("both_same_point", "hold_and_attack")
+_ENDS = ("wipe", "silence", "cap")
 
 
 def _kind_ok(value, kind) -> bool:
@@ -28,6 +34,8 @@ def _kind_ok(value, kind) -> bool:
         return isinstance(value, (int, float)) and not isinstance(value, bool)
     if kind == "int_or_null":
         return value is None or (isinstance(value, int) and not isinstance(value, bool))
+    if kind == "side_or_null":
+        return value is None or value in ("A", "B")
     if kind is int:
         return isinstance(value, int) and not isinstance(value, bool)
     return isinstance(value, kind)
@@ -61,9 +69,19 @@ def validate(doc: dict) -> list[str]:
     out: list[str] = []
     if not isinstance(doc, dict):
         return ["document is not a table"]
-    _check_keys(doc, _TOP, "", out)
-    if doc.get("schema") != SCHEMA and "schema" in doc:
-        out.append(f"schema is not {SCHEMA}")
+    v2 = doc.get("schema") == SCHEMA_V2
+    top = dict(_TOP, orders=dict) if v2 else _TOP
+    _check_keys(doc, top, "", out)
+    if doc.get("schema") not in SCHEMAS and "schema" in doc:
+        out.append(f"schema is not {SCHEMA} or {SCHEMA_V2}")
+    if v2 and isinstance(doc.get("orders"), dict):
+        orders = doc["orders"]
+        _check_keys(orders, _ORDERS, "orders", out)
+        if "mode" in orders and orders["mode"] not in _ORDER_MODES:
+            out.append("orders.mode is not both_same_point or hold_and_attack")
+        pt = orders.get("point")
+        if isinstance(pt, list) and (len(pt) != 2 or not all(_kind_ok(v, "num") for v in pt)):
+            out.append("bad type orders.point (want [x, y] numbers)")
     if "sight" in doc and doc["sight"] not in ("off", "on"):
         out.append("sight is not off or on")
     frames = doc.get("frames")
@@ -103,9 +121,27 @@ def validate(doc: dict) -> list[str]:
             out.append("frames[0].tick is not 0")
     result = doc.get("result")
     if isinstance(result, dict):
-        _check_keys(result, _RESULT, "result", out)
-        if result.get("winner") not in ("A", "B", "draw") and "winner" in result:
-            out.append("result.winner is not A, B or draw")
+        spec = dict(_RESULT, end=str, stall=bool) if v2 else _RESULT
+        _check_keys(result, spec, "result", out)
+        winners = ("A", "B", "draw", "stall") if v2 else ("A", "B", "draw")
+        if result.get("winner") not in winners and "winner" in result:
+            out.append("result.winner is not " + ", ".join(winners[:-1]) + " or " + winners[-1])
+        if v2:
+            if "end" in result and result["end"] not in _ENDS:
+                out.append("result.end is not wipe, silence or cap")
+            stall = result.get("stall")
+            if stall is True and result.get("end") != "silence":
+                out.append("result.stall without result.end silence")
+            if stall is True and "winner" in result and result["winner"] != "stall":
+                out.append("result.stall needs result.winner stall")
+            if stall is True and result.get("agree") is True:
+                out.append("result.stall needs result.agree false")
+            if stall is False and result.get("winner") == "stall":
+                out.append("result.winner stall without result.stall")
+            surv = result.get("survivors")
+            if (stall is True and isinstance(surv, list) and len(surv) == 2
+                    and all(_kind_ok(v, int) for v in surv) and not all(v > 0 for v in surv)):
+                out.append("result.stall needs survivors on both sides")
         if result.get("predict") not in ("A", "B", "draw") and "predict" in result:
             out.append("result.predict is not A, B or draw")
         if isinstance(result.get("survivors"), list):
@@ -144,9 +180,12 @@ def frame_ticks(last_tick: int, tick_rate: int, every_seconds: int = 5, max_fram
         every *= 2
 
 
-def example(frames: int = 3, units_per_side: int = 2) -> dict:
+def example(frames: int = 3, units_per_side: int = 2, schema: str = SCHEMA) -> dict:
     """A valid document for tests and readers' fixtures: `frames` frames 100 ticks apart, A and B each with
-    `units_per_side` units; from the second frame on B's units are dead, so A wins, as predicted."""
+    `units_per_side` units; from the second frame on B's units are dead, so A wins, as predicted. `schema`
+    om-fight-2 adds orders both_same_point and result.end wipe, stall false."""
+    if schema not in SCHEMAS:
+        raise ValueError(f"schema is not {SCHEMA} or {SCHEMA_V2}")
     every = 5 * TICKS_PER_SECOND
     units = []
     for side_n, side in enumerate("AB"):
@@ -164,10 +203,15 @@ def example(frames: int = 3, units_per_side: int = 2) -> dict:
                 if row["side"] == "B":
                     row["hp"], row["alive"] = 0.0, False
         out_frames.append({"tick": n * every, "alive": [units_per_side, 0 if dead else units_per_side], "units": rows})
-    return {
-        "schema": SCHEMA, "layout_id": "L-0001", "layout_path": "docs/northstar/research/layer_dynamics/layouts/L-0001.toml",
+    doc = {
+        "schema": schema, "layout_id": "L-0001", "layout_path": "docs/northstar/research/layer_dynamics/layouts/L-0001.toml",
         "seed": 1, "tick_rate": TICKS_PER_SECOND, "snapshot_every": every, "sight": "off",
         "frames": out_frames,
         "result": {"winner": "A", "survivors": [units_per_side, 0 if frames > 1 else units_per_side], "ticks": last, "capped": False,
                    "predict": "A", "agree": True},
     }
+    if schema == SCHEMA_V2:
+        doc["orders"] = {"mode": "both_same_point", "point": [120.0, 52.0], "attacker": None}
+        doc["result"]["end"] = "wipe"
+        doc["result"]["stall"] = False
+    return doc

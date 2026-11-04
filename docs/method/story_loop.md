@@ -49,7 +49,7 @@ Gate: 412s fast
 Flag: sim
 ```
 
-The same merge flips the story to Tested in `stories.md`. Westley's verdict is a one-line commit `Seen <id>` with trailer `Verdict: approve <his words>`, or `Verdict: reject <his words>`, after which the story returns to Ready with the reason written into its story file.
+The same merge flips the story to Tested in `stories.md`. Westley's verdict is a one-line empty commit `Seen <id>`, made directly on the then-current `origin/main` tip (`gate.md`, Records pushes), with trailer `Verdict: approve <his words>`, or `Verdict: reject <his words>`, after which the story returns to Ready with the reason written into its story file.
 
 ## Scenes, not screenshots
 
@@ -69,4 +69,4 @@ Playing main is the same script with no arguments. The 30B plays main nightly wi
 
 ## Slots and waits
 
-DRAFT-build-slots: three builds in flight, one landing per channel. Waits are `flock -w`; no chat polls a gate or schedules a wakeup. A builder pushes and stops; a fresh clerk lands. Every agent reports once, at the end, in its card's schema, and stops past 120k context.
+DRAFT-build-slots: eight builds in flight, four per channel, one landing per channel. Waits are `flock -w` inside scripts; a chat waits only on `mail.py wait`; no chat polls a gate or schedules a wakeup. A builder pushes and stops; a fresh clerk lands. Every agent reports once, at the end, in its card's schema, and stops past 120k context.

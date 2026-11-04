@@ -19,13 +19,16 @@ READERS = ("cat", "sed", "head", "tail", "grep", "ls", "wc", "echo", "git", "sta
 
 # id, roles, kind, rule line
 CHECKS = [
-    ("wakeups", "both", "DRIFT", "No scheduled wakeups: the wait is the Workflow or Agent notification (docs/method/runner.md)."),
+    ("wakeups", "both", "DRIFT", "No scheduled wakeups: the wait is the Workflow or Agent notification or `mail.py wait` (docs/method/runner.md)."),
     ("polling", "both", "DRIFT", "No chat sits in a wait loop or polls a gate; clerks inside scripts do (docs/method/runner.md)."),
     ("gate_runs", "both", "DRIFT", "Gates run inside landing clerks, never in a chat (docs/method/clerk.md)."),
     ("live_tree", "both", "DRIFT", "Never touch `~/Projects/ouroboros-manifold` as a working tree; work in a worktree made by `wt.py` (docs/method/builder.md)."),
     ("code_edits", "architect", "DRIFT", "The Fable chat writes no code; builders do. It writes stories, briefs and docs (docs/method/architect.md)."),
     ("context", "both", "DRIFT", "Compaction at 400k is the only context rule; a turn past 400k without a compaction is drift (docs/method/architect.md)."),
     ("plan_reread", "both", "DRIFT", "After a compaction read every file of the reading list before any mutating call (docs/method/reading_list.toml)."),
+    ("comm_send", "both", "DRIFT", "Never `SendMessage` another chat: `mail.py send` (docs/method/communication.md)."),
+    ("comm_state_checks", "both", "DRIFT", "No more than three state-check commands in one wakeup: git log, status.sh, lock listings (docs/method/communication.md)."),
+    ("comm_mail_first", "both", "DRIFT", "Every wakeup begins with `mail.py read --me <name>` (docs/method/communication.md)."),
 ]
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 READING_LIST = "docs/method/reading_list.toml"
@@ -161,8 +164,51 @@ def excerpt(c):
     return " ".join(str(text).split())[:100]
 
 
+# H-077: a `Bash` segment that is a state check, and a `SendMessage` target a chat may use (main or a sub-agent id).
+STATE_CHECK = re.compile(r"^\s*(?:git\s+(?:-C\s+\S+\s+)?(?:log|status|rev-parse|branch)\b|(?:\S*/)?status\.sh\b|"
+                         r"(?:python3\s+)?(?:\S*/)?status_check\.py\b|flock\b|ls\b.*\.lock\b)")
+MAIL_WAIT = "python3 scripts/method/mail.py wait"
+MAIL_READ = re.compile(r"mail\.py\s+read\b")
+
+
+def is_user_turn(e):
+    c = (e.get("message") or {}).get("content")
+    return e["type"] == "user" and e.get("isCompactSummary") is not True and not (isinstance(c, list) and any(isinstance(b, dict) and b.get("type") == "tool_result" for b in c))
+
+
+def wakeups(entries):
+    """The spans from one user turn to the next, each (user entry, [assistant entries]); the entries before the first user turn are no wakeup."""
+    spans = []
+    for e in entries:
+        if is_user_turn(e):
+            spans.append((e, []))
+        elif spans and e["type"] == "assistant":
+            spans[-1][1].append(e)
+    return spans
+
+
+def westley_typed(e):
+    c = (e.get("message") or {}).get("content")
+    return isinstance(c, str) and not c.startswith("<task-notification>")
+
+
+def comm_hits(cid, entries):
+    hits = []
+    for user, asst in wakeups(entries):
+        seq = [(e, c) for e in asst for c in calls(e)]
+        if cid == "comm_mail_first" and seq and not westley_typed(user) and not (
+                seq[0][1]["name"] == "Bash" and MAIL_READ.search(str(seq[0][1]["input"].get("command") or ""))):
+            hits.append(seq[0])
+        if cid == "comm_state_checks":
+            found = [(e, c) for e, c in seq if c["name"] == "Bash"
+                     for g, w in segments(str(c["input"].get("command") or "")) if STATE_CHECK.match(g)]
+            if len(found) > 3:
+                hits.append(found[3])
+    return hits
+
+
 # H-059: the retired single lock and the two channel locks all mean "a chat waits on a gate".
-GATE_LOCKS = ("gate.lock", "gate-lab.lock", "gate-beta.lock")
+GATE_LOCKS = ("gate-lab.lock", "gate-beta.lock")
 
 
 def matcher(cid, role, live):
@@ -177,8 +223,11 @@ def matcher(cid, role, live):
         fp = i.get("file_path") or i.get("notebook_path")
         if cid == "wakeups":
             return n == "ScheduleWakeup"
+        if cid == "comm_send":
+            to = str(i.get("to") or "")
+            return n == "SendMessage" and not (to == "main" or re.match(r"a[0-9a-f]{8,}", to))
         if cid == "polling":
-            return n == "Monitor" or (s is not None and any(
+            return n == "Monitor" or (s is not None and not s.startswith(MAIL_WAIT) and any(
                 w in ("sleep", "flock") or (any(n in g for n in GATE_LOCKS) and w not in READERS) for g, w in segments(s)))
         if cid == "gate_runs":
             return s is not None and any(
@@ -253,6 +302,8 @@ def report(entries, live, threshold, session, name="", root=REPO_ROOT):
                     hits += [] if lone else [(r, {"name": "context", "input": {"command": str(ctx_size(r))}}) for r in run]
                     run = []
             hits.sort(key=lambda h: -ctx_size(h[0]))
+        elif cid in ("comm_state_checks", "comm_mail_first"):
+            hits = comm_hits(cid, entries)
         else:
             hit = matcher(cid, role, live)
             hits = []
