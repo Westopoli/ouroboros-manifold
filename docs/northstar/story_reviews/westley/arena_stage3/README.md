@@ -1,14 +1,26 @@
-# Lab stage 3: the ground pushes back
+# Lab stage 3: the ground pushes back (finished run, 2026-11-05)
 
-Run 2026-11-05 from main: `scripts.skilllab.arena.run --seed 1` on four layouts (chokepoint L-0055, city L-0073, slope L-0045, cover L-0039), each with a control twin (the same fight with the ground taken away) beside it. The pictures below are the live replay scene in a real window, one frame each, taken through the screenshot portal and cropped to the game window (no desktop in them). The full page, with every frame and the control strips, is `docs/northstar/research/layer_dynamics/arena/stage3/index.html`.
+Replaces the first run of the same day (seed 1 only, run before the stage 3 fixes: its control fights flew over the ground, the replay drew every layout flat, and the slope was the old L-0045). Its four window captures are removed from here; they stay in git history (`65a4dd4a`).
 
-Numbers in short (seed 1, one fight each, not a rate): L-0055 blue wins 21:0 and agrees with your guess; L-0073 blue wins 17:0 and agrees; L-0045 (slope) red wins 50:0 and disagrees with your guess of blue; L-0039 (cover) ends in a draw at the time cap, 8:8, and disagrees. Rate files exist for L-0055 and L-0073 only (the slope and cover layouts carry no target rate, so the runner does not rate them).
+Four fights, 20 seeds each, every one beside the same fight without the ground. Run on main after the engage-on-sight engine (H-057). The page with every strip is `docs/northstar/research/layer_dynamics/arena/stage3/index.html`.
 
-Known gap to judge with these: the control strips on the page redraw the walls and buildings of the layout even though the control fight ran without them, so a control picture shows units standing where a wall is drawn. The sim side of the control is right; the replay picture is not yet.
+Watch one: on the Mac `scripts/replay.sh docs/northstar/research/layer_dynamics/arena/stage3/L-0055-s10.fight.json`, on Linux `OM_FIGHT=$PWD/<that file> scripts/play.sh --scene res://scenes/proto/fight_replay/fight_replay.tscn`. Space steps forward. The controls are in `arena/stage3/control/`.
 
-| Picture | What to expect | Approve means | Deny means |
+What the numbers say (the same in all 20 seeds of each fight; the seed changes nothing in the arena today, so a rate is 0% or 100%):
+
+| Fight | With the ground | Same fight without it | Your guess |
 |---|---|---|---|
-| `stage3-1-chokepoint-L-0055.png` | Two long yellow walls with a gap between them. Blue (right) holds a cluster just past the gap with its range rings drawn; red (left) is bunched at the mouth, several already fallen (grey). Tick 2000, 21 blue against 7 red. | Red has to come through the gap and blue holds it, as you drew it; the walls are where the layout puts them. | The walls, the gap or how the fight uses it do not read as a chokepoint; say what is off. |
-| `stage3-2-city-L-0073.png` | A field of grey buildings on a pale paved patch and a cyan road strip, with the fight in front of the first row. Tick 4000, 17 blue against 6 red. | The units fight round the buildings and respect them as obstacles, as a city should. | Units cross buildings, or the city does not read as one. |
-| `stage3-3-slope-L-0045.png` | A brown and olive diagonal band (the slope) across the green, with a small orange pad on it. Red (left, 56) pours in on blue (right, 40) on the slope pad; all blue are fallen, red wins. Tick 946, the end of the fight. | The slope shows as a slope and red's uphill push behaves plausibly, even though the result disagrees with your guess. | The slope does not read as ground that matters, or units move over it as if flat. |
-| `stage3-4-cover-L-0039.png` | Three tan cover boxes in a row with eight blue and eight red facing each other round them, very large range rings (the long-range units). Tick 7200, 8 against 8; this fight stalls to a draw. | The boxes read as cover and a stand-off is a fair result for this layout. | The boxes do not matter, or a draw is wrong for this layout; say which. |
+| Chokepoint L-0055 | Blue wins, 21 left against 0, 3394 ticks; 6 unit-frames held by the walls. | Blue wins, 23 left, 2196 ticks. | Blue 98%: agrees. |
+| City L-0073 | Blue wins, 17 left against 0, 6175 ticks; no unit held. | Blue wins, 22 left, 2156 ticks. | Blue 75%: agrees. |
+| Slope L-0084 (redrawn: blue in an arc on the top, 40 against 56) | Red wins, 0 against 6 left, 2268 ticks; 6 unit-frames held. | A stand-off at tick 820, nobody dead. | Blue 60%: red wins every time. |
+| Cover L-0039 (as you drew it, red expected 75%) | A draw at the 600 s cap, 8 against 8. From tick 800 both sides sit about 290 wu apart with targets and nobody loses any hit points. | Blue wins, 3 left, 2606 ticks. | Red 75%: a draw. |
+
+Checked exactly on the fight files (not by eye): in every frame of the four real fights no unit stands inside a wall, building or box, and no red unit is on the slope's cliff; in the city control 38 unit rows stand inside buildings and in the slope control 54 rows are on the cliff, as they should without the ground.
+
+Open for you: the cover draw (no damage at all for ten minutes looks wrong, cause not investigated) and the slope result are yours to call: a story, or fine as it is.
+
+| What to look at | What to expect | Approve means | Deny means |
+|---|---|---|---|
+| Chokepoint, then its control | Red queues at the gap, nobody inside a wall; without walls red spreads and reaches the arc at once. | The walls stop red units and the queue is the thing I see. | A red unit stands in a wall, or no queue forms; name the frame. |
+| Slope, then its control | Red climbs the ribbon one file at a time; the cliff is not crossed. | The climb is slower than the control and the cliff holds. | Red crosses the cliff or stalls at the foot; name the frame. |
+| City, cover (as you like) | Units go round buildings and boxes. | Units respect the ground. | A unit crosses a building or box. |
