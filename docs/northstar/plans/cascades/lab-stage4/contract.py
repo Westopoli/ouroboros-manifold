@@ -29,8 +29,8 @@ def fight(layout: dict, seed: int, sight: str, cap_seconds: int):
 
 # --- scripts/skilllab/arena/snapshot.py (leaf A) ---
 
-def validate(doc: dict) -> None:
-    """spec 3. Accepts seen / sights / result.first_seen / orders.guard on om-fight-2, absent or present; rejects each on om-fight-1 naming the key. Signature unchanged."""
+def validate(doc: dict) -> list:
+    """spec 3. Accepts seen / sights / result.first_seen / orders.guard on om-fight-2, absent or present; rejects each on om-fight-1 naming the key. Signature unchanged: returns the list of problem messages, [] when valid (as today)."""
     raise NotImplementedError
 
 
