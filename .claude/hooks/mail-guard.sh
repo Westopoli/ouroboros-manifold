@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Detached 2026-11-05: no longer wired in .claude/settings.json; see docs/method/history.md (DEC-mail-detached-2026-11-05).
 # mail-guard — PreToolUse hook on SendMessage (H-077). Chats talk through scripts/method/mail.py send, never SendMessage;
 # only `main` and a sub-agent id (a hex id starting with "a") are allowed. Same deny form as git-guard.sh.
 # See also: docs/method/communication.md, scripts/specfactory/method_check.py (comm_send).

@@ -1,3 +1,4 @@
+<!-- Westley's copy (2026-11-05). Stage status lives in ROADMAP.md section 1; each stage is one cascade plan Westley asks a Fable chat for, run by a Sonnet chat with /manager-mode. -->
 # The beta staircase: the game assembled one approved step at a time, on its own gate channel
 
 Westley, 2026-11-02: "there's not a beta.exe or command I can run that shows me the latest versions ... all I know is the work being done passes tests, but doesn't actually run. I want to ... use the same staged mechanism to put the pieces together of the beta." Approved by him the same morning; amended at once: B5 is one role in groups, not one unit.

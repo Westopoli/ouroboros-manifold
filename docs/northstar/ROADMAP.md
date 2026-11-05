@@ -9,13 +9,13 @@ Rules for this file:
 - Rewrite, never append. History is `git log`.
 - A row points to a plan doc and never restates it. No design text here.
 - A plan enters "Queued" only when it has a doc path. An idea without a doc goes in "Not planned yet".
-- Whoever starts, finishes or reorders a plan updates this file in the same commit; whoever starts or ends a plan also edits `docs/method/reading_list.toml` in the same commit as the ROADMAP row.
+- Whoever starts, finishes or reorders a plan updates this file in the same commit.
 - File ownership stays in `plans/push/pieces.toml`. Open questions stay in `ambiguity_register.md`. Rulings stay in `plans/2026-10-01-architect-rulings-2.md` and, for the programme, in the spec's `[W ...]` tags.
 - Lane status lives in one place, the lane table of `plans/2026-10-07-visible-game-programme.md`; this file never copies it.
 
 ## 1. Now building: two staircases, two gate channels
 
-Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a time, each step ending in something he looks at in a scene he plays, approve or deny, before the next starts. Two staircases run side by side on separate gate channels (DEC-two-gate-channels-2026-11-02, H-059): the **simulation lab** (`plans/2026-10-31-lab-staircase.md`, DEC-lab-staircase-2026-10-31; stories H-039, H-040, H-052, H-053) and the **beta** (`plans/2026-11-02-beta-staircase.md`; stories H-028, H-059, H-060, H-061, then one per stage). Each row is one story; its words and done-when live in the story file; this table is the order and the state only. Whoever moves a stage rewrites its row in the same commit.
+Westley 2026-10-31 and 2026-11-02: everything is built one verified step at a time, each step ending in something he looks at in a scene he plays, approve or deny, before the next starts. Two staircases run side by side on separate gate channels (DEC-two-gate-channels-2026-11-02, H-059): the **simulation lab** (`story_reviews/westley/lab-staircase.md`, DEC-lab-staircase-2026-10-31; stories H-039, H-040, H-052, H-053) and the **beta** (`story_reviews/westley/beta-staircase.md`; stories H-028, H-059, H-060, H-061, then one per stage). Each row is one story; its words and done-when live in the story file; this table is the order and the state only. Whoever moves a stage rewrites its row in the same commit.
 
 | Staircase | Stage | Story | State (2026-11-03) | Next |
 |---|---|---|---|---|
@@ -60,7 +60,7 @@ Statuses: `logged` (recorded, nobody on it) · `investigating` (someone is findi
 
 ## 2. The beta critical path
 
-Superseded for the build order by the beta staircase (`plans/2026-11-02-beta-staircase.md`, section 1 above): B0 to B8 assemble the game; rows 5 to 8 below (Steam) follow B8. The landed rows 1 to 4 (terrain stages 2 and 3, unit size, Steam phase A) are removed; git log has them.
+Superseded for the build order by the beta staircase (`story_reviews/westley/beta-staircase.md`, section 1 above): B0 to B8 assemble the game; rows 5 to 8 below (Steam) follow B8. The landed rows 1 to 4 (terrain stages 2 and 3, unit size, Steam phase A) are removed; git log has them.
 
 Target: a private Steam beta with multiplayer and every approved prototype integrated. Westley 2026-10-07: no date; "done right than fast"; efficiency, parallelism and no drift are the measures. Steps 1 to 5 are carried by the programme; this table keeps the Steam-side steps.
 
