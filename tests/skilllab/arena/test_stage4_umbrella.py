@@ -35,13 +35,15 @@ def test_stage4_pipeline_end_to_end(tmp_path):
     assert any(u["seen"] for f in doc["frames"] for u in f["units"] if u["side"] == "A")
     assert not any(u["seen"] for f in doc["frames"] for u in f["units"] if u["side"] == "B"), "no B unit sees an A unit on the band above"
     assert all(side[e] == "B" for f in doc["frames"] for u in f["units"] if u["side"] == "A" for e in u["seen"])
-    snapshot.validate(doc)
+    assert snapshot.validate(doc) == []
 
     control = snapshot.read(control_dir / "L-9401-control-s1.fight.json")
     assert control["sight"] == "off"
     assert control["layout_path"] == doc["layout_path"], "the sight control is the same layout, no twin"
     assert not any("seen" in u for f in control["frames"] for u in f["units"])
-    assert "sights" not in control and "first_seen" not in control["result"] and "guard" not in control["orders"]
+    assert control["movement_kind"] == 1 and control["orders"]["guard"] is True, "the control differs from the main fight by sight only (DEC-stage4-control-sight-off, amended)"
+    assert "sights" not in control and "first_seen" not in control["result"]
+    assert any(u["target"] for f in control["frames"] for u in f["units"] if u["side"] == "A"), "without sight targeting A fires down on the walkers"
 
     html = tmp_path / "index.html"
     assert page.build(str(tmp_path / "out"), str(html), control_dir=str(control_dir), stage=4) == 0

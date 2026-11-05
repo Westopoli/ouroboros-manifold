@@ -10,7 +10,7 @@ CHECK_EVERY = 20   # spec 2: ticks, one sim second (TICKS_PER_SECOND 20, run.py 
 
 def fight(layout: dict, seed: int, sight: str, cap_seconds: int):
     """spec 1 and 2. Signature unchanged. With sight == "on" the stage 4 rule set runs (targeting by sight on, ground era, every role walks on a canvas, reach 0 up 1 down,
-    the holder of hold:A / hold:B on engine.order_guard); with sight == "off" nothing changes. Return shape unchanged (frames by tick, last tick, end, orders block);
+    the holder of hold:A / hold:B on engine.order_guard); with sight == "off" nothing changes. sight == "control" (internal, spec 4) is the stage 4 rule set with OM_TP_TARGET_BY_SIGHT 0: its document is written with sight "off", movement_kind 1, orders.guard as applied, and none of seen / sights / first_seen. Return shape unchanged (frames by tick, last tick, end, orders block);
     the orders block gains "guard": bool when sight == "on"; the frames gain per-unit "seen"; the end state carries first_seen for _document to write."""
     raise NotImplementedError
 
