@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-03 (records doer, Architect's brief, the pause day): section 1 rows brought to the state after the stack's first landing and the Dispatcher pause (DEC-pause-2026-11-03); section 1 is the two staircases on two gate channels, with a first row pointing to the one list of what waits on Westley (`story_reviews/westley/README.md`, section Waiting on you); sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
 
-What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
+What is being built now, what is built next, and in what order. `docs/method/` is the method; this file is the order. One row per plan.
 
 Rules for this file:
 

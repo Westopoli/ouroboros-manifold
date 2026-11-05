@@ -9,6 +9,21 @@ Every story play that reaches the player's eyes gets a queue row. Westley approv
 | story | lane | run id | screenshot path | qa_state file | reviewer | reviewer verdict (yes/no/unclear + evidence) | Westley verdict (pending/approved/rejected) | date |
 |---|---|---|---|---|---|---|---|---|
 
+### Lane key
+
+The single-letter files are the lane tables, one per area of the game. They are read by `scripts/specfactory/batch_review.py` and matched by `scripts/specfactory/pieces.py`, which is why they keep their short names.
+
+| File | Lane | Last row |
+|---|---|---|
+| `A.md` | Battle screen (the ground and space tactical view) | 2026-10-13 |
+| `B.md` | Galaxy view | 2026-10-08 |
+| `C.md` | Ground era | 2026-10-09 |
+| `D.md` | The space battlefield | 2026-10-19 |
+| `E.md` | Settlement and economy | 2026-10-20 |
+| `F.md` | Steam phase B and shipping | 2026-10-12 |
+| `P.md` | Prototype review queue (mockups, prototype gate) | 2026-10-18 |
+| `V.md` | Sim viewer (tooling shots, no story id) | 2026-10-20 |
+
 ## Screenshots
 
 Committed copies live under `docs/northstar/story_reviews/shots/<run id>/<story>.png`. The run id is a timestamp plus the commit hash, so a re-run never overwrites an earlier one. The `qa_state` dump sits beside the png, same folder, same stem.
