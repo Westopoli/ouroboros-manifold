@@ -23,7 +23,7 @@ const _DumpDecode := preload("res://autoload/bridge/dump_decode.gd")
 const DEFAULT_N_REGIONS := 80
 # The pipe ABI this client speaks: OM_ABI_VERSION in csrc/ouroboros_sim.h, carried by the pipe's hello frame
 # (docs/architecture.md). tests/qa/test_pipe_abi_check.py pins this equal to the header.
-const EXPECTED_ABI := 9
+const EXPECTED_ABI := 10
 # Every strategic om_feature id (csrc/ouroboros_sim.h OM_FEAT_EVENTS ..
 # OM_FEAT_LIFECYCLE); OM_FEAT_TACTICAL (8) stays off. With [6] alone nothing
 # ever changes owner (docs/architecture.md "session commands (v1.1)").
