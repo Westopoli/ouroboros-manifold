@@ -20,6 +20,7 @@ Not waiting on you, although it may look like it: the piecemeal-then-whole plan 
 
 ## What is here (newest first, by the day each was added; names are relative to this directory)
 
+- `b1-cascade-plan.md`: the B1 cascade plan (2026-11-05): pre-flight facts, the rules for H-060 and the new H-087 (the beta on the Mac), the documents the cascade rewrites, the steps, the decisions he may veto.
 - `beta-staircase.md`, `lab-staircase.md`: the two high-level plans (stages B0 to B8; lab stages 1 to 7), moved here 2026-11-05 from `docs/northstar/plans/`; stage state is ROADMAP section 1.
 - `ruled.md`: the verdict ledger: every verdict of Westley's, one row per picture or layout id, his words verbatim with the chat date, any owed action, and the git command that brings back a removed picture.
 - `beta_stage0/`: B0: the standing beta build (`beta-proof.png`).
