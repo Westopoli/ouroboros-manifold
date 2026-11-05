@@ -1,0 +1,7 @@
+- **run.unreachable world seed**: `layout.get("seed", 1)` for `new_world` and `apply` - source: no source (the slope heights are replaced by `terrain_set_heights`, so the seed does not change the walk mask)
+- **run.unreachable always builds a world**: even for a layout with no bound features (`first_unreachable` then returns None) - source: spec criterion 3/brief ("builds a throwaway world, calls features.apply, calls first_unreachable, frees")
+- **movement_kind derivation**: `_document` writes `movement_kind` 1 when `features.bound(layout)` or `layout.get("movement") == "walk"`, so `fight()`'s return tuple is unchanged - source: spec criterion 3 (`ground` equals `bound` because `apply` returns True iff boxes or ramps exist)
+- **control_twin creates control_dir and returns a Path**: the TOML path is a `pathlib.Path`; `layout_path` argument is unused (kept for the contract signature) - source: spec criterion 3/4; no source for the unused argument
+- **control twin files written once per seed**: same bytes each time - source: no source
+- **walk mask indexing**: row-major `y * terrain_width + x` with terrain width from `terrain_dump_bands` - source: scripts/skilllab/engine.py `terrain_walk_mask` (one byte per 100 wu terrain cell), confirmed by the cliff tests
+- **ROUTE_CELL renamed to NAV_CELL (50.0)**: the 20 wu constant is removed, nothing else in the module read it - source: spec criterion 1

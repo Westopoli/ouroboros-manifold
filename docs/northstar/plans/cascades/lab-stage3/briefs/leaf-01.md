@@ -25,6 +25,9 @@ do_not_edit:
   - scripts/replay.sh
   - README.md
   - scripts/skilllab/arena/situations.py
+standalone_symbols:
+  - frame_ticks
+  - example
 impl_line_budget: 200
 test_assertion_budget: 40
 test_owned_by: parent

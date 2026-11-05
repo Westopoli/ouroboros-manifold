@@ -1,0 +1,4 @@
+- **Mac app path is tried only when the platform (OM_UNAME or uname -s) is Darwin**: the spec says OM_UNAME overrides uname "for the platform branch" and names no other branch - source: spec line 42 (inference)
+- **README section is an h3 under "Open in the editor"'s parent, before "Read next"**: no placement given - source: no source
+- **A missing Godot exits 2 (as run_godot_tests.sh), unknown argument exits 64 (as play.sh)**: no source in spec - source: scripts/run_godot_tests.sh, scripts/play.sh
+- **Import failure exits 1 and leaves no marker**: no source
