@@ -30,3 +30,16 @@ clang: present
 ## `scripts/fetch_godotsteam.sh` (R-087-03)
 
 The sum is taken with `sha256sum` when it exists, else `shasum -a 256`; the output is compared to the pinned `SHA256` exactly as today, a mismatch prints `sha256 mismatch: expected ..., got ...` to stderr and exits 1, and nothing is unpacked before the comparison passes.
+
+## Symbols
+
+```
+ARCH = uname -m
+OM_GODOT_APP = /Applications/Godot.app/Contents/MacOS/Godot
+```
+
+`ARCH` is exported to `scripts/build_pipe_macos.sh` unchanged (any `uname -m` value is passed through, never validated or rewritten). `OM_GODOT_APP` is read as `${OM_GODOT_APP:-<default>}`, so an empty value means the default.
+
+## Boundary rulings (overlord, 2026-11-05, answering BOUNDARIES.md Q1 to Q7; recorded as DEC-h087-boundaries-2026-11-05, Westley may veto)
+
+- Q1 the app binary counts when it is executable (`-x`, as `scripts/run_godot_tests.sh` tests it); a non-executable file is "none found". Q2 an unknown `uname -m` is passed through. Q3 with neither `sha256sum` nor `shasum` the fetch script exits non-zero before unpacking; the message is not pinned. Q4 empty `OM_GODOT_APP` is unset. Q5 an uppercase hex sum is not specially handled (not pinned). Q6 every path expansion is quoted, so a tree path with spaces works. Q7 a failed copy removes `pipe/ouroboros_pipe.new.$$`, keeps the old pipe and prints `EDITOR SETUP FAILED pipe` (the Linux route already does this).
