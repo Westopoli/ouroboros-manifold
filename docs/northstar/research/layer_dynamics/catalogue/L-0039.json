@@ -3,8 +3,8 @@
   "situation": "cover",
   "landscape": "small_flat",
   "seed": 1020833,
-  "predict": "A",
-  "predict_why": "Side A shoots from behind the cover boxes at side B crossing open ground, so position outweighs numbers.",
+  "predict": "B",
+  "predict_why": "Westley 2026-11-01 on this layout as drawn: \"this position is technically worse for blue because they have less space to spread out units to get firing angles on red. Without being changed red is expected to win 75% of the time depending on where units stop.\" Predict B, red 75%, so side A (blue) 0.25.",
   "verdict": "",
   "feedback": "",
   "defender": "A",
@@ -172,5 +172,6 @@
         }
       ]
     }
-  ]
+  ],
+  "predict_rate": 0.25
 }

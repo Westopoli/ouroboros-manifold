@@ -1,0 +1,10 @@
+# Stage 3 page sentences (DEC-stage3-sentences-file-2026-11-05)
+
+One row per stage 3 fight. The page (`scripts/skilllab/arena/page.py --stage 3 --sentences <this file>`) prints these three sentences under the layout's strip in place of the layout's own keys, so the same layout can be judged for different things at different stages. Stage 3 judges one thing: do the units respect the ground. The percentage is the heuristic target, never scored.
+
+| id | What to expect | Approve means | Deny means |
+|---|---|---|---|
+| L-0055 | Blue's arc holds at the mouth of the gap; red files into the gap and queues behind its front unit; no unit stands inside a wall; in the control strip (same fight, no walls) red spreads out and reaches the arc at once. | The walls stop red units and the queue at the gap is the thing I see, so the chokepoint works as ground. | A red unit stands inside a wall, goes through one, or the queue never forms; name the frame. |
+| L-0073 | Red enters the city by its streets, only between buildings; blue's arc inside fires on red as it comes; in the control strip (no buildings) red walks straight in. | Units walk the streets and stop at building edges; the city slows red down. | A unit stands inside a building or crosses one; name the unit and frame. |
+| L-0084 | Red walks the ribbon up the slope slowly, one file at a time; blue's arc on the top fires down; no red unit climbs the cliff beside the ribbon; in the control strip (no slope) red crosses in a straight line at full pace. | The climb is slower than the control and the cliff is not crossed, so the slope works as ground. | Red climbs faster than the control, crosses the cliff, or stalls at the foot with no queue; name the frame. |
+| L-0039 | Red crosses open ground toward blue's three cover boxes; units go round the boxes, none through them; in the control strip (no boxes) red walks straight. | Units go round the boxes and the boxes block walking; sight through the boxes is stage 4, not judged here. | A unit stands inside a box or crosses one; name the unit and frame. |
