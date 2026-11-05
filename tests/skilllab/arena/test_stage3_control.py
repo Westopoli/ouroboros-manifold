@@ -135,6 +135,17 @@ def test_main_and_control_documents_carry_movement_kind_and_landscape(tmp_path):
     assert [u["id"] for u in doc["frames"][0]["units"]] == [u["id"] for u in control["frames"][0]["units"]]
 
 
+def test_the_control_documents_units_move(tmp_path):
+    """Criterion 3, amended sentence (spec line 27): in the control document of the chokepoint fixture (10 s, `--control-dir`) some side A unit's x differs by more
+    than 100 wu between frame 0 and the last frame; a walker on a world with no canvas never moves, so the control must get `set_canvas` before spawning."""
+    _, _, _, control = _fight_with_control(tmp_path, None, "--cap-seconds", "10")
+    assert control.get("movement_kind") == 1, "the control's units must be walking (movement_kind 1) for their moving to count"
+    first, last = control["frames"][0]["units"], control["frames"][-1]["units"]
+    x0 = {u["id"]: u["x"] for u in first if u["side"] == "A"}
+    moved = max(abs(u["x"] - x0[u["id"]]) for u in last if u["side"] == "A" and u["id"] in x0)
+    assert moved > 100, "the control's units must advance, not only carry movement_kind (largest side A move %.1f wu)" % moved
+
+
 def test_a_flying_fight_omits_movement_kind_but_still_names_its_landscape(tmp_path):
     """Criterion 3, "a fight whose units fly omits the key", and criterion 5: the open-field fixture flies, `landscape` is written, `movement_kind` is absent."""
     proc, doc = fx.fight(open_field("L-9325"), tmp_path, 1, "--cap-seconds", "5")
@@ -245,3 +256,10 @@ def test_results_md_has_the_blocked_column_counting_the_frames_blocked_units(tmp
     assert sep.count("---") == 8
     assert [r[0] for r in rows] == ["L-9327", "L-9328"] and all(len(r) == 8 for r in rows)
     assert rows[0][7] == str(want) and rows[1][7] == "0"
+
+
+def test_snapshot_md_documents_landscape_movement_kind_and_the_control_twin_files():
+    """Criterion 5, last sentence (spec line 29): `scripts/skilllab/arena/SNAPSHOT.md` documents `landscape`, `movement_kind` and the control twin files."""
+    text = (fx.ROOT / "scripts" / "skilllab" / "arena" / "SNAPSHOT.md").read_text()
+    for word in ("landscape", "movement_kind", "-control.toml", "-control.json"):
+        assert word in text, "SNAPSHOT.md does not mention %r" % word

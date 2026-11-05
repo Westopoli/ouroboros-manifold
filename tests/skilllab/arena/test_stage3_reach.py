@@ -160,10 +160,13 @@ def test_slope_walk_mask_is_the_union_over_the_presets_layers():
     assert sorted(set(asked)) == list(range(produce.presets()["small_tiered"]["layers"]))
 
 
-def test_slope_walk_mask_is_read_once_per_layer_not_per_unit():
-    """Criterion 1 and the brief's hot path (linear-ish in cells plus units): the mask reads do not grow with the unit count, 8 against 128 a side."""
+def test_slope_walk_mask_is_read_once_per_layer_not_per_unit(monkeypatch):
+    """Criterion 1 and the brief's hot path (linear-ish in cells plus units): the mask reads and the grid builds (`_engine_boxes` calls) do not grow with the unit
+    count, 8 against 128 a side."""
     def reads(n):
-        count = []
+        count, grids = [], []
+        real_boxes = features._engine_boxes
+        monkeypatch.setattr(features, "_engine_boxes", lambda *a, **k: (grids.append(1), real_boxes(*a, **k))[1])
 
         def tweak(engine):
             real = engine.terrain_walk_mask
@@ -172,9 +175,15 @@ def test_slope_walk_mask_is_read_once_per_layer_not_per_unit():
         lay["side_a"] = {"headcount": n, "units": grid_units(n, 2480.0, 1, per_row=8)}
         lay["side_b"] = {"headcount": n, "units": grid_units(n, 1000.0, 0, per_row=8)}
         reach(lay, tweak=tweak)
-        return len(count)
-    small, many = reads(8), reads(128)
+        return len(count), len(grids)
+    (small, small_grids), (many, many_grids) = reads(8), reads(128)
     assert 0 < small == many <= produce.presets()["small_tiered"]["layers"]
+    assert small_grids == many_grids, "grid work grew with the unit count: %d against %d" % (small_grids, many_grids)
+
+
+def test_nav_cell_is_the_engines_navmesh_cell():
+    """Criterion 1 (spec line 21): `NAV_CELL`, the engine's `OM_NAVMESH_CELL_SIZE`, is 50 wu and is exported by `features`."""
+    assert features.NAV_CELL == 50.0
 
 
 # ---------------------------------------------------------------- composition: run.unreachable calls the new signature

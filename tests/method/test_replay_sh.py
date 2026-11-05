@@ -133,14 +133,23 @@ def test_a_missing_fight_file_exits_2_and_names_it(rig):
 # ---------------------------------------------------------------- criterion 12: finding Godot
 
 def test_godot_is_found_in_the_stated_order(rig):
-    """Criterion 12: first match wins, `$GODOT` then `godot` on PATH then `~/.local/bin/godot.real`. $GODOT beats PATH; with PATH having none, the home one is used."""
+    """Criterion 12: first match wins, `$GODOT` then `godot` on PATH then `~/.local/bin/godot.real`. $GODOT beats PATH; PATH beats the home one (both exist);
+    with PATH having none, the home one is used."""
+    home_godot = _exe(rig.home / ".local" / "bin" / "godot.real", FAKE_GODOT)
     elsewhere = _exe(rig.base / "elsewhere" / "my-godot", FAKE_GODOT)
     r = rig.run(rig.fight.name, "--dry-run", uname="Linux", GODOT=str(elsewhere))
-    assert str(elsewhere) in r.stdout and str(rig.godot) not in r.stdout, r.stdout + r.stderr
+    assert str(elsewhere) in r.stdout and str(rig.godot) not in r.stdout and str(home_godot) not in r.stdout, r.stdout + r.stderr
+    r = rig.run(rig.fight.name, "--dry-run", uname="Linux")
+    assert str(rig.godot) in r.stdout and str(home_godot) not in r.stdout, r.stdout + r.stderr
     rig.godot.unlink()
-    home_godot = _exe(rig.home / ".local" / "bin" / "godot.real", FAKE_GODOT)
     r = rig.run(rig.fight.name, "--dry-run", uname="Darwin")
     assert r.returncode == 0 and str(home_godot) in r.stdout, r.stdout + r.stderr
+
+
+def test_replay_sh_names_the_mac_default_godot_location():
+    """Criterion 12: the fourth stated location, `/Applications/Godot.app/Contents/MacOS/Godot`, cannot be exercised on this machine, so the script's source is
+    checked for the exact path."""
+    assert "/Applications/Godot.app/Contents/MacOS/Godot" in REPLAY.read_text()
 
 
 # ---------------------------------------------------------------- criterion 12: a real run
