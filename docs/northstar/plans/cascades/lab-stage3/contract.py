@@ -38,6 +38,7 @@ def build(d: str, out: str, control_dir: Optional[str] = None, stage: Optional[i
 #   "landscape": str          preset name used ("small_flat" when the fight file has none)
 #   "features": list          [] for a control fight
 #   "blocked_units": list     unit ids blocked at the current frame (exists today)
+#   "hud_tick": str           the HUD tick line text (spec 9)
 # HUD tick line: "tick %d  A %d  B %d  blocked %d  frame %d/%d"
 
 # --- scripts/replay.sh (leaf E), spec 12 ---
