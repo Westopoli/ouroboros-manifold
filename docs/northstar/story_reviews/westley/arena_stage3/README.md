@@ -2,7 +2,7 @@
 
 Replaces the first run of the same day (seed 1 only, run before the stage 3 fixes: its control fights flew over the ground, the replay drew every layout flat, and the slope was the old L-0045). Its four window captures are removed from here; they stay in git history (`65a4dd4a`).
 
-Four fights, 20 seeds each, every one beside the same fight without the ground. Run on main after the engage-on-sight engine (H-057). The page with every strip is `docs/northstar/research/layer_dynamics/arena/stage3/index.html`.
+Four fights, 20 seeds each, every one beside the same fight without the ground. Run on main after the engage-on-sight engine (H-057). The page with every strip is `index.html` in this directory; its frames (`L-0055-s10/` and so on, each fight with its `-control-s10`) sit beside it. The fight files themselves are in `docs/northstar/research/layer_dynamics/arena/stage3/`.
 
 Watch one: on the Mac `scripts/replay.sh docs/northstar/research/layer_dynamics/arena/stage3/L-0055-s10.fight.json`, on Linux `OM_FIGHT=$PWD/<that file> scripts/play.sh --scene res://scenes/proto/fight_replay/fight_replay.tscn`. Space steps forward. The controls are in `arena/stage3/control/`.
 
