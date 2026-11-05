@@ -45,7 +45,7 @@ DEFAULT_PIECES = REPO / "docs" / "northstar" / "plans" / "push" / "pieces.toml"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pieces as pc  # noqa: E402
 
-DEFAULT_WARN_LINES = 100
+DEFAULT_WARN_LINES = 1500
 DEFAULT_WARN_FILES = 1
 
 

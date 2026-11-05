@@ -157,8 +157,8 @@ def _roadmap_section1_problems(text: str) -> list[str]:
             for ln in body.splitlines() if ln.startswith("|")]
     if not any(len(r) >= 3 and r[0] == "lab" and "H-0" in r[2] for r in rows):
         out.append("ROADMAP section 1 has no row with first cell 'lab' and an H-0 story id")
-    if "2026-10-31-lab-staircase.md" not in body:
-        out.append("ROADMAP section 1 intro does not name 2026-10-31-lab-staircase.md")
+    if "lab-staircase.md" not in body:
+        out.append("ROADMAP section 1 intro does not name lab-staircase.md")
     return out
 
 
