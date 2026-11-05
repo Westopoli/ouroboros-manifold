@@ -1,4 +1,4 @@
-<!-- Copied from ~/.claude/plans/cheerful-baking-codd.md on 2026-11-02 so the plan lives in the repo (H-062); the lab staircase of DEC-lab-staircase-2026-10-31. Rewrite this copy from now on; stage state is in ROADMAP.md section 1. -->
+<!-- Westley's copy (2026-11-05; moved from docs/northstar/plans/2026-10-31-lab-staircase.md). Stage status lives in ROADMAP.md section 1; each stage is one cascade plan Westley asks a Fable chat for, run by a Sonnet chat with /manager-mode. -->
 # The simulation lab, rebuilt as a staircase: one verified step at a time
 
 ## Context

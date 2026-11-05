@@ -21,5 +21,15 @@ The method before 2026-10-30 lived in sixteen documents, about 160,000 words. Ea
 | `story_reviews/westley/README.md` | 01931049 | The shots table; scenes replaced screenshots |
 | `docs/northstar/ROADMAP.md` | 2b03d79b | Lane rows and "Now"; Ready in `stories.md` is the queue |
 | `tests/specfactory/test_pieces.py::test_pieces_toml_owns_disjoint`, `tests/specfactory/test_lab_docs.py::test_l7_depends_on_every_other_lab_rev2_row_except_e2_e4_and_l7b` | 38d08cc2 | Tests of `pieces.toml` ownership and the L7 dependency list; retired 2026-11-01 (H-037 part 2a) with the ownership table (H-029, plan ruling 1, Westley 2026-10-30); `git show 38d08cc2:<path>` reads them |
+| `docs/method/clerk.md` | 93d8649f | The landing clerk: nine landing steps, the proof capture, the look review, test-defect ruling; retired 2026-11-05 (DEC-mail-detached-2026-11-05), landing is `story_loop.md` step 6 |
+| `docs/method/runner.md` | cd113bf3 | The runner chat per gate channel; retired 2026-11-05, Westley drives |
+| `docs/method/rulebook.md` | 692b54e3 | The five-condition test-defect procedure and patterns table; retired 2026-11-05, one sentence in `story_loop.md` step 3 |
+| `docs/method/gate.md` | 93d8649f | The layered gate per landing, channels, records pushes; retired 2026-11-05; `merge_gate.sh` stays for the nightly sweep only |
+| `docs/method/communication.md`, `docs/method/agents.toml` | 4530f758 | Mail, station, wake rule, gate queue, process register (H-077 to H-081); retired 2026-11-05, Westley is the mail system; `scripts/method/mail.py`, `station.py`, `scripts/specfactory/gate_queue.py` and the `om-station`/`om-gate-queue` units stay in the tree, stopped |
+| `docs/method/reading_list.toml` | 43d539f7 | Per-role re-read list after a compaction (H-062); retired 2026-11-05, the plan file Westley named is re-read instead |
+| `.claude/hooks/mail-guard.sh` | 4530f758 | The `SendMessage` denial hook; out of `settings.json` 2026-11-05, file kept |
+| `tests/method/test_mail.py`, `test_station.py`, `test_mail_guard.py`, `mailfix.py`, `test_method_check_comm.py` | 7d1d97cf (`mailfix.py` e97041ef) | Tests of the mail system and the `comm_*` method checks; retired 2026-11-05 with the scripts they pin |
+| `tests/specfactory/test_method_check_reread.py` | fff63ae7 | Tests of the `plan_reread` check; retired 2026-11-05 |
+| `docs/northstar/plans/2026-11-02-beta-staircase.md`, `plans/2026-10-31-lab-staircase.md` | moved, not retired | Now `docs/northstar/story_reviews/westley/beta-staircase.md`, `lab-staircase.md` (2026-11-05) |
 
-Kept unchanged: `docs/northstar/story_reviews/westley/decisions.md`, `docs/northstar/plans/2026-10-29-layered-gate-spec.md`, `docs/northstar/ambiguity_register.md`, the bible.
+Kept unchanged: `docs/northstar/story_reviews/westley/decisions.md`, `docs/northstar/ambiguity_register.md`, the bible.
