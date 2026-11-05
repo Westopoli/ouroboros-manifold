@@ -637,7 +637,7 @@ def test_ke5_save_format_version_is_10(klib, kmake):
 
 def test_ke5_abi_version_is_7(klib):
     """K-e5: OM_ABI_VERSION 6 to 7 (the one new public symbol); E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group); LAB-REV2 E0 moved it to 9 (two new public symbols), read from om_abi_version() as the moved pins read it."""
-    assert klib.om_abi_version() == 9
+    assert klib.om_abi_version() == 10
 
 
 def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():

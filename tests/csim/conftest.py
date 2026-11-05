@@ -94,7 +94,7 @@ def pytest_unconfigure(config):
 # Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
 # bug ids, and om_world_get_state_checksum / om_world_set_tick /
 # om_abi_layout_check are new since version 1).
-EXPECTED_ABI_VERSION = 9
+EXPECTED_ABI_VERSION = 10
 
 
 # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----
@@ -1950,6 +1950,7 @@ def _bind_e01(lib):
     _bind(lib, "om_era_kind", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_ping_alert_count", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction"))
     _bind(lib, "om_ping_alert_get", [W, ctypes.c_int32, ctypes.c_uint32, V], ctypes.c_int, ("w", "faction", "index", "out"))
+    _bind(lib, "om_roster_set_collision_radius", [W, ctypes.c_int, ctypes.c_double], ctypes.c_int, ("w", "unit_type", "radius"))
     _bind(lib, "om_roster_set_movement_kind", [W, ctypes.c_int, ctypes.c_int], ctypes.c_int, ("w", "type", "kind"))
     _bind(lib, "om_roster_set_reach", [W, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "unit_type", "layers_up", "layers_down"))
     _bind(lib, "om_set_era_kind", [W, ctypes.c_int], ctypes.c_int, ("w", "kind"))

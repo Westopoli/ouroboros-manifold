@@ -467,6 +467,12 @@ uint32_t om_move_terrain_epoch(om_world *w);
  * interleaved (x, y) pairs, a read that changes no checksum. Body in csrc/tactical_move.c.
  * See also: tests/csim/test_VG_W_w2_routes.py */
 uint32_t om_move_route_get(const om_world *w, uint32_t unit_id, uint32_t *route_i, double *pts, uint32_t cap);
+/* H-041, defined in csrc/tactical_move.c beside om_roster_set_collision_radius. om_move_largest_radius: the roster's largest per-type
+ * collision radius, wu, for a site with no unit type in hand (OM_UNIT_COLLISION_RADIUS when none is set). om_move_type_radius: one
+ * type's, OM_UNIT_COLLISION_RADIUS when never set; om_tactical_reset reads it to carry the built-in types across the reset. Neither
+ * includes the OM_TP_UNIT_COLLISION_RADIUS multiplier. */
+double om_move_largest_radius(const om_world *w);
+double om_move_type_radius(const om_world *w, int type);
 
 /* Terrain noise (csrc/terrain_noise.c), integer only, no libm, no world rng.
  * Fixed point is Q16.16 (1.0 = 65536). Lattice spacing is 1.0 in input units.
@@ -528,16 +534,14 @@ void om_mission_on_begin(om_world *w);
 uint32_t om_mission_reinforce_cap(const om_world *w);
 void om_mission_reinforce_note_spawn(om_world *w);
 /* VG-E-prodslot (R-126-02, FINDING-production-stack, TD-VG-E-29, spec 2026-10-07-visible-game-spec.md "VG-E-prodslot"):
- * the first free slot, in a fixed ring-by-ring row-major scan, of the 30 wu lattice around a structure's point, within half the
+ * the first free slot, in a fixed ring-by-ring row-major scan, of the lattice (30 wu by default) around a structure's point, within half the
  * capture radius (inclusive); the structure's own point excluded; a slot is free when no live unit (any faction, any layer) is
  * strictly within one spacing of it and om_unit_spawn would accept the structure's unit type there. Returns 1 and the slot
  * centre, or 0 when none is free (the caller delays production one tick). No RNG draw. Defined in csrc/mission.c, called by
- * csrc/tactical_support.c om_structure_tick_production. Spacing is mission.c:2470's (2 * OM_UNIT_COLLISION_RADIUS), integer
- * ring bound as the Architect ruled (GAP 2, 2026-10-21): a slot (i, j) counts when i*i + j*j <= OM_PRODSLOT_RING_MAX^2. */
-#define OM_PRODSLOT_SPACING_WU (2 * OM_UNIT_COLLISION_RADIUS)
-#define OM_PRODSLOT_RING_MAX ((OM_REINFORCEMENT_CAPTURE_RADIUS / 2) / OM_PRODSLOT_SPACING_WU)
-_Static_assert((OM_REINFORCEMENT_CAPTURE_RADIUS % 2) == 0 && ((OM_REINFORCEMENT_CAPTURE_RADIUS / 2) % OM_PRODSLOT_SPACING_WU) == 0,
-               "half the capture radius is a whole number of lattice spacings");
+ * csrc/tactical_support.c om_structure_tick_production. Spacing is mission.c's spawn-grid spacing, integer
+ * ring bound as the Architect ruled (GAP 2, 2026-10-21): a slot (i, j) counts when i*i + j*j <= ring_max^2, ring_max being
+ * the whole number of spacings in half the capture radius. H-041: the spacing is 2 * om_move_largest_radius (30 wu when no unit-type radius
+ * is set, so ring_max is 5 and nothing before it changes), and ring_max follows it. */
 int om_mission_production_slot(const om_world *w, uint32_t structure, double *out_x, double *out_y);
 /* Resets the one-shot mission_started latch (csrc/fog.c); called by mission.c
  * om_mission_setup so a new mission's recon phase can be re-entered via

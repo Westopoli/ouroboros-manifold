@@ -2569,17 +2569,19 @@ void om_tactical_disable_abilities(om_world *w) {
  * lazily on the next command or read. */
 /* A133 Q-C4: the tunable settings live in move_state, which is freed here; they
  * are configuration, so they survive the reset (a new world starts at the defaults). The built-in types' reach
- * (G5) lives there too and survives the same way; a custom type's reach goes with its registration. */
+ * (G5) and collision radius (H-041) live there too and survive the same way; a custom type's reach goes with its registration. */
 void om_tactical_reset(om_world *w) {
     om_tac_state *st = om_tac(w);
     double kept[OM_TP__COUNT];
     uint32_t kept_up[OM_UNIT_TYPE_COUNT], kept_down[OM_UNIT_TYPE_COUNT];
+    double kept_radius[OM_UNIT_TYPE_COUNT];
     int kept_kind[OM_UNIT_TYPE_COUNT];
     int k;
     for (k = 0; k < OM_TP__COUNT; k++) kept[k] = om_tactical_get_param(w, (om_tac_param)k);
     for (k = 0; k < OM_UNIT_TYPE_COUNT; k++) {
         om_unit_profile_reach(w, k, &kept_up[k], &kept_down[k]);
         kept_kind[k] = om_unit_profile_movement_kind(w, k);
+        kept_radius[k] = om_move_type_radius(w, k);
     }
     om_tac_release_arrays(st);
     memset(st, 0, sizeof(*st));
@@ -2594,6 +2596,7 @@ void om_tactical_reset(om_world *w) {
     for (k = 0; k < OM_UNIT_TYPE_COUNT; k++) {
         if (kept_up[k] != 0 || kept_down[k] != 0) om_roster_set_reach(w, k, kept_up[k], kept_down[k]);
         if (kept_kind[k] != OM_MOVE_FLYING) om_roster_set_movement_kind(w, k, kept_kind[k]);
+        if (kept_radius[k] != (double)OM_UNIT_COLLISION_RADIUS) om_roster_set_collision_radius(w, k, kept_radius[k]);
     }
 }
 
@@ -2649,7 +2652,7 @@ uint64_t om_tactical_run_until_engagement_ends(om_world *w, uint32_t unit_id) {
 /* "default_balanced" only (see OM_COMPOSITION_*): shares scale to `count`
  * by largest remainder, ties to the lower unit type. The two sides are laid
  * out as facing grids one shortest-launch attack range apart
- * (OM_ROSTER_RAIDER_RANGE), 2 * OM_UNIT_COLLISION_RADIUS between neighbours,
+ * (OM_ROSTER_RAIDER_RANGE), 2 * the roster's largest collision radius between neighbours,
  * faction 0 to the left of x = 0 and any other faction to the right of the
  * gap, so every fixture built through here starts inside somebody's range.
  * Each unit attack-moves to the opposing front line at its own y, so a force
@@ -2661,7 +2664,7 @@ void om_tactical_spawn_force_composition(om_world *w, int32_t faction_id, uint32
     };
     uint32_t n[OM_UNIT_TYPE_COUNT], rem[OM_UNIT_TYPE_COUNT];
     uint32_t placed = 0, rows = 1, k = 0, type, left;
-    double spacing = 2.0 * (double)OM_UNIT_COLLISION_RADIUS;
+    double spacing = 2.0 * om_move_largest_radius(w);
     if (!composition || strcmp(composition, "default_balanced") != 0) return;
     for (type = 0; type < OM_UNIT_TYPE_COUNT; type++) {
         n[type] = count * share[type] / OM_COMPOSITION_BASE;
