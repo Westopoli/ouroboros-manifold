@@ -17,9 +17,9 @@ Measures: Whether holding the top of a slope in an arc beats a larger force that
 
 | side | role | count | anchor x | anchor y | facing | range | layer | shape | centre_x | centre_y | radius | start_deg | end_deg |
 |------|------|-------|----------|----------|--------|-------|-------|-------|----------|----------|--------|-----------|---------|
-| A | Warden | 14 | 0 | 0 | west | 0 | 1 | arc | 1900 | 2000 | 500 | -30 | 30 |
-| A | Vanguard | 14 | 0 | 0 | west | 0 | 1 | arc | 1900 | 2000 | 540 | -30 | 30 |
-| A | Bombard | 12 | 0 | 0 | west | 0 | 1 | arc | 1900 | 2000 | 580 | -30 | 30 |
+| A | Warden | 14 | 0 | 0 | west | 0 | 1 | arc | 2150 | 2000 | 500 | -30 | 30 |
+| A | Vanguard | 14 | 0 | 0 | west | 0 | 1 | arc | 2150 | 2000 | 540 | -30 | 30 |
+| A | Bombard | 12 | 0 | 0 | west | 0 | 1 | arc | 2150 | 2000 | 580 | -30 | 30 |
 | B | Warden | 19 | 1250 | 1860 | east | 0 | 0 | block | | | | | |
 | B | Vanguard | 19 | 1250 | 2060 | east | 0 | 0 | block | | | | | |
 | B | Bombard | 18 | 1080 | 1960 | east | 0 | 0 | block | | | | | |
@@ -36,4 +36,4 @@ A
 
 ## Notes for the eye
 
-Blue's three arcs stand on the high ground east of x 2300, facing down the ribbon; red starts as three blocks at the foot, west of x 1700, and attack-moves onto blue's centre. Watch the ribbon: red should thin to a file there.
+Blue's three arcs stand on the high ground east of x 2500, facing down the ribbon; red starts as three blocks at the foot, west of x 1700, and attack-moves onto blue's centre. Watch the ribbon: red should thin to a file there.
