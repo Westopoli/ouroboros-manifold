@@ -30,6 +30,9 @@ do_not_edit:
   - Makefile
   - tests/csim/data/**
   - tests/skilllab/golden_hashes.json
+standalone_symbols:
+  - frame_ticks
+  - example
 impl_line_budget: 220
 test_assertion_budget: 40
 test_owned_by: parent
