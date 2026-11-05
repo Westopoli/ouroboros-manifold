@@ -36,7 +36,7 @@ Westley's decisions (2026-09-28):
 
 ## Wave 0: rails first (Architect and Engineer)
 
-1. **Land the approved CLAUDE.md on main.** Resume the stopped Engineer agent; its branch `push/claude-md-trim` is ready, and it stopped only because plan mode was inherited. Rewrite the stale references it found: `docs/northstar/stage1_audit.md:18,803`, the three `docs/stage_specs/_completed/stage_7*`/`stage_8` spec lines, and `stage_11d_mid_mission_hud_spec.md:28`.
+1. **Land the approved CLAUDE.md on main.** Resume the stopped Engineer agent; its branch `push/claude-md-trim` is ready, and it stopped only because plan mode was inherited. Rewrite the stale references it found: `docs/legacy/agora_era/stage1_audit.md:18,803`, the three `docs/stage_specs/_completed/stage_7*`/`stage_8` spec lines, and `stage_11d_mid_mission_hud_spec.md:28`.
 2. **`pieces.toml` hygiene (M0).**
    - Set `Q1` to attached, since its content landed with C3-4b, and drop its one-off `scenes/**/*.gd` glob. That glob would otherwise overlap every client piece.
    - Add rows for files no piece owns: `autoload/ui_data_bus.gd`, `autoload/tactical_bridge.gd`, `autoload/sim_bridge*.gd`, `scenes/error_screen/**`, `scenes/loading_screen/**`, `scenes/settings/**`, `scenes/era_library/**`, `scenes/bug_report/**` and the bug report manager, if unowned (the lint says which).

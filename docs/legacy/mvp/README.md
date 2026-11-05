@@ -60,7 +60,7 @@ The thresholds attached to these in `distinctiveness.md` are live kill criteria 
 
 ## Feedback instruments
 
-- **Feedback form.** A rewrite of the existing `build/feedback.txt` template so that every question maps to one metric above. Free text where the metric is a scored free answer; yes/no where it is a count. Delivered inside the ZIP as a text file for Round 1, as a pinned form for Round 2, in-game for Round 3.
+- **Feedback form.** A rewrite of the existing `legacy/build/feedback.txt` template so that every question maps to one metric above. Free text where the metric is a scored free answer; yes/no where it is a count. Delivered inside the ZIP as a text file for Round 1, as a pinned form for Round 2, in-game for Round 3.
 - **Interview script.** Ten questions in fixed order, thirty minutes, after the tester's second session. Recorded with consent. The scored questions are asked verbatim so answers are comparable across testers.
 - **Telemetry file.** Local, plain JSON, written by the client: session start and end, chapter index, mission outcome band, orders issued per mission, chronicle read time and expand-clicks, screens visited, first-order latency. Stored locally; the tester may send it back with the form or opt in, from the first-launch notice, to an upload to the project's R2 bucket (`Q-MVP-03`, answered 2026-09-14). Consent follows the pattern the legacy client's privacy modal used; nothing uploads without the opt-in.
 - **Bug capture.** A hotkey that zips logs, the telemetry file, and a screenshot, and copies the path to the clipboard. The legacy client's F12 flow is the reference for behavior, not for code.

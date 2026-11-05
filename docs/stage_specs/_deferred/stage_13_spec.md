@@ -203,7 +203,7 @@ privacy_modal.tscn (_ready)
 
 ### Checkpoint A — PyInstaller Sim Bundle
 
-**Build:** `build/pyinstaller_spec.py` and the PyInstaller invocation section of `build/build_zip.py`. Freeze the Python sim into `sim/ouroboros_sim.exe` + `sim/_internal/`.
+**Build:** `build/pyinstaller_spec.py` and the PyInstaller invocation section of `legacy/build/build_zip.py`. Freeze the Python sim into `sim/ouroboros_sim.exe` + `sim/_internal/`.
 
 **Test:** Run `sim/ouroboros_sim.exe --root <some_test_dir>` directly from the command line (not through Godot). Verify it starts, writes progress messages to stdout in length-prefixed JSON format, reaches the `ready` message, and creates `logs/` inside `<some_test_dir>` (not inside `sim/`). Then send a simple command via stdin and verify a response. Run on a machine without Python installed if possible (or rename/hide the Python installation temporarily). Also test without `--root` — verify it falls back to cwd.
 
@@ -251,9 +251,9 @@ privacy_modal.tscn (_ready)
 
 ### Checkpoint E — Build Script + ZIP Assembly
 
-**Build:** `build/build_zip.py`, `build/README.txt`, `build/feedback.txt`, `build/pyinstaller_spec.py`. The full automated pipeline.
+**Build:** `legacy/build/build_zip.py`, `legacy/build/README.txt`, `legacy/build/feedback.txt`, `build/pyinstaller_spec.py`. The full automated pipeline.
 
-**Test:** Run `python build/build_zip.py` from the project root. Verify it: (1) runs PyInstaller and produces `sim/` folder, (2) runs Godot headless export and produces `.exe` + `.pck`, (3) assembles the folder structure per the spec, (4) copies README and feedback template, (5) creates the final ZIP. Inspect the ZIP contents.
+**Test:** Run `python legacy/build/build_zip.py` from the project root. Verify it: (1) runs PyInstaller and produces `sim/` folder, (2) runs Godot headless export and produces `.exe` + `.pck`, (3) assembles the folder structure per the spec, (4) copies README and feedback template, (5) creates the final ZIP. Inspect the ZIP contents.
 
 **Print:** Build script console output (each step with timing). ZIP file listing (`zipinfo` or equivalent). Total ZIP size.
 

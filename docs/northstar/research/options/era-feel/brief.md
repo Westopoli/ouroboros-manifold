@@ -16,7 +16,7 @@ Vision v2 Q7, 2026-09-10 (`docs/northstar/vision_v2.md:73`): "Yes, we cannot bui
 
 D9, 2026-09-19 (`docs/northstar/research/harness_defects_2026-09-17/DECISIONS.md:109`): "D9: Q146: exact idential for MVP, different as we get farther into the game."
 
-A-321, Stage 1 (`docs/northstar/stage1_audit.md:500`): "Per-branch fog/sensor differentiation (sci-fi near-total awareness, modern partial asymmetry, ancient heavy fog/scout-dependent, Roman shallow-ancient). Deferred, pinned as an idea for later: no mechanical/feel differentiation between eras at initial launch. Applies across the whole era system, not just fog/sensor — the broader "each era has its own feel" plan is pinned for now, to revisit only if eras end up feeling too similar to each other once built."
+A-321, Stage 1 (`docs/legacy/agora_era/stage1_audit.md:500`): "Per-branch fog/sensor differentiation (sci-fi near-total awareness, modern partial asymmetry, ancient heavy fog/scout-dependent, Roman shallow-ancient). Deferred, pinned as an idea for later: no mechanical/feel differentiation between eras at initial launch. Applies across the whole era system, not just fog/sensor — the broader "each era has its own feel" plan is pinned for now, to revisit only if eras end up feeling too similar to each other once built."
 
 Q-099-01, 2026-09-14 (`ambiguity_register.md:97`), on terrain slowing units: "slows when it's ships; I don't care about it slowing in eras where it's units on the ground." (Built era-uniform to satisfy A-321.)
 

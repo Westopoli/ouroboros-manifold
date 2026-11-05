@@ -89,7 +89,7 @@ Listed as Agora PRs for the Research Lane, not done here:
 - `rules_file` required on client cards, as it already is on sim cards.
 - Export tool type or build-card post-step for probe I.
 - A QA reader for the telemetry file so T2 sessions can assert on what the client recorded, not only on pixels.
-- Fence entries for `tests/*.gd`, `docs/northstar/mvp/`, and the feedback form.
+- Fence entries for `tests/*.gd`, `docs/legacy/mvp/`, and the feedback form.
 
 ## What does not change
 

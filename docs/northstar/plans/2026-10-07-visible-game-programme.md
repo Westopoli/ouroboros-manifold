@@ -1,6 +1,6 @@
 # The visible game programme (plan, 2026-10-07; method rev 2, 2026-10-10)
 
-**Status: PAUSED since 2026-10-26 for the simulation lab (DEC-lab-before-beta-2026-10-26); resumes after the lab's crossings document (DEC-lab-finished-lines-cross-2026-10-27), ROADMAP section 1b first (W0). Earlier: IN FLIGHT since 2026-10-07; method rev 2 since 2026-10-10; four build workflows under EXC-sprint-2026-10-13, extended by Westley 2026-10-19 until he says two (docs/northstar/plans/2026-10-13-sprint-48h.md).** The lane table below is the programme's only status; ROADMAP section 1 points here, the journal is `git log` (`scripts/journal.sh`), and no chat memory carries lane state beyond a pointer. When every lane's stories are `Seen` this header becomes DONE with the date.
+**Status: PAUSED since 2026-10-26 for the simulation lab (DEC-lab-before-beta-2026-10-26); resumes after the lab's crossings document (DEC-lab-finished-lines-cross-2026-10-27), ROADMAP section 1b first (W0). Earlier: IN FLIGHT since 2026-10-07; method rev 2 since 2026-10-10; four build workflows under EXC-sprint-2026-10-13, extended by Westley 2026-10-19 until he says two (docs/northstar/plans/archive/specs/2026-10-13-sprint-48h.md).** The lane table below is the programme's only status; ROADMAP section 1 points here, the journal is `git log` (`scripts/journal.sh`), and no chat memory carries lane state beyond a pointer. When every lane's stories are `Seen` this header becomes DONE with the date.
 
 | Stage | State | Date |
 |---|---|---|

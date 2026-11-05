@@ -1,6 +1,6 @@
 # Walking and flying units on generated land (mockup)
 
-Spec: `docs/northstar/plans/2026-10-05-proto-walkers-spec.md`. Built 2026-10-05 on branch `push/proto-walkers`, `scenes/mockups/walkers/`. Run line in `docs/northstar/ROADMAP.md` section 0.
+Spec: `docs/northstar/plans/archive/specs/2026-10-05-proto-walkers-spec.md`. Built 2026-10-05 on branch `push/proto-walkers`, `scenes/mockups/walkers/`. Run line in `docs/northstar/ROADMAP.md` section 0.
 
 **Approved 2026-10-05.** Westley, verbatim: "Walkers/flyers looks great, approved." **Final, 2026-10-06:** "Walkers prototype approved, no need for any more iteration that one can be integrated as is."
 

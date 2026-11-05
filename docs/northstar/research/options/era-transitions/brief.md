@@ -24,7 +24,7 @@ Vision v2 Q8 (`:81`): "Fortnite for it's skin cross-compatability. Any skin, any
 
 Vision v2 Q9 (`:89`): "$10-15 on steam, $3 per expansion, expansions are grindable, some are exclusive but not all." Q10 (`:97`): "3 eras, past/present/future."
 
-A-061, Stage 1 (`docs/northstar/stage1_audit.md:133`): "Westley: unlocks DO exist — unlocking other eras is the one scoped unlock type right now, and he's not opposed to more later."
+A-061, Stage 1 (`docs/legacy/agora_era/stage1_audit.md:133`): "Westley: unlocks DO exist — unlocking other eras is the one scoped unlock type right now, and he's not opposed to more later."
 
 A-071, new from Westley (`:141`): "once the timeline reaches its chronologically last/final era, the game continues indefinitely in that era's state rather than collapsing to extinction and restarting. Technology level oscillates over time — periodic mild regression followed by recovery, sine-wave pattern — instead of a hard collapse/reset."
 

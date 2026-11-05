@@ -20,7 +20,7 @@ Q-105-01 answer, 2026-09-14 (`ambiguity_register.md:101`): "(b), a drag box sele
 
 Q-106-01 answer, 2026-09-12 (`ambiguity_register.md:102`): "No replacement needed. "Players should already have access to army hotkeys and easy ability usage (since all abilities are contained within the same command card, immortal style)." Hotkey affordance exists; don't remove it."
 
-A-300, 2026-09-10 (`docs/northstar/stage1_audit.md:472`): "Cross-check resolved (2026-09-10): Westley says remove the all-army hotkey now — it is not supposed to make it into the game."
+A-300, 2026-09-10 (`docs/legacy/agora_era/stage1_audit.md:472`): "Cross-check resolved (2026-09-10): Westley says remove the all-army hotkey now — it is not supposed to make it into the game."
 
 Q-E03-01 answer, 2026-09-10 (`ambiguity_register.md:17`): "(c) — Halo Wars model. Keep both mechanics, but reverse the speed-matching clause: a selection moves together at its slowest unit's pace by default (not strung-out arrival), and formation-preserving destination assignment is exactly the mechanism that makes uniform-pace cohesion work. Players can deliberately split off their own sub-groups to move independently at a different pace if they want a faster element to detach."
 

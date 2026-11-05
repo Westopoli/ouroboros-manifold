@@ -1,7 +1,7 @@
 class_name Pass5Layout
 extends RefCounted
 
-# Pass 5 prototype (docs/northstar/plans/2026-10-03-land-mockup-pass5-spec.md): a layout node graph
+# Pass 5 prototype (docs/northstar/plans/archive/specs/2026-10-03-land-mockup-pass5-spec.md): a layout node graph
 # from simulation/layout_library leads, the generated terrain obeys it. Runs inside
 # FieldMap.generate right after the pass-4 ramps. Prototype only; every number is a candidate.
 

@@ -1,7 +1,7 @@
 class_name Pass4Terrain
 extends RefCounted
 
-# Pass 4 prototype (docs/northstar/plans/2026-10-03-land-mockup-pass4-spec.md): landforms, minimum
+# Pass 4 prototype (docs/northstar/plans/archive/specs/2026-10-03-land-mockup-pass4-spec.md): landforms, minimum
 # relief, benching, then the numbers Westley judges (steepness, bands, walking reach, variety).
 # Prototype only: not deterministic-checked, not budgeted, never loaded by the game.
 

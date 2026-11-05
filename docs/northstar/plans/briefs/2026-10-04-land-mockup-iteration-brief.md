@@ -29,7 +29,7 @@ WHAT THIS IS
 - Its product is Westley's decisions, recorded word for word.
 - Read first: docs/northstar/research/landscape_design/README.md (sections Pass 4,
   Pass 4 sweep, Pass 5), options_2026-10-03_walkable_land.md beside it, and
-  docs/northstar/plans/2026-10-03-land-mockup-pass5-spec.md.
+  docs/northstar/plans/archive/specs/2026-10-03-land-mockup-pass5-spec.md.
 
 FILES (all in scenes/mockups/landscape/)
 - field_map.gd      terrain: height, water, rivers, biome, borders (coast, cliff, wall)

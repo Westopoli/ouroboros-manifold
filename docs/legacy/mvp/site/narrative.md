@@ -117,8 +117,8 @@ These appeared in earlier mockups and are wrong or invented. Remove them whereve
 
 All of it, visually. Theme and palette direction (start from `DESIGN.md`; that brief is open and invites bold options, so do not treat this file as re-litigating it), layout, typography, spacing, motion — and the main deliverable, **the concept image or animation for each beat's concept moment above**. The arc, the sequence, and the facts are fixed; how they look is the design's to invent.
 
-A note on the images: each *concept moment* is a seed. The full per-moment prompts — medium, references, composition, negative lists — are authored in the companion prompts file (`CONCEPT_PROMPTS.md` in the site repo; `docs/northstar/mvp/site/concept_prompts.md` in the game repo), one per moment, with the fixed choices (static baseline plus five animations, the game's low-poly register, world-only, no text in images).
+A note on the images: each *concept moment* is a seed. The full per-moment prompts — medium, references, composition, negative lists — are authored in the companion prompts file (`CONCEPT_PROMPTS.md` in the site repo; `docs/legacy/mvp/site/concept_prompts.md` in the game repo), one per moment, with the fixed choices (static baseline plus five animations, the game's low-poly register, world-only, no text in images).
 
 ---
 
-*Companion documents:* `DESIGN.md` (look and feel, same repo), and in the game repository `docs/northstar/mvp/site/prompt_kit.md` (the concept-art register and per-page prompt lines) and `docs/northstar/mvp/distinctiveness.md` (the twelve offers behind `/offers/`). This file is mirrored in the game repository at `docs/northstar/mvp/site/narrative.md`.
+*Companion documents:* `DESIGN.md` (look and feel, same repo), and in the game repository `docs/legacy/mvp/site/prompt_kit.md` (the concept-art register and per-page prompt lines) and `docs/legacy/mvp/distinctiveness.md` (the twelve offers behind `/offers/`). This file is mirrored in the game repository at `docs/legacy/mvp/site/narrative.md`.

@@ -33,20 +33,20 @@ def _read(rel_path):
 def test_umbrella_a_pyinstaller_win_spec_exists():
     path = os.path.join(REPO_ROOT, "build", "pyinstaller_win.spec")
     assert os.path.exists(path), (
-        "B5-A not landed: build/pyinstaller_win.spec missing"
+        "B5-A not landed: legacy/build/pyinstaller_win.spec missing"
     )
 
 
 def test_umbrella_a_pyinstaller_win_spec_structure():
-    src = _read("build/pyinstaller_win.spec")
+    src = _read("legacy/build/pyinstaller_win.spec")
     for token in ("Analysis", "PYZ", "EXE", "COLLECT", "ouroboros_sim"):
         assert token in src, (
-            f"B5-A not landed: build/pyinstaller_win.spec missing token {token!r}"
+            f"B5-A not landed: legacy/build/pyinstaller_win.spec missing token {token!r}"
         )
 
 
 def test_umbrella_a_pyinstaller_win_entry_point():
-    src = _read("build/pyinstaller_win.spec")
+    src = _read("legacy/build/pyinstaller_win.spec")
     assert "pipe_transport" in src, (
         "B5-A not landed: pyinstaller_win.spec must declare pipe_transport entry"
     )

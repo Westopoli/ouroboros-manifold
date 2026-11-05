@@ -38,7 +38,7 @@
 - `docs/bible/stories.md`: Catalog entries for S-118 and S-130.
 
 ### C. Is it in one of the planned epics in `PLAN.md`?
-- **Yes**: In `docs/northstar/PLAN.md` and `docs/northstar/mvp/build_path.md`, moving objectives and drifting spine nodes are scheduled under **E-17 (Map Generation)** and **E-15 (Reinforcements & Hazards)** as part of the Tactical Sim ladder (MVP Round 3).
+- **Yes**: In `docs/northstar/PLAN.md` and `docs/legacy/mvp/build_path.md`, moving objectives and drifting spine nodes are scheduled under **E-17 (Map Generation)** and **E-15 (Reinforcements & Hazards)** as part of the Tactical Sim ladder (MVP Round 3).
 
 ---
 

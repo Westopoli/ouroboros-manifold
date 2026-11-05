@@ -24,7 +24,7 @@ Up to 14 per generation. Use what's relevant to the page:
 The order these appear on the site, and which concept each home-page beat needs, is fixed in `narrative.md` (this directory). The full per-beat prompts for the home page — including the five animations and the real galaxy-view capture — live in `concept_prompts.md`; the per-offer lines below serve the `/offers/` pages.
 
 
-One offer page per row in `docs/northstar/mvp/distinctiveness.md`. Each prompt is the shared style block plus the line below; 2 to 4 images per page is enough.
+One offer page per row in `docs/legacy/mvp/distinctiveness.md`. Each prompt is the shared style block plus the line below; 2 to 4 images per page is enough.
 
 | Page | Prompt line |
 |---|---|

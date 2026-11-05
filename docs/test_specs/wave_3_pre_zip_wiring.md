@@ -55,7 +55,7 @@ Game = pause-and-command tactical w/ generational chronicle. Player commands tro
 
 ### B5 — Packaging + release-mode wiring
 
-**Windows PyInstaller spec:** `build/pyinstaller_win.spec` (NEW) — mirror Mac spec structure. Same `simulation/pipe_transport.py` entry, same 76 hidden_imports, same data files. COLLECT name: `ouroboros_sim` (binary suffix `.exe` on Windows handled by PyInstaller).
+**Windows PyInstaller spec:** `legacy/build/pyinstaller_win.spec` (NEW) — mirror Mac spec structure. Same `simulation/pipe_transport.py` entry, same 76 hidden_imports, same data files. COLLECT name: `ouroboros_sim` (binary suffix `.exe` on Windows handled by PyInstaller).
 
 **Privacy modal:** `scenes/privacy_modal/privacy_modal.tscn` + `.gd` (NEW). Scene shows text below verbatim. Single "Accept & Continue" button → writes `user://privacy_accepted` → SceneRouter.go_to("loading_screen") (existing).
 
@@ -87,7 +87,7 @@ If `user://privacy_accepted` exists on _ready() → immediately route to loading
 
 | Leaf | impl_files | test_files |
 |---|---|---|
-| **B5-A** Windows spec + DebugOverlay autoload | `build/pyinstaller_win.spec` (NEW), `project.godot` (1-line autoload add) | `simulation/test_b5_pyinstaller_specs.py` |
+| **B5-A** Windows spec + DebugOverlay autoload | `legacy/build/pyinstaller_win.spec` (NEW), `project.godot` (1-line autoload add) | `simulation/test_b5_pyinstaller_specs.py` |
 | **B5-B** Privacy modal scene | `scenes/privacy_modal/privacy_modal.tscn` (NEW), `scenes/privacy_modal/privacy_modal.gd` (NEW) | `tests/test_privacy_modal.gd` |
 
 (B2-A dropped 2026-05-26 — `OBJECTIVE_TEMPLATES_SHORT` already populates `briefing.objective` for all 10 archetypes; no sim-side work required.)
@@ -166,9 +166,9 @@ Leaf agents MAY import / reference ONLY these symbols. New symbols introduced re
 ## Acceptance criteria
 
 ### B5-A (Windows PyInstaller spec + DebugOverlay autoload)
-1. `build/pyinstaller_win.spec` exists, parses as valid PyInstaller spec, has same Analysis/PYZ/EXE/COLLECT structure as Mac spec.
+1. `legacy/build/pyinstaller_win.spec` exists, parses as valid PyInstaller spec, has same Analysis/PYZ/EXE/COLLECT structure as Mac spec.
 2. `project.godot [autoload]` block contains line `DebugOverlay="*res://autoload/debug_overlay.gd"`.
-3. Test `simulation/test_b5_pyinstaller_specs.py`: both `build/pyinstaller_spec.spec` and `build/pyinstaller_win.spec` parse; specs declare same hidden_imports + data files; binary name `ouroboros_sim`.
+3. Test `simulation/test_b5_pyinstaller_specs.py`: both `legacy/build/pyinstaller_spec.spec` and `legacy/build/pyinstaller_win.spec` parse; specs declare same hidden_imports + data files; binary name `ouroboros_sim`.
 
 ### B5-B (Privacy modal scene)
 1. `scenes/privacy_modal/privacy_modal.tscn` exists; loads in Godot without parse error.
@@ -233,7 +233,7 @@ Sim-side `OBJECTIVE_TEMPLATES_SHORT` already populates `briefing.objective` for 
 
 `simulation/test_wave3_blockers_umbrella.py` (Python side) — RED before any leaf, GREEN after all 7 leaves merge. Encodes parent-owned end-to-end gate. Assertions:
 
-1. B5-A: `build/pyinstaller_win.spec` exists + parses; project.godot DebugOverlay autoload line present.
+1. B5-A: `legacy/build/pyinstaller_win.spec` exists + parses; project.godot DebugOverlay autoload line present.
 2. B5-B: privacy_modal scene file exists; gd script defines `_on_accept_pressed` handler that calls FileAccess.
 3. B2-A: import `simulation.mission_briefing` → assert all 10 templates have `short_objective`; assert `assemble_briefing` return contains the key.
 4. B3-A: load beats.json → assert 5 beats, all have `trigger_event` field from locked allowlist.

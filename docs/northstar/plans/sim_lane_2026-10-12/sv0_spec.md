@@ -1,6 +1,6 @@
 # SV-0: optional `retention` on `mission_end` (debug pipe only)
 
-Source: simviewer plan (`docs/northstar/plans/2026-10-12-simviewer-plan.md`, SV-0) as amended by Westley 2026-10-13 ("go ahead with (c)"): no core change, no header change; the pipe sets unit HP so the sim measures the retention itself. Pre-flight facts read at origin/main 3125ee77.
+Source: simviewer plan (`docs/northstar/plans/archive/specs/2026-10-12-simviewer-plan.md`, SV-0) as amended by Westley 2026-10-13 ("go ahead with (c)"): no core change, no header change; the pipe sets unit HP so the sim measures the retention itself. Pre-flight facts read at origin/main 3125ee77.
 
 ## Facts (read, not assumed)
 - `om_mission_end` (`csrc/mission.c:1514`) measures retention in `om_mission_end_retention` from the player's force units' HP over max HP, weighted by `om_unit_power`; `om_mission_compute_retention` clamps to [0,1].

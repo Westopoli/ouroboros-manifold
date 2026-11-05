@@ -2,7 +2,7 @@
 
 ## 1. Feature and status
 
-E-10 S-080 "Difficulty is scarcity, not stronger enemies" (`docs/bible/epics/E-10-missions.md:155-166`) carries the difficulty compression ramp whose content half is complications. Q-080-01 closed 2026-09-12: ship the full ramp at launch, design now (`docs/northstar/ambiguity_register.md:83`); the epic rules were never rewritten to match. Complication templates are library-builder output (E-21 S-153, `docs/bible/epics/E-21-offline-ai-pipeline.md:45`, "deferred until complications exist"). Stage 1 A-459 records the old design and a "Stage 7 plus" deferral (`docs/northstar/stage1_audit.md:664`). No complication exists in code. MVP placement: Round 3.
+E-10 S-080 "Difficulty is scarcity, not stronger enemies" (`docs/bible/epics/E-10-missions.md:155-166`) carries the difficulty compression ramp whose content half is complications. Q-080-01 closed 2026-09-12: ship the full ramp at launch, design now (`docs/northstar/ambiguity_register.md:83`); the epic rules were never rewritten to match. Complication templates are library-builder output (E-21 S-153, `docs/bible/epics/E-21-offline-ai-pipeline.md:45`, "deferred until complications exist"). Stage 1 A-459 records the old design and a "Stage 7 plus" deferral (`docs/legacy/agora_era/stage1_audit.md:664`). No complication exists in code. MVP placement: Round 3.
 
 ## 2. Player-facing goal as documented
 

@@ -6,11 +6,11 @@ Paste this file as the first message of a fresh Claude Sonnet 5 chat opened in t
 
 You are the auditor for Stage 1 of the north star plan (`docs/northstar/README.md`). Your job is to walk every idea in the game bible with Westley and record his verdict on each: keep, kill, rewrite, or defer. You also run a vision interview first, and an algorithm pass at the end. You produce a ledger. You do not edit the bible. You do not make design decisions. You do not implement anything.
 
-Read `docs/northstar/README.md`, `docs/northstar/principles.md`, and `docs/northstar/agile.md` before you start. They explain why this audit exists and what the bible will become in Stage 2.
+Read `docs/northstar/README.md`, `docs/legacy/agora_era/principles.md`, and `docs/northstar/agile.md` before you start. They explain why this audit exists and what the bible will become in Stage 2.
 
 ## Rules
 
-1. **No bible edits.** You write only `docs/northstar/stage1_audit.md`, `docs/northstar/vision_v2.md`, and additions to `docs/northstar/ambiguity_register.md`. Nothing under `docs/bible/` changes in this stage.
+1. **No bible edits.** You write only `docs/legacy/agora_era/stage1_audit.md`, `docs/northstar/vision_v2.md`, and additions to `docs/northstar/ambiguity_register.md`. Nothing under `docs/bible/` changes in this stage.
 2. **No design decisions.** Westley decides every verdict. When you think a claim is wrong, stale, or contradictory, say so in the row's note and let him decide.
 3. **Never guess.** If a claim is ambiguous and Westley's verdict depends on the reading, add a `Q-` flag to `docs/northstar/ambiguity_register.md` with the concrete question and candidate answers, and mark the row `unsure` until answered.
 4. **Ledger tables are normal prose, not caveman.** Terse chat replies are fine; the ledger must read cleanly a year from now.
@@ -106,7 +106,7 @@ Present the retained equations as named formulas with their constants. Pull them
 
 ## Ledger schema
 
-`docs/northstar/stage1_audit.md`:
+`docs/legacy/agora_era/stage1_audit.md`:
 
 ```
 | id | source | type | built | verdict | note |

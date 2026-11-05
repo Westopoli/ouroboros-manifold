@@ -16,3 +16,7 @@ Eight hand-run debug scenes that nothing loads (no scene, autoload, test, `proje
 - test_time_jump (last commit 5cde9aa5): stepped a time-jump sequencer through a paced panel.
 - test_world_view (last commit 0c6a3805): loaded the shared world-view shell for a by-eye check.
 - wave2_visual_check (last commit 2e1768bb): "runs the two Wave 2 UI changes through a paced sequence so Westley can read and verify each step before it advances".
+
+## build (was `build/`)
+
+The PyInstaller packaging of the Python-era sim for the 2026-05 friends build: `build_zip.py`, the Mac and Windows `.spec` files, the friends-build README and feedback sheet, and the tracked PyInstaller work output (`_pyi_work/`). Moved 2026-11-05 from the repo root; file contents are untouched, so absolute paths inside the `.toc` files still say `build/`. Nothing in the game or its gate builds it; `simulation/test_wave3_blockers_umbrella.py` reads the Windows spec.

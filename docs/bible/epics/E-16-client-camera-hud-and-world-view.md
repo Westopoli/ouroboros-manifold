@@ -143,7 +143,7 @@ Rules
 
 Inputs: time jump report; chronicle entries; player buttons.
 Outputs: screen; menu.
-Open flags: none beyond references. Reference required (No Man's Sky planetary transition is the named model). Prototype gate (Westley, 2026-10-15): the visual move is prototyped as a mockup and approved before it is built in the game ("we're going for a No Man's Sky sort of transition, so players really get the sense of scale"); the simulation jump and the next map are pre-loaded behind the move, so the move never waits on them. Spec: `docs/northstar/plans/2026-10-15-transition-mockup-spec.md`.
+Open flags: none beyond references. Reference required (No Man's Sky planetary transition is the named model). Prototype gate (Westley, 2026-10-15): the visual move is prototyped as a mockup and approved before it is built in the game ("we're going for a No Man's Sky sort of transition, so players really get the sense of scale"); the simulation jump and the next map are pre-loaded behind the move, so the move never waits on them. Spec: `docs/northstar/plans/archive/specs/2026-10-15-transition-mockup-spec.md`.
 
 ### S-109 — Briefing, debrief, onboarding
 As a player, I want the screens around a mission to read as orders and after-action reports from my civilization, so that the chain of command is felt.

@@ -188,12 +188,12 @@ Lane F has no behaviour sentences, only plumbing.
 
 ## Audits
 
-- **Spec audits on main:** `plans/audits_2026-10-07/` holds round1-opus (rev 1), round1-parallelism, round2-opus (rev 2), round3-opus (rev 3) and lab-drift. All are dated 2026-10-07.
+- **Spec audits on main:** `plans/archive/audits/audits_2026-10-07/` holds round1-opus (rev 1), round1-parallelism, round2-opus (rev 2), round3-opus (rev 3) and lab-drift. All are dated 2026-10-07.
 - **What they checked:**
   - Round 1 did check the bible. It caught A4's remembered positions against R-089-04, "builders get choices the bible already fixes", and the Q-166-02 and Q-219-02 guesses.
   - Rounds 2 and 3 checked internal consistency, code facts, existing getters, owners and mechanisms. None has a provenance column.
 - **Rev 10 and B22 audits:** the rev 10b to 10e and B22 commit messages cite three to four "fresh audits", but I found no report for them on main. The findings the commit titles list (save order, pins, ABI, compile safety, load checks) are interface and mechanism items. The titles give no sign of a bible or Westley check.
-- **Drift checks:** `plans/drift_checks/` has five reports (2026-10-09, 09-b, 09-c, 10-10, 10-10-e). Drift check e is the only one that checked rulings against rules and Westley's words. It ran after E1e had landed, and it caught failure 3, the solo-placement contradiction, the doctrine default and the building roles.
+- **Drift checks:** `plans/archive/audits/drift_checks/` has five reports (2026-10-09, 09-b, 09-c, 10-10, 10-10-e). Drift check e is the only one that checked rulings against rules and Westley's words. It ran after E1e had landed, and it caught failure 3, the solo-placement contradiction, the doctrine default and the building roles.
 - **Not caught:** no audit caught the centre block, the galaxy geometry or the settlement ring field. Drift check e item 14 noted the density port was partial but did not call it a ring.
 - **Who approved:** the CLAUDE.md "Audit" bullet says Westley approves after the audit. The go line (Q-PROG-01) covers the rev 4 launch. I found no recorded Westley approval of rev 5 to rev 10 rulings.
 

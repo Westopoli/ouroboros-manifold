@@ -30,7 +30,7 @@ All four match both builds. The nine section words printed per tick also look co
 | fight_990_gap1500 | 2fb6e3e21bc42da8 | 3ed69acfbd29f922 |
 | fight_990_gap3000 | 9aa75a3fdd19a468 | 36f3c836c0b40bd0 |
 
-This is not a Mac divergence. `docs/northstar/plans/2026-10-14-skill-lab-rev2-baseline.md` records the same three ids failing on the Linux box (`/home/westopoli`, main `b8edf56e`), "pre-existing". The same Mac hashes result from a source tree at `4b785400` (before the VG-W2 route commits), so W2 did not cause them; the recording (2026-10-09) predates other sim changes, or the harness is stale. Side finding: `a99_tactical_runs.stage_fight` uses Python `math.hypot`; swapping in libm hypot or sqrt(a*a+b*b) changes the gap1500 and gap3000 step-0 hashes. So that harness depends on the Python version, a test-side portability hazard (Python 3.14 here), separate from the sim. The recorded Linux Python version is unknown.
+This is not a Mac divergence. `docs/northstar/plans/archive/specs/2026-10-14-skill-lab-rev2-baseline.md` records the same three ids failing on the Linux box (`/home/westopoli`, main `b8edf56e`), "pre-existing". The same Mac hashes result from a source tree at `4b785400` (before the VG-W2 route commits), so W2 did not cause them; the recording (2026-10-09) predates other sim changes, or the harness is stale. Side finding: `a99_tactical_runs.stage_fight` uses Python `math.hypot`; swapping in libm hypot or sqrt(a*a+b*b) changes the gap1500 and gap3000 step-0 hashes. So that harness depends on the Python version, a test-side portability hazard (Python 3.14 here), separate from the sim. The recorded Linux Python version is unknown.
 
 ## First divergent tick and subsystem
 

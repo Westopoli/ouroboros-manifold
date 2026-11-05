@@ -15,8 +15,8 @@ Prototype under `agile.md`, Prototype gate. One Doer. It may skip determinism, b
 7. **Paths.** Natural paths through the settlement stay clear, at least one formation wide (200 wu). Pick a simple method, say which, and draw the paths with a toggle.
 8. **Time.** Speed 1x, 5x, 20x, and reset.
 
-**Deliver.** Screenshots at 1920x1080 in `docs/northstar/research/settlement_mockup/pass1/`: start, after one minute and five minutes of growth, just after a wave, after placing a building, after damage, and the paths overlay. Piece counts and frame time. The command to run it.
+**Deliver.** Screenshots at 1920x1080 in `docs/legacy/research/settlement_mockup/pass1/`: start, after one minute and five minutes of growth, just after a wave, after placing a building, after damage, and the paths overlay. Piece counts and frame time. The command to run it.
 
-**Record.** `docs/northstar/research/settlement_mockup/README.md`: what was built, the candidate numbers you picked, the keys, and the questions for Westley. Edit no other doc.
+**Record.** `docs/legacy/research/settlement_mockup/README.md`: what was built, the candidate numbers you picked, the keys, and the questions for Westley. Edit no other doc.
 
 **Hand back.** Own worktree from origin/main, branch `push/proto-settlement-p1`, push and stop. Report under 30 lines: commit, files, numbers, anything not built and why.

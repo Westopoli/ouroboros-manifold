@@ -1,9 +1,9 @@
 # Backlog seed (carried from the retired priority queue, 2026-09-10)
 
-The one-queue workflow is retired under the north star. This file preserves the Soon, Backlog, Pre-Steam, research-only, and known-failure inventories from `docs/priority_queue.md` so nothing is lost before the Stage 4 product backlog (`docs/northstar/backlog.md`) exists. Every item here that survives becomes a story in an epic or a backlog row; items already verdicted in the Stage 1 audit (A-537 through A-552) carry those verdicts. Multiplayer, multi-era, and their coupled items are core now (vision_v2), not research-only; the Lieutenant System and its decision engine are killed; pause-and-command language is stale everywhere it appears below.
+The one-queue workflow is retired under the north star. This file preserves the Soon, Backlog, Pre-Steam, research-only, and known-failure inventories from `docs/priority_queue.md` so nothing is lost before the Stage 4 product backlog (`docs/legacy/agora_era/backlog.md`) exists. Every item here that survives becomes a story in an epic or a backlog row; items already verdicted in the Stage 1 audit (A-537 through A-552) carry those verdicts. Multiplayer, multi-era, and their coupled items are core now (vision_v2), not research-only; the Lieutenant System and its decision engine are killed; pause-and-command language is stale everywhere it appears below.
 
-**What:** Walk every idea in the bible with Westley and record keep / kill / rewrite / defer per row, after a vision interview. Runs in a separate Claude Sonnet 5 chat started from `docs/northstar/stage1_brief.md`.
-**Output:** `docs/northstar/stage1_audit.md`, `docs/northstar/vision_v2.md`.
+**What:** Walk every idea in the bible with Westley and record keep / kill / rewrite / defer per row, after a vision interview. Runs in a separate Claude Sonnet 5 chat started from `docs/legacy/agora_era/stage1_brief.md`.
+**Output:** `docs/legacy/agora_era/stage1_audit.md`, `docs/northstar/vision_v2.md`.
 **Why next:** First stage of the north star (`docs/northstar/README.md`). Everything downstream (bible reformat, e2e definitions, tests, sprints) depends on it. This queue is retired in Stage 2 in favor of the product backlog.
 
 ---

@@ -3,12 +3,12 @@
 **Approved 2026-10-06.** Westley, verbatim: "Settlements mockup approved". The approval covers the look of pass 1; its five questions and Q-193-01 to Q-193-06 keep their candidates until he answers them.
 
 
-Spec: `docs/northstar/plans/2026-10-03-settlement-mockup-pass1-spec.md`. Prototype under agile.md, never loaded by the game. Placeholder boxes. Every number below is a CANDIDATE, picked to make the thing visible; none is a rule.
+Spec: `docs/northstar/plans/archive/specs/2026-10-03-settlement-mockup-pass1-spec.md`. Prototype under agile.md, never loaded by the game. Placeholder boxes. Every number below is a CANDIDATE, picked to make the thing visible; none is a rule.
 
 ## Run
 
 - Watch it live (needs a display): `godot --path . res://scenes/mockups/settlement/settlement_mockup.tscn`
-- Scripted pass, screenshots + state JSON (xvfb, llvmpipe): `scripts/mockup_qa.sh run settlement scenes/mockups/settlement/qa/pass1.json docs/northstar/research/settlement_mockup/pass1 --res 1920x1080 --timeout 400`
+- Scripted pass, screenshots + state JSON (xvfb, llvmpipe): `scripts/mockup_qa.sh run settlement scenes/mockups/settlement/qa/pass1.json docs/legacy/research/settlement_mockup/pass1 --res 1920x1080 --timeout 400`
 - Run once `godot --headless --import --path . --quit` in a fresh worktree.
 
 ## What was built (files in `scenes/mockups/settlement/`)

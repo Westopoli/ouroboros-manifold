@@ -37,7 +37,7 @@ Each entry awaits user disposition: **confirm** (accept value), **edit** (provid
 - Artifact: spec, umbrella
 - Location: spec §B5-A design contract; umbrella `test_umbrella_a_pyinstaller_win_spec_structure`
 - Inferred value: COLLECT name `ouroboros_sim` (`.exe` suffix added by PyInstaller on Windows)
-- Why this could not be cited: matches existing Mac `build/pyinstaller_spec.spec` COLLECT name. Convention inheritance, not user-stated.
+- Why this could not be cited: matches existing Mac `legacy/build/pyinstaller_spec.spec` COLLECT name. Convention inheritance, not user-stated.
 - Disposition: confirmed 2026-05-26
 
 ### U-6: Privacy modal button label
