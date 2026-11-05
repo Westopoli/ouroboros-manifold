@@ -214,7 +214,7 @@ def test_cli_rejects_the_60wu_gap_and_the_touching_walls_with_the_r8_line(tmp_pa
     """Criterion 1 (a)(b) through the CLI: exit 2, exactly `REJECT <id> R8 unreachable: side_b unit 0`, no fight file written."""
     for gap, lid in ((60, "L-9314"), (0, "L-9315")):
         proc, doc = fx.fight(gap_layout(lid, gap), tmp_path / lid, 1, "--cap-seconds", "5")
-        assert proc.returncode == 2, proc.stdout + proc.stderr
+        assert proc.returncode in (2,), proc.stdout + proc.stderr
         assert [l for l in proc.stdout.splitlines() if l.startswith("REJECT")] == ["REJECT %s R8 unreachable: side_b unit 0" % lid]
         assert doc is None
 
@@ -223,8 +223,8 @@ def test_cli_accepts_the_200wu_gap_and_the_slope_foot_and_rejects_the_cliff_unit
     """Criterion 1 (a) and (c) through the CLI: the 200 wu gap and the slope with every B unit at the foot run to a fight (exit 0); the cliff unit is REJECTed."""
     for lay in (gap_layout("L-9316", 200), slope_layout("L-9317")):
         proc, doc = fx.fight(lay, tmp_path / lay["id"], 1, "--cap-seconds", "5")
-        assert proc.returncode == 0, proc.stdout + proc.stderr
+        assert proc.returncode in (0,), proc.stdout + proc.stderr
         assert doc is not None
     proc, doc = fx.fight(slope_layout("L-9318", {3: (2000.0, 1500.0)}), tmp_path / "cliff", 1, "--cap-seconds", "5")
-    assert proc.returncode == 2 and "REJECT L-9318 R8 unreachable: side_b unit 3" in proc.stdout
+    assert proc.returncode in (2,) and "REJECT L-9318 R8 unreachable: side_b unit 3" in proc.stdout
     assert doc is None

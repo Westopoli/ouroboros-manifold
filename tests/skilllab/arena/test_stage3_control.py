@@ -121,7 +121,7 @@ def _fight_with_control(tmp_path, lay=None, *extra):
     lay = lay or fx.planar("chokepoint", "L-9301")[0]
     control = tmp_path / "control"
     proc, doc = fx.fight(lay, tmp_path, 1, "--cap-seconds", "5", "--control-dir", control, *extra)
-    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.returncode in (0,), proc.stdout + proc.stderr
     return lay, control, doc, snapshot.read(control / ("%s-control-s1.fight.json" % lay["id"]))
 
 
@@ -137,7 +137,7 @@ def test_main_and_control_documents_carry_movement_kind_and_landscape(tmp_path):
 def test_a_flying_fight_omits_movement_kind_but_still_names_its_landscape(tmp_path):
     """Criterion 3, "a fight whose units fly omits the key", and criterion 5: the open-field fixture flies, `landscape` is written, `movement_kind` is absent."""
     proc, doc = fx.fight(open_field("L-9325"), tmp_path, 1, "--cap-seconds", "5")
-    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.returncode in (0,), proc.stdout + proc.stderr
     assert "movement_kind" not in doc
     assert doc["landscape"] == "small_flat"
 
@@ -146,7 +146,7 @@ def test_the_tiered_landscape_is_named_in_the_slope_fight(tmp_path):
     """Criterion 5: `landscape` is the layout's preset name, `small_tiered` for the slope fixture (not a constant)."""
     from test_stage3_reach import slope_layout
     proc, doc = fx.fight(slope_layout("L-9326"), tmp_path, 1, "--cap-seconds", "5")
-    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.returncode in (0,), proc.stdout + proc.stderr
     assert doc["landscape"] == "small_tiered" and doc["movement_kind"] == 1
 
 
@@ -233,11 +233,11 @@ def test_results_md_has_the_blocked_column_counting_the_frames_blocked_units(tmp
     The cover fixture stalls with blocked units (premise asserted: the sum is above 0, so a count of 0 would be a wrong cell and not a quiet fixture)."""
     cover = fx.planar("cover", "L-9327")[0]
     proc, doc = fx.fight(cover, tmp_path, 1, "--cap-seconds", "60")
-    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.returncode in (0,), proc.stdout + proc.stderr
     want = sum(len(f.get("blocked", [])) for f in doc["frames"])
     assert want > 0, "fixture premise: the cover fight has blocked unit-frames"
     proc, field_doc = fx.fight(open_field("L-9328"), tmp_path, 1, "--cap-seconds", "5")
-    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.returncode in (0,), proc.stdout + proc.stderr
     assert all("blocked" not in f for f in field_doc["frames"])
     head, sep, rows = _rows(tmp_path / "out")
     assert head == HEAD
