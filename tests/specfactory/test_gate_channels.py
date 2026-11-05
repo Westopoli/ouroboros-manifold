@@ -411,17 +411,6 @@ def test_t4d_land_push_fails_closed_when_the_lock_is_held_past_its_timeout(tmp_p
     assert "candidate" not in gc._git(bare, "log", "--format=%s", "main") and not (tmp_path / "pre_gate.args").exists()
 
 
-def test_t4e_the_clerk_card_calls_land_push_and_names_the_channel_lock():
-    """H-059 ruling 2: "`docs/method/clerk.md` calls it in place of the hand-typed push", and Change: "the clerk's
-    flock line takes the story's channel lock". The card names land_push.sh, has no hand-typed
-    HEAD:main line, names both channel locks and no longer names gate.lock."""
-    text = (REPO / "docs" / "method" / "clerk.md").read_text()
-    assert "land_push.sh" in text, "clerk.md does not call land_push.sh"
-    assert not any("HEAD:main" in ln and "land_push.sh" not in ln for ln in text.splitlines()), "clerk.md still has a hand-typed push line"
-    assert "gate-lab.lock" in text and "gate-beta.lock" in text
-    assert "gate.lock" not in re.sub(r"gate-(lab|beta)\.lock", "", text), "clerk.md still names the retired gate.lock"
-
-
 # ------------------------------------------------------------------ t5
 
 def _channel_repo(tmp_path, channel):

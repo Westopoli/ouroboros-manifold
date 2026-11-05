@@ -30,6 +30,7 @@ The method before 2026-10-30 lived in sixteen documents, about 160,000 words. Ea
 | `.claude/hooks/mail-guard.sh` | 4530f758 | The `SendMessage` denial hook; out of `settings.json` 2026-11-05, file kept |
 | `tests/method/test_mail.py`, `test_station.py`, `test_mail_guard.py`, `mailfix.py`, `test_method_check_comm.py` | 7d1d97cf (`mailfix.py` e97041ef) | Tests of the mail system and the `comm_*` method checks; retired 2026-11-05 with the scripts they pin |
 | `tests/specfactory/test_method_check_reread.py` | fff63ae7 | Tests of the `plan_reread` check; retired 2026-11-05 |
+| `tests/specfactory/test_gate_channels.py::test_t4e_the_clerk_card_calls_land_push_and_names_the_channel_lock`, `tests/specfactory/test_gate_queue.py::test_6_each_result_sends_one_info_mail_to_the_requester` | db9e9e7d | Pinned the retired clerk card and the gate-queue mail step; retired 2026-11-05 |
 | `docs/northstar/plans/2026-11-02-beta-staircase.md`, `plans/2026-10-31-lab-staircase.md` | moved, not retired | Now `docs/northstar/story_reviews/westley/beta-staircase.md`, `lab-staircase.md` (2026-11-05) |
 
 Kept unchanged: `docs/northstar/story_reviews/westley/decisions.md`, `docs/northstar/ambiguity_register.md`, the bible.
