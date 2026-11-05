@@ -36,6 +36,7 @@ def test_control_twin_of_a_bound_layout_is_the_walking_layout_without_features(k
     lay, _ = fx.planar(kind, "L-9320")
     before = copy.deepcopy(lay)
     assert features.bound(lay)
+    (tmp_path / "control").mkdir()
     twin, path = arena_run.control_twin(lay, str(tmp_path / "L-9320.toml"), tmp_path / "control")
     assert twin == {**before, "features": [], "movement": "walk"}
     assert lay == before

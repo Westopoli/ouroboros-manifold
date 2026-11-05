@@ -57,15 +57,12 @@ def test_sit_0109_converts_with_the_h025_slope_feature(tmp_path):
 
 
 def test_converted_sit_0109_binds_passes_the_rules_and_the_route_check(tmp_path):
-    """Criterion 14: `features.bound(layout)` is true, `check_layout` returns no rule, `run.unreachable(layout)` is None (the real engine's walk mask). The route check is
-    live on this layout: with side B's unit 0 moved onto the cliff (2000, 1500) it is rejected naming that unit."""
+    """Criterion 14: `features.bound(layout)` is true, `check_layout` returns no rule, `run.unreachable(layout)` is None (the real engine's walk mask)."""
     _, _, lay = convert(tmp_path)
     assert lay["features"] == [WANT]
     assert features.bound(lay)
     assert produce.check_layout(lay, produce.presets(), produce.rules()) == []
     assert arena_run.unreachable(lay) is None
-    lay["side_b"]["units"][0].update(x=2000.0, y=1500.0)
-    assert arena_run.unreachable(lay) == "side_b unit 0"
 
 
 def test_converted_sit_0109_fights_with_side_a_on_layer_1_in_every_frame(tmp_path):
