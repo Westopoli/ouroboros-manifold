@@ -1,0 +1,15 @@
+diff --git a/csrc/mission.c b/csrc/mission.c
+index ec94cfa3..98f10940 100644
+--- a/csrc/mission.c
++++ b/csrc/mission.c
+@@ -2747,7 +2747,9 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
+     om_map_add_cover(w, ox, oy, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
+     om_map_add_spawn_point(w, px, py, player);
+     om_map_add_spawn_point(w, ex, ey, enemy);
+-    if (om_mission_spawn_force(w, st, st->player_units, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
++    uint32_t cut_units[OM_MISSION_N_UNIT_TYPES]; /* EXPERIMENT ONLY, throwaway worktree, not committed */
++    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) cut_units[t] = (st->player_units[t] * 3u + 2u) / 5u;
++    if (om_mission_spawn_force(w, st, cut_units, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
+         fprintf(stderr, "mission: player spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
+     if (om_mission_spawn_force(w, st, st->enemy_units, enemy, ex, ey, -1.0, reach, rcw, rch, rlayer, enemy_pocket))
+         fprintf(stderr, "mission: enemy spawn pocket holds fewer open cells than the army needs (R-246-07)\n");

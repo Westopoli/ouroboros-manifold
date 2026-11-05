@@ -1,0 +1,108 @@
+diff --git a/scenes/galaxy/galaxy_view.gd b/scenes/galaxy/galaxy_view.gd
+index ea3bd158..0e9d4c2b 100644
+--- a/scenes/galaxy/galaxy_view.gd
++++ b/scenes/galaxy/galaxy_view.gd
+@@ -252,18 +252,14 @@ func _note_unknown_factions(snapshot: Dictionary) -> void:
+ 	for r in _regions:
+ 		owner_ids.append(int(r.get("owner", -1)))
+ 	var known: Array = []
+-	var names := {}
+ 	if snapshot.has("factions"):
+ 		for f in snapshot["factions"]:
+ 			known.append(int(f.get("id", -1)) if f is Dictionary else int(f))
+-			if f is Dictionary and str(f.get("name", "")) != "":
+-				names[int(f["id"])] = str(f["name"])
+ 	else:
+ 		known = owner_ids.duplicate()
+ 	var shell := get_node_or_null("ShellRenderer")
+ 	if shell != null:
+ 		shell.known_faction_ids = known
+-		shell.faction_names = names
+ 	_unknown_factions = []
+ 	for id in UnknownLabel.unknown_ids(owner_ids, known):
+ 		if id >= 0:
+diff --git a/scenes/galaxy/shell_labels.gd b/scenes/galaxy/shell_labels.gd
+index ea1c05bc..0d0d586d 100644
+--- a/scenes/galaxy/shell_labels.gd
++++ b/scenes/galaxy/shell_labels.gd
+@@ -4,6 +4,8 @@ extends RefCounted
+ # Compatibility renderer, a flat alpha-blended stand-in mesh per faction in place of the field shell.
+ # Called from shell_renderer.gd.
+ 
++const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
++const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
+ const LABEL_LIFT := 8.0   # draft: B4 retunes the label scale and offset
+ const LABEL_PIXEL_SIZE := 0.05
+ const LABEL_FONT_SIZE := 64
+@@ -11,6 +13,7 @@ const STAND_IN_OPACITY_MULTIPLIER := 0.15   # draft: Architect ruling 2026-10-08
+ 
+ var stand_in: bool
+ var _host: Node3D
++var _names: RefCounted   # chronicle name table: the wire carries no faction names
+ var _labels: Dictionary = {}    # colour key -> Label3D
+ var _meshes: Dictionary = {}    # colour key -> MeshInstance3D (stand-in only)
+ 
+@@ -18,11 +21,15 @@ var _meshes: Dictionary = {}    # colour key -> MeshInstance3D (stand-in only)
+ func _init(host: Node3D, use_stand_in: bool) -> void:
+ 	_host = host
+ 	stand_in = use_stand_in
++	_names = ChronicleNames.new()
++	var lib = JSON.parse_string(FileAccess.get_file_as_string(LABEL_LIBRARY))
++	if lib is Dictionary:
++		_names.load_tables(lib.get("name_tables", {}))
+ 
+ 
+ # factions: colour key -> {region_id: true}. One label per (colour key, faction_id): a region
+ # mid-tween sits in its old owner's colour but carries its new owner's id, so it keeps its own label.
+-func refresh(factions: Dictionary, data: Node, known_ids: Array = [], names: Dictionary = {}) -> void:
++func refresh(factions: Dictionary, data: Node, known_ids: Array = []) -> void:
+ 	var live := {}
+ 	for key in factions:
+ 		var parts := {}
+@@ -57,7 +64,7 @@ func refresh(factions: Dictionary, data: Node, known_ids: Array = [], names: Dic
+ 				label.font_size = LABEL_FONT_SIZE
+ 				_host.add_child(label)
+ 				_labels[lkey] = label
+-			label.text = _text_for(fid, known_ids, _labels.size(), names)
++			label.text = _text_for(fid, known_ids, _labels.size())
+ 			label.position = parts[fid]["sum"] / parts[fid]["n"] + Vector3(0.0, LABEL_LIFT, 0.0)
+ 			label.modulate = Color(color.r, color.g, color.b, label.modulate.a)
+ 			label.outline_modulate = Color(color.r * 0.5, color.g * 0.5, color.b * 0.5, label.outline_modulate.a)
+@@ -82,13 +89,13 @@ func refresh(factions: Dictionary, data: Node, known_ids: Array = [], names: Dic
+ 
+ 
+ # A display name (non-numeric faction_id) reads as a name; a bare owner id goes through UnknownLabel.
+-func _text_for(fid: String, known_ids: Array, ordinal: int, names: Dictionary) -> String:
++func _text_for(fid: String, known_ids: Array, ordinal: int) -> String:
+ 	if fid == "":
+ 		return "Faction %d" % ordinal
+ 	var num := fid.trim_prefix("faction_")
+ 	if fid.is_valid_int() or (fid.begins_with("faction_") and num.is_valid_int()):
+-		if names.has(int(num)):
+-			return names[int(num)]
++		if known_ids.has(int(num)):
++			return _names.fill_template("{faction_name}", -1, int(num))
+ 		return UnknownLabel.text_for(int(num), known_ids)
+ 	return fid.replace("_", " ").capitalize()
+ 
+diff --git a/scenes/galaxy/shell_renderer.gd b/scenes/galaxy/shell_renderer.gd
+index cf6f5f68..74a31918 100644
+--- a/scenes/galaxy/shell_renderer.gd
++++ b/scenes/galaxy/shell_renderer.gd
+@@ -18,7 +18,6 @@ var res_divisor := SHELL_RES_DIVISOR
+ # Set by galaxy_quality.gd (A54): 1 forces stand-in shells (tiers 1 and 2). -1 (tier 0, or unset) follows the rendering method.
+ var stand_in_mode := -1
+ var known_faction_ids: Array = []
+-var faction_names: Dictionary = {}   # faction id -> name, from snapshot.factions
+ 
+ var _wv_data: Node
+ var _labels: RefCounted   # faction labels, and the flat stand-in under the Compatibility renderer
+@@ -242,7 +241,7 @@ func _on_territory_removed(region_id: String) -> void:
+ 
+ 
+ func _refresh_labels() -> void:
+-	_labels.refresh(_faction_systems, _wv_data, known_faction_ids, faction_names)
++	_labels.refresh(_faction_systems, _wv_data, known_faction_ids)
+ 
+ 
+ func _on_regions_cleared() -> void:

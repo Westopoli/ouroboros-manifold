@@ -1,0 +1,211 @@
+diff --git a/docs/northstar/plans/push/pieces.toml b/docs/northstar/plans/push/pieces.toml
+index 240517d3..e2c86423 100644
+--- a/docs/northstar/plans/push/pieces.toml
++++ b/docs/northstar/plans/push/pieces.toml
+@@ -1991,7 +1991,7 @@ size_estimate = "TD-VG-A-13, TD-VG-A-14 and TD-VG-A-15 applied in the test files
+ id = "VG-A18-testfix-2"
+ manager = "M0"
+ wave = 9
+-owns = ["tests/qa/desktop/plays/A/play_support.py"]
++owns = ["tests/qa/desktop/plays/A/play_support.py", "tests/qa/desktop/test_tactical_play.py"]  # TD-VG-A-16, overlap with the attached glob G-qadesktoptests (Architect 2026-10-13)
+ owns_glob = []
+ acceptance = []
+ depends_on = ["VG-A18", "VG-A17"]
+diff --git a/docs/northstar/plans/push_ledger_2026-09-22.md b/docs/northstar/plans/push_ledger_2026-09-22.md
+index 4ba685b2..2ec277d4 100644
+--- a/docs/northstar/plans/push_ledger_2026-09-22.md
++++ b/docs/northstar/plans/push_ledger_2026-09-22.md
+@@ -1097,3 +1097,6 @@ PF-tests2 (3) test_R_085_02_fight_lasts_150_to_200 upper bound 4000 -> 4200 tick
+ | day32 | TD-VG-A-15 (test-defect, premise-changed, Architect 2026-10-13; VG-A18 test fix) | tests/test_qa_daemon.gd :144 G-project control | The fixture frame (tests/support/vg_c_fixture.gd:54) has no map.canvas, so load_frame never frames it (tactical_view.gd:452) and the units are projected against the camera the view already holds; with A18 that is the live opening frame at zoom 32 (unit 1 at x=-15816 px, on_screen=false). Fix: the test sets fr["map"]["canvas"] = 1000.0 before load_frame; the view then frames the fixture's own box; the far-point control (:166) and the unit's own point control (:169) are unchanged in text, no threshold or tolerance touched. Rule proved unchanged: R-103-01. Verified: by VG-A18-testfix-1 (test alone, xvfb). Branch push/vg-a18cam-tests. Red on the build branch until the fix merges. |
+ | day32 | FINDING-edge-scroll-restore-overshoot (finding, A18 play writer, Architect ruling 2026-10-13; owner VG-A18 by the attached-owner overlap with VG-A17/VG-A) | tests/qa/desktop/plays/A/play_support.py _edge_scroll_to :194-224; tests/qa/desktop/plays/A/test_S_134_shots_and_hits.py, test_S_136_deaths.py | The long scroll breaks within the half-screen extent, then the pointer release lands one qa plus one input round trip later; at full zoom-out the edge scroll runs about 13,300 wu/s (PAN_SPEED_PX 600 / scale 0.045, tactical_view.gd _pan_input), so about 33 ms is the logged 445 wu overshoot against the 338 wu half screen at the restored scale. Fix: after _zoom_restore, if project(wx, wy) is off screen, run the existing near pass (hits >= 2) at the restored zoom; SCROLL_LOG gains ", converged N polls". SCROLL_STALL_TICKS, SCROLL_CAP_TICKS and the half-screen extent unchanged. Deterministic, S-134 and S-136 red until it lands. |
+ | day32 | FU-B22-pregate-display-a18 (extension, lane A piece A18) | tests/test_tactical_camera.gd | FU-B22-pregate-display extended to tests/test_tactical_camera.gd (edge-scroll cases read the real pointer; headless the file rejects in pre_gate.sh): the clerk quotes the xvfb-run line (1920x1080) with its PASS/FAIL counts in place of the PRE_GATE line; FAIL 4 = FINDING-edge-scroll-xvfb (gd_tests_known_red.txt :5). Architect 2026-10-13. |
++| day32 | TD-VG-A-16 (test-defect, assumption-changed, Architect 2026-10-13; VG-A18-testfix-2) | tests/qa/desktop/test_tactical_play.py :184-196 test_c5_4_move_order_single_command_and_units_move | Assumed the opening camera leaves the +200 wu target on screen (:184-186); A18 centres on the home box so it projects to window y=758 and :195 takes the fallback click at (640,14), a different, nearer target, so the 90% pace assertion reads an early arrival (0.880; green on main twice, red on the A18 tree three times). Fix: RP; when the +Y target is off-window try target_wy = mean_wy - 200 before the fallback, _move_via names the sign; only the target computation; no threshold, tolerance or positive control touched (rulebook row 6 pattern; row 32's 90% stays). Rule proved unchanged: C5-4. Verified: pending (the testfix-2 engineer fills: test alone 1 pass 0 fail on the merged tree). Branch push/vg-a18cam-play-tests. Red on the A18 tree until it lands. |
++| day32 | FINDING-a18-ground-centre (finding, lane A piece VG-A18, Architect 2026-10-13; A18 builder) | scenes/tactical_c/tactical_view.gd :319, _home_box :1008-1023 | Ground era (OM_PLAY_ERA=ground, Westley's saved era): A18's spawn and lot terms shift the unfitted rig centre 135 wu (2665 vs own-box 2800) and the own-unit px box leaves the bottom margin by 9 px; S-103 tests 1-3 green on main, 1 of them red on A18. Fix in A18: _home_box(anchors := true) and _force_camera(anchors := true); set_terrain :319 passes false (own-unit box as on main) with a FU-A18-3d comment; the 2D path unchanged. Acceptance: ground S-103 tests 1-3 green, space 4 of 4 and test_tactical_camera 63/4 unchanged. |
++| day32 | FU-A18-3d amended (Architect 2026-10-13) | scenes/ground3d/camera_rig_3d.gd | Scope adds: the Home key restores the rig height recorded at the fit (DRAFT-a18-home-key; _go_home :1054-1058 restores camera only in the ground era because the rig has no height setter). Ground S-103 test 4 is red under this row; not in the default play run, reported not marked. |
+diff --git a/tests/qa/desktop/plays/A/play_support.py b/tests/qa/desktop/plays/A/play_support.py
+index 1fefe990..68d51cf5 100644
+--- a/tests/qa/desktop/plays/A/play_support.py
++++ b/tests/qa/desktop/plays/A/play_support.py
+@@ -177,6 +177,7 @@ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
+     far = max(abs(ddx), abs(ddy)) > SCREEN_WU and not q0["ground3d"].get("present")
+     notches, scale_out, scale_back, how, hits, ticked, edge = 0, scale0, scale0, "arrival", 0, False, None
+     cam1, end_tick = q0["camera"], tick0
++    restored, polls = False, 0  # polls: near-pass polls run at the restored zoom (FINDING-edge-scroll-restore-overshoot)
+     try:
+         if far:
+             notches, step = _zoom_out_fully(client)
+@@ -193,7 +194,22 @@ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
+             if far:
+                 sx, sy = abs(dx) > half_x, abs(dy) > half_y
+                 if not (sx or sy):
+-                    break
++                    # FINDING-edge-scroll-restore-overshoot: the pointer is released here, not in the finally (one qa plus one
++                    # input round trip later at 13,300 wu/s full zoom-out is the 445 wu overshoot). Restore the zoom, then
++                    # when the target is not on screen finish with the near pass below at the restored zoom (about 83 wu per poll).
++                    client.call("input", "move", w // 2, h // 2)
++                    edge = (w // 2, h // 2)
++                    _zoom_restore(client, notches)
++                    restored = True
++                    r = client.call("project", float(wx), float(wy))
++                    assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
++                    if r["result"].get("on_screen"):
++                        break
++                    c = qa(client)["camera"]
++                    far, both, hits = False, False, 0
++                    start = qa(client)["tick"]  # the near pass counts its stall and cap from here
++                    last, last_move_tick = (c["x"], c["y"]), start
++                    continue
+             else:
+                 sx = both or abs(dx) >= abs(dy)
+                 sy = both or abs(dy) > abs(dx)
+@@ -210,6 +226,7 @@ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
+                 assert tick > start, "play_support: premise: tick frozen (qa tick %d did not advance over the first poll window)" % tick
+                 ticked = True
+             if not far:
++                polls += 1
+                 r = client.call("project", float(wx), float(wy))
+                 assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+                 hits = hits + 1 if r["result"].get("on_screen") else 0
+@@ -225,11 +242,11 @@ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
+                 break
+     finally:
+         client.call("input", "move", w // 2, h // 2)
+-        if far:
++        if far and not restored:
+             _zoom_restore(client, notches)
+-        line = "SCROLL wall %.1f s, game %.1f s (%d ticks), notches %d, scale saved %.4f out %.4f restored %.4f, camera (%.0f, %.0f) to (%.0f, %.0f), ended by %s" % (
++        line = "SCROLL wall %.1f s, game %.1f s (%d ticks), notches %d, scale saved %.4f out %.4f restored %.4f, camera (%.0f, %.0f) to (%.0f, %.0f), ended by %s, converged %d polls" % (
+             time.monotonic() - wall0, (end_tick - tick0) / 20.0, end_tick - tick0, notches, scale0, scale_out, qa(client)["scale"],
+-            cam0[0], cam0[1], cam1["x"], cam1["y"], how)
++            cam0[0], cam0[1], cam1["x"], cam1["y"], how, polls)
+         print(line)
+         SCROLL_LOG.append(line)
+     if how != "arrival":
+@@ -312,7 +329,7 @@ def nearest_enemy_px(client, q: dict) -> tuple:
+     assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+     w, h = (int(v) for v in RESOLUTION.split("x"))
+     # TD-VG-A-9e/9g, A17: a player scrolls with real pointer input (no camera verb); before a scroll longer than one screen _edge_scroll_to zooms
+-    # out with the wheel and restores the zoom, and it measures game ticks, not wall seconds (the pan is a screen rate, 600 px/s, and A19 zoomed the opening frame about 14.5x). The edge is
++    # out with the wheel and restores the zoom, and it measures game ticks, not wall seconds (the pan is a screen rate, 600 px/s, and A18 frames the opening view at the home fit, up to ZOOM_MAX/ZOOM_STEP). The edge is
+     # chosen from the WORLD delta enemy minus camera, not from the projected pixel: a point behind the eye unprojects to a
+     # mirrored pixel. The live pan (tactical_view.gd _pan_input) scrolls only after a mouse-motion event, so one move to the edge pixel is sent and the pointer stays there (TD-VG-A-9f: nudges
+     # take it out of the margin and the pan runs in bursts). SCREEN_WU is a named draft (a screen's worth of world, 3000 wu at the start height): both axes
+diff --git a/tests/qa/desktop/test_pan_speed_zoom.py b/tests/qa/desktop/test_pan_speed_zoom.py
+index c8cbc644..f7657bc5 100644
+--- a/tests/qa/desktop/test_pan_speed_zoom.py
++++ b/tests/qa/desktop/test_pan_speed_zoom.py
+@@ -4,7 +4,8 @@
+ Real display (Xvfb, software GL). Boots tests/test_settings_pan_speed.gd in its `--probe pan`
+ child mode on a settings.cfg fixture in a throwaway XDG_DATA_HOME, mounts the live tactical_c view
+ and measures camera travel over 5 fixed-step pan frames (1/30 s) for a held arrow key and for the
+-pointer resting on the right viewport edge, at zoom 1.0 and at zoom 2.0 (`_zoom_by(2.0)`).
++pointer resting on the right viewport edge, at two zooms: the zoom is halved first (`_zoom_by(0.5)`, zoom1) and then doubled
++(`_zoom_by(2.0)`, zoom2), so the opening fit (ZOOM_MAX / ZOOM_STEP) is never clamped.
+ 
+ Zoom direction: in tactical_view.gd zoom 1.0 is zoomed OUT (the whole canvas fits the screen
+ height, ZOOM_MIN) and zoom 4.0 is zoomed IN, so doubling the zoom halves the world distance:
+diff --git a/tests/qa/desktop/test_tactical_play.py b/tests/qa/desktop/test_tactical_play.py
+index 7f337a7c..47b91b48 100644
+--- a/tests/qa/desktop/test_tactical_play.py
++++ b/tests/qa/desktop/test_tactical_play.py
+@@ -181,15 +181,26 @@ def test_c5_4_move_order_single_command_and_units_move(tactical_game):
+     mean_wx = sum(v[0] for v in pre_pos.values()) / len(pre_pos)
+     mean_wy = sum(v[1] for v in pre_pos.values()) / len(pre_pos)
+     target_wx = mean_wx
++    # TD-VG-A-16: before, the +200 wu target was always projected and, when it fell off-window, the fallback click (a nearer point)
++    # was taken, so the 90% pace assertion read an early arrival. A18 centres the camera on the home box, which puts the +Y
++    # target below the window (y=758 of 720); now the -200 wu target is tried first, and the fallback stays as the last resort.
++    _sign = "+"
+     target_wy = mean_wy + 200.0
+     target_cx = (target_wx - cam_x) * world_scale + CANVAS_W * 0.5
+     target_cy = (target_wy - cam_y) * world_scale + CANVAS_H * 0.5
+     target_px = target_cx * cw_scale
+     target_py = target_cy * ch_scale
++    if not (0.0 <= target_px <= WIN_W and 0.0 <= target_py <= WIN_H):
++        _sign = "-"
++        target_wy = mean_wy - 200.0
++        target_cx = (target_wx - cam_x) * world_scale + CANVAS_W * 0.5
++        target_cy = (target_wy - cam_y) * world_scale + CANVAS_H * 0.5
++        target_px = target_cx * cw_scale
++        target_py = target_cy * ch_scale
+ 
+     if 0.0 <= target_px <= WIN_W and 0.0 <= target_py <= WIN_H:
+         client.click(target_px, target_py, 2)
+-        _move_via = "right-click at window (%.0f, %.0f)" % (target_px, target_py)
++        _move_via = "right-click at window (%.0f, %.0f), target %s200 wu" % (target_px, target_py, _sign)
+     else:
+         safe_px, safe_py = WIN_W * 0.5, WIN_H * 0.02
+         client.click(safe_px, safe_py, 2)
+diff --git a/tests/test_qa_daemon.gd b/tests/test_qa_daemon.gd
+index d9d3a6c2..bb7f6a54 100644
+--- a/tests/test_qa_daemon.gd
++++ b/tests/test_qa_daemon.gd
+@@ -142,6 +142,10 @@ func _check_project_verb(script) -> void:
+ 	var fr: Dictionary = fx.frame()
+ 	fr["player_faction"] = 0
+ 	fr["visible"] = {"0": [1, 2, 3, 4]}
++	# TD-VG-A-15: the fixture has no map.canvas, so load_frame never framed it and the
++	# units projected against the camera the view already held (A18 opening frame, zoom 32,
++	# unit 1 off screen). A canvas makes the view frame the fixture's own box. Was: no canvas.
++	fr["map"]["canvas"] = 1000.0
+ 	view.load_frame(fr)
+ 	await process_frame
+ 	current_scene = view
+diff --git a/tests/test_settings_pan_speed.gd b/tests/test_settings_pan_speed.gd
+index 7108f6b3..32536914 100644
+--- a/tests/test_settings_pan_speed.gd
++++ b/tests/test_settings_pan_speed.gd
+@@ -140,6 +140,10 @@ func _probe(mode: String) -> void:
+ 		view.set_process(false)
+ 		await process_frame
+ 		out["canvas"] = float(view.get("_canvas"))
++		# TD-VG-A-14 (amended): the opening zoom is the fit at ZOOM_MAX / ZOOM_STEP (32), so
++		# zoom1 was 32 and _zoom_by(2.0) clamped to 40 (a 1.25 ratio). Halve first: zoom1 = 16,
++		# zoom2 = 32 after the existing _zoom_by(2.0), unclamped.
++		view._zoom_by(0.5)
+ 		out["zoom1"] = {"scale": float(view.get("_world_scale")), "key": await _measure(view, "key"), "edge": await _measure(view, "edge")}
+ 		view._zoom_by(2.0)
+ 		out["zoom2"] = {"scale": float(view.get("_world_scale")), "key": await _measure(view, "key"), "edge": await _measure(view, "edge")}
+diff --git a/tests/test_tactical_view.gd b/tests/test_tactical_view.gd
+index a0e150e1..6865fa62 100644
+--- a/tests/test_tactical_view.gd
++++ b/tests/test_tactical_view.gd
+@@ -306,10 +306,19 @@ func _run_c53_tests() -> void:
+ 	view.load_frame(big)
+ 	await process_frame
+ 	var st: Dictionary = view.qa_state()
+-	_assert(st.has("scale") and is_equal_approx(float(st["scale"]), 1080.0 / 24000.0), "qa_state().scale = %s, expected the canvas fitted to the screen height (%s)" % [st.get("scale"), 1080.0 / 24000.0])
++	# TD-VG-A-13 (premise-changed, Architect 2026-10-13): was
++	# `is_equal_approx(float(st["scale"]), 1080.0 / 24000.0)`; A18 frames the own box
++	# (units, spawn, own lots), not the whole canvas, so the scale is the canvas fit
++	# times the framing zoom (clamped to ZOOM_MIN..ZOOM_MAX / ZOOM_STEP), read after load_frame.
++	var fit_scale: float = (1080.0 / 24000.0) * view._framing_zoom()
++	_assert(st.has("scale") and is_equal_approx(float(st["scale"]), fit_scale), "qa_state().scale = %s, expected the canvas fit times the framing zoom (%s)" % [st.get("scale"), fit_scale])
+ 	var px: Dictionary = st.get("units_px", {})
+ 	_assert(px.size() == 3, "expected 3 drawn units on the 24000 canvas, got %d" % px.size())
++	# TD-VG-A-13: was every entry of px; now own-faction ids only (units 1 and 2,
++	# faction 0): the enemy at y=23985 is outside the own box and may sit off screen.
+ 	for k in px:
++		if int(big["units"][int(k) - 1]["faction"]) != 0:
++			continue
+ 		var p: Array = px[k]
+ 		_assert(p[0] >= 0.0 and p[0] <= 1920.0 and p[1] >= 0.0 and p[1] <= 1080.0, "unit %s drawn at %s, outside the 1920x1080 screen on a real-size canvas" % [k, str(p)])
+ 
+@@ -553,7 +562,17 @@ func _check_units_count_and_px_in_viewport() -> void:
+ 	if vp.x < 200.0 or vp.y < 200.0:
+ 		vp = Vector2(1920, 1080)
+ 	var outside := 0
++	# TD-VG-A-13: was every px entry; now own-faction ids only (the frame's
++	# player_faction, default LOCAL_FACTION); A18 frames the own box, so enemy
++	# units may sit off screen. The count assertion above is unchanged.
++	var own_faction: int = int(_frame0.get("player_faction", LOCAL_FACTION))
++	var own_ids: Dictionary = {}
++	for u in _frame0.get("units", []):
++		if int(u.get("faction", -1)) == own_faction:
++			own_ids[str(int(u.get("id")))] = true
+ 	for id in px:
++		if not own_ids.has(str(id)):
++			continue
+ 		var p = px[id]
+ 		if typeof(p) != TYPE_ARRAY or p.size() != 2 or p[0] < 0 or p[0] > vp.x or p[1] < 0 or p[1] > vp.y:
+ 			outside += 1

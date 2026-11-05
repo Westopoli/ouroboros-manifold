@@ -1,0 +1,13 @@
+diff --git a/csrc/unit.c b/csrc/unit.c
+index efade02d..73987371 100644
+--- a/csrc/unit.c
++++ b/csrc/unit.c
+@@ -1733,7 +1733,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
+     int kind = om_unit_get_order_kind(w, u->unit_id);
+     int arrived = has_dest && om_tac_dist_le(dest_x - u->x, dest_y - u->y, OM_TIE_EPSILON);
+     int noncombat = om_tac_noncombat(u);
+-    int pursue = om_tac_pursue(w);
++    int pursue = 0; (void)om_tac_pursue;
+     om_unit_row *t;
+ 
+     if (u->cooldown < interval_ticks) u->cooldown += (double)om_tac_period(st);

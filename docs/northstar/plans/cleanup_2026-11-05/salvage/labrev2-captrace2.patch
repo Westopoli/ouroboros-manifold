@@ -1,0 +1,13 @@
+diff --git a/scripts/skilllab/contract.py b/scripts/skilllab/contract.py
+index 15664d2c..3dd57239 100644
+--- a/scripts/skilllab/contract.py
++++ b/scripts/skilllab/contract.py
+@@ -92,7 +92,7 @@ class Setup:
+     states: bool = False      # True records FightResult.states
+     target_policy: Optional[tuple] = None   # (side 0, side 1), each None, 0 nearest or 1 most damaged; None sets nothing (A196)
+     point: Optional[tuple] = None   # (x, y) the shared attack-move point; None: each group aims at the first anchor of the other side
+-    orders_per_unit: bool = True    # one order_attack_move call per unit at the opening; later timeline steps stay group-level (L4 flips the default)
++    orders_per_unit: bool = False   # one order_attack_move call per unit at the opening; later timeline steps stay group-level (L4 flips the default)
+     firing_arc_deg: float = 360.0   # set on the world through OM_TP_FIRING_ARC_DEG when below 360 and the library has the parameter
+     cone: dict = field(default_factory=dict)   # type name -> (range, half-angle degrees, share), applied through Engine.set_cone
+ 

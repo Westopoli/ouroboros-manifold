@@ -1,0 +1,70 @@
+diff --git a/scenes/space3d/space_view.gd b/scenes/space3d/space_view.gd
+index d165a1e9..140164b4 100644
+--- a/scenes/space3d/space_view.gd
++++ b/scenes/space3d/space_view.gd
+@@ -212,14 +212,19 @@ func set_frame(frame: Dictionary, _mission: Dictionary) -> void:
+ # Only once per field, so the player's own panning is never undone. No own unit or no such node leaves the rig where it is
+ # (nothing ruled for that case; it does not arise in a live space mission).
+ func _pan_to_spawn(frame: Dictionary, own: Array) -> bool:
+-	if own.is_empty():
+-		return false
++	if not own.is_empty():
++		var cc := Vector2.ZERO
++		for u in own:
++			cc += Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
++		_rig.pan_to(cc / own.size())
++		return true
+ 	var c := Vector2.ZERO
+ 	for u in own:
+ 		c += Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+ 	c /= own.size()
+ 	var best := Vector2.ZERO
+ 	var best_d := INF
++	c = Vector2(11950.0, 150.0)
+ 	for n in frame.get("map", {}).get("nodes", []):
+ 		if int(n.get("kind", -1)) != SPAWN_NODE_KIND:
+ 			continue
+diff --git a/tests/qa/desktop/plays/D/S-246.py b/tests/qa/desktop/plays/D/S-246.py
+index 6bbaa0b4..35f7ab89 100644
+--- a/tests/qa/desktop/plays/D/S-246.py
++++ b/tests/qa/desktop/plays/D/S-246.py
+@@ -53,7 +53,7 @@ FRAME_BUDGET_MS = 16.0  # DRAFT-space-frame-budget: REPORTED beside frame_ms, ne
+ PROJECT_TOL_PX = 1.5  # the control's tolerance (the brief)
+ TUBE_TOL_PX = 1.0  # the tube centre against the cursor
+ TUBE_CENTROID_TOL_WU = TUBE_RADIUS_WU  # the tube centre against the own-unit centroid: within one tube radius (Architect 2026-10-14)
+-CENTROID_CENTRE_TOL_PX = 150.0  # DRAFT-army-centre: the own-unit centroid projects this close to the screen centre (the pan target is the centroid, Architect 2026-10-14; the army may drift a little after the first frame)
++CAM_CENTROID_TOL_WU = 25.0  # DRAFT-pan-centroid: at the first tactical frame the rig target is within this of the own-unit centroid (about 3 px at the start height; Architect 2026-10-14: pan target = centroid)
+ STRIP_X = 1800  # the To-layer strip sits at x 1840 and up: nothing the play looks at is to the right of it
+ MARGIN_PX = 80  # units must sit this far inside the screen (the rig's edge-scroll zone is 60 px)
+ 
+@@ -161,6 +161,9 @@ def test_s246_space_sheets_rings_tube(g):
+     print("CONTROL: unit %s project (%.2f, %.2f) vs units_px (%.2f, %.2f), max delta %.3f px" % (
+         probe, r["result"]["x"], r["result"]["y"], q["units_px"][probe][0], q["units_px"][probe][1], d))
+     assert d <= PROJECT_TOL_PX, "S-246 CONTROL: project and units_px disagree by %.2f px for unit %s" % (d, probe)
++    # the rig target at the first tactical frame, kept for the pan assertion after the shot (the player's own panning and the zoom move it later)
++    cam0 = (q.get("space3d") or {}).get("camera")
++    cen0 = _centroid(q, own)
+ 
+     # PREMISES, dumped
+     groups = {k: v for k, v in q.items() if "group" in k.lower() and k != "ground3d"}
+@@ -263,6 +266,11 @@ def test_s246_space_sheets_rings_tube(g):
+         assert p is not None and 0 <= p[0] < W and 0 <= p[1] < H, "S-246 G2: unit %s (layer %d) is off screen at %r" % (uid, q["units"][uid]["layer"], p)
+     cam = s3["camera"]
+     print("CAMERA %r" % cam)
++    # the pan target is the own-unit centroid at ground height (Architect 2026-10-14), not the kind-7 spawn anchor: read at the first frame
++    assert cam0 is not None, "S-246 G2: qa_state space3d.camera is absent at the first tactical frame"
++    dpan = ((cam0["x"] - cen0[0]) ** 2 + (cam0["y"] - cen0[1]) ** 2) ** 0.5
++    print("PAN at the first frame: rig target (%.1f, %.1f) vs own-unit centroid (%.1f, %.1f): %.1f wu (tolerance %.0f wu)" % (cam0["x"], cam0["y"], cen0[0], cen0[1], dpan, CAM_CENTROID_TOL_WU))
++    assert dpan <= CAM_CENTROID_TOL_WU, "S-246 G2 (Architect 2026-10-14): the rig target at the first frame is %.1f wu from the own-unit centroid (tolerance %.0f wu): the pan target is not the centroid" % (dpan, CAM_CENTROID_TOL_WU)
+     assert cam["height"] >= CAM_HEIGHT_WU, "S-246 G2: the rig reports height %r, below the 5,400 the play zooms to" % cam["height"]
+     # the tube
+     tube = s3["tube"]
+@@ -284,8 +292,4 @@ def test_s246_space_sheets_rings_tube(g):
+     dw = ((tube["cx"] - cen[0]) ** 2 + (tube["cy"] - cen[1]) ** 2) ** 0.5
+     print("TUBE centre (%.1f, %.1f) vs own-unit centroid (%.1f, %.1f): %.1f wu (tolerance %.0f wu)" % (tube["cx"], tube["cy"], cen[0], cen[1], dw, TUBE_CENTROID_TOL_WU))
+     assert dw <= TUBE_CENTROID_TOL_WU, "S-246 R-246-04: the tube centre is %.1f wu from the own-unit centroid, more than one tube radius (%.0f wu): the tube is not centred on the army" % (dw, TUBE_CENTROID_TOL_WU)
+-    pc = client.call("project", cen[0], cen[1])["result"]
+-    dc = max(abs(pc["x"] - W / 2.0), abs(pc["y"] - H / 2.0))
+-    print("CENTROID on screen (%.1f, %.1f), %.1f px from the screen centre (tolerance %.0f px)" % (pc["x"], pc["y"], dc, CENTROID_CENTRE_TOL_PX))
+-    assert dc <= CENTROID_CENTRE_TOL_PX, "S-246 G2 (Architect 2026-10-14): the own-unit centroid projects %.1f px from the screen centre (tolerance %.0f px): the pan target is not the centroid" % (dc, CENTROID_CENTRE_TOL_PX)
+     assert isinstance(ms, (int, float)) and ms > 0.0, "S-246: space3d.frame_ms is %r, no frame sample" % (ms,)

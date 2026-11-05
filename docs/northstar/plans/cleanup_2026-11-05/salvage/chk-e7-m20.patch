@@ -1,0 +1,655 @@
+diff --git a/tests/csim/conftest.py b/tests/csim/conftest.py
+index 7efbfb08..82b123e1 100644
+--- a/tests/csim/conftest.py
++++ b/tests/csim/conftest.py
+@@ -61,7 +61,7 @@ _build_libs()
+ # Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
+ # bug ids, and om_world_get_state_checksum / om_world_set_tick /
+ # om_abi_layout_check are new since version 1).
+-EXPECTED_ABI_VERSION = 7
++EXPECTED_ABI_VERSION = 8
+ 
+ 
+ # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----
+@@ -2276,6 +2276,7 @@ def _bind_e10(lib):
+     _bind(lib, "om_mission_get_deployed_force_count", [W], ctypes.c_uint32, ("w",))
+     _bind(lib, "om_mission_get_enemy_power", [W], ctypes.c_double, ("w",))
+     _bind(lib, "om_mission_get_force_count", [W], ctypes.c_uint32, ("w",))
++    _bind(lib, "om_mission_get_force_group", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "i"))
+     _bind(lib, "om_mission_get_force_unit", [W, ctypes.c_uint32, P(ctypes.c_int32), P(ctypes.c_int32)], ctypes.c_int, ("w", "i", "type", "tier"))
+     _bind(lib, "om_mission_get_objective_completion", [W, ctypes.c_uint32], ctypes.c_double, ("w", "objective_idx"))
+     _bind(lib, "om_mission_get_objective_score", [W], ctypes.c_double, ("w",))
+@@ -2603,8 +2604,8 @@ def _bind_e15(lib):
+     _bind(lib, "om_hazard_spawn_moving_interference", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_uint64], ctypes.c_uint32, ("w", "p1", "p2", "p3", "c_double", "p5"))
+     _bind(lib, "om_macro_set_force_fallback_point", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "force", "x", "y"))
+     _bind(lib, "om_mission_check_extraction_objectives", [W], None, ("w",))
+-    _bind(lib, "om_mission_compute_reinforcement_capacity", [ctypes.c_double, ctypes.c_uint64], ctypes.c_double, ("c_double", "time"))
+-    _bind(lib, "om_mission_compute_starting_force", [ctypes.c_double], ctypes.c_double, ("c_double",))
++    _bind(lib, "om_mission_compute_reinforcement_capacity", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("F", "share"))
++    _bind(lib, "om_mission_compute_starting_force", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("F", "share"))
+     _bind(lib, "om_mission_get_reinforcement_trickle", [W], ctypes.c_uint32, ("w",))
+     _bind(lib, "om_mission_set_player_held_structures_count", [W, ctypes.c_int32, ctypes.c_uint32], None, ("w", "faction_id", "held"))
+     _bind(lib, "om_mission_setup_extraction_point", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], None, ("w", "x", "y", "radius"))
+diff --git a/tests/csim/test_E01_T3_contract.py b/tests/csim/test_E01_T3_contract.py
+index 74c31ad6..afce9c28 100644
+--- a/tests/csim/test_E01_T3_contract.py
++++ b/tests/csim/test_E01_T3_contract.py
+@@ -161,7 +161,7 @@ def test_save_round_trip_keeps_era_kind_and_movement_kinds(lib, world_factory):
+     assert lib.om_roster_set_movement_kind(src, TYPE_A, MOVE_WALKING) == 0
+     assert lib.om_roster_set_movement_kind(src, TYPE_B, MOVE_WALKING) == 0
+     buf, n = _save(lib, src)
+-    assert int.from_bytes(bytes(buf[4:8]), "little") == 11, "K-e5 bumps OM_SAVE_FORMAT_VERSION to 10 (TD-VG-E-16); W2 bumps it to 11 (TD-VG-W-1)"
++    assert int.from_bytes(bytes(buf[4:8]), "little") == 12, "K-e5 bumps OM_SAVE_FORMAT_VERSION to 10 (TD-VG-E-16); W2 bumps it to 11 (TD-VG-W-1); E7 bumps it to 12 (TD-VG-E-27)"
+     dst = world_factory(n_regions=1)
+     assert lib.om_era_kind(dst) == 0   # control: a fresh world is space, kinds default flying
+     assert lib.om_unit_profile_movement_kind(dst, TYPE_A) == MOVE_FLYING
+diff --git a/tests/csim/test_E01_T3_mission_ground.py b/tests/csim/test_E01_T3_mission_ground.py
+index 855aa897..770d1ae3 100644
+--- a/tests/csim/test_E01_T3_mission_ground.py
++++ b/tests/csim/test_E01_T3_mission_ground.py
+@@ -28,6 +28,7 @@ from conftest import (
+     OMArchetype, OMEdge, OMFeature, OMTier, OMVec2,
+     set_edge, set_faction, set_owner, set_region,
+ )
++from test_VG_E_e7 import _bind as e7_bind, oracle_units, owners_of, roster_of  # TD-VG-E-34: the E7 starting-force oracle
+ 
+ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
+ V = ctypes.c_void_p
+@@ -191,14 +192,27 @@ def test_control_space_mission_has_no_terrain(lib, world_factory):
+ def test_every_unit_spawns_on_walkable_ground_and_objective_is_reachable(lib, world_factory, archetype):
+     """Spec 3a: every archetype at 20 seeds, ground era: every unit spawns (same count as the space era), each on
+     a walkable cell, the (snapped) objective node on a walkable cell and reachable from a player and an enemy unit
+-    by om_walk_route."""
++    by om_walk_route.
++
++    TD-VG-E-34 (pin move, start-count pins move with the starting-force cut, E7, Architect 2026-10-19): the player spawns
++    start_units of the composed force F in every era, with start = F * frac(share), share = p / (p + e) read from the era's own
++    structure placement (the ground era caps the strongpoints at the slope count, R-218-01, so its p and e differ from the space
++    era's). The expected count is the space era's enemy units (unchanged by E7) plus the ground world's start_units: it was the
++    space era's total, which held while both eras spawned all of F. The premise (F, p, e, share, start_units) is in the message."""
++    e7_bind(lib)
+     for seed in SEEDS:
+         space = _scene(lib, world_factory, ground=False, archetype=archetype, seed=seed)
+-        expect = lib.om_unit_count(space)
++        space_enemy = sum(1 for u in _units(lib, space) if lib.om_unit_get_faction(space, u) == ENEMY_FAC)
+         w = _scene(lib, world_factory, ground=True, archetype=archetype, seed=seed)
+         assert lib.om_terrain_present(w) == 1, f"seed {seed}: no terrain"
+         units = _units(lib, w)
+-        assert len(units) == expect, f"seed {seed}: {len(units)} units spawned, the space era spawns {expect}"
++        owners = owners_of(lib, w)
++        F, p, e = sum(roster_of(lib, w)), owners.count(PLAYER_FAC), owners.count(ENEMY_FAC)
++        start_units, _cap = oracle_units(F, p, e)
++        expect = space_enemy + start_units
++        print("PREMISE", f"archetype {archetype} seed {seed} F {F} p {p} e {e} share {p / (p + e) if p + e else None} start_units {start_units} enemy {space_enemy} expect {expect}")
++        assert len(units) == expect, (f"seed {seed}: {len(units)} units spawned, E7 wants the enemy's {space_enemy} + start_units "
++                                      f"{start_units} = {expect} (F {F}, p {p}, e {e}, share {p / (p + e) if p + e else None})")
+         for u in units:
+             x, y = _pos(lib, w, u)
+             assert lib.om_terrain_walkable_at(w, x, y) == 1, f"seed {seed}: unit {u} spawned unwalkable at {x},{y}"
+diff --git a/tests/csim/test_E02_S020_abi.py b/tests/csim/test_E02_S020_abi.py
+index 1ddab9d5..45b6baf3 100644
+--- a/tests/csim/test_E02_S020_abi.py
++++ b/tests/csim/test_E02_S020_abi.py
+@@ -19,7 +19,7 @@ from conftest import OMTier, OmCollision, OmDriftRow, OmTraceRow, set_region
+ 
+ 
+ def test_R_020_abi_version_is_4(lib):
+-    assert lib.om_abi_version() == 7
++    assert lib.om_abi_version() == 8
+ 
+ 
+ def test_R_020_layout_check_matches_caller_sizes(lib):
+diff --git a/tests/csim/test_E16_B5_save_version.py b/tests/csim/test_E16_B5_save_version.py
+index 52e2d06f..247c0c66 100644
+--- a/tests/csim/test_E16_B5_save_version.py
++++ b/tests/csim/test_E16_B5_save_version.py
+@@ -10,7 +10,7 @@ import ctypes
+ from conftest import OMTier, set_owner, set_region
+ 
+ VERSION_OFFSET = 4
+-EXPECTED_VERSION = 11
++EXPECTED_VERSION = 12
+ 
+ 
+ def _bind_save(lib):
+@@ -91,10 +91,10 @@ def test_R_111_03_a_version_3_save_is_refused_cleanly(lib, world_factory):
+ 
+ 
+ def test_R_111_03_a_version_6_save_is_refused_cleanly(lib, world_factory):
+-    """Given a save from a later build (version word 12), When loaded, Then it is refused: no migration either way, any other version is rejected."""
++    """Given a save from a later build (version word 13), When loaded, Then it is refused: no migration either way, any other version is rejected."""
+     src = _world(lib, world_factory, seed=37)
+     buf, size = _save(lib, src)
+-    newer = _with_version(buf, size, 12)
++    newer = _with_version(buf, size, 13)
+     dst = world_factory(n_regions=4, seed=38)
+     before = lib.om_world_get_state_checksum(dst)
+     assert lib.om_load_state_read(dst, newer, size) != 0
+diff --git a/tests/csim/test_E16_C2_save_version.py b/tests/csim/test_E16_C2_save_version.py
+index fb747485..332f0d3f 100644
+--- a/tests/csim/test_E16_C2_save_version.py
++++ b/tests/csim/test_E16_C2_save_version.py
+@@ -11,7 +11,7 @@ import ctypes
+ from conftest import OMTier, set_owner, set_region
+ 
+ VERSION_OFFSET = 4
+-EXPECTED_VERSION = 11
++EXPECTED_VERSION = 12
+ PRE_BUMP_VERSION = 9
+ 
+ 
+diff --git a/tests/csim/test_VG_E_contract.py b/tests/csim/test_VG_E_contract.py
+index 22eca744..de21c170 100644
+--- a/tests/csim/test_VG_E_contract.py
++++ b/tests/csim/test_VG_E_contract.py
+@@ -68,9 +68,9 @@ def test_control_existing_getter_still_works(lib, world_factory):
+ 
+ 
+ def test_abi_version_is_7(lib):
+-    """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1); K-e5 moved the pin to 7 (the hook om_terrain_set_heights, TD-VG-E-16). Red before K-e5: the library reports 6."""
++    """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1); K-e5 moved the pin to 7 (the hook om_terrain_set_heights, TD-VG-E-16). Red before K-e5: the library reports 6. E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group): red until then, the library reports 7."""
+     lib.om_abi_version.argtypes, lib.om_abi_version.restype = [], ctypes.c_uint32
+-    assert lib.om_abi_version() == 7
++    assert lib.om_abi_version() == 8
+ 
+ 
+ def test_new_symbols_present_and_bind(lib):
+@@ -134,14 +134,14 @@ def test_place_symbol_callable(lib, world_factory):
+ 
+ def test_save_round_trip_at_format_10_keeps_empty_new_state(lib, world_factory):
+     """K-e3: format 9 writes and re-reads; K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1): the version word is 11; the new state reads back empty / doctrine 3.
+-    Red before W2: the version word is 10."""
++    Red before W2: the version word is 10. E7 moved it to 12 (TD-VG-E-27): red until then, the version word is 11."""
+     bind(lib)
+     bind_save(lib)
+     src = world_factory(n_regions=1)
+     size = lib.om_save_state_size(src)
+     buf = (ctypes.c_uint8 * size)()
+     lib.om_save_state_write(src, buf, size)
+-    assert int.from_bytes(bytes(buf[4:8]), "little") == 11
++    assert int.from_bytes(bytes(buf[4:8]), "little") == 12
+     dst = world_factory(n_regions=1)
+     assert lib.om_load_state_read(dst, buf, size) == 0
+     assert lib.om_lot_count(dst) == 0 and lib.om_strongpoint_count(dst) == 0
+diff --git a/tests/csim/test_VG_E_e1h.py b/tests/csim/test_VG_E_e1h.py
+index 0b532a8f..09500e3e 100644
+--- a/tests/csim/test_VG_E_e1h.py
++++ b/tests/csim/test_VG_E_e1h.py
+@@ -307,9 +307,11 @@ def test_rubble_can_be_refounded(lib, world_factory):
+ def test_no_fixed_force_split(lib, world_factory):
+     """R-218-06: R-126-04's 0.20 starting-force split is dropped, so om_mission_compute_starting_force(F) != 0.20 F."""
+     bind(lib)
+-    lib.om_mission_compute_starting_force.argtypes = [ctypes.c_double]
++    lib.om_mission_compute_starting_force.argtypes = [ctypes.c_double, ctypes.c_double]  # (F, share): E7, TD-VG-E-28
+     lib.om_mission_compute_starting_force.restype = ctypes.c_double
+-    got = lib.om_mission_compute_starting_force(100.0)
++    # share 0.5, not 0.0: at share 0 the ruled floor is exactly a fifth (DRAFT-e7-floor-knee), 20.0, and the assertion would fail
++    # on a correct build; the point of this test is that the split is no longer a fixed 0.20 of F.
++    got = lib.om_mission_compute_starting_force(100.0, 0.5)
+     assert not math.isclose(got, 20.0, abs_tol=1e-5), "the fixed fifth is still applied (R-126-04 retired by R-218-06)"
+ 
+ 
+diff --git a/tests/csim/test_VG_E_ke2.py b/tests/csim/test_VG_E_ke2.py
+index 06682db9..4afac308 100644
+--- a/tests/csim/test_VG_E_ke2.py
++++ b/tests/csim/test_VG_E_ke2.py
+@@ -2,7 +2,8 @@
+ 
+ Spec: docs/northstar/plans/2026-10-07-visible-game-spec.md rev 8, "Lane E1 part a2: the K-e2 amendment".
+ Rules: R-218-01 (ground structure count capped at the slope count), R-218-05 (a structure at 0 HP stays
+-listed), R-218-06 (starting force is the whole force, reinforcement capacity 0; liberty 2026-10-10).
++listed), R-218-06 (starting force is the whole force, reinforcement capacity 0; liberty 2026-10-10; superseded by E7, TD-VG-E-28:
++(F, share) pins, see the section above the starting-force tests).
+ The entry points are internal (csrc/economy_internal.h) but exported by the shared object, so ctypes finds them.
+ """
+ import ctypes
+@@ -107,23 +108,55 @@ def test_R_218_01_ground_structure_count_at_most_slope_count(lib, world_factory,
+     assert not _over_cap(count, slopes), f"{count} structures over {slopes} slopes"
+ 
+ 
+-def test_R_218_06_starting_force_is_the_whole_force(lib):
+-    """R-218-06 (liberty 2026-10-10): om_mission_compute_starting_force(F) == F."""
+-    lib.om_mission_compute_starting_force.argtypes = [D]
++# E7 (VG-CONTRACT-E7, TD-VG-E-28): R-218-06 as rewritten by Westley 2026-10-11 ("players start with at least half-force when
++# a match begins, if not as far down as 20%"): both functions take (F, share) and the five pins below replace the whole-force
++# (F, 0) pair. Piecewise with START_KNEE 0.25 (DRAFT-e7-floor-knee, Westley to confirm): frac = 0.2 + 1.2 * share up to the
++# knee, 0.5 + 0.4 * (share - 0.25) above it. Red until E7: the one-argument and (D, U64) functions answer F and 0.
++ONE_THOUSAND = 1000.0
++
++
++def _starting_force(lib, f, share):
++    lib.om_mission_compute_starting_force.argtypes = [D, D]
+     lib.om_mission_compute_starting_force.restype = D
+-    assert lib.om_mission_compute_starting_force(1000.0) == 1000.0
++    return lib.om_mission_compute_starting_force(f, share)
+ 
+ 
+-def test_R_218_06_reinforcement_capacity_is_zero(lib):
+-    """R-218-06: om_mission_compute_reinforcement_capacity(1000.0, 1200) == 0.0."""
+-    lib.om_mission_compute_reinforcement_capacity.argtypes = [D, U64]
++def _capacity(lib, f, share):
++    lib.om_mission_compute_reinforcement_capacity.argtypes = [D, D]
+     lib.om_mission_compute_reinforcement_capacity.restype = D
+-    assert lib.om_mission_compute_reinforcement_capacity(1000.0, 1200) == 0.0
++    return lib.om_mission_compute_reinforcement_capacity(f, share)
++
++
++def test_R_218_06_starting_force_at_half_share_is_600(lib):
++    """R-218-06 (E7): om_mission_compute_starting_force(1000.0, 0.5) == 600.0 (old pin: (F) == F; TD-VG-E-28)."""
++    assert _starting_force(lib, ONE_THOUSAND, 0.5) == pytest.approx(600.0, abs=1e-5)
++
++
++def test_R_218_06_reinforcement_capacity_at_half_share_is_400(lib):
++    """R-218-06 (E7): om_mission_compute_reinforcement_capacity(1000.0, 0.5) == 400.0 (old pin: (1000.0, 1200) == 0.0; TD-VG-E-28)."""
++    assert _capacity(lib, ONE_THOUSAND, 0.5) == pytest.approx(400.0, abs=1e-5)
++
++
++def test_R_218_06_starting_force_at_zero_share_is_a_fifth(lib):
++    """R-218-06 (E7): a player holding none of the contested strongpoints starts with a fifth: (1000.0, 0.0) == 200.0."""
++    assert _starting_force(lib, ONE_THOUSAND, 0.0) == pytest.approx(200.0, abs=1e-5)
++
++
++def test_R_218_06_starting_force_at_the_knee_is_half(lib):
++    """R-218-06 (E7), DRAFT-e7-floor-knee: START_KNEE 0.25, half of F at the knee: (1000.0, 0.25) == 500.0."""
++    assert _starting_force(lib, ONE_THOUSAND, 0.25) == pytest.approx(500.0, abs=1e-5)
++
++
++def test_R_218_06_starting_force_at_full_share_is_four_fifths(lib):
++    """R-218-06 (E7): a player holding every contested strongpoint starts with four fifths: (1000.0, 1.0) == 800.0."""
++    assert _starting_force(lib, ONE_THOUSAND, 1.0) == pytest.approx(800.0, abs=1e-5)
+ 
+ 
+ def test_R_218_06_detector_control(lib):
+-    """Positive control: a non-whole starting force (a 0.2 share) is distinguishable from F."""
++    """Positive control (green today): a non-whole starting force (a 0.2 share of F) is distinguishable from F, and the
++    library exports both functions the pins above call."""
+     assert 0.2 * 1000.0 != 1000.0
++    assert hasattr(lib, "om_mission_compute_starting_force") and hasattr(lib, "om_mission_compute_reinforcement_capacity")
+ 
+ 
+ def _hp(lib, w, s):
+diff --git a/tests/csim/test_VG_E_ke3.py b/tests/csim/test_VG_E_ke3.py
+index a7db4154..52b26d6d 100644
+--- a/tests/csim/test_VG_E_ke3.py
++++ b/tests/csim/test_VG_E_ke3.py
+@@ -80,6 +80,6 @@ def test_ke3_density_economy_is_saved(lib, world_factory):
+ 
+ 
+ def test_ke3_save_format_version_is_10(lib, world_factory):
+-    """K-e3 added the density_economy and lot_hit_tick fields (format 9); K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1): OM_SAVE_FORMAT_VERSION is 11 (header bytes 4..8, the pin the save-pin tests use); red: 10."""
++    """K-e3 added the density_economy and lot_hit_tick fields (format 9); K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1): E7 moved it to 12 (TD-VG-E-27): OM_SAVE_FORMAT_VERSION is 12 (header bytes 4..8, the pin the save-pin tests use); red: 11."""
+     buf, _ = _save(lib, scene(lib, world_factory))
+-    assert int.from_bytes(bytes(buf[4:8]), "little") == 11
++    assert int.from_bytes(bytes(buf[4:8]), "little") == 12
+diff --git a/tests/csim/test_VG_E_ke5.py b/tests/csim/test_VG_E_ke5.py
+index 3e2eb8b8..22db0927 100644
+--- a/tests/csim/test_VG_E_ke5.py
++++ b/tests/csim/test_VG_E_ke5.py
+@@ -630,18 +630,18 @@ def test_ke5_load_rejects_core_cell_at_or_above_side_squared(klib, kmake):
+ # ------------------------------------------------------------------------------------------------ version pins
+ 
+ def test_ke5_save_format_version_is_10(klib, kmake):
+-    """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10; W2 moved it to 11 (TD-VG-W-1), read as the moved pins read it (header bytes 4..8 of a save)."""
+-    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 11
++    """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10; W2 moved it to 11 (TD-VG-W-1), E7 to 12 (TD-VG-E-27), read as the moved pins read it (header bytes 4..8 of a save)."""
++    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 12
+ 
+ 
+ def test_ke5_abi_version_is_7(klib):
+-    """K-e5: OM_ABI_VERSION 6 to 7 (the one new public symbol), read from om_abi_version() as the moved pins read it."""
+-    assert klib.om_abi_version() == 7
++    """K-e5: OM_ABI_VERSION 6 to 7 (the one new public symbol); E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group), read from om_abi_version() as the moved pins read it."""
++    assert klib.om_abi_version() == 8
+ 
+ 
+ def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
+-    """K-e5: OM_PIPE_SAVE_FORMAT_VERSION goes to 10 (it is 8 today; finding FINDING-pipe-save-version); W2 moved it to 11 (TD-VG-W-1). A save written through the
+-    pipe has sidecar format_version 11 and a version word 11 (the sidecar is the key the load-game screen reads). Control
++    """K-e5: OM_PIPE_SAVE_FORMAT_VERSION goes to 10 (it is 8 today; finding FINDING-pipe-save-version); W2 moved it to 11 (TD-VG-W-1), E7 to 12 (TD-VG-E-27). A save written through the
++    pipe has sidecar format_version 12 and a version word 12 (the sidecar is the key the load-game screen reads). Control
+     first: both exist and are integers."""
+     if not PIPE.exists():
+         pytest.fail("pipe/ouroboros_pipe is not built")
+@@ -658,8 +658,8 @@ def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
+         side = json.load(open(path + ".json"))
+         word = struct.unpack_from("<I", open(path, "rb").read(), 4)[0]
+     assert isinstance(side.get("format_version"), int) and isinstance(word, int)
+-    assert side["format_version"] == 11, f"sidecar format_version {side['format_version']} (save version word {word})"
+-    assert word == 11
++    assert side["format_version"] == 12, f"sidecar format_version {side['format_version']} (save version word {word})"
++    assert word == 12
+ 
+ 
+ # ------------------------------------------------------------------------------------------------ the hook om_terrain_set_heights
+diff --git a/tests/csim/test_core_mission_force_accessors.py b/tests/csim/test_core_mission_force_accessors.py
+index 5407400e..35febd3e 100644
+--- a/tests/csim/test_core_mission_force_accessors.py
++++ b/tests/csim/test_core_mission_force_accessors.py
+@@ -14,6 +14,8 @@ import ctypes
+ from conftest import OMTier, set_region
+ 
+ ARCH_SIEGE_BREAKING = 1
++ROSTER_10, START_10, CUT_10 = [24, 38, 21, 137, 30, 13], 158, [14, 23, 13, 82, 18, 8]  # TD-VG-E-34: F 263, p 1, e 1, share 0.5
++ROSTER_90, START_90 = [301, 434, 271, 846, 363, 206], 1453  # TD-VG-E-34: F 2421, p 2, e 2, share 0.5
+ 
+ 
+ def _setup(lib, w, military, archetype=ARCH_SIEGE_BREAKING):
+@@ -31,18 +33,18 @@ def _player_counts(lib, w):
+ def test_R_079_01_force_count_equals_player_units_sum(lib, world_factory):
+     w = world_factory(n_regions=1)
+     _setup(lib, w, 10.0)
+-    total = sum(_player_counts(lib, w))
+-    assert total > 0, "fixture must produce a nonzero player force"
+-    assert lib.om_mission_get_force_count(w) == total
++    assert _player_counts(lib, w) == ROSTER_10, "premise: the composed roster F 263"
++    assert lib.om_mission_get_force_count(w) == START_10  # was sum(roster) = 263: the player spawns start_units of F
+ 
+ 
+ def test_R_079_01_force_unit_types_match_spawned_units(lib, world_factory):
+     w = world_factory(n_regions=1)
+     _setup(lib, w, 10.0)
++    assert _player_counts(lib, w) == ROSTER_10, "premise: the composed roster F 263"
+     expected = []
+-    for t, n in enumerate(_player_counts(lib, w)):
++    for t, n in enumerate(CUT_10):  # was the roster itself: the player spawns the cut of it (start_units 158)
+         expected += [t] * n
+-    assert expected
++    assert len(expected) == START_10
+     ty, tier = ctypes.c_int32(-1), ctypes.c_int32(-1)
+     for i, want in enumerate(expected):
+         assert lib.om_mission_get_force_unit(w, i, ctypes.byref(ty), ctypes.byref(tier)) == 1
+@@ -80,7 +82,8 @@ def test_R_079_01_control_force_count_tracks_force_size(lib, world_factory):
+     _setup(lib, lo, 10.0)
+     hi = world_factory(n_regions=1)
+     _setup(lib, hi, 90.0)
+-    t_lo, t_hi = sum(_player_counts(lib, lo)), sum(_player_counts(lib, hi))
++    assert _player_counts(lib, lo) == ROSTER_10 and _player_counts(lib, hi) == ROSTER_90, "premise: F 263 and F 2421"
++    t_lo, t_hi = START_10, START_90  # was sum(roster): 263 and 2421; the player spawns start_units of F
+     assert t_lo != t_hi
+     assert lib.om_mission_get_force_count(lo) == t_lo
+     assert lib.om_mission_get_force_count(hi) == t_hi
+diff --git a/tests/specfactory/test_pp_contract.py b/tests/specfactory/test_pp_contract.py
+index cace3b02..476b3a40 100644
+--- a/tests/specfactory/test_pp_contract.py
++++ b/tests/specfactory/test_pp_contract.py
+@@ -26,7 +26,7 @@ CONFTEST = REPO / "tests" / "csim" / "conftest.py"
+ TABLE = REPO / "docs" / "northstar" / "spec_factory" / "signatures.toml"
+ DOC = REPO / "docs" / "northstar" / "plans" / "push" / "pp_contract.md"
+ 
+-EXPECTED_ABI = 7
++EXPECTED_ABI = 8
+ 
+ # name -> (module, restype, [(param name, ctype), ...]); the contract document section 1 and 6 (17 calls).
+ W = "om_world*"
+diff --git a/tests/specfactory/test_signatures_internal.py b/tests/specfactory/test_signatures_internal.py
+index 8cd54511..711710b9 100644
+--- a/tests/specfactory/test_signatures_internal.py
++++ b/tests/specfactory/test_signatures_internal.py
+@@ -60,6 +60,9 @@ EXPECTED_MODULE = {
+     "om_grid_query_circle": "unit.c",
+     "om_grid_query_circle_faction": "unit.c",
+     "om_mission_on_begin": "mission.c",
++    # VG-CONTRACT-E7 (TD-VG-E-28): the cross-file bridge between mission.c (state) and tactical_support.c (production driver).
++    "om_mission_reinforce_cap": "mission.c",
++    "om_mission_reinforce_note_spawn": "mission.c",
+     "om_mission_reset_started": "fog.c",
+     "om_mission_tactical_tick": "mission.c",
+     "om_move_route_get": "tactical_move.c",
+diff --git a/tests/test_load_game_wrong_version.gd b/tests/test_load_game_wrong_version.gd
+index 0a96bb8e..3386ca21 100644
+--- a/tests/test_load_game_wrong_version.gd
++++ b/tests/test_load_game_wrong_version.gd
+@@ -11,7 +11,7 @@ extends SceneTree
+ # written now is current (sidecar and scene both say 5, so fresh saves are not refused).
+ 
+ const SCENE_PATH := "res://scenes/load_game/load_game.tscn"
+-const EXPECTED_VERSION := 11
++const EXPECTED_VERSION := 12
+ 
+ var _pass_count := 0
+ var _fail_count := 0
+diff --git a/tests/transport/test_pipe_command_cap.py b/tests/transport/test_pipe_command_cap.py
+index 19ee8640..9abb4f09 100644
+--- a/tests/transport/test_pipe_command_cap.py
++++ b/tests/transport/test_pipe_command_cap.py
+@@ -1,12 +1,17 @@
+ """T1-7-3: handle_command unit cap raised from 256 to OM_MAX_UNITS (10100).
+ 
+-A mission spawns 490 player units; with the old cap of 256 the last 234 unit
++A mission spawns 294 player units; with the old cap of 256 the last 38 unit
+ IDs in the sorted list are silently dropped by get_int_array, so a select-all
+-move command misses 234 units.
++move command misses 38 units.
+ 
+-Red on unmodified code: unit 490 is at sorted position 490 (beyond old cap of
++Red on unmodified code: unit 294 is at sorted position 294 (beyond old cap of
+ 256) and receives no move command; after 20 tactical steps it stays at spawn.
+-Green after fix: unit 490 is included in the group move and must move >= 5 wu.
++Green after fix: unit 294 is included in the group move and must move >= 5 wu.
++
++TD-VG-E-34 (pin move, start-count pins move with the starting-force cut, E7, Architect 2026-10-19): the mission composes
++F 490 player units (it was all spawned: 490 and unit id 490), and the player spawns start_units of them. Premise (seed 1, 80
++regions, region 66, archetype 8): F 490, p 1, e 1, n 2, share 0.5, frac 0.6, start 294.0, start_units 294. The player's units
++are ids 1..294, so the last in ascending ID order is now 294, still beyond the old cap of 256.
+ """
+ import json
+ import subprocess
+@@ -23,13 +28,13 @@ STEP10 = {"type": "cmd", "name": "step", "n": 10}
+ START = {"type": "cmd", "name": "mission_start", "faction": 0}
+ BEGIN = {"type": "cmd", "name": "mission_begin"}
+ 
+-# The mission spawns 490 player units with these seed/region/step params.
+-EXPECTED_UNIT_COUNT = 490
++# The mission spawns 294 player units (start_units of F 490, TD-VG-E-34) with these seed/region/step params.
++EXPECTED_UNIT_COUNT = 294
+ 
+-# Unit 490 (Bastion, type 5): last in ascending ID order; spawn at (11850, 645).
+-# At sorted position 490 it falls beyond old cap=256 and is dropped.
++# Unit 294: last in ascending ID order (was unit 490 when all of F 490 spawned).
++# At sorted position 294 it falls beyond old cap=256 and is dropped.
+ # After the fix it receives the group move and must move >= MIN_DIST_WU.
+-CAP_PROOF_UNIT_ID = 490
++CAP_PROOF_UNIT_ID = 294
+ CAP_PROOF_DEST_X = 13045.0
+ CAP_PROOF_DEST_Y = 1255.0
+ MIN_DIST_WU = 5.0
+@@ -60,7 +65,7 @@ def _get_player_unit_ids(begin_frame, player_faction=0):
+ 
+ @pytest.fixture(scope="module")
+ def cap_proof_frames():
+-    """Run mission with a select-all move command carrying all 490 unit IDs."""
++    """Run mission with a select-all move command carrying all 294 unit IDs."""
+     # First pass: discover unit IDs from the begin frame.
+     discover = _run([SET_SEED, STEP10, START, BEGIN])
+     tactical_begin = [f for f in discover if f["type"] == "tactical"]
+diff --git a/tests/transport/test_pipe_mission_start_a3_fallback.py b/tests/transport/test_pipe_mission_start_a3_fallback.py
+index 8f5abb63..cdf242b4 100644
+--- a/tests/transport/test_pipe_mission_start_a3_fallback.py
++++ b/tests/transport/test_pipe_mission_start_a3_fallback.py
+@@ -37,6 +37,7 @@ PARITY_MAX = 1.0
+ # the player's units; every QUIET_SEEDS fallback region is below it.
+ SHORTFALL_KEEP_MIN = 0.75
+ ENEMY_POWER_PER_MILITARY = 2000.0  # R-074-01 default form; R-072-08
++N_TYPES = 6
+ SNAPSHOT_ROUNDING = 1e-3  # snapshot military is rounded to two decimals; relative slack on P
+ LIB = ROOT / "libouroboros.so"
+ 
+@@ -188,6 +189,8 @@ def test_fallback_enemy_is_nearest_faction_and_player_budget_follows_its_power(s
+     lib.om_mission_setup.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int]
+     lib.om_mission_fill_player_force.argtypes = [ctypes.c_void_p, ctypes.c_double, ctypes.c_double]
+     lib.om_mission_fill_player_force.restype = ctypes.c_double
++    lib.om_mission_setup_fallback.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_int32]
++    lib.om_mission_get_player_units.argtypes = [ctypes.c_void_p, ctypes.c_int32, ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint32]
+ 
+     frames = _run([
+         {"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": N_REGIONS,
+@@ -230,7 +233,28 @@ def test_fallback_enemy_is_nearest_faction_and_player_budget_follows_its_power(s
+     finally:
+         lib.om_world_free(w)
+     assert low > 0, "seed %d: fixture drift, the oracle fill is empty for P=%.0f" % (seed, p)
+-    got = sum(lib.om_unit_power(u["type"]) for u in mine)
++    # TD-VG-E-34 (measures the composed F, Architect 2026-10-19): the band is a statement about the composed budget (P x
++    # parity), and before E7 the spawned units were the whole composed force. The player now spawns start_units of F, so the
++    # test sums the composed roster (om_mission_get_player_units of a world set up through the same
++    # om_mission_setup_fallback the pipe calls) and keeps the band unchanged. Premise F, p, e, share, start, spawned is printed.
++    wf = lib.om_world_new(N_REGIONS, seed)
++    try:
++        lib.om_world_generate(wf)
++        lib.om_mission_load_launch_library(wf)
++        lib.om_mission_setup_fallback(wf, mission["region"], expected_enemy)
++        roster = (ctypes.c_uint32 * N_TYPES)()
++        lib.om_mission_get_player_units(wf, player, roster, N_TYPES)
++    finally:
++        lib.om_world_free(wf)
++    composed = list(roster)
++    owners = [s["owner"] for s in tactical["structures"]]
++    n_p, n_e = owners.count(player), owners.count(expected_enemy)
++    share = n_p / (n_p + n_e) if n_p + n_e else None
++    start = sum(composed) * ((0.2 + 1.2 * share if share <= 0.25 else 0.5 + 0.4 * (share - 0.25)) if share is not None else 1.0)
++    print("PREMISE", "seed %d F %d p %d e %d share %s start %.2f start_units %d spawned %d composed %r"
++          % (seed, sum(composed), n_p, n_e, share, start, int(start + 0.5), len(mine), composed))
++    assert sum(composed) >= len(mine) > 0, "premise: the composed force F is at least what spawned"
++    got = sum(lib.om_unit_power(t) * n for t, n in enumerate(composed))
+     assert low <= got <= high, (
+-        "seed %d: player power %.1f outside [%.1f, %.1f] for enemy P=%.0f (strongest military %.2f of faction %d) times parity (R-072-08, R-074-04)"
+-        % (seed, got, low, high, p, strongest, expected_enemy))
++        "seed %d: composed player power %.1f outside [%.1f, %.1f] for enemy P=%.0f (strongest military %.2f of faction %d) times parity (R-072-08, R-074-04); F %d p %d e %d share %s start_units %d spawned %d"
++        % (seed, got, low, high, p, strongest, expected_enemy, sum(composed), n_p, n_e, share, int(start + 0.5), len(mine)))
+diff --git a/tests/transport/test_pipe_shapes.py b/tests/transport/test_pipe_shapes.py
+index c083a8d2..3fecb4b0 100644
+--- a/tests/transport/test_pipe_shapes.py
++++ b/tests/transport/test_pipe_shapes.py
+@@ -77,7 +77,7 @@ def test_pipe_hello_snapshot_and_checksum_match_ctypes():
+     proc = subprocess.run([str(PIPE)], input=script, capture_output=True, timeout=60)
+     frames = _read_frames(proc.stdout)
+     kinds = [f["type"] for f in frames]
+-    assert kinds[0] == "hello" and frames[0]["abi"] == 7 and frames[0]["layout_ok"] is True
++    assert kinds[0] == "hello" and frames[0]["abi"] == 8 and frames[0]["layout_ok"] is True
+     snap = [f for f in frames if f["type"] == "snapshot"][-1]
+     assert snap["tick"] == 10
+     lib = csim.load_lib()
+diff --git a/tests/transport/test_pipe_units_move.py b/tests/transport/test_pipe_units_move.py
+index b3cc62e4..4df3117d 100644
+--- a/tests/transport/test_pipe_units_move.py
++++ b/tests/transport/test_pipe_units_move.py
+@@ -21,15 +21,15 @@ Part 2 -- group speed-sync (R-095-01):
+   the group's speed (R-095-01: "all units move at the speed of the slowest member
+   until the group has spread further than the magic box").
+ 
+-  Unit 21 (Raider, type 0, ~147 wu/s) and unit 490 (Bastion, type 5, ~40 wu/s)
++  Unit 21 (Raider, type 0, ~147 wu/s) and unit 294 (Bastion, type 5, ~40 wu/s)
+   are both at the edge of the spawn formation and can both move.  Commanded together
+   with om_command_move (the unfixed pipe), unit 21 races at Raider speed while
+-  unit 490 moves at Bastion speed: ratio ~3.7x.  With om_command_group_move (fixed),
++  unit 294 moves at Bastion speed: ratio ~3.7x.  With om_command_group_move (fixed),
+   both are capped at the Bastion's speed: ratio ~1.0x.
+ 
+   Positive controls:
+     - Unit 21 must move (sanity check on the begin frame position).
+-    - Unit 490 must move (confirms the slow unit also has a clear path).
++    - Unit 294 must move (confirms the slow unit also has a clear path).
+ 
+ Seed-stability: unit ids and spawn positions are deterministic for seed 1 / 80 regions /
+ features [1..7] / 10 strategic steps / faction 0.  If the world changes, the begin-frame
+@@ -67,13 +67,17 @@ MIN_DIST_WU = 75.0
+ 
+ # Part 2 -- speed-sync group: Raider + Bastion edge pair (R-095-01).
+ # Both units are at the right/top edge of the formation and have a clear NE path.
+-# Unit 21: type 0 (Raider), ~147 wu/s solo.  Unit 490: type 5 (Bastion), ~40 wu/s solo.
++# Unit 21: type 0 (Raider), ~147 wu/s solo.  Unit 294: type 5 (Bastion), ~40 wu/s solo.
+ # When commanded together via om_command_group_move (the fix), both move at Bastion speed.
+ # When commanded via om_command_move (the defect), Raider races ahead at 3.7x Bastion speed.
+ FAST_ID = 21    # Raider at (12080, 120); TD-VG-D-7: was unit 23 at (12330, 15)
+-SLOW_ID = 490   # Bastion at (12420, 450); TD-VG-D-7: was (11850, 645)
+-SLOW_SPAWN_X = 12420.0
+-SLOW_SPAWN_Y = 450.0
++# TD-VG-E-34 (pin move, start-count pins move with the starting-force cut, E7, Architect 2026-10-19): the player spawns
++# start_units of F, not F. Premise (this seed/region, archetype 8): F 490, p 1, e 1, n 2, share 0.5, frac 0.6, start 294.0,
++# start_units 294, so the player's units are ids 1..294 and the last Bastion is unit 294 (was unit 490 of F 490, an enemy
++# unit now), at (12080, 550) (was (12420, 450)). Unit 21's pin is unchanged.
++SLOW_ID = 294   # Bastion at (12080, 550); TD-VG-E-34: was unit 490 at (12420, 450); TD-VG-D-7: was (11850, 645)
++SLOW_SPAWN_X = 12080.0
++SLOW_SPAWN_Y = 550.0
+ # Shared destination: 1000 wu NE of the midpoint between the two units.
+ GROUP_DEST_X = (SPAWN_X + SLOW_SPAWN_X) / 2.0 + 1000.0   
+ GROUP_DEST_Y = (SPAWN_Y + SLOW_SPAWN_Y) / 2.0 + 1000.0   
+diff --git a/tests/transport/test_pipe_vg_contract.py b/tests/transport/test_pipe_vg_contract.py
+index 980389cf..944c0118 100644
+--- a/tests/transport/test_pipe_vg_contract.py
++++ b/tests/transport/test_pipe_vg_contract.py
+@@ -6,7 +6,7 @@ Stories and rules proved (each test names its own in its docstring):
+   S-087 / R-087-*  fire and kill events          S-086 / R-096-05  ability events and `acd`
+   S-005 / R-104-09 layer transit (`tl`,`ld`,4)    S-089 / R-089-03, S-205 / R-205-02 fog_filter
+   S-007 cover class                               S-139 / S-140 net_step frame (K-f)
+-Fixture: seed 8 (eight launch features), the clash of tests/transport/test_pipe_tactical_tier_state_reserved.py:
++Fixture: seed 8 (eight launch features; the clash fixture and the fog clash use CLASH_SEED, see below), the clash of tests/transport/test_pipe_tactical_tier_state_reserved.py:
+ the opposing groups meet around tick 2300. Frames are read from the real pipe/ouroboros_pipe.
+ Every detector function has a positive control (a planted bad frame it must reject).
+ 
+@@ -34,6 +34,14 @@ EVENT_CAP = 512
+ ONE_STEP_FRAMES = 300
+ 
+ SET_SEED = {"type": "cmd", "name": "set_seed", "seed": SEED, "n_regions": 80, "features": list(range(8))}
++# TD-VG-E-34 (fixture seed moved so the first kill falls inside the 3000 window, Architect 2026-10-19): the player spawns
++# start_units of F, so the seed-8 clash (F 177, p 1, e 2, share 1/3, start 94) no longer kills anyone before tick 3000 (its first
++# kill event is at tick 3550 on the E7 build, 2917 on main). The kill tests use the LOWEST seed of 1 to 32 whose clash kills inside
++# the window with p + e > 0 on the E7 build: seed 1, archetype 3, region 76: F 236, p 1, e 2, n 1, share 1/3, frac 0.5333,
++# start 125.87, start_units 126, first fire tick 601, first kill event tick 2258 (17 kill events by tick 3000). Seeds of 1 to 32
++# with no kill before 3000: 6, 8, 15, 21, 23, 24. The window stays 3000.
++CLASH_SEED = 1
++CLASH_SET_SEED = dict(SET_SEED, seed=CLASH_SEED)
+ BEGIN = {"type": "cmd", "name": "mission_begin"}
+ QUIT = {"type": "cmd", "name": "quit"}
+ 
+@@ -95,10 +103,11 @@ def first_frames():
+ 
+ 
+ @pytest.fixture(scope="module")
+-def clash(first_frames):
+-    """Every frame of one clash run (full and delta), in order."""
+-    first = tacticals(first_frames)[0]
+-    return run([SET_SEED, start(), BEGIN] + clash_script(first))
++def clash():
++    """Every frame of one clash run (full and delta), in order. Seed CLASH_SEED (TD-VG-E-34: F 236, p 1, e 2, share 1/3,
++    start_units 126, first kill event at tick 2258, inside the 3000-tick window)."""
++    first = tacticals(run([CLASH_SET_SEED, start(), BEGIN]))[0]
++    return run([CLASH_SET_SEED, start(), BEGIN] + clash_script(first))
+ 
+ 
+ # ---- detectors (pure functions on a frame, each with a positive control below) ----
+@@ -416,11 +425,11 @@ def test_leaving_sight_sends_units_removed_and_events_follow_visibility():
+     """R-089-03, S-089 (K-h): with fog_filter on, a unit that leaves sight while still alive appears in
+     `units_removed` of a delta frame (control: an unfiltered run lists only real deaths there), and an event is
+     sent only when its `a` or `b` is an own or visible unit. Red on main: the flag is ignored."""
+-    plain = tacticals(run([SET_SEED, start(), BEGIN]))[0]
++    plain = tacticals(run([CLASH_SET_SEED, start(), BEGIN]))[0]  # TD-VG-E-34: seed 1 (F 236, p 1, e 2, share 1/3, start_units 126, first kill at tick 2258)
+     script = clash_script(plain)
+-    dead = {i for f in tacticals(run([SET_SEED, start(), BEGIN] + script)) for i in f.get("units_removed", [])}
++    dead = {i for f in tacticals(run([CLASH_SET_SEED, start(), BEGIN] + script)) for i in f.get("units_removed", [])}
+     assert dead, "control: the unfiltered clash has no deaths"
+-    frames = tacticals(run([SET_SEED, start(fog_filter=True), BEGIN] + script))
++    frames = tacticals(run([CLASH_SET_SEED, start(fog_filter=True), BEGIN] + script))
+     left_alive = set()
+     seen = set()
+     for f in frames:
+diff --git a/tests/transport/test_pipe_vg_e.py b/tests/transport/test_pipe_vg_e.py
+index 10b366a8..99973a5e 100644
+--- a/tests/transport/test_pipe_vg_e.py
++++ b/tests/transport/test_pipe_vg_e.py
+@@ -184,14 +184,14 @@ def test_place_no_world():
+ 
+ 
+ def test_hello_abi_is_7():
+-    """K-e: the hello frame reported abi 6; K-e5 moved the pin to 7 (TD-VG-E-16)."""
++    """K-e: the hello frame reported abi 6; K-e5 moved the pin to 7 (TD-VG-E-16); E7 moved it to 8 (TD-VG-E-28)."""
+     script = b""
+     for c in [QUIT]:
+         body = json.dumps(c).encode()
+         script += len(body).to_bytes(4, "big") + body
+     data = subprocess.run([str(PIPE)], input=script, capture_output=True, timeout=60).stdout
+     n = int.from_bytes(data[:4], "big")
+-    assert json.loads(data[4:4 + n])["abi"] == 7
++    assert json.loads(data[4:4 + n])["abi"] == 8
+ 
+ 
+ # ---- K-e6: lots on full frames (R-193-01, R-193-02) -------------------------------------------------------------------------

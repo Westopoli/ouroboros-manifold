@@ -1,0 +1,1407 @@
+diff --git a/scripts/skilllab/__main__.py b/scripts/skilllab/__main__.py
+index 11dffed4..b58d319a 100644
+--- a/scripts/skilllab/__main__.py
++++ b/scripts/skilllab/__main__.py
+@@ -57,7 +57,7 @@ def _batch(name, out_dir, workers=1, layouts=200):
+     return 0
+ 
+ 
+-def _sweep(name, out_dir, workers):
++def _sweep(name, out_dir, workers, full_scan=False):
+     if name in (None, "all"):
+         families = list(sweep.FAMILY_ORDER)
+     elif name in sweep.FAMILY_ORDER:
+@@ -65,7 +65,7 @@ def _sweep(name, out_dir, workers):
+     else:
+         print("sweep needs one of: all, " + ", ".join(sweep.FAMILY_ORDER))
+         return 2
+-    summary = sweep.run(families, out_dir, workers=workers)
++    summary = sweep.run(families, out_dir, workers=workers, full_scan=full_scan)
+     for entry in summary["families"].values():
+         if entry.get("csv"):
+             print(out_dir / entry["csv"])
+@@ -73,8 +73,8 @@ def _sweep(name, out_dir, workers):
+     return 0
+ 
+ 
+-def _smoke(out_dir, workers):
+-    summary = sweep.run_smoke(out_dir, workers=workers)
++def _smoke(out_dir, workers, full_scan=False):
++    summary = sweep.run_smoke(out_dir, workers=workers, full_scan=full_scan)
+     print(out_dir / "smoke.csv")
+     print(out_dir / "smoke_summary.json")
+     return 0
+@@ -105,6 +105,7 @@ def main(argv=None) -> int:
+     parser.add_argument("--factor", type=_positive, default=1.2)
+     parser.add_argument("--workers", type=_workers, default=None,
+                         help="batch only: fight in this many worker processes (default 1; try the number of idle cores)")
++    parser.add_argument("--full-scan", action="store_true", help="scan every headcount (linear) instead of the bisection")
+     parser.add_argument("--layouts", type=_workers, default=200, help="batch layout_search only: how many layouts to draw (default 200)")
+     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
+     if args.command == "controls":
+@@ -114,9 +115,9 @@ def main(argv=None) -> int:
+     if args.command == "batch":
+         return _batch(args.name, Path(args.out), args.workers or 1, args.layouts)
+     if args.command == "sweep":
+-        return _sweep(args.name, Path(args.out), args.workers or 1)
++        return _sweep(args.name, Path(args.out), args.workers or 1, args.full_scan)
+     if args.command == "smoke":
+-        return _smoke(Path(args.out), args.workers or 12)
++        return _smoke(Path(args.out), args.workers or 12, args.full_scan)
+     return 2
+ 
+ 
+diff --git a/scripts/skilllab/summary.py b/scripts/skilllab/summary.py
+index 0d305b0f..38b27323 100644
+--- a/scripts/skilllab/summary.py
++++ b/scripts/skilllab/summary.py
+@@ -43,13 +43,11 @@ def _cell_summary(result):
+         k = len(fights)
+         count = lambda o: sum(f.outcome == o for f in fights)
+         mean = lambda xs: round(sum(xs) / len(xs), 4) if xs else None
+-        orders = [f.mopup_orders for f in fights if f.mopup_orders is not None]
+         sizes[str(cell.enemy_heads)] = {
+             "fights": k, "won": count("side0"), "lost": count("side1"), "stalemate": count("stalemate"),
+             "cap": count("cap"), "draw": count("draw"), "mean_margin": mean([f.margin for f in fights]),
+             "firing_unit_seconds_side0": mean([f.firing_unit_seconds[0] for f in fights]),
+-            "firing_unit_seconds_side1": mean([f.firing_unit_seconds[1] for f in fights]),
+-            "mean_reorders": mean(orders)}
++            "firing_unit_seconds_side1": mean([f.firing_unit_seconds[1] for f in fights])}
+     return {"break_even": ("no break-even in range" if result.beats is None
+                            else "%d units beat %d, lose to %d" % (result.size, result.beats, result.loses_to)),
+             "beats": result.beats, "loses_to": result.loses_to, "by_enemy_size": sizes}
+diff --git a/scripts/skilllab/sweep.py b/scripts/skilllab/sweep.py
+index 2fd0b3bd..83e9393d 100644
+--- a/scripts/skilllab/sweep.py
++++ b/scripts/skilllab/sweep.py
+@@ -49,6 +49,7 @@ class Control:
+     points: list
+     reach: Optional[tuple]
+     check: Any
++    max_ticks: Optional[int] = CONTROL_MAX_TICKS
+ 
+ 
+ def in_band(value, base):
+@@ -119,7 +120,7 @@ def _vision_zero_ok(results_by_point):
+ 
+ def _damage_ok(results_by_point):
+     base, half = results_by_point
+-    return (len(base) == len(half) and all(a.firing[0][1:] == b.firing[0][1:] for a, b in zip(base, half))
++    return (len(base) == len(half) and all(a.firing_window == b.firing_window for a, b in zip(base, half))
+             and any(a.margin != b.margin for a, b in zip(base, half)))
+ 
+ 
+@@ -127,12 +128,20 @@ def controls(family):
+     out = {}
+     if family == "sign_flip":
+         return out
++    if family == "arc":
++        out["null"] = Control("null", [Point("arc", "OM_TP_FIRING_ARC_DEG", 360.0, {"OM_TP_FIRING_ARC_DEG": 360.0}, {}, "control_null", "arc 360 pushed"),
++                                       Point("arc", "OM_TP_FIRING_ARC_DEG", 360.0, {}, {}, "control_null", "arc unset")], None, _identical)
++        return out
++    if family == "cone":
++        out["null"] = Control("null", [Point("cone", "cone", 0.0, {}, {"cone": {"Vanguard": (0.0, 45.0, 1.0)}}, "control_null", "cone range 0"),
++                                       Point("cone", "cone", 0.0, {}, {}, "control_null", "no cone")], None, _identical)
++        return out
+     out["null"] = Control("null", [dataclasses.replace(p, kind="control_null") for p in grid(family)], (0, 0), _identical)
+     if family == "vision":
+         zero = dataclasses.replace(_vision(0.0), kind="control_positive", label="vision 0 control")
+         out["positive"] = Control("positive", [zero], None, _vision_zero_ok)
+     if family == "damage_up":
+-        out["positive"] = Control("positive", [dataclasses.replace(_damage(v), kind="control_positive") for v in (1.0, 0.5)], None, _damage_ok)
++        out["positive"] = Control("positive", [dataclasses.replace(_damage(v), kind="control_positive") for v in (1.0, 0.5)], None, _damage_ok, None)
+     return out
+ 
+ 
+@@ -191,8 +200,6 @@ def baseline_roles(play):
+     return ("naive_attacker", "naive_defender")
+ 
+ 
+-def default_builds(play, role, layout):
+-    raise NotImplementedError("reference only")
+ 
+ 
+ def _apply(build, point, control=False):
+@@ -213,8 +220,9 @@ def _refusal(builds_by_role):
+     return None
+ 
+ 
+-def _scan_rows(rows, family, play, layout, point, baseline, build, replicates, fight_fn, map_fn):
+-    res = scan_mod.scan(_apply(build, point), SIZE, ENEMY_FROM, ENEMY_TO, replicates=replicates, fight_fn=fight_fn, map_fn=map_fn)
++def _scan_rows(rows, family, play, layout, point, baseline, build, replicates, fight_fn, map_fn, full_scan=False):
++    res = scan_mod.scan(_apply(build, point), SIZE, ENEMY_FROM, ENEMY_TO, replicates=replicates, fight_fn=fight_fn, map_fn=map_fn,
++                        full_scan=full_scan)
+     for c in res.cells:
+         for f in c.fights:
+             rows.append(rows_mod.fight_row(f, family=family, play=play, layout=layout, kind=point.kind, enemy_heads=c.enemy_heads,
+@@ -227,16 +235,24 @@ def _gain(play_res, base_res):
+     return (play_res.beats or 0) - (base_res.beats or 0)
+ 
+ 
+-def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_fn=None, map_fn=None, caps=None, replicates=REPLICATES):
++def _defects(rows):
++    cell = lambda r: (r["play"], r["layout"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
++    bad = [r for r in rows if r["outcome"] in ("cap", "draw") and not r["kind"].startswith("control_")]
++    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "draw_rows": sum(r["outcome"] == "draw" for r in rows),
++            "cells": len({cell(r) for r in bad})}
++
++
++def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_fn=None, map_fn=None, caps=None, replicates=REPLICATES,
++               full_scan=False):
+     builds = builds or default_builds
+     layouts = layouts if layouts is not None else smoke_layouts()
+     out = Path(out_dir)
+     out.mkdir(parents=True, exist_ok=True)
+     caps = caps or detect(None)
+-    entry = {"family": family, "skipped": skip_reason(family, caps), "csv": None, "rows": 0, "refined": [], "refused": [], "controls": {}}
++    entry = {"family": family, "skipped": skip_reason(family, caps), "csv": None, "rows": 0, "refined": [], "refined_vs": {}, "refused": [], "controls": {}}
+     if entry["skipped"]:
+         return entry
+-    rows, oks, refined = [], {}, set()
++    rows, oks, refined, refined_vs = [], {}, set(), {}
+     for layout, features in layouts.items():
+         for play in (plays or PLAYS_BY_FAMILY[family]):
+             roles = ("play",) + baseline_roles(play)
+@@ -251,28 +267,36 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
+                 got = {}
+                 for role in roles:
+                     got[role] = _scan_rows(rows, family, play, layout, point, "none" if role == "play" else role, by_role[role],
+-                                           replicates, fight_fn, map_fn)
++                                           replicates, fight_fn, map_fn, full_scan)
+                 results[point.value] = got
+-                return _gain(got["play"], got["naive_attacker"]) > 0
+ 
+             for p in grid(family):
+                 point_rows(p)
+             if family in _REFINABLE:
+-                signs = {v: _gain(r["play"], r["naive_attacker"]) > 0 for v, r in results.items()}
+-                added = refine(sorted(signs), lambda v: signs[v] if v in signs else point_rows(_point_at(family, v)))
+-                # refine() evaluates new midpoints through `differs`, which fought them above
+-                refined |= {v for _r, v in added}
++                coarse = sorted(results)
++
++                def sign(role, v):
++                    if v not in results:
++                        point_rows(_point_at(family, v))
++                    return _gain(results[v]["play"], results[v][role]) > 0
++
++                for role in roles[1:]:
++                    added = refine(coarse, lambda v, role=role: sign(role, v))
++                    refined_vs.setdefault(role, set()).update(v for _r, v in added)
++                    refined |= {v for _r, v in added}
+             for name, ctl in controls(family).items():
+                 per_point = []
+                 for p in ctl.points:
+                     role = "reach_zero" if ctl.reach else "play"
+-                    cell = scan_mod.cell(_apply(by_role[role], p, control=True), SIZE, replicates, fight_fn=fight_fn, map_fn=map_fn)
++                    cell = scan_mod.cell(_apply(by_role[role], p, control=ctl.max_ticks is not None), SIZE, replicates, fight_fn=fight_fn, map_fn=map_fn)
+                     per_point.append(cell.fights)
+                     for f in cell.fights:
+                         rows.append(rows_mod.fight_row(f, family=family, play=play, layout=layout, kind=p.kind, enemy_heads=SIZE,
+                                                        knob=p.knob, knob_value=float(p.value), baseline="none", ceiling_hit=0))
+                 oks[name] = oks.get(name, True) and bool(ctl.check(per_point))
+     entry["refined"] = sorted(refined)
++    entry["refined_vs"] = {k: sorted(v) for k, v in refined_vs.items()}
++    entry["defects"] = _defects(rows)
+     entry["controls"] = {n: {"ok": ok} for n, ok in oks.items()}
+     if family == "emitting":
+         entry["saturated_at_vision"] = [0.5]
+@@ -281,7 +305,8 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
+     return entry
+ 
+ 
+-def run(families, out_dir, workers=1, **kw):
++def run(families, out_dir, workers=1, full_scan=False, **kw):
++    kw = dict(kw, full_scan=full_scan)
+     out = Path(out_dir)
+     out.mkdir(parents=True, exist_ok=True)
+ 
+@@ -303,7 +328,7 @@ def smoke_layouts():
+     return {k: draw[int(k)] for k in SMOKE_LAYOUTS}
+ 
+ 
+-def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=None, fight_fn=None, map_fn=None):
++def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=None, fight_fn=None, map_fn=None, full_scan=False):
+     builds = builds or default_builds
+     layouts = layouts if layouts is not None else smoke_layouts()
+     out = Path(out_dir)
+@@ -324,17 +349,18 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
+                 ok += 1
+                 for role in roles:
+                     _scan_rows(rows, "vision", play, layout, point, "none" if role == "play" else role, by_role[role],
+-                               REPLICATES, fight_fn, map_fn)
++                               REPLICATES, fight_fn, map_fn, full_scan)
+         for name, heads in SMOKE_CONTROLS:
+             ok += 1
+-            cell = scan_mod.cell(_apply((control_builds or {})[name], dataclasses.replace(point, settings={}, kind="smoke_control")),
++            cell = scan_mod.cell(_apply((control_builds or default_control_builds())[name], dataclasses.replace(point, settings={}, kind="control_smoke")),
+                                  heads, REPLICATES, fight_fn=fight_fn, map_fn=map_fn)
+             for f in cell.fights:
+-                rows.append(rows_mod.fight_row(f, family="controls", play=name, layout="none", kind="smoke_control", enemy_heads=heads))
++                rows.append(rows_mod.fight_row(f, family="controls", play=name, layout="none", kind="control_smoke", enemy_heads=heads))
+         rows_mod.write_rows(rows, out / "smoke.csv")
+         outcomes = collections.Counter(r["outcome"] for r in rows)
+         summary = {"rows_sha256": hashlib.sha256((out / "smoke.csv").read_bytes()).hexdigest(), "rows": len(rows),
+-                   "outcomes": dict(sorted(outcomes.items())), "prefight": {"ok": ok}, "refused": refused}
++                   "outcomes": dict(sorted(outcomes.items())), "prefight": {"ok": ok}, "refused": refused,
++                   "defects": _defects(rows)}
+         (out / "smoke_summary.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
+         return summary
+ 
+@@ -342,3 +368,37 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
+         with pool.FightPool(workers, lean=True) as p:
+             return go(p.map)
+     return go(map_fn)
++
++# ---- scratch-only real builds so the OM_LAB_SLOW cases can run on the reference (approximate: every baseline is the naive blob) ----
++def _features_of(f):
++    return depth._features(f)
++
++
++def _reach_zero(build):
++    def wrapped(enemy_heads, swap):
++        setup = build(enemy_heads, swap)
++        ut = {k: dict(v) for k, v in setup.unit_types.items()}
++        for g in setup.groups:
++            ut.setdefault(g.unit, {"base": g.unit})
++            ut[g.unit]["reach"] = (0, 0)
++        out = dataclasses.replace(setup, unit_types=ut)
++        wrapped.labels["prefight"] = build.labels.get("prefight")
++        return out
++    wrapped.labels = build.labels
++    return wrapped
++
++
++def default_builds(play, role, layout):
++    from scripts.skilllab import maps, scenes
++    values = dict(layout)
++    d = values["start_distance"]
++    feats = depth._features(values)
++    frame = maps.Frame((-d / 2, 0.0), (d / 2, 0.0), 0)
++    lay = maps.layout_map(feats, 0, frame=frame)
++    b = scenes.placed_scene(lay, play, d, feats)      # scratch approximation: every baseline is the play's own scene
++    return _reach_zero(b) if role == "reach_zero" else b
++
++
++def default_control_builds():
++    from scripts.skilllab import plays
++    return {"mirror": plays.blob_play(16), "numbers": plays.blob_play(16), "planted": plays.damage_play(16)}
+diff --git a/tests/skilllab/integration/test_planted_advantage.py b/tests/skilllab/integration/test_planted_advantage.py
+index a365554a..19c84d53 100644
+--- a/tests/skilllab/integration/test_planted_advantage.py
++++ b/tests/skilllab/integration/test_planted_advantage.py
+@@ -4,6 +4,9 @@
+ The control is damage, not reach: on today's engine more reach made a side worse (docs/northstar/research/
+ layer_dynamics/runs/2026-10-02_harness_check.md). `reach_play` stays as a knob to study; nothing here asserts
+ that a reach scan beats more.
++
++LAB-REV2-L4 ruler (TD-LAB-REV2-L4-fullscan): bisection is the scan default now, so the four fixtures ask for the linear sweep (full_scan=True)
++and the comparisons read the exact break-even of each play.
+ """
+ import sys
+ from pathlib import Path
+@@ -26,22 +29,22 @@ def library():
+ 
+ @pytest.fixture(scope="module")
+ def identical_scan(library):
+-    return scan.scan(plays.blob_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO)
++    return scan.scan(plays.blob_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO, full_scan=True)
+ 
+ 
+ @pytest.fixture(scope="module")
+ def identical_scan_again(library):
+-    return scan.scan(plays.blob_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO)
++    return scan.scan(plays.blob_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO, full_scan=True)
+ 
+ 
+ @pytest.fixture(scope="module")
+ def null_damage_scan(library):
+-    return scan.scan(plays.damage_play(SIZE, factor=1.0), SIZE, ENEMY_FROM, ENEMY_TO)
++    return scan.scan(plays.damage_play(SIZE, factor=1.0), SIZE, ENEMY_FROM, ENEMY_TO, full_scan=True)
+ 
+ 
+ @pytest.fixture(scope="module")
+ def damage_scan(library):
+-    return scan.scan(plays.damage_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO)
++    return scan.scan(plays.damage_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO, full_scan=True)
+ 
+ 
+ def test_damage_beats_strictly_more_enemies_than_identical(damage_scan, identical_scan):
+diff --git a/tests/skilllab/integration/test_scenes_real.py b/tests/skilllab/integration/test_scenes_real.py
+index 3dd2e30c..e35bfad5 100644
+--- a/tests/skilllab/integration/test_scenes_real.py
++++ b/tests/skilllab/integration/test_scenes_real.py
+@@ -2,7 +2,10 @@
+ """Phase B choke, 8 defenders against 8 attackers, through fight.fight twice.
+ 
+ If om_map_block_rect is still an inert stub in this build the engine may ignore the walls, so this asserts only
+-determinism, spawn positions and that the fight runs."""
++determinism, spawn positions and that the fight runs.
++
++LAB-REV2-L4 ruler (TD-LAB-REV2-L4-layers): test_layers_batch_has_the_choke_phase_b_cells is retired with the `layers` batch (tables
++LA, LB and LC are deleted by L4)."""
+ import dataclasses
+ import sys
+ from pathlib import Path
+@@ -13,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[3]
+ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+-from scripts.skilllab import batches, engine, fight  # noqa: E402
++from scripts.skilllab import engine, fight  # noqa: E402
+ from scripts.skilllab.formations import place  # noqa: E402
+ from scripts.skilllab.scenes import phase_b_choke  # noqa: E402
+ 
+@@ -46,8 +49,3 @@ def test_a_replicate_with_swap_also_runs(library):
+     r = fight.fight(_setup(), 2, True, engine=library)
+     assert r.ticks > 0 and r.heads == (8, 8)
+ 
+-
+-def test_layers_batch_has_the_choke_phase_b_cells():
+-    cells = [c for c in batches.get("layers").cells if "choke_phase_b" in c.label]
+-    assert len(cells) == 19
+-    assert all((c.size, c.enemy_from, c.enemy_to) == (8, 7, 12) for c in cells)
+diff --git a/tests/skilllab/integration/test_slots_real.py b/tests/skilllab/integration/test_slots_real.py
+index 7b819933..53f928e1 100644
+--- a/tests/skilllab/integration/test_slots_real.py
++++ b/tests/skilllab/integration/test_slots_real.py
+@@ -21,8 +21,7 @@ def library():
+ 
+ def _destinations(library, n, per_unit=False):
+     setup = plays.line_play(n)(n, False)
+-    if not per_unit:
+-        setup = dataclasses.replace(setup, orders_per_unit=False)
++    setup = dataclasses.replace(setup, orders_per_unit=per_unit)      # spelled out: L4 flipped the Setup default to False
+     w = library.new_world(0)
+     try:
+         library.disable_abilities(w)
+@@ -48,10 +47,11 @@ def test_line_destinations_are_distinct_and_spread(library, n, spread):
+ 
+ @pytest.mark.parametrize("n", [16, 32])
+ def test_per_unit_orders_all_head_for_the_shared_point(library, n):
+-    """LAB-REV2-L2 (ruling 6, Q-LAB-03): the default is one attack-move per unit to Setup.point, so every destination is that point
+-    (the control for the slot test above, which asks for the group order)."""
++    """LAB-REV2-L2 (ruling 6, Q-LAB-03): with orders_per_unit=True it is one attack-move per unit to Setup.point, so every destination
++    is that point (the control for the slot test above, which asks for the group order). LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): the
++    default is now the group order, so this test asks for the per-unit order explicitly."""
+     setup = plays.line_play(n)(n, False)
+-    assert setup.orders_per_unit is True and setup.point is not None
++    assert setup.orders_per_unit is False and setup.point is not None
+     dests = _destinations(library, n, per_unit=True)
+     assert all(d is not None for d in dests)
+     assert set(dests) == {tuple(float(v) for v in setup.point)}
+diff --git a/tests/skilllab/integration/test_sweep_real.py b/tests/skilllab/integration/test_sweep_real.py
+index c545725b..4e060b07 100644
+--- a/tests/skilllab/integration/test_sweep_real.py
++++ b/tests/skilllab/integration/test_sweep_real.py
+@@ -12,7 +12,15 @@ cap with (16, 16) alive, firing unit-seconds (0, 0) against (152.5, 110.75); dam
+ (margin 0.312), damage-up 0.5 with 14 left (margin 0.670), both with an opening window of (12.75, 9.25).
+ 
+ Gated cases (OM_LAB_SLOW=1; they need L3's plays and sweep.py's real builds): the smoke command's rows are the same bytes at 1 and 12
+-workers and every fight ends side0, side1 or draw; the sweep command writes sweep_<family>.csv and sweep_summary.json.
++workers and every fight ends side0, side1 or draw; the sweep command writes sweep_<family>.csv and sweep_summary.json. A cap appears
++only in control_* kinds (controls cap by design, CONTROL_MAX_TICKS < 12000), and the pinned defect count (non-control caps, draws and
++the cells holding them) is recounted from the CSV and must match the entry or summary; non-control caps are pinned at zero.
++SATISFIABILITY of the gated cases: the first revision of this file was written before L3's plays existed, so they were unverified.
++L3 is on the lab branch now; the fix pass ran them on the scratch reference (see the report of LAB-REV2-L4-tests-fix for the result).
++
++Capability-gated cases (skipped on a library without OM_TP_FIRING_ARC_DEG or a usable om_roster_set_cone): the arc null control
++(parameter pushed at 360 against never set) and the cone null control (range 0 against no cone) read byte-identical rows on the real
++engine. They skip today (E0 and E2 are not built) and are unverified for satisfiability until those land.
+ """
+ import csv
+ import dataclasses
+@@ -109,6 +117,32 @@ def test_positive_control_the_damage_detector_fires_on_two_identical_runs(librar
+     assert sweep.controls("damage_up")["positive"].check([[a], [b]]) is False
+ 
+ 
++# ---- arc and cone null controls (gated on the library) ------------------------------------------------------------------------------
++
++def test_the_arc_null_control_reads_360_pushed_against_never_set_as_byte_identical_rows(library):
++    if not sweep.detect(library).arc:
++        pytest.skip("the library has no OM_TP_FIRING_ARC_DEG (E0 not built): unverified for satisfiability until it lands")
++    ctl = sweep.controls("arc")["null"]
++    got = []
++    for p in sorted(ctl.points, key=lambda p: -len(p.settings)):
++        setup = scene(vision=0.5)
++        setup = dataclasses.replace(setup, settings={**setup.settings, **p.settings}, **p.setup)
++        got.append([fought(library, setup)])
++    assert ctl.check(got) is True
++    assert got[0][0].firing_unit_seconds[0] > 0                 # positive control: the scene does shoot, so identical rows mean something
++
++
++def test_the_cone_null_control_reads_range_zero_against_no_cone_as_byte_identical_rows(library):
++    if not sweep.detect(library).cone:
++        pytest.skip("the library has no usable om_roster_set_cone (E2 not built): unverified for satisfiability until it lands")
++    ctl = sweep.controls("cone")["null"]
++    got = []
++    for p in sorted(ctl.points, key=lambda p: -len(p.setup)):
++        got.append([fought(library, dataclasses.replace(scene(vision=0.5), **p.setup))])
++    assert ctl.check(got) is True
++    assert got[0][0].firing_unit_seconds[0] > 0
++
++
+ # ---- capabilities: arc and cone are skipped with a reason when the library lacks them ------------------------------------------------
+ 
+ def test_detect_matches_the_header_and_the_symbol(library):
+@@ -153,6 +187,14 @@ def _read(path):
+         return list(csv.DictReader(fh))
+ 
+ 
++def _defects_of(rows):
++    """The pinned definition of the defect count (test_sweep.py header), recounted from the CSV rows."""
++    cell = lambda r: (r["play"], r["layout"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
++    bad = [r for r in rows if r["outcome"] in ("cap", "draw") and not r["kind"].startswith("control_")]
++    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "draw_rows": sum(r["outcome"] == "draw" for r in rows),
++            "cells": len({cell(r) for r in bad})}
++
++
+ @SLOW
+ def test_smoke_rows_are_the_same_bytes_at_1_and_12_workers_and_every_fight_ends_clean(tmp_path):
+     assert cli.main(["smoke", "--out", str(tmp_path / "w1"), "--workers", "1"]) == 0
+@@ -162,6 +204,8 @@ def test_smoke_rows_are_the_same_bytes_at_1_and_12_workers_and_every_fight_ends_
+     b = json.loads((tmp_path / "w12" / "smoke_summary.json").read_text())
+     assert a["rows_sha256"] == b["rows_sha256"]
+     assert set(a["outcomes"]) <= {"side0", "side1", "draw"}, a["outcomes"]          # no cap: a capped fight is a lab defect
++    smoke_rows = _read(tmp_path / "w1" / "smoke.csv")
++    assert a["defects"] == _defects_of(smoke_rows) == b["defects"] and a["defects"]["cap_rows"] == 0
+     assert {r["prefight"] for r in _read(tmp_path / "w1" / "smoke.csv") if r["family"] != "controls"} == {"ok"}
+     assert isinstance(a["refused"], list) and set(a["prefight"]) <= {"ok", "no_fit", "unroutable", "no_reach"}
+     layouts = {r["layout"] for r in _read(tmp_path / "w1" / "smoke.csv") if r["family"] == "vision"}
+@@ -179,3 +223,5 @@ def test_the_sweep_command_writes_the_family_csv_and_the_summary(tmp_path):
+     assert entry["skipped"] is None and entry["csv"] == "sweep_damage_up.csv"
+     assert entry["controls"]["positive"]["ok"] is True and entry["controls"]["null"]["ok"] is True
+     assert {r["outcome"] for r in rows} <= {"side0", "side1", "draw", "cap"}
++    assert {r["kind"] for r in rows if r["outcome"] == "cap"} <= {"control_positive", "control_null"}      # a cap is allowed in a control only
++    assert entry["defects"] == _defects_of(rows) and entry["defects"]["cap_rows"] == 0
+diff --git a/tests/skilllab/test_asym.py b/tests/skilllab/test_asym.py
+index 67d92a14..6eb431e6 100644
+--- a/tests/skilllab/test_asym.py
++++ b/tests/skilllab/test_asym.py
+@@ -408,7 +408,7 @@ def test_ruling_6_a_naive_meeting_has_one_point_between_the_fronts(a, b, heads):
+     s = asym_play(16, Side(a), Side(b))(heads, False)
+     assert s.point == pytest.approx((0.0, 0.0), abs=1e-6)
+     assert all(g.goal is None for g in s.groups)
+-    assert s.orders_per_unit is True
++    assert s.orders_per_unit is False      # LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): the group order is the default
+ 
+ 
+ @pytest.mark.parametrize("kw", ["approach", "mopup"])
+diff --git a/tests/skilllab/test_charts.py b/tests/skilllab/test_charts.py
+index a6fb88cc..0e5957f4 100644
+--- a/tests/skilllab/test_charts.py
++++ b/tests/skilllab/test_charts.py
+@@ -229,7 +229,7 @@ def test_region_map_css_classes_only_and_safe():
+ 
+ # small multiples
+ 
+-def scan(label_won, size=10, win=0.05):
++def scan(label_won, size=10):
+     """label_won: {enemy_heads: won}; break-even computed as scan() does (first won -> lost step)."""
+     heads = sorted(label_won)
+     cells = [CellResult(enemy_heads=h, fights=[], mean_margin=0.5 if label_won[h] else -0.5, won=label_won[h])
+@@ -239,7 +239,7 @@ def scan(label_won, size=10, win=0.05):
+         if a.won and not b.won:
+             beats, loses = a.enemy_heads, b.enemy_heads
+             break
+-    return ScanResult(size=size, cells=cells, beats=beats, loses_to=loses, win_margin=win)
++    return ScanResult(size=size, cells=cells, beats=beats, loses_to=loses)
+ 
+ 
+ A = scan({1: True, 2: True, 3: False, 4: False})
+@@ -324,7 +324,7 @@ def test_sm_panel_count_limits():
+ 
+ def test_sm_empty_cells_is_valueerror():
+     """A panel with no cells is a ValueError."""
+-    empty = ScanResult(size=1, cells=[], beats=None, loses_to=None, win_margin=0.05)
++    empty = ScanResult(size=1, cells=[], beats=None, loses_to=None)
+     with pytest.raises(ValueError):
+         charts.small_multiples_html([("a", A), ("e", empty)])
+ 
+diff --git a/tests/skilllab/test_conditions.py b/tests/skilllab/test_conditions.py
+index f6363063..d6b12002 100644
+--- a/tests/skilllab/test_conditions.py
++++ b/tests/skilllab/test_conditions.py
+@@ -54,7 +54,7 @@ def _cell(heads, fights, won=True):
+ 
+ 
+ def _scan(size, cells, beats=None, loses_to=None):
+-    return ScanResult(size=size, cells=list(cells), beats=beats, loses_to=loses_to, win_margin=0.05)
++    return ScanResult(size=size, cells=list(cells), beats=beats, loses_to=loses_to)
+ 
+ 
+ def _pts_scan(xs, ys, size=5):
+diff --git a/tests/skilllab/test_fight_outcomes.py b/tests/skilllab/test_fight_outcomes.py
+index 6362a6a3..707a5355 100644
+--- a/tests/skilllab/test_fight_outcomes.py
++++ b/tests/skilllab/test_fight_outcomes.py
+@@ -181,11 +181,12 @@ def test_positive_control_setup_still_takes_the_kept_fields():
+ 
+ 
+ def test_setup_gains_point_orders_per_unit_firing_arc_cone_and_max_ticks_default():
+-    """Spec: point, orders_per_unit=True, firing_arc_deg=360.0, cone={} and max_ticks=12000 (the cap, bug detector only)."""
++    """Spec: point, orders_per_unit, firing_arc_deg=360.0, cone={} and max_ticks=12000 (the cap, bug detector only). LAB-REV2-L4 ruler
++    (TD-LAB-REV2-L4-flip, decisions 13): the orders_per_unit default is False (one group order) since E1 lands in the same landing."""
+     names = {f.name for f in dataclasses.fields(Setup)}
+     assert {"point", "orders_per_unit", "firing_arc_deg", "cone", "max_ticks"} <= names
+     s = Setup(groups=(), unit_types={})
+-    assert (s.point, s.orders_per_unit, s.firing_arc_deg, s.cone, s.max_ticks) == (None, True, 360.0, {}, 12000)   # decision: point defaults to None
++    assert (s.point, s.orders_per_unit, s.firing_arc_deg, s.cone, s.max_ticks) == (None, False, 360.0, {}, 12000)   # decision: point defaults to None
+     assert s.cone is not Setup(groups=(), unit_types={}).cone      # a fresh dict per Setup
+ 
+ 
+@@ -645,17 +646,24 @@ def _orders(fake):
+     return [(c[2], c[3], c[4]) for c in fake.calls_named("order_attack_move")]
+ 
+ 
+-def test_ruling_6_default_issues_one_attack_move_per_unit_to_the_shared_point(seam):
+-    """Spec: orders_per_unit=True means one order_attack_move call per unit; `point` is the shared attack-move point."""
+-    setup = S(count=3, max_ticks=2, point=(25.0, -40.0))
++def test_ruling_6_orders_per_unit_true_issues_one_attack_move_per_unit_to_the_shared_point(seam):
++    """Spec: orders_per_unit=True means one order_attack_move call per unit; `point` is the shared attack-move point.
++    LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): the per-unit path is now asked for explicitly (it was the default)."""
++    setup = S(count=3, max_ticks=2, point=(25.0, -40.0), orders_per_unit=True)
+     _, fake = run(setup)
+     got = _orders(fake)
+     assert sorted(ids for ids, _x, _y in got) == [[1], [2], [3], [4], [5], [6]]
+     assert all((x, y) == (25.0, -40.0) for _ids, x, y in got)
+ 
+ 
+-def test_ruling_6_orders_per_unit_false_is_one_order_for_the_group_at_the_point(seam):
+-    """Control: the group order (still available until E1 is on main and L4 flips the default) is one call per group."""
++def test_ruling_6_the_default_is_one_order_for_the_group_at_the_point(seam):
++    """LAB-REV2-L4 flip (decisions 13): with the default, and with orders_per_unit=False spelled out, one call per group."""
++    setup = S(count=3, max_ticks=2, point=(25.0, -40.0))
++    assert setup.orders_per_unit is False
++    _, fake = run(setup)
++    got = _orders(fake)
++    assert sorted(ids for ids, _x, _y in got) == [[1, 2, 3], [4, 5, 6]]
++    assert all((x, y) == (25.0, -40.0) for _ids, x, y in got)
+     setup = S(count=3, max_ticks=2, point=(25.0, -40.0), orders_per_unit=False)
+     _, fake = run(setup)
+     got = _orders(fake)
+@@ -666,9 +674,9 @@ def test_ruling_6_orders_per_unit_false_is_one_order_for_the_group_at_the_point(
+ def test_ruling_6_a_group_goal_overrides_the_point_for_that_group(seam):
+     setup = Setup(groups=(G(0, 2, goal=(5.0, 6.0)), G(1, 2)), unit_types={}, max_ticks=2, point=(25.0, -40.0))
+     _, fake = run(setup)
+-    goals = {ids[0]: (x, y) for ids, x, y in _orders(fake)}
+-    assert goals[1] == goals[2] == (5.0, 6.0)
+-    assert goals[3] == goals[4] == (25.0, -40.0)
++    goals = {ids[0]: (x, y) for ids, x, y in _orders(fake)}       # the group order: one call per group, keyed by its first unit
++    assert sorted(ids for ids, _x, _y in _orders(fake)) == [[1, 2], [3, 4]]
++    assert goals[1] == (5.0, 6.0) and goals[3] == (25.0, -40.0)
+ 
+ 
+ def test_ruling_6_per_unit_orders_go_out_before_the_first_step(seam):
+@@ -682,7 +690,7 @@ def test_ruling_6_a_guard_group_gets_a_guard_order_not_an_attack_move(seam):
+     setup = Setup(groups=(G(0, 2), G(1, 2, order="guard")), unit_types={}, max_ticks=2, point=(25.0, -40.0))
+     _, fake = run(setup, engine_cls=GuardFakeEngine)
+     assert [c[2] for c in fake.calls_named("order_guard")] == [[3, 4]]
+-    assert sorted(ids for ids, _x, _y in _orders(fake)) == [[1], [2]]
++    assert sorted(ids for ids, _x, _y in _orders(fake)) == [[1, 2]]
+ 
+ 
+ def test_ruling_6_without_a_point_or_goal_each_group_aims_at_the_first_anchor_of_the_other_side(seam):
+@@ -692,8 +700,9 @@ def test_ruling_6_without_a_point_or_goal_each_group_aims_at_the_first_anchor_of
+     assert setup.point is None
+     _, fake = run(setup)
+     got = {ids[0]: (x, y) for ids, x, y in _orders(fake)}
+-    assert got[1] == got[2] == (300.0, 0.0)          # side 0 aims at side 1's anchor
+-    assert got[3] == got[4] == (-300.0, 0.0)         # side 1 aims at side 0's anchor
++    assert sorted(ids for ids, _x, _y in _orders(fake)) == [[1, 2], [3, 4]]      # the group order (the default)
++    assert got[1] == (300.0, 0.0)          # side 0 aims at side 1's anchor
++    assert got[3] == (-300.0, 0.0)         # side 1 aims at side 0's anchor
+ 
+ 
+ def test_ruling_6_the_fallback_is_the_other_sides_first_group_when_a_side_has_two(seam):
+@@ -712,8 +721,7 @@ def test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only(seam):
+     """Decision (D16): later timeline steps stay group-level. With orders_per_unit True the opening is one call per unit; a
+     step that attack-moves group 0 at tick 5 is ONE call with all three of group 0's units, and a move step is one call too."""
+     steps = (Step(0, ("tick", 5), "attack_move", (10.0, 20.0)), Step(0, ("tick", 6), "move", (30.0, 40.0)))
+-    setup = S(count=3, max_ticks=10, point=(25.0, -40.0), timeline=steps)
+-    assert setup.orders_per_unit is True
++    setup = S(count=3, max_ticks=10, point=(25.0, -40.0), timeline=steps, orders_per_unit=True)
+     _, fake = run(setup)
+     opening = [c for c in _orders(fake) if (c[1], c[2]) == (25.0, -40.0)]
+     assert sorted(ids for ids, _x, _y in opening) == [[1], [2], [3], [4], [5], [6]]
+@@ -726,12 +734,13 @@ def test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only(seam):
+ @pytest.mark.parametrize("name", ["DRAW_BAND", "SILENCE_TICKS", "REISSUE_TICKS", "BLIND_TICKS", "HOLD_RADIUS"])
+ def test_contract_loses_the_retired_constants(name):
+     """Decision 12 (Q-LAB-03): the constants of the retired draw band, silence, re-issue, blind and hold rules are deleted from
+-    contract.py. Control below: WIN_MARGIN stays until L4, and the new window constant is there."""
++    contract.py. Control below: the window constant and the time constants stay."""
+     assert not hasattr(contract_mod, name)
+ 
+ 
+-def test_contract_keeps_win_margin_until_l4():
+-    assert contract_mod.WIN_MARGIN == 0.05 and hasattr(contract_mod, "TICKS_PER_SECOND") and hasattr(contract_mod, "SHIFT_MAX")
++def test_contract_keeps_the_time_and_shift_constants_and_loses_win_margin():
++    """LAB-REV2-L4 ruler (TD-LAB-REV2-L4-winmargin): spec 'WIN_MARGIN deleted'; the L2 control kept it until L4."""
++    assert not hasattr(contract_mod, "WIN_MARGIN") and hasattr(contract_mod, "TICKS_PER_SECOND") and hasattr(contract_mod, "SHIFT_MAX")
+ 
+ 
+ @pytest.mark.parametrize("name", ["mopup", "approach"])
+@@ -746,6 +755,6 @@ def test_the_retired_lab_modules_are_deleted(name):
+ def test_no_mop_up_or_reissue_orders_after_the_opening_orders(seam):
+     """Q-LAB-03: orders are issued once at tick 0 and never again by the fight loop (a side that stops stays stopped)."""
+     r, fake = run(S(count=2, max_ticks=450, point=(0.0, 0.0)))
+-    assert len(fake.calls_named("order_attack_move")) == 4
++    assert len(fake.calls_named("order_attack_move")) == 2        # one group order per side (the default since the L4 flip)
+     first_step = [c[0] for c in fake.calls].index("step")
+     assert all(i < first_step for i, c in enumerate(fake.calls) if c[0] == "order_attack_move")
+diff --git a/tests/skilllab/test_guard.py b/tests/skilllab/test_guard.py
+index a8d253f9..b5eb8336 100644
+--- a/tests/skilllab/test_guard.py
++++ b/tests/skilllab/test_guard.py
+@@ -149,7 +149,7 @@ def _t(tol=DRAFT_UNCONFIRMED_GUARD_TOLERANCE_UNITS):
+ 
+ 
+ def _scan(beats):
+-    return ScanResult(size=10, cells=[], beats=beats, loses_to=None if beats is None else beats + 1, win_margin=0.05)
++    return ScanResult(size=10, cells=[], beats=beats, loses_to=None if beats is None else beats + 1)
+ 
+ 
+ def test_guard_flag_positive_control():
+diff --git a/tests/skilllab/test_mapreport.py b/tests/skilllab/test_mapreport.py
+index 140ed63a..c6bbc15b 100644
+--- a/tests/skilllab/test_mapreport.py
++++ b/tests/skilllab/test_mapreport.py
+@@ -117,13 +117,6 @@ def test_call_set_equals_find_break_even_on_the_wrapped_build():
+     assert rep.naive == ref
+ 
+ 
+-def test_win_margin_default_is_used():
+-    """The default win margin is passed on: scan.win_margin is the contract WIN_MARGIN."""
+-    from scripts.skilllab.contract import WIN_MARGIN
+-    rep = naive_break_even("open", 0, Terrain(canvas=CANVAS), SIZE, 3, 5, fight_fn=Recorder(), **KW)
+-    assert rep.naive.scan.win_margin == WIN_MARGIN
+-
+-
+ def test_deterministic_for_equal_calls():
+     """Two calls with equal arguments and a deterministic fake give equal reports."""
+     a = naive_break_even("block", 1, T, SIZE, 3, 7, fight_fn=Recorder(), **KW)
+@@ -152,7 +145,7 @@ def test_fight_fn_and_map_fn_together_raise():
+ 
+ 
+ def _canned(beats, loses_to, multi):
+-    scan = ScanResult(size=SIZE, cells=[], beats=beats, loses_to=loses_to, win_margin=0.05)
++    scan = ScanResult(size=SIZE, cells=[], beats=beats, loses_to=loses_to)
+     return BreakEven(scan=scan, flips=[], multi_flip=multi, beats=beats, loses_to=loses_to, refined=[], rounds=0)
+ 
+ 
+diff --git a/tests/skilllab/test_objective_scene.py b/tests/skilllab/test_objective_scene.py
+index 6955965f..66feac16 100644
+--- a/tests/skilllab/test_objective_scene.py
++++ b/tests/skilllab/test_objective_scene.py
+@@ -48,10 +48,11 @@ def test_objective_scene_sets_sides_d_apart():
+ 
+ 
+ def test_objective_scene_sends_both_groups_to_the_point_between_them():
+-    """Ruling 6: both groups attack-move to one point, at the corridor's middle, one order per unit."""
++    """Ruling 6: both groups attack-move to one point, at the corridor's middle, one order per group (the default since the
++    L4 flip, TD-LAB-REV2-L4-flip)."""
+     setup = scenes.objective_scene(2800.0)(16, False)
+     g0, g1 = _sides(setup)
+-    assert setup.point is not None and setup.orders_per_unit is True
++    assert setup.point is not None and setup.orders_per_unit is False
+     for g in (g0, g1):
+         assert g.order == "attack_move" and g.goal in (None, tuple(setup.point))
+     assert g0.x < setup.point[0] < g1.x
+@@ -83,7 +84,10 @@ def test_objective_scene_is_deterministic_and_ignores_swap():
+ def test_far_open_ground_fight_is_ended_by_elimination_not_by_quiet():
+     """Q-LAB-03 / ruling 6 (real engine): a fight at d = 2800 on open ground has contact after tick 0 and ends side0, side1 or
+     draw: never a stalemate, never the cap (red on the old code: it ended by its mop-up and quiet rules)."""
+-    r = fight(scenes.objective_scene(2800.0)(16, False), 0, False, engine=engine.Engine())
++    # LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): the test is about the ending rule, measured with per-unit orders as before the flip
++    # (with the group order this scene caps at 12000 ticks with 1 v 2 left on seed 0: reported as a finding, not tested here).
++    setup = dataclasses.replace(scenes.objective_scene(2800.0)(16, False), orders_per_unit=True)
++    r = fight(setup, 0, False, engine=engine.Engine())
+     assert r.first_contact_tick > 0
+     assert r.outcome in ("side0", "side1", "draw"), (r.outcome, r.ticks)
+ 
+diff --git a/tests/skilllab/test_placed_by_feature.py b/tests/skilllab/test_placed_by_feature.py
+index 8697c243..35a5d031 100644
+--- a/tests/skilllab/test_placed_by_feature.py
++++ b/tests/skilllab/test_placed_by_feature.py
+@@ -227,7 +227,7 @@ def test_defender_guards_attacker_attack_moves_toward_the_defender(play):
+         aim = g.goal if g.goal is not None else setup.point
+         assert dist(aim, anchor) <= 300.0 or (play == "s2_mass_one_end" and abs(aim[0] - anchor[0]) <= 300.0)
+     assert not any(hasattr(setup, name) for name in ("decided_by_survivors", "defender_side", "hold_anchor", "hold_ticks"))
+-    assert setup.orders_per_unit is True
++    assert setup.orders_per_unit is False      # LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): the group order is the default
+ 
+ 
+ @pytest.mark.parametrize("sd", [1400.0, 2800.0])
+diff --git a/tests/skilllab/test_plays.py b/tests/skilllab/test_plays.py
+index 2ce553e7..ef6e3816 100644
+--- a/tests/skilllab/test_plays.py
++++ b/tests/skilllab/test_plays.py
+@@ -414,8 +414,9 @@ def test_ruling_6_a_meeting_sends_both_sides_to_one_point_between_them(play, hea
+ 
+ 
+ @pytest.mark.parametrize("play", ALL_PLAYS)
+-def test_ruling_6_plays_use_per_unit_orders(play):
+-    assert play(16)(8, False).orders_per_unit is True
++def test_ruling_6_plays_use_the_group_order_default(play):
++    """LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): plays leave orders_per_unit at the Setup default, which is False since the flip."""
++    assert play(16)(8, False).orders_per_unit is False
+ 
+ 
+ @pytest.mark.parametrize("play", [blob_play, line_play, reach_play, damage_play])
+diff --git a/tests/skilllab/test_report.py b/tests/skilllab/test_report.py
+index 2e30650c..73b8b7b9 100644
+--- a/tests/skilllab/test_report.py
++++ b/tests/skilllab/test_report.py
+@@ -65,7 +65,7 @@ def _fight(firing=None):
+                        firing_unit_seconds=(2.0, 1.0))
+ 
+ 
+-def _scan(size, first, last, won_up_to, win_margin=0.05):
++def _scan(size, first, last, won_up_to):
+     """Cells first..last; won (margin +0.5) up to won_up_to, lost (-0.5) above; None breaks even if no change."""
+     cells = []
+     for n in range(first, last + 1):
+@@ -73,8 +73,7 @@ def _scan(size, first, last, won_up_to, win_margin=0.05):
+         cells.append(CellResult(enemy_heads=n, fights=[_fight()], mean_margin=0.5 if won else -0.5, won=won))
+     changed = any(a.won and not b.won for a, b in zip(cells, cells[1:]))
+     beats = won_up_to if changed else None
+-    return ScanResult(size=size, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1,
+-                      win_margin=win_margin)
++    return ScanResult(size=size, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1)
+ 
+ 
+ def _batch(title="Controls"):
+@@ -86,7 +85,7 @@ def _batch(title="Controls"):
+ 
+ def _flat(first, last, margin):
+     cells = [CellResult(n, [_fight()], margin, margin > 0.05) for n in range(first, last + 1)]
+-    return ScanResult(size=16, cells=cells, beats=None, loses_to=None, win_margin=0.05)
++    return ScanResult(size=16, cells=cells, beats=None, loses_to=None)
+ 
+ 
+ class Page(HTMLParser):
+@@ -403,7 +402,7 @@ GRADED = [0.9126, 0.3, -0.1234, -0.7]
+ 
+ def _graded_batch():
+     cells = [CellResult(20 + i, [_fight()], m, m > 0.05) for i, m in enumerate(GRADED)]
+-    sc = ScanResult(size=17, cells=cells, beats=21, loses_to=22, win_margin=0.05)
++    sc = ScanResult(size=17, cells=cells, beats=21, loses_to=22)
+     return Batch(title="t", scans={"graded": sc}, firing_example={"graded": _fight()}, rows=[])
+ 
+ 
+@@ -676,8 +675,7 @@ def test_batch_title_is_the_pages_h1(tmp_path):
+ 
+ def test_one_cell_scan_and_one_sample_series_draw_without_raising(tmp_path):
+     """AC-18 Reading: a series with one point is drawn (finite coordinates), never raising."""
+-    one = ScanResult(size=16, cells=[CellResult(12, [_fight()], 0.5, True)], beats=None, loses_to=None,
+-                     win_margin=0.05)
++    one = ScanResult(size=16, cells=[CellResult(12, [_fight()], 0.5, True)], beats=None, loses_to=None)
+     batch = Batch(title="t", scans={"solo": one}, firing_example={"solo": _fight([(0, 2, 1)])}, rows=[])
+     _, _, page = _render(batch, tmp_path)
+     scan_svg = _scan_svg(page, 1)
+diff --git a/tests/skilllab/test_sweep.py b/tests/skilllab/test_sweep.py
+index ed769cdc..6749952a 100644
+--- a/tests/skilllab/test_sweep.py
++++ b/tests/skilllab/test_sweep.py
+@@ -11,19 +11,31 @@ Anything marked "pinned" below is asserted; anything else in sweep.py is the bui
+         setup {Setup field: value} (firing_arc_deg, cone), kind, label
+         kind in {"grid", "refined", "sign_flip", "control_positive", "control_null"}
+     grid(family) -> list[Point]            the coarse points in the spec's order (kind "grid"; sign_flip family: kind "sign_flip")
+-    controls(family) -> {"positive": Control, "null": Control}   Control: points (list[Point]), reach (None or (0, 0)), check(results)
++    controls(family) -> {"positive": Control, "null": Control}   Control: points (list[Point]), reach (None or (0, 0)), check(results),
++        max_ticks (CONTROL_MAX_TICKS for a control that needs no result, None for one that does: the fight runs to its own cap)
+         check(results_by_point) -> bool, results_by_point = [[FightResult, ...] per control point, in points order]
+     refine(values, differs, max_rounds=2) -> [(round, value), ...]    differs(value) -> bool, called once per value
+     Capabilities(arc, cone) (namedtuple of bool); detect(engine) -> Capabilities; skip_reason(family, caps) -> str | None
+     baseline_roles(play) -> tuple of roles; the roles for sweep rows: "play", "reach_zero" (the null control's build), and the
+         baselines "naive_attacker", "naive_defender" (a play whose name starts "s3_" has "naive_defender_attacker_layer" and
+         "naive_defender_play_layer" in place of "naive_defender", ruling 3 DRAFT)
+-    run_family(family, out_dir, *, builds, layouts, plays=None, fight_fn=None, map_fn=None, caps=None, replicates=REPLICATES) -> dict
++    run_family(family, out_dir, *, builds, layouts, plays=None, fight_fn=None, map_fn=None, caps=None, replicates=REPLICATES,
++               full_scan=False) -> dict    full_scan False (the default) scans by bisection, True fights every headcount 8 to 48
++        the entry: family, skipped, csv, rows, refined (sorted values added by refinement, all baselines), refined_vs ({baseline role:
++        sorted values refined for the sign change of the gain against that baseline}), refused, controls ({"positive"/"null": {"ok"}}),
++        defects ({"cap_rows": cap fights outside control_* kinds, "draw_rows": draw fights, "cells": distinct (play, layout, kind,
++        knob_value, baseline, enemy_heads) non-control cells holding a cap or a draw}), saturated_at_vision (emitting)
+         builds(play, role, layout_features) -> BuildFn (build.labels["prefight"] is set when the build is called, as
+         scenes.placed_scene does); layouts {name: features}; caps None means detect the real library.
+-    run(families, out_dir, workers=1, **same keywords) -> dict; calls sweep.run_family(name, out_dir, **kw) once per family, in the
++    run(families, out_dir, workers=1, full_scan=False, **same keywords) -> dict; calls sweep.run_family(name, out_dir, **kw) once per family, in the
+         given order; with workers > 1 and no map_fn it fights through pool.FightPool(workers, lean=True).map
+-    SMOKE_LAYOUTS = ("81", "78", "192"); smoke_layouts() -> {name: features}; run_smoke(out_dir, workers=12, **same keywords) -> dict
++    SMOKE_LAYOUTS = ("81", "78", "192"); smoke_layouts() -> {name: features}; run_smoke(out_dir, workers=12, full_scan=False, **same keywords)
++    -> dict; its summary carries "defects" with the same three counts as a sweep entry. Smoke control rows have a kind starting
++    "control_"; the vision rows do not.
++    Refinement (families vision, range_up, damage_up, arc only): the sign of a point is "gain > 0", gain = break-even of the play minus the
++    break-even of the baseline at the same knob value, a ceiling hit counting as the top of the range (48) and a scan with no break-even
++    (lost everywhere) as 0; gain exactly 0 is not positive. Midpoints are arithmetic. The CLI flag `--full-scan` (sweep, smoke, controls,
++    reach) selects the linear scan; controls and reach are always linear.
+ Files: sweep_<family>.csv per run family, sweep_summary.json; smoke.csv, smoke_summary.json.
+ CSV columns (labels on the rows beside rows.fight_row's own): family, play, layout, kind, enemy_heads, knob, knob_value, baseline
+ (`none` for the play itself), ceiling_hit (0 or 1, of the row's scan), prefight.
+@@ -314,14 +326,52 @@ def _res(outcome="side0", **kw):
+ 
+ 
+ def test_every_family_has_a_null_control_and_vision_and_damage_have_a_positive_one():
+-    for fam in ("vision", "range_up", "damage_up", "emitting", "arc", "cone"):
++    for fam in ("vision", "range_up", "damage_up", "emitting"):
+         c = sweep.controls(fam)["null"]
+         assert c.reach == (0, 0) and len(c.points) >= 2 and {p.kind for p in c.points} == {"control_null"}
+         assert [p.settings for p in c.points] == [p.settings for p in points(fam)] and [p.setup for p in c.points] == [p.setup for p in points(fam)]
++    for fam in ("arc", "cone"):
++        assert "null" in sweep.controls(fam)
+     assert sweep.controls("vision")["positive"].reach is None and sweep.controls("damage_up")["positive"].reach is None
+     assert set(sweep.controls("sign_flip")) <= {"null", "positive"}
+ 
+ 
++def test_arc_null_control_is_the_parameter_set_to_360_against_the_parameter_never_set():
++    """Overseer default (DRAFT): arc 360 equals unset. The reach (0, 0) pin does not apply to arc: the two points are the real play with
++    OM_TP_FIRING_ARC_DEG pushed to the world at 360 against the play with the parameter untouched (the lab skips the parameter at 360
++    in the arc grid, so only an explicit setting can show the engine's 360 gate leaks)."""
++    c = sweep.controls("arc")["null"]
++    assert c.reach is None and len(c.points) == 2 and {p.kind for p in c.points} == {"control_null"}
++    explicit, unset = sorted(c.points, key=lambda p: -len(p.settings))
++    assert explicit.settings == {"OM_TP_FIRING_ARC_DEG": 360.0} and explicit.setup == {}
++    assert unset.settings == {} and unset.setup == {}
++    a, b = _res("side0", margin=0.5), _res("side0", margin=0.5)
++    assert c.check([[a, b], [a, b]]) is True
++    assert c.check([[a, b], [a, _res("side0", margin=0.25)]]) is False            # positive control: a differing row is caught
++    assert c.check([[a, b], [a]]) is False
++
++
++def test_cone_null_control_is_a_cone_of_range_zero_against_no_cone():
++    """Overseer default (DRAFT): cone range 0 equals no cone (range 0 clears the cone, spec om_roster_set_cone)."""
++    c = sweep.controls("cone")["null"]
++    assert c.reach is None and len(c.points) == 2 and {p.kind for p in c.points} == {"control_null"}
++    zero, none = sorted(c.points, key=lambda p: -len(p.setup))
++    assert zero.setup == {"cone": {"Vanguard": (0.0, 45.0, 1.0)}} and zero.settings == {}
++    assert none.setup == {} and none.settings == {}
++    a = _res("side0", margin=0.5)
++    assert c.check([[a], [a]]) is True and c.check([[a], [_res("side0", margin=0.1)]]) is False
++
++
++def test_control_lengths_only_the_damage_control_needs_a_finished_fight():
++    """Vision zero and every null control read rows that do not need a result: they stop at CONTROL_MAX_TICKS. The damage control
++    reads a result (damage-up 0.5 changes it) and a capped fight at 600 ticks shows the same margin at both points on the real
++    play (measured on the reference: s3_layer_above, six fights, identical margins), so it runs to elimination (max_ticks None)."""
++    assert sweep.controls("vision")["positive"].max_ticks == sweep.CONTROL_MAX_TICKS
++    for fam in ("vision", "range_up", "damage_up", "emitting", "arc", "cone"):
++        assert sweep.controls(fam)["null"].max_ticks == sweep.CONTROL_MAX_TICKS, fam
++    assert sweep.controls("damage_up")["positive"].max_ticks is None
++
++
+ def test_vision_positive_control_is_vision_zero_both_directions():
+     c = sweep.controls("vision")["positive"]
+     assert len(c.points) == 1 and c.points[0].kind == "control_positive" and c.points[0].value == 0.0
+@@ -345,15 +395,24 @@ def test_null_check_wants_byte_identical_rows_across_the_points():
+     assert check([[a, b], [a, b], [a, b], [a]]) is False                                  # a different number of fights
+ 
+ 
++def _lean(result, window=(12.75, 9.25)):
++    """A result as the pool's lean mode returns it: the per-tick series are gone (trim_series), the window counts are row values."""
++    return dataclasses.replace(result, firing=[], firing_window=window, weighted_window=window)
++
++
+ def test_damage_positive_control_changes_the_result_and_not_the_count():
++    """The count is the opening-window firing count (a row value), not the per-tick firing series: the series is empty on a lean
++    result (the pool, workers > 1), and the check must still work."""
+     c = sweep.controls("damage_up")["positive"]
+     assert [p.value for p in c.points] == [1.0, 0.5] and all(p.kind == "control_positive" for p in c.points)
+-    base = [_res("side0", margin=0.5, firing=((0, 16, 16),)) for _ in range(2)]
+-    half = [_res("side0", margin=0.25, firing=((0, 16, 16),)) for _ in range(2)]
++    base = [_lean(_res("side0", margin=0.5)) for _ in range(2)]
++    half = [_lean(_res("side0", margin=0.25)) for _ in range(2)]
+     assert c.check([base, half]) is True
+     assert c.check([base, base]) is False                                                  # nothing changed
+-    moved = [_res("side0", margin=0.25, firing=((0, 12, 16),)) for _ in range(2)]
++    moved = [_lean(_res("side0", margin=0.25), window=(9.0, 9.25)) for _ in range(2)]
+     assert c.check([base, moved]) is False                                                 # the count moved too
++    full = [dataclasses.replace(r, firing=[(0, 16, 16)]) for r in base]
++    assert c.check([full, [dataclasses.replace(r, firing=[(0, 16, 16)]) for r in half]]) is True        # with the series present as well
+ 
+ 
+ # ---- run_family with fakes ----------------------------------------------------------------------------------------------------
+@@ -361,9 +420,9 @@ def test_damage_positive_control_changes_the_result_and_not_the_count():
+ class World(ScriptedFight):
+     """Scripted fights keyed on role and settings. be_of(role, settings) -> break-even. Flags plant defects for the controls."""
+ 
+-    def __init__(self, be_of=None, **flags):
++    def __init__(self, be_of=None, arc_be=None, cone_be=None, **flags):
+         super().__init__(be_of=lambda setup: be_of(setup.unit_types["_role"], setup.settings) if be_of else 20)
+-        self.flags = flags
++        self.flags, self.arc_be, self.cone_be = flags, arc_be, cone_be
+ 
+     def __call__(self, setup, seed, swap):
+         role, s, enemy = setup.unit_types["_role"], setup.settings, setup.unit_types["enemy"]
+@@ -374,16 +433,28 @@ class World(ScriptedFight):
+             leak = (sum(v for v in s.values() if isinstance(v, (int, float))) + setup.firing_arc_deg
+                     + sum(c[0] for c in setup.cone.values())) if self.flags.get("null_leaks") else 0.0
+             return _fr("cap", enemy, firing=((0, 0, 0),), fus=(leak, 0.0), survivors=(16, 16))
++        if role == "play" and self.flags.get("arc_param_leaks") and "OM_TP_FIRING_ARC_DEG" in s:
++            return _fr("side0", enemy, margin=0.9)
++        if role == "play" and self.flags.get("cone_zero_leaks") and any(c[0] == 0 for c in setup.cone.values()):
++            return _fr("side0", enemy, margin=0.9)
++        if (self.flags.get("defects") and role == "play" and enemy == sweep.ENEMY_FROM and setup.max_ticks != sweep.CONTROL_MAX_TICKS
++                and setup.unit_types["_play"] not in ("mirror", "numbers", "planted") and seed < 2 and not swap):
++            return _fr("cap" if seed == 0 else "draw", enemy)           # one cap and one draw in the smallest cell of every play scan
+         if role == "play" and s.get(V1) == 0.0:
+             if self.flags.get("vision_zero_shoots"):
+                 return _fr("cap", enemy, fus=(1.0, 1.0), survivors=(10, 12))
+             return _fr("cap", enemy, firing=((0, 0, 0),), fus=(0.0, 0.0), survivors=(16, 16))
+         be = self.be_of(setup)
++        if self.arc_be is not None:
++            be = self.arc_be(role, setup.firing_arc_deg)
++        if self.cone_be is not None:
++            be = self.cone_be(role, setup.cone)
+         out = _fr("side0" if be is not None and enemy <= be else "side1", enemy)
+         d = s.get("OM_TP_DAMAGE_UP_1")
+         if role == "play" and d is not None and enemy == 16:
+-            out = dataclasses.replace(out, margin=0.5 if self.flags.get("damage_blind") else 0.5 * d,
+-                                      firing=[(0, int(16 * d), 16)] if self.flags.get("damage_count_moves") else [(0, 16, 16)])
++            window = (12.75 * d, 9.25) if self.flags.get("damage_count_moves") else (12.75, 9.25)
++            out = dataclasses.replace(out, margin=0.5 if self.flags.get("damage_blind") else 0.5 * d, firing=[],
++                                      firing_window=window, weighted_window=window)
+         return out
+ 
+ 
+@@ -414,7 +485,7 @@ def test_run_family_writes_the_csv_with_the_pinned_columns_and_the_summary_entry
+ 
+ def test_every_cell_is_three_replicates_in_both_orders_and_no_fight_repeats(tmp_path):
+     """3 replicates per cell: 6 fights per (point, role, headcount), each (seed, swap) once."""
+-    _, world = run(tmp_path, "damage_up")
++    _, world = run(tmp_path, "range_up")          # not damage_up: its positive control may repeat a grid cell's fights
+     groups = {}
+     for c in world.calls:
+         if c["max_ticks"] == sweep.CONTROL_MAX_TICKS:
+@@ -425,7 +496,7 @@ def test_every_cell_is_three_replicates_in_both_orders_and_no_fight_repeats(tmp_
+ 
+ 
+ def test_replicates_keyword_changes_the_cell_size(tmp_path):
+-    _, world = run(tmp_path, "damage_up", replicates=2)
++    _, world = run(tmp_path, "range_up", replicates=2)
+     sizes = {}
+     for c in world.calls:
+         if c["max_ticks"] == sweep.CONTROL_MAX_TICKS:
+@@ -444,8 +515,8 @@ def test_the_scan_range_is_eight_to_forty_eight_by_bisection_not_forty_one_cells
+ 
+ 
+ def test_both_baselines_are_run_and_reported_for_a_plain_play(tmp_path):
+-    entry, world = run(tmp_path, "arc", plays=("s2_concave",))
+-    rows = read(tmp_path, "arc")
++    entry, world = run(tmp_path, "range_up", plays=("s2_concave",))
++    rows = read(tmp_path, "range_up")
+     assert {c["role"] for c in world.calls} == {"play", "reach_zero", "naive_attacker", "naive_defender"}
+     assert {r["baseline"] for r in rows if r["kind"] == "grid"} == {"none", "naive_attacker", "naive_defender"}
+     assert {r["baseline"] for r in rows if r["kind"] == "control_null"} == {"none"}
+@@ -496,6 +567,132 @@ def test_no_sign_change_means_no_refined_row(tmp_path):
+         assert entry["refined"] == [] and "refined" not in {r["kind"] for r in read(tmp_path, "range_up")}
+ 
+ 
++def _be_range(play, attacker=16, defender=lambda v: 16):
++    """A range_up world: the play's break-even follows `play(v)` (None: lost everywhere; 99: beats the top of 8 to 48), the naive
++    attacker's is `attacker` and the naive defender's `defender(v)`, v being the range-up value of the cell."""
++    def be(role, s):
++        v = s.get("OM_TP_RANGE_UP_1", 1.0)
++        return play(v) if role == "play" else defender(v) if role.startswith("naive_defender") else attacker
++    return be
++
++
++def test_a_gain_against_the_naive_attacker_that_is_positive_but_negative_against_the_naive_defender_lists_a_second_crossing(tmp_path):
++    """Decisions 21: refinement follows the sign against the naive attacker; the crossing against the naive defender is listed in
++    its own entry. Play break-even 20 from range-up 0.7 up, 12 below; attacker 16; defender 18 from 0.9 up, 22 below. Gains against
++    the attacker: +4 +4 -4 -4 (1.0 .. 0.25), against the defender +2 -2 -10 -10. Attacker crossing: 0.75|0.5, refined 0.625 and
++    0.6875. Defender crossing: 1.0|0.75, refined 0.875 (still negative) and 0.9375 (positive)."""
++    be = _be_range(lambda v: 20 if v >= 0.7 else 12, defender=lambda v: 18 if v >= 0.9 else 22)
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=be))
++    assert entry["refined_vs"] == {"naive_attacker": [0.625, 0.6875], "naive_defender": [0.875, 0.9375]}
++    assert entry["refined"] == [0.625, 0.6875, 0.875, 0.9375]
++    rows = read(tmp_path, "range_up")
++    assert {float(r["knob_value"]) for r in rows if r["kind"] == "refined"} == {0.625, 0.6875, 0.875, 0.9375}
++    assert {r["baseline"] for r in rows if r["kind"] == "refined"} == {"none", "naive_attacker", "naive_defender"}
++
++
++def test_the_naive_defender_alone_flipping_does_not_move_the_attacker_refinement(tmp_path):
++    """Positive control for the test above, the other way round: the defender's gain changes sign and the attacker's never does."""
++    be = _be_range(lambda v: 20, attacker=10, defender=lambda v: 18 if v >= 0.9 else 22)
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=be))
++    assert entry["refined_vs"]["naive_attacker"] == [] and entry["refined_vs"]["naive_defender"] == [0.875, 0.9375]
++    assert entry["refined"] == [0.875, 0.9375]
++
++
++def test_a_layer_play_lists_a_crossing_per_defender_baseline(tmp_path):
++    be = _be_range(lambda v: 20 if v >= 0.7 else 12, defender=lambda v: 16)
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=be), plays=("s3_layer_above",))
++    assert set(entry["refined_vs"]) == set(sweep.baseline_roles("s3_layer_above")) == {
++        "naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer"}
++    assert all(v == [0.625, 0.6875] for v in entry["refined_vs"].values())
++
++
++def test_a_gain_of_exactly_zero_is_not_a_sign_change(tmp_path):
++    """Strictly greater: a play that ties its baseline (gain 0) is not ahead. Tie above the line, loss below: no change at all;
++    tie below the line, win above: the one change is between the win and the tie (0.75|0.5)."""
++    tie_then_loss = _be_range(lambda v: 16 if v >= 0.7 else 12)
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=tie_then_loss))
++    assert entry["refined"] == [] and entry["refined_vs"]["naive_attacker"] == []
++    win_then_tie = _be_range(lambda v: 20 if v >= 0.7 else 16)
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=win_then_tie))
++    assert entry["refined_vs"]["naive_attacker"] == [0.625, 0.6875] and entry["refined"] == [0.625, 0.6875]
++
++
++def test_a_play_with_no_break_even_counts_as_no_gain_not_as_a_gain(tmp_path):
++    """A play lost at every headcount (beats None) below range-up 0.7 and 20 above: against a naive attacker at 16 the gain is positive
++    above and not positive below, so the change is found and refined. (A None counted as a gain would hide it.)"""
++    be = _be_range(lambda v: 20 if v >= 0.7 else None)
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=be))
++    assert entry["refined_vs"]["naive_attacker"] == [0.625, 0.6875]
++
++
++def test_a_baseline_with_no_break_even_is_no_gain_for_the_baseline_too(tmp_path):
++    """The other side of the None rule: a play at 20 against a naive attacker that loses everywhere (None) is ahead at every point,
++    and a play that also loses everywhere is level (gain 0): no sign change in either, nothing refined."""
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=_be_range(lambda v: 20, attacker=None)))
++    assert entry["refined"] == []
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=_be_range(lambda v: None, attacker=None)))
++    assert entry["refined"] == []
++
++
++def test_a_ceiling_hit_at_one_coarse_point_counts_as_the_top_of_the_range(tmp_path):
++    """Range-up 1.0 beats every headcount (ceiling hit, break-even 48); 0.75 is 20, below 0.7 it is 12, attacker 16. Gains +32 +4 -4 -4:
++    the one change is 0.75|0.5. (A ceiling hit read as 'no break-even' would invent a second change between 0.75 and 1.0.)"""
++    be = _be_range(lambda v: 99 if v >= 0.9 else 20 if v >= 0.7 else 12)
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=be))
++    rows = read(tmp_path, "range_up")
++    assert {r["ceiling_hit"] for r in rows if r["baseline"] == "none" and r["kind"] == "grid" and float(r["knob_value"]) == 1.0} == {"1"}
++    assert entry["refined_vs"]["naive_attacker"] == [0.625, 0.6875] and entry["refined"] == [0.625, 0.6875]
++
++
++def test_a_play_and_a_baseline_both_at_the_ceiling_are_level(tmp_path):
++    entry, _ = run(tmp_path, "range_up", world=World(be_of=_be_range(lambda v: 99, attacker=99)))
++    assert entry["refined"] == []
++
++
++def test_vision_refines_between_the_bracketing_pair_with_both_layers_at_the_ratio(tmp_path):
++    """Play break-even 20 from vision 0.35 up, 12 below; attacker 16. The change is 0.25|0.5: the arithmetic midpoint 0.375 (ahead),
++    then 0.3125 (behind). A refined vision point carries the same two-layer settings as a grid point."""
++    be = lambda role, s: (20 if s.get(V1, 0.5) >= 0.35 else 12) if role == "play" else 16
++    entry, world = run(tmp_path, "vision", world=World(be_of=be))
++    assert entry["refined"] == [0.3125, 0.375]
++    for v in (0.3125, 0.375):
++        calls = [c for c in world.calls if c["settings"].get(V1) == v and c["role"] == "play"]
++        assert calls and all(c["settings"][V2] == pytest.approx(0.4 * v) and c["settings"]["OM_TP_VISION_DOWN_1"] == v for c in calls)
++        assert all(sweep.in_band(c["settings"][V1], 0.5) for c in calls)
++
++
++def test_damage_up_refines_by_the_arithmetic_midpoint(tmp_path):
++    be = lambda role, s: (20 if s.get("OM_TP_DAMAGE_UP_1", 1.0) >= 0.7 else 12) if role == "play" else 16
++    entry, _ = run(tmp_path, "damage_up", world=World(be_of=be))
++    assert entry["refined"] == [0.625, 0.6875]
++
++
++def test_arc_refines_between_the_bracketing_arcs_by_the_arithmetic_midpoint(tmp_path):
++    """Play break-even 20 from an arc of 200 degrees up, 12 below; attacker 16. Coarse 360, 270, 180, 120, 90: the change is
++    270|180, so 225 (ahead), then 202.5 (ahead). The refined points go to the world as firing_arc_deg."""
++    arc_be = lambda role, arc: (20 if arc >= 200 else 12) if role == "play" else 16
++    entry, world = run(tmp_path, "arc", world=World(arc_be=arc_be), plays=("s2_concave",))
++    assert entry["refined"] == [202.5, 225.0]
++    assert {c["extra"]["arc"] for c in world.calls if c["role"] == "play"} >= {225.0, 202.5}
++    assert all(sweep.in_band(v, 360.0) for v in entry["refined"])
++    assert {float(r["knob_value"]) for r in read(tmp_path, "arc") if r["kind"] == "refined"} == {202.5, 225.0}
++
++
++@pytest.mark.parametrize("family,world_kw", [
++    ("emitting", dict(be_of=lambda role, s: (20 if s.get("OM_TP_EMIT_SIGHT_MULT", 2.0) >= 2.0 else 12) if role == "play" else 16)),
++    ("cone", dict(cone_be=lambda role, cone: (20 if cone and cone["Vanguard"][0] >= 300 else 12) if role == "play" else 16)),
++    ("sign_flip", dict(be_of=lambda role, s: (20 if "OM_TP_RANGE_UP_1" in s and s["OM_TP_RANGE_UP_1"] > 1.0 else 12) if role == "play" else 16)),
++])
++def test_emitting_cone_and_sign_flip_never_refine_even_with_a_sign_change(tmp_path, family, world_kw):
++    """Only vision, range_up, damage_up and arc refine. Each world here has a gain that changes sign across the family's points."""
++    plays_ = ("s3_dark_striker",) if family == "emitting" else ("s2_concave",) if family == "cone" else ("p2",)
++    entry, _ = run(tmp_path, family, world=World(**world_kw), plays=plays_)
++    rows = read(tmp_path, family)
++    assert entry["refined"] == [] and "refined" not in {r["kind"] for r in rows}
++    gains = {(r["knob"], r["knob_value"]) for r in rows if r["kind"] in ("grid", "sign_flip")}
++    assert len(gains) >= 2          # positive control: the family has several points the gain could change across
++
++
+ def test_the_sign_flip_family_writes_its_own_labelled_file(tmp_path):
+     entry, _ = run(tmp_path, "sign_flip")
+     rows = read(tmp_path, "sign_flip")
+@@ -523,16 +720,40 @@ def test_the_vision_positive_control_detector_fires_when_vision_zero_still_shoot
+ 
+ 
+ def test_the_null_control_detector_fires_when_reach_zero_rows_differ_across_the_points(tmp_path):
+-    for fam in ("vision", "range_up", "arc"):
++    for fam in ("vision", "range_up"):
+         entry, _ = run(tmp_path, fam, world=World(null_leaks=True), plays=("s2_concave",))
+         assert entry["controls"]["null"]["ok"] is False, fam
+         entry, _ = run(tmp_path, fam, plays=("s2_concave",))
+         assert entry["controls"]["null"]["ok"] is True, fam
+ 
+ 
++def test_the_arc_null_control_runs_the_real_play_at_360_set_and_unset_and_its_detector_fires(tmp_path):
++    entry, world = run(tmp_path, "arc", plays=("s2_concave",))
++    assert entry["controls"]["null"]["ok"] is True and "positive" not in entry["controls"]
++    ctl = [c for c in world.calls if c["max_ticks"] == sweep.CONTROL_MAX_TICKS]
++    assert ctl and {c["role"] for c in ctl} == {"play"} and {c["enemy"] for c in ctl} == {16}        # no reach-zero build for arc
++    assert {"OM_TP_FIRING_ARC_DEG" in c["settings"] for c in ctl} == {True, False}
++    assert {c["settings"]["OM_TP_FIRING_ARC_DEG"] for c in ctl if "OM_TP_FIRING_ARC_DEG" in c["settings"]} == {360.0}
++    assert {c["extra"]["arc"] for c in ctl} == {360.0}
++    leaky, _ = run(tmp_path, "arc", world=World(arc_param_leaks=True), plays=("s2_concave",))
++    assert leaky["controls"]["null"]["ok"] is False
++
++
++def test_the_cone_null_control_runs_the_real_play_with_a_zero_range_cone_and_without_and_its_detector_fires(tmp_path):
++    entry, world = run(tmp_path, "cone", plays=("s2_concave",))
++    assert entry["controls"]["null"]["ok"] is True and "positive" not in entry["controls"]
++    ctl = [c for c in world.calls if c["max_ticks"] == sweep.CONTROL_MAX_TICKS]
++    assert ctl and {c["role"] for c in ctl} == {"play"} and {c["enemy"] for c in ctl} == {16}
++    assert {tuple(sorted(c["extra"]["cone"].items())) for c in ctl} == {(), (("Vanguard", (0.0, 45.0, 1.0)),)}
++    leaky, _ = run(tmp_path, "cone", world=World(cone_zero_leaks=True), plays=("s2_concave",))
++    assert leaky["controls"]["null"]["ok"] is False
++
++
+ def test_the_damage_controls(tmp_path):
+-    entry, _ = run(tmp_path, "damage_up")
++    entry, world = run(tmp_path, "damage_up")
+     assert entry["controls"]["positive"]["ok"] is True
++    assert {c["max_ticks"] for c in world.calls if c["role"] != "reach_zero"} == {12000}          # no fight but the null control is cut short
++    assert {c["max_ticks"] for c in world.calls if c["role"] == "reach_zero"} == {sweep.CONTROL_MAX_TICKS}
+     assert run(tmp_path, "damage_up", world=World(damage_blind=True))[0]["controls"]["positive"]["ok"] is False
+     assert run(tmp_path, "damage_up", world=World(damage_count_moves=True))[0]["controls"]["positive"]["ok"] is False
+ 
+@@ -550,6 +771,92 @@ def test_emitting_is_reported_saturated_at_the_base_vision_not_swept(tmp_path):
+     assert {float(r["knob_value"]) for r in read(tmp_path, "emitting") if r["kind"] == "grid"} == {1.0, 2.0, 4.0}
+ 
+ 
++# ---- defects: caps outside the controls, draws, and the cells that hold them ----------------------------------------------------
++
++CONTROL_KINDS = ("control_positive", "control_null")
++
++
++def _defects_of(rows):
++    """Recount from the CSV: the pinned definition of entry["defects"] (header)."""
++    cell = lambda r: (r["play"], r["layout"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
++    bad = [r for r in rows if r["outcome"] in ("cap", "draw") and not r["kind"].startswith("control_")]
++    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "draw_rows": sum(r["outcome"] == "draw" for r in rows),
++            "cells": len({cell(r) for r in bad})}
++
++
++def test_a_faithful_world_has_no_defects_and_its_only_caps_are_in_control_kinds(tmp_path):
++    """Controls cap by design (CONTROL_MAX_TICKS < 12000): a cap is allowed in a control_* kind and in no other. The vision-zero
++    control caps here, so the exclusion is exercised (positive control), and the pinned defect count is still zero."""
++    entry, _ = run(tmp_path, "vision")
++    rows = read(tmp_path, "vision")
++    caps = {r["kind"] for r in rows if r["outcome"] == "cap"}
++    assert caps and caps <= set(CONTROL_KINDS)
++    assert entry["defects"] == {"cap_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
++
++
++def test_a_cap_or_a_draw_outside_the_controls_is_counted_as_a_defect(tmp_path):
++    """The smallest cell of every play scan holds one cap (seed 0) and one draw (seed 1): 4 grid points, so 4 caps, 4 draws, 4 cells."""
++    entry, _ = run(tmp_path, "damage_up", world=World(defects=True))
++    rows = read(tmp_path, "damage_up")
++    assert entry["defects"] == {"cap_rows": 4, "draw_rows": 4, "cells": 4} == _defects_of(rows)
++    assert {r["kind"] for r in rows if r["outcome"] == "cap"} - set(CONTROL_KINDS) == {"grid"}      # the detector's input is really there
++
++
++def test_a_cap_in_a_control_kind_alone_is_not_a_defect_but_a_draw_in_one_is_counted(tmp_path):
++    class W(World):
++        def __call__(self, setup, seed, swap):
++            out = super().__call__(setup, seed, swap)
++            if setup.max_ticks == sweep.CONTROL_MAX_TICKS and seed == 0 and not swap:
++                return _fr("draw", setup.unit_types["enemy"], fus=out.firing_unit_seconds)
++            return out
++    entry, _ = run(tmp_path, "vision", world=W())
++    rows = read(tmp_path, "vision")
++    assert entry["defects"]["cap_rows"] == 0 and entry["defects"]["draw_rows"] == sum(r["outcome"] == "draw" for r in rows) > 0
++    assert entry["defects"]["cells"] == 0 and entry["defects"] == _defects_of(rows)
++
++
++# ---- --full-scan: the linear scan; bisection is the default -------------------------------------------------------------------------
++
++def _play_heads(world, setting="OM_TP_DAMAGE_UP_1", value=1.0):
++    return sorted({c["enemy"] for c in world.calls if c["role"] == "play" and c["settings"].get(setting) == value
++                   and c["max_ticks"] != sweep.CONTROL_MAX_TICKS})
++
++
++def test_run_family_scans_every_headcount_with_full_scan_and_by_bisection_without(tmp_path):
++    _, world = run(tmp_path / "bis", "damage_up")
++    assert len(_play_heads(world)) <= 14
++    _, world = run(tmp_path / "lin", "damage_up", full_scan=True)
++    assert _play_heads(world) == list(range(8, 49))
++    _, world = run(tmp_path / "off", "damage_up", full_scan=False)
++    assert len(_play_heads(world)) <= 14
++
++
++def test_the_full_scan_rows_are_a_superset_of_the_bisection_rows(tmp_path):
++    run(tmp_path / "bis", "damage_up")
++    run(tmp_path / "lin", "damage_up", full_scan=True)
++    key = lambda r: (r["play"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
++    bis = {key(r) for r in read(tmp_path / "bis", "damage_up")}
++    lin = {key(r) for r in read(tmp_path / "lin", "damage_up")}
++    assert bis < lin
++
++
++def test_run_hands_full_scan_to_every_family(tmp_path, monkeypatch):
++    got = []
++    monkeypatch.setattr(sweep, "run_family", lambda name, out_dir, **kw: got.append((name, kw.get("full_scan", False))) or {"family": name, "csv": None})
++    sweep.run(["damage_up", "arc"], tmp_path / "a", builds=fake_builds(), layouts={"A": {}}, fight_fn=World(), full_scan=True)
++    sweep.run(["damage_up"], tmp_path / "b", builds=fake_builds(), layouts={"A": {}}, fight_fn=World())
++    assert got == [("damage_up", True), ("arc", True), ("damage_up", False)]
++
++
++def test_smoke_scans_every_headcount_with_full_scan_and_by_bisection_without(tmp_path):
++    _, world, _ = _smoke(tmp_path / "bis", control_builds=control_builds())
++    plays_ = set(sweep.PLAYS_BY_FAMILY["vision"])
++    heads = lambda w: sorted({c["enemy"] for c in w.calls if c["play"] in plays_ and c["role"] == "play"})
++    assert len(heads(world)) <= 14
++    _, world, _ = _smoke(tmp_path / "lin", control_builds=control_builds(), full_scan=True)
++    assert heads(world) == list(range(8, 49))
++
++
+ # ---- prefight refusals -------------------------------------------------------------------------------------------------------
+ 
+ def test_a_refused_cell_is_not_fought_and_is_listed_the_other_plays_still_run(tmp_path):
+@@ -675,6 +982,7 @@ def test_smoke_runs_vision_half_only_on_the_three_layouts_plus_the_three_control
+     assert {r["layout"] for r in vision} == {"81", "78", "192"} and {float(r["knob_value"]) for r in vision} == {0.5}
+     assert {r["play"] for r in vision} == set(sweep.PLAYS_BY_FAMILY["vision"]) == {"s3_layer_above", "s3_types_by_reach"}
+     ctl = [r for r in rows if r["family"] == "controls"]
++    assert all(r["kind"].startswith("control_") for r in ctl) and not any(r["kind"].startswith("control_") for r in vision)
+     assert {r["play"] for r in ctl} == {"mirror", "numbers", "planted"}
+     assert {(r["play"], r["enemy_heads"]) for r in ctl} == {("mirror", "16"), ("numbers", "8"), ("planted", "16")}
+     assert {c["settings"].get(V1) for c in world.calls if c["play"] in sweep.PLAYS_BY_FAMILY["vision"]} == {0.5}
+@@ -691,6 +999,16 @@ def test_smoke_has_states_on_and_writes_the_summary_with_the_row_hash_outcomes_a
+     assert list(on_disk["prefight"]) == ["ok"] and on_disk["prefight"]["ok"] > 0 and on_disk["refused"] == []
+ 
+ 
++def test_smoke_counts_its_defects_like_a_sweep_entry(tmp_path):
++    """The smallest cell of each of the 3 layouts x 2 plays holds one cap and one draw (the play role only): 6 of each, 6 cells.
++    A faithful world has none."""
++    summary, _, rows = _smoke(tmp_path / "clean", control_builds=control_builds())
++    assert summary["defects"] == {"cap_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
++    summary, _, rows = _smoke(tmp_path / "bad", world=World(defects=True), control_builds=control_builds())
++    assert summary["defects"] == {"cap_rows": 6, "draw_rows": 6, "cells": 6} == _defects_of(rows)
++    assert json.loads((tmp_path / "bad" / "smoke_summary.json").read_text())["defects"] == summary["defects"]
++
++
+ def test_smoke_lists_the_refused_cells(tmp_path):
+     sweep.run_smoke(tmp_path / "r", workers=1, builds=fake_builds(refuse={("s3_layer_above", "play"): "unroutable"}), fight_fn=World(),
+                     control_builds=control_builds())
+@@ -742,31 +1060,64 @@ def test_the_sweep_command_prints_the_files_it_wrote(tmp_path, capsys, monkeypat
+     assert "sweep_summary.json" in capsys.readouterr().out
+ 
+ 
++def test_the_sweep_and_smoke_commands_accept_full_scan_and_default_to_bisection(tmp_path, monkeypatch):
++    """Overseer default: `--full-scan` is a CLI flag selecting the linear scan; without it the commands pass nothing or False."""
++    got = []
++    monkeypatch.setattr(sweep, "run", lambda families, out_dir, workers=1, **kw: got.append(("sweep", bool(kw.get("full_scan", False)))) or {"families": {}})
++    monkeypatch.setattr(sweep, "run_smoke", lambda out_dir, workers=12, **kw: got.append(("smoke", bool(kw.get("full_scan", False)))) or {"rows_sha256": "x"})
++    assert cli.main(["sweep", "damage_up", "--out", str(tmp_path)]) == 0
++    assert cli.main(["sweep", "damage_up", "--out", str(tmp_path), "--full-scan"]) == 0
++    assert cli.main(["smoke", "--out", str(tmp_path)]) == 0
++    assert cli.main(["smoke", "--out", str(tmp_path), "--full-scan", "--workers", "2"]) == 0
++    assert got == [("sweep", False), ("sweep", True), ("smoke", False), ("smoke", True)]
++
++
++def test_the_controls_and_reach_commands_accept_full_scan_and_stay_linear(tmp_path, monkeypatch):
++    """controls and reach chart a dot per fight at every headcount, so they scan linearly with or without the flag
++    (test_main.py and test_main_reach.py pin the default; this pins that the flag is accepted and changes nothing)."""
++    from scripts.skilllab import scan as scan_mod
++    seen = []
++    monkeypatch.setattr(scan_mod, "scan", lambda build, size, lo, hi, **kw: seen.append(kw.get("full_scan")) or (_ for _ in ()).throw(RuntimeError("stop")))
++    for argv in (["controls", "--out", str(tmp_path), "--full-scan"], ["reach", "--out", str(tmp_path), "--full-scan"]):
++        with pytest.raises(RuntimeError):
++            cli.main(argv)
++    assert seen == [True, True]
++
++
++def test_an_unknown_option_is_still_refused(tmp_path, capsys):
++    """Positive control for the two tests above: argparse does refuse what it does not know, so 'accepted' means something."""
++    with pytest.raises(SystemExit) as exc:
++        cli.main(["smoke", "--out", str(tmp_path), "--no-such-flag"])
++    assert exc.value.code == 2
++
++
+ # ---- the orders_per_unit default flip (decisions 13) --------------------------------------------------------------------------------
+ 
+-# Decisions 13: L4 flips the Setup default to False once E1 (the attack-move resume) is on the lab branch (it is: e721da83).
+-# Tests outside L4's files that read the old default become ruler rows (test-defect, ledger row quoting decisions 13); the L4 builder
+-# does not edit them. The list below is MEASURED, not copied from decisions 13: a reference build with the default at False was run
+-# over tests/skilllab, and exactly these tests (and no others) fail because of the flip alone. It is longer than decisions 13's
+-# six lines because the lines there are the explicit `orders_per_unit is True` asserts; the others read per-unit orders off the default.
++# Decisions 13: L4 flips the Setup default to False once E1 (the attack-move resume) is on the lab branch (it is: e721da83), and
++# only because E1 lands in the same landing (decisions 21: revert the flip in the same commit if E1 is pulled). The tests that read
++# the old default were MEASURED, not copied from decisions 13: a reference build with the default at False was run over tests/skilllab
++# including integration, and exactly these tests fail because of the flip alone: 13 functions, 42 pytest items. The ruler executed
++# the flip in this piece (ledger row TD-LAB-REV2-L4-flip): a test about the default now asserts False; a test about per-unit
++# behaviour passes orders_per_unit=True explicitly. RULER_ROWS maps file -> ((old name, name now, pytest items), ...).
+ RULER_ROWS = {
+     "tests/skilllab/test_fight_outcomes.py": (
+-        "test_setup_gains_point_orders_per_unit_firing_arc_cone_and_max_ticks_default",     # Setup defaults (decisions 13)
+-        "test_ruling_6_default_issues_one_attack_move_per_unit_to_the_shared_point",
+-        "test_ruling_6_a_group_goal_overrides_the_point_for_that_group",
+-        "test_ruling_6_a_guard_group_gets_a_guard_order_not_an_attack_move",
+-        "test_ruling_6_without_a_point_or_goal_each_group_aims_at_the_first_anchor_of_the_other_side",
+-        "test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only",
+-        "test_no_mop_up_or_reissue_orders_after_the_opening_orders",
+-        "test_contract_keeps_win_margin_until_l4",            # not the flip: WIN_MARGIN is deleted in this piece (spec Cell and scan)
++        ("test_setup_gains_point_orders_per_unit_firing_arc_cone_and_max_ticks_default",) * 2 + (1,),     # Setup defaults (decisions 13)
++        ("test_ruling_6_default_issues_one_attack_move_per_unit_to_the_shared_point",
++         "test_ruling_6_orders_per_unit_true_issues_one_attack_move_per_unit_to_the_shared_point", 1),   # per-unit, asked for
++        ("test_ruling_6_a_group_goal_overrides_the_point_for_that_group",) * 2 + (1,),
++        ("test_ruling_6_a_guard_group_gets_a_guard_order_not_an_attack_move",) * 2 + (1,),
++        ("test_ruling_6_without_a_point_or_goal_each_group_aims_at_the_first_anchor_of_the_other_side",) * 2 + (1,),
++        ("test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only",) * 2 + (1,),                 # per-unit, asked for
++        ("test_no_mop_up_or_reissue_orders_after_the_opening_orders",) * 2 + (1,),
+     ),
+-    "tests/skilllab/test_plays.py": ("test_ruling_6_plays_use_per_unit_orders",),                     # line 418 (decisions 13)
+-    "tests/skilllab/test_asym.py": ("test_ruling_6_a_naive_meeting_has_one_point_between_the_fronts",),     # line 411 (decisions 13)
+-    "tests/skilllab/test_placed_by_feature.py": ("test_defender_guards_attacker_attack_moves_toward_the_defender",),     # line 223
+-    "tests/skilllab/test_objective_scene.py": ("test_objective_scene_sends_both_groups_to_the_point_between_them",
+-                                               "test_far_open_ground_fight_is_ended_by_elimination_not_by_quiet"),     # line 54
+-    "tests/skilllab/integration/test_slots_real.py": (),        # line 54 (decisions 13); real engine, not run in the measurement
++    "tests/skilllab/test_plays.py": (("test_ruling_6_plays_use_per_unit_orders", "test_ruling_6_plays_use_the_group_order_default", 4),),
++    "tests/skilllab/test_asym.py": (("test_ruling_6_a_naive_meeting_has_one_point_between_the_fronts",) * 2 + (12,),),
++    "tests/skilllab/test_placed_by_feature.py": (("test_defender_guards_attacker_attack_moves_toward_the_defender",) * 2 + (15,),),
++    "tests/skilllab/test_objective_scene.py": (("test_objective_scene_sends_both_groups_to_the_point_between_them",) * 2 + (1,),
++                                               ("test_far_open_ground_fight_is_ended_by_elimination_not_by_quiet",) * 2 + (1,)),
++    "tests/skilllab/integration/test_slots_real.py": (("test_per_unit_orders_all_head_for_the_shared_point",) * 2 + (2,),),
+ }
++RULER_FUNCTIONS, RULER_ITEMS = 13, 42
+ 
+ 
+ def test_the_orders_per_unit_default_is_false_after_the_flip():
+@@ -775,13 +1126,27 @@ def test_the_orders_per_unit_default_is_false_after_the_flip():
+     assert f.default is False
+ 
+ 
+-def test_the_ruler_list_names_files_and_tests_that_exist():
+-    """Pins the list: every file exists and defines each named test. A ruler row removes its entry in the same ledger row."""
+-    for rel, names in RULER_ROWS.items():
++def test_the_ruler_list_names_files_and_tests_that_exist_and_pins_the_count():
++    """Pins the measured list: the count is 13 functions and 42 items, every file defines the new name of each test and no longer
++    defines a renamed old name. A test that is dropped from the list or from its file changes the count."""
++    assert sum(len(v) for v in RULER_ROWS.values()) == RULER_FUNCTIONS == 13
++    assert sum(n for v in RULER_ROWS.values() for _o, _n, n in v) == RULER_ITEMS == 42
++    for rel, rows in RULER_ROWS.items():
++        text = (ROOT / rel).read_text()
++        assert "orders_per_unit" in text or rel.endswith(("test_fight_outcomes.py", "test_plays.py")), rel
++        for old, now, _n in rows:
++            assert "def %s(" % now in text, (rel, now)
++            assert old == now or "def %s(" % old not in text, (rel, old)
++
++
++def test_the_flip_left_no_test_asserting_the_old_default():
++    """The ruler rows are executed: no test file asserts `orders_per_unit is True` on a play or a scene, which is the old default
++    (positive control: the explicit per-unit calls are still there)."""
++    for rel in RULER_ROWS:
+         text = (ROOT / rel).read_text()
+-        assert "orders_per_unit" in text or rel.endswith("test_fight_outcomes.py"), rel
+-        for name in names:
+-            assert "def %s" % name in text, (rel, name)
++        assert ".orders_per_unit is True" not in text, rel
++    assert "orders_per_unit=True" in (ROOT / "tests/skilllab/test_fight_outcomes.py").read_text()
++    assert "per_unit=True" in (ROOT / "tests/skilllab/integration/test_slots_real.py").read_text()
+ 
+ 
+ def _orders(fake):

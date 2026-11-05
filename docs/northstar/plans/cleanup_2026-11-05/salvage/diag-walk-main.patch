@@ -1,0 +1,30 @@
+diff --git a/csrc/tactical_move.c b/csrc/tactical_move.c
+index 5c62ad49..855b4a85 100644
+--- a/csrc/tactical_move.c
++++ b/csrc/tactical_move.c
+@@ -2122,6 +2122,10 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
+  * that rises in terrain height runs at 1/SLOPE_UP_DIV of the pace, one that falls at SLOPE_DOWN_MULT times it; the
+  * rest of the tick's time carries over to the next waypoint. aim_is_waypoint is 1 while the aim is not the route's
+  * last point. See also: om_move_walker_tick, which sets the layer after the step. */
++int om_dbg_tot, om_dbg_unw, om_dbg_calls, om_dbg_fail, om_dbg_cnt_unit; uint32_t om_dbg_ids[64];
++int om_dbg_get(int k){return k==0?om_dbg_calls:k==1?om_dbg_fail:k==2?om_dbg_cnt_unit:(int)om_dbg_ids[k-3];}
++int om_dbg_tt(int k){return k?om_dbg_unw:om_dbg_tot;}
++void om_dbg_reset(void){om_dbg_calls=om_dbg_fail=om_dbg_cnt_unit=0;}
+ #define OM_MOVE_WALK_PTS 512
+ #define OM_MOVE_WALK_AIM_X 2 /* pts[0..1] is the unit; the next point follows */
+ #define OM_MOVE_WALK_MAX_LEGS 16
+@@ -2140,12 +2144,14 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
+             mu->pushed_x = mu->x;
+             mu->pushed_y = mu->y;
+             om_tac_unit_sync_position(w, id, mu->x, mu->y);
++            om_dbg_calls++; om_dbg_tot++; if(!om_terrain_walkable_at(w,mu->dest_x,mu->dest_y)) om_dbg_unw++; if (om_dbg_cnt_unit<64) om_dbg_ids[om_dbg_cnt_unit++]=id;
+             int n = om_walk_route(w, id, om_move_clamp_axis(mu->dest_x, ms->canvas_w), om_move_clamp_axis(mu->dest_y, ms->canvas_h), pts, OM_MOVE_WALK_PTS, &secs);
+             if (n > OM_MOVE_WALK_PTS) {
+                 pts = (double *)malloc(sizeof(double) * 2u * (size_t)n);
+                 n = pts ? om_walk_route(w, id, om_move_clamp_axis(mu->dest_x, ms->canvas_w), om_move_clamp_axis(mu->dest_y, ms->canvas_h), pts, (uint32_t)n, &secs) : -1;
+             }
+             if (n < 2) {
++                om_dbg_fail++;
+                 if (pts != buf) free(pts);
+                 mu->has_dest = 0;
+                 mu->plan_valid = 0;

@@ -1,0 +1,27 @@
+diff --git a/csrc/tactical_support.c b/csrc/tactical_support.c
+index 2408f1ae..ac7da24e 100644
+--- a/csrc/tactical_support.c
++++ b/csrc/tactical_support.c
+@@ -532,6 +532,7 @@ uint64_t om_structure_get_timer(om_world *w, uint32_t structure) {
+     return om_sup_structure_at(w, structure)->timer;
+ }
+ 
++#define OM_STANDIN_SLOT 30.0
+ void om_structure_tick_production(om_world *w, uint32_t structure) {
+     om_sup_structure *s = om_sup_structure_at(w, structure);
+     uint32_t interval = om_structure_production_interval_ticks(s->power);
+@@ -543,11 +544,9 @@ void om_structure_tick_production(om_world *w, uint32_t structure) {
+      * distance, within half the capture radius -- never any other
+      * generator. cos(angle) is read off om_sin(angle + HALF_PI) since the
+      * deterministic sine wrapper has no cosine sibling (csrc/sim.c). */
+-    angle = om_rng_draw(w) * OM_TWO_PI;
+-    dist = om_rng_draw(w) * (OM_REINFORCEMENT_CAPTURE_RADIUS / 2.0);
+-    s->last_spawn_distance = dist;
+-    s->last_spawn_x = s->x + dist * om_sin(angle + OM_SUP_HALF_PI);
+-    s->last_spawn_y = s->y + dist * om_sin(angle);
++    s->last_spawn_distance = OM_STANDIN_SLOT;
++    s->last_spawn_x = s->x + OM_STANDIN_SLOT;
++    s->last_spawn_y = s->y;
+ }
+ 
+ int om_structure_pop_spawned_unit(om_world *w, uint32_t structure) {

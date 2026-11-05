@@ -1,0 +1,12 @@
+diff --git a/scenes/tactical_c/tactical_view.gd b/scenes/tactical_c/tactical_view.gd
+index 667dda23..b3766a16 100644
+--- a/scenes/tactical_c/tactical_view.gd
++++ b/scenes/tactical_c/tactical_view.gd
+@@ -512,6 +512,7 @@ func qa_state() -> Dictionary:
+ 			units[str(id)]["ld"] = int(u["ld"])
+ 	return {
+ 		"scene": "tactical_view",
++		"fps_dbg": Engine.get_frames_per_second(),
+ 		"tick": int(_frame.get("tick", 0)),
+ 		"plants": ["facing-fixed", "camera-unbounded", "move-order-dropped"],
+ 		"canvas": _canvas,

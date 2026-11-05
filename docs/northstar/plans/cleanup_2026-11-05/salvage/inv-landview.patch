@@ -1,0 +1,89 @@
+diff --git a/autoload/qa_daemon.gd b/autoload/qa_daemon.gd
+index c8417afe..225df652 100644
+--- a/autoload/qa_daemon.gd
++++ b/autoload/qa_daemon.gd
+@@ -250,6 +250,20 @@ func _dispatch(verb: String, args: Array) -> Dictionary:
+ 			return _do_qa_select(args)
+ 		"project":
+ 			return _do_project(args)
++		"probe_move":
++			var cur2 = get_tree().current_scene
++			cur2.send_command({"kind": "move", "unit_ids": [int(args[0])], "x": float(args[1]), "y": float(args[2])})
++			return {"ok": true, "result": {}}
++		"probe_vis":
++			var nn = get_tree().current_scene.get_node_or_null(str(args[0]))
++			if nn == null:
++				return {"ok": true, "result": {"found": false}}
++			nn.visible = bool(args[1])
++			return {"ok": true, "result": {"found": true}}
++		"probe_cam":
++			var cur = get_tree().current_scene
++			cur.qa_probe_cam(float(args[0]), float(args[1]), float(args[2]))
++			return {"ok": true, "result": {}}
+ 		"set_fog_filter":
+ 			_fog_filter_override = 1 if (args.size() > 0 and bool(args[0])) else 0
+ 			return {"ok": true, "result": {"fog_filter": fog_filter()}}
+diff --git a/scenes/tactical_c/tactical_view.gd b/scenes/tactical_c/tactical_view.gd
+index 86025f36..7e9071ba 100644
+--- a/scenes/tactical_c/tactical_view.gd
++++ b/scenes/tactical_c/tactical_view.gd
+@@ -585,9 +585,40 @@ func qa_state() -> Dictionary:
+ 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
+ 		"inventory": _inventory(),
+ 		"settlement_lots": _settlement.lots_drawn() if _settlement != null else [],
++		"probe": _probe(),
+ 	}
+ 
+ 
++func _probe() -> Dictionary:
++	var out := {}
++	if _ground3d == null:
++		return out
++	var cam: Camera3D = _ground3d.camera_rig().get_camera()
++	var uv := _node("UnitVisuals")
++	var sq := _node("UnitSquads")
++	var centres := {}
++	for b in sq._batches:
++		centres[snappedf(b["c"].x, 0.01)] = b
++	for u in _frame.get("units", []):
++		var id := int(u.get("id"))
++		var n = uv.unit_node(id)
++		var b3 = _ground3d._units3d.unit_node(id)
++		if n == null or b3 == null:
++			continue
++		var gp: Vector2 = _ground3d.to_screen(float(u["x"]), float(u["y"]))
++		var flat := (Vector2(float(u["x"]), float(u["y"])) - _camera) * _world_scale + Vector2(960.0, 540.0)
++		var sqc = null
++		var sqflat := flat
++		for bb in sq._batches:
++			if bb["c"].distance_to(flat) < 0.01:
++				sqc = bb["c"]
++		out[str(id)] = {"faction": int(u["faction"]), "type": int(u["type"]), "x": float(u["x"]), "y": float(u["y"]), "facing": float(u.get("facing", 0.0)),
++			"uv": [n.position.x, n.position.y], "uv_rot": uv._fills[id].rotation, "proj": [gp.x, gp.y],
++			"body3d": [cam.unproject_position(b3.global_position).x, cam.unproject_position(b3.global_position).y],
++			"body_rot_y": b3.rotation.y, "ground_y": b3.position.y, "flat": [flat.x, flat.y], "squad": [sqc.x, sqc.y] if sqc != null else null}
++	return out
++
++
+ func _inventory() -> Dictionary:
+ 	var squads := 0
+ 	var squad_node := _node("UnitSquads")
+@@ -1016,6 +1047,18 @@ func qa_set_selected(ids: Array) -> void:
+ 	_update_hud()
+ 
+ 
++func qa_probe_cam(x: float, y: float, h: float) -> void:
++	var r = _rig()
++	if h > 0.0:
++		r._height = h
++		r._update_band()
++	qa_pan(x, y)
++	r._place()
++	_sync_from_rig()
++	_update_display_px()
++	_redraw()
++
++
+ func qa_pan(x: float, y: float) -> void:
+ 	if _camera_unbounded:
+ 		_camera = Vector2(x, y)

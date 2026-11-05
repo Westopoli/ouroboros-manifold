@@ -1,0 +1,86 @@
+diff --git a/tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py b/tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py
+index 952880ec..d84f43e8 100644
+--- a/tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py
++++ b/tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py
+@@ -9,15 +9,27 @@ import pytest
+ 
+ from conftest import (
+     OMArchetype,
++    OMEdge,
+     OMFeature,
+     OMField,
++    OMMissionCandidate,
++    OMStance,
+     OMTier,
++    set_edge,
+     set_faction,
+     set_owner,
+     set_region,
++    set_stance,
++    set_tech_multipliers,
+ )
+ 
+ 
++def read_mission_candidates(lib, w, max_records=64):
++    buf = (OMMissionCandidate * max_records)()
++    n = lib.om_mission_candidates(w, buf, max_records)
++    return [buf[i] for i in range(n)]
++
++
+ class OMChapterPhase:
+     BRIEFING = 0
+     RECON = 1
+@@ -109,18 +121,50 @@ def test_R_055_04_character_selector_runs_after_it(lib, world_factory):
+     w = world_factory(n_regions=4)
+     lib.om_chapter_start(w, 1)
+ 
++    # Register a player faction owning region 2 (a frontier region under
++    # attack, the same defensive_stand trigger shape as test_E10_S072's
++    # fixture) and a hostile neighbor on region 3, so the mission candidate
++    # pool is non-empty -- a bare world with no faction and no owned region
++    # falls back to om_mission_fallback_region, which returns 0 when no
++    # player faction is found, making chosen_region trivially satisfy a
++    # bare "!= 0" check for the wrong reason.
++    set_faction(lib, w, 0, OMArchetype.PLAYER, budget=50.0)
++    set_faction(lib, w, 1, OMArchetype.CONQUEROR, budget=100.0)
++    set_stance(lib, w, 0, 1, OMStance.HOSTILE)
++    set_tech_multipliers(lib, w, 0, 1.0, 1.0, 1.0)
++    set_tech_multipliers(lib, w, 1, 1.0, 1.0, 1.0)
++
++    set_region(lib, w, 2, tier=OMTier.HOME, military=30.0, economy=40.0, tension=20.0, population=50.0)
++    set_owner(lib, w, 2, 0, held_since=-1)
++
++    set_region(lib, w, 3, tier=OMTier.HOME, military=40.0, economy=50.0, tension=15.0, population=50.0)
++    set_owner(lib, w, 3, 1, held_since=-1)
++
++    set_edge(lib, w, 2, 3, OMEdge.BORDER)
++
+     # Complete time jump phase
+     lib.om_chapter_set_phase(w, OMChapterPhase.TIME_JUMP)
+     lib.om_time_jump_run(w, 50)
+ 
+-    # Mission generator runs and chooses mission region 2
++    # Mission generator runs and chooses a mission region
+     lib.om_mission_generator_run(w)
+     chosen_region = lib.om_mission_generator_chosen_region(w)
+     # A hard-stub chosen-region accessor returning 0 would make the equality
+-    # below trivially true against an equally-stubbed reader; region 2 was set
+-    # up as the mission target, so 0 alone is not a valid chosen region here.
++    # below trivially true against an equally-stubbed reader; a candidate
++    # pool was set up above, so 0 alone is not a valid chosen region here.
+     assert chosen_region != 0, "chosen region must be a real (nonzero) mission target"
+ 
++    # om_mission_generator_run already consumed the weighted-draw RNG state
++    # internally (it calls om_mission_select once); re-calling om_mission_select
++    # here would draw again and could pick a different index, so instead read
++    # the candidate pool it built (a side-effect-free accessor) and check that
++    # chosen_region names one of the real candidates it scored -- self-consistent
++    # whichever region actually scores highest, not a hardcoded region number.
++    candidates = read_mission_candidates(lib, w)
++    assert any(c.region_idx == chosen_region for c in candidates), (
++        "chosen region must be one of the candidates the generator actually built and scored"
++    )
++
+     # Character selector runs after mission generator and reads the chosen region
+     lib.om_character_selector_run(w)
+     read_region = lib.om_character_selector_input_region(w)

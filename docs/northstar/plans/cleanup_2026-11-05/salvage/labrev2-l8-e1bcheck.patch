@@ -1,0 +1,156 @@
+diff --git a/scripts/skilllab/contract.py b/scripts/skilllab/contract.py
+index 1a7072d6..c84abc11 100644
+--- a/scripts/skilllab/contract.py
++++ b/scripts/skilllab/contract.py
+@@ -97,6 +97,9 @@ class Setup:
+     cone: dict = field(default_factory=dict)   # type name -> (range, half-angle degrees, share), applied through Engine.set_cone
+ 
+ 
++REENGAGE_SILENCE_TICKS = 40
++
++
+ @dataclass
+ class FightResult:
+     outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "cap" (max_ticks reached: a lab defect, never a result)
+@@ -117,6 +120,7 @@ class FightResult:
+     weighted_window: tuple = (0.0, 0.0)
+     predicted_count: str = "tie"            # "side0" | "side1" | "tie": the larger window total
+     predicted_type: str = "tie"
++    reengage: tuple = (0, 0)
+     agreement: str = "n/a"    # "both_right" | "count_wrong_type_right" | "both_wrong" | "count_right_type_wrong" | "n/a"
+ 
+ 
+diff --git a/scripts/skilllab/fight.py b/scripts/skilllab/fight.py
+index 67e1ddad..8d2a143f 100644
+--- a/scripts/skilllab/fight.py
++++ b/scripts/skilllab/fight.py
+@@ -3,7 +3,7 @@ A fight ends by elimination only; reaching Setup.max_ticks is a cap, a lab defec
+ import math
+ import random
+ 
+-from scripts.skilllab.contract import OPENING_WINDOW_TICKS, SHIFT_MAX, TICKS_PER_SECOND, FightResult
++from scripts.skilllab.contract import REENGAGE_SILENCE_TICKS, OPENING_WINDOW_TICKS, SHIFT_MAX, TICKS_PER_SECOND, FightResult
+ from scripts.skilllab.firing import count_able, count_weighted, states
+ from scripts.skilllab.formations import place
+ from scripts.skilllab.timeline import Timeline, first_anchors, validate
+@@ -258,9 +258,15 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline):
+     if trace is not None:
+         record()
+     timeline.check(0, hp, zero=True)
++    import os
++    mut = os.environ.get("OM_MUT", "")
++    side_of = {u: s for s in (0, 1) for u in side_ids[s]}
++    prev_pos = {u: engine.unit_pos(w, u) for u in all_ids}
++    silent, armed, reengage = [0, 0], [True, True], [0, 0]
+     while outcome is None:
+         step(w)
+         tick += 1
++        pre_hp = dict(hp)
+         changed = False
+         for u in living:
+             h = unit_hp(w, u)
+@@ -269,7 +275,9 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline):
+         if changed:
+             living = [u for u in living if hp[u] > 0]
+             alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
++        prev_hp = pre_hp
+         timeline.check(tick, hp)
++        _reengage(engine, w, setup, side_ids, side_of, hp, prev_hp, prev_pos, silent, armed, reengage, timeline, mut)
+         if trace is not None:
+             record()
+         if alive[0] == 0 and alive[1] == 0:
+@@ -296,4 +304,39 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline):
+                        steps_fired=tuple(timeline.fired), weighted_unit_seconds=wsec, states=state_rows,
+                        winner=outcome if outcome in ("side0", "side1") else None, firing_window=fwin,
+                        weighted_window=wwin, predicted_count=pcount, predicted_type=ptype,
+-                       agreement=_agreement(outcome, pcount, ptype))
++                       agreement=_agreement(outcome, pcount, ptype), reengage=tuple(reengage))
++
++
++def _reengage(engine, w, setup, side_ids, side_of, hp, prev_hp, prev_pos, silent, armed, reengage, timeline, mut):
++    for s in (0, 1):
++        fired = any(hp[u] < prev_hp[u] for u in side_ids[1 - s])
++        moved = False
++        for u in side_ids[s]:
++            if hp[u] > 0:
++                p = engine.unit_pos(w, u)
++                if p != prev_pos[u]:
++                    moved = True
++                prev_pos[u] = p
++        if mut == "arm_on_move_only":
++            fired = False
++        if fired or moved:
++            silent[s], armed[s] = 0, True
++        else:
++            silent[s] += 1
++        if silent[s] < REENGAGE_SILENCE_TICKS or not armed[s]:
++            continue
++        enemy = [u for u in side_ids[1 - s] if hp[u] > 0]
++        mine = [u for u in side_ids[s] if hp[u] > 0]
++        vis = engine.visible_enemies(w, s, enemy) if enemy else set()
++        idle = [u for u in mine if timeline.role[u] and engine.unit_destination(w, u) is None]
++        if mut == "idle_consume" and vis and not idle:
++            armed[s] = False
++        if not vis or not idle:
++            continue
++        pts_set = enemy if mut == "all_living" else [u for u in enemy if u in vis]
++        if mut == "visible_centroid":
++            pts_set = enemy
++        pts = [engine.unit_pos(w, u) for u in pts_set]
++        engine.order_attack_move(w, idle, sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
++        reengage[s] += 1
++        armed[s] = False
+diff --git a/scripts/skilllab/rows.py b/scripts/skilllab/rows.py
+index b0f0ca1c..b8d3c61f 100644
+--- a/scripts/skilllab/rows.py
++++ b/scripts/skilllab/rows.py
+@@ -7,7 +7,7 @@ _FROM_RESULT = ("outcome", "margin", "strength_left_0", "strength_left_1", "surv
+                 "firing_unit_seconds_1", "firing_window_0", "firing_window_1", "weighted_unit_seconds_0",
+                 "weighted_unit_seconds_1", "weighted_window_0", "weighted_window_1", "predicted_count",
+                 "predicted_type", "agreement")
+-_FIXED = _FROM_RESULT + ("knob", "knob_value", "baseline", "ceiling_hit", "prefight")
++_FIXED = _FROM_RESULT + ("knob", "knob_value", "baseline", "ceiling_hit", "prefight", "reengage_0", "reengage_1")
+ 
+ # Features field order, matching scripts.skilllab.maps.Features
+ _FEATURE_FIELDS = ("choke_count", "choke_width_wu", "choke_width_bodies", "lane_count", "blocked_layer_ranges",
+@@ -32,6 +32,7 @@ def fight_row(result, features=None, knob="none", knob_value=None, baseline="non
+     row["weighted_window_0"], row["weighted_window_1"] = result.weighted_window
+     row["predicted_count"], row["predicted_type"], row["agreement"] = result.predicted_count, result.predicted_type, result.agreement
+     row["knob"], row["knob_value"], row["baseline"], row["ceiling_hit"], row["prefight"] = knob, knob_value, baseline, ceiling_hit, prefight
++    row["reengage_0"], row["reengage_1"] = (int(c) for c in result.reengage)
+     if features is not None:
+         for name in _FEATURE_FIELDS:
+             row["feat_" + name] = getattr(features, name)
+diff --git a/scripts/skilllab/timeline.py b/scripts/skilllab/timeline.py
+index 5d26e4f3..4da5e4e8 100644
+--- a/scripts/skilllab/timeline.py
++++ b/scripts/skilllab/timeline.py
+@@ -42,9 +42,11 @@ class Timeline:
+         self.anchors = first_anchors(setup)
+         self.pending = list(range(len(setup.timeline)))
+         self.fired = []
++        self.role = {u: setup.groups[gi].order == "attack_move" for gi, us in ids_by_group.items() for u in us}
+ 
+     def check(self, tick, hp, zero=False):
+         """Fire every due pending step in listed order; zero=True checks only ("tick", 0) (before any step)."""
++        self._tick = tick
+         for i in list(self.pending):
+             s = self.setup.timeline[i]
+             alive = [u for u in self.ids[s.group] if hp[u] > 0]
+@@ -83,6 +85,16 @@ class Timeline:
+         return any(self.engine.can_see(self.w, a, t) for a in alive for t in others)
+ 
+     def _issue(self, s, alive, hp):
++        import os
++        mut = os.environ.get("OM_MUT", "")
++        if mut == "late_steps_ignored" and self.fired is not None and self._tick > 0:
++            pass
++        elif s.order in ("attack_move",):
++            for u in alive: self.role[u] = True
++        elif s.order in ("move", "group_move", "idle", "guard"):
++            for u in alive: self.role[u] = False
++        elif mut == "ping_clears" and s.order in ("ping", "set_layer", "set_emission"):
++            for u in alive: self.role[u] = False
+         if s.order == "ping":
+             for gi in range(len(self.setup.groups)):
+                 for u in self.ids[gi]:

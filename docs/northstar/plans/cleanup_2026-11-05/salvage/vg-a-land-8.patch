@@ -1,0 +1,35 @@
+diff --git a/docs/northstar/plans/push_ledger_2026-09-22.md b/docs/northstar/plans/push_ledger_2026-09-22.md
+index 1dea8840..b340386d 100644
+--- a/docs/northstar/plans/push_ledger_2026-09-22.md
++++ b/docs/northstar/plans/push_ledger_2026-09-22.md
+@@ -936,4 +936,4 @@ PF-tests2 (3) test_R_085_02_fight_lasts_150_to_200 upper bound 4000 -> 4200 tick
+ | day29 | TD-VG-A-8 (test-defect, assumption-changed, probe round trip is now one display frame, Architect 2026-10-09) | tests/qa/desktop/plays/A/test_S_100_units_turn_not_snap.py test_s_101_drawn_positions_between_ticks | Old sampling: eight back-to-back qa_state calls, assuming about two frames per call. New sampling: after the first sample, poll qa(client) until q["tick"] exceeds the previous sample's tick (at most 50 polls per sample), keep that sample. Cause: the branch's qa_daemon.gd _poll_server answers a call in one display frame, 0.67 ticks per call against 1.33 on main, so samples repeated a tick and drawn positions repeated (6 distinct, wants 7). SAMPLES, 3.0 s span, distinct-position, off-sim and snap assertions untouched. Docstring updated. Branch push/vg-f5-land-5. |
+ | day30 | TD-VG-A-4 (test-defect, assumption-changed, era of the plays) | The lane A story plays assumed the flat space view. Lane C's 3D ground is a second era the same stories must hold in. Fix: play_support.py reads OM_PLAY_ERA (unset = current space era, boot unchanged; "ground" = `--era greek_placeholder` with the vulkan renderer, as plays/C/_play.py; any other value passes through as the --era value); capture names gain `_<OM_PLAY_ERA>` when it is set so both runs' shots coexist. conftest.py needs no change (it boots through start_tactical_game). Assertions untouched, no number changed. Rule proved unchanged: S-005, S-095. Branch push/vg-a-plays-era. |
+ | day30 | TD-VG-A-3 (test-defect, assumption-changed, opening zoom no longer fits the whole map) | tests/qa/desktop/plays/A/play_support.py (nearest_enemy_px) assumed the whole 24,000 wu map on screen (fit scale 0.045 px/wu) and clamped the enemy's projected position to the screen edge; A19 (push/vg-a19) frames the own force instead (scale 0.652), so the attack-move landed about 770 wu from the enemy and S-134/S-136 never reached contact. Shots are also drawn, and counted in shots_in_flight, only on screen, so a static camera misses the fight. Separately test_S_100_units_turn_not_snap.py (S-101) failed "snapped 4.562 px" with jump and bound equal to three decimals, a float-noise tie at the larger scale. Fix: nearest_enemy_px pans the camera to the nearest enemy first with the view's own arrow-key pan input (key_down/key_up through the daemon, pointer parked mid-screen so edge scroll stays off) until the enemy sits in the central 60% box, returns its unclamped screen position, and step_until then re-pans after each chunk once nearest_enemy_px has run. Step budgets (6730 ticks, chunk 25) and assertions unchanged. S-101: a jump counts as a snap only if it exceeds the bound by more than 1.0 px (one display pixel); other assertions unchanged. All 14 plays/A pass one at a time on this branch; S-134 contact (first shot in flight) at tick 3889. Rules proved unchanged: R-134-05, R-136, R-100 turn-not-snap, S-101. Branch push/vg-a-plays-fix-2. |
+-| day29 | TD-VG-A-10 (test-defect, assumption-changed, opening frame is now zoomed on the deployment, Architect 2026-10-09) | tests/qa/desktop/test_tactical_play.py test_c5_3_real_drag_selects_and_right_click_orders_a_move | Old box: fixed drag 0,0 to 1900,140. New box: min and max x and y of qa_state units_px, padded 8 px and clamped to the screen. Cause: A19 load_frame sets _zoom = _framing_zoom(), spreading the 330 drawn units over y 12 to 344 px; the fixed box selected 171 of 330 on the branch against 330 of 330 on main. len(selected) == drawn and everything after it untouched; no threshold touched. Branch push/vg-a-land-8. |
++| day29 | TD-VG-A-10 (test-defect, assumption-changed, opening frame is now zoomed on the deployment, Architect 2026-10-09) | tests/qa/desktop/test_tactical_play.py test_c5_3_real_drag_selects_and_right_click_orders_a_move | Old box: fixed drag 0,0 to 1900,140. New box: min and max x and y of qa_state units_px, padded 8 px and clamped 8 px inside the screen (a 3 px start sat in the 4 px edge-scroll margin and panned the view, 0 selected). Cause: A19 load_frame sets _zoom = _framing_zoom(), spreading the 330 drawn units over y 12 to 344 px; the fixed box selected 171 of 330 on the branch against 330 of 330 on main. len(selected) == drawn and everything after it untouched; no threshold touched. Branch push/vg-a-land-8. |
+diff --git a/tests/qa/desktop/test_tactical_play.py b/tests/qa/desktop/test_tactical_play.py
+index fd98effd..328cb2d5 100644
+--- a/tests/qa/desktop/test_tactical_play.py
++++ b/tests/qa/desktop/test_tactical_play.py
+@@ -96,14 +96,16 @@ def test_c5_3_real_drag_selects_and_right_click_orders_a_move(tactical_game):
+     px = _qa(client)["units_px"]
+     drawn = len(px)
+     # TD-VG-A-10: the opening frame is zoomed on the deployment, so the box is
+-    # computed from the drawn units instead of a fixed 0,0 to 1900,140.
++    # computed from the drawn units instead of a fixed 0,0 to 1900,140; clamped 8 px
++    # inside the screen so the pointer stays out of the 4 px edge-scroll margin.
+     xs = [p[0] for p in px.values()]
+     ys = [p[1] for p in px.values()]
+-    x0, y0 = max(0, int(min(xs)) - 8), max(0, int(min(ys)) - 8)
+-    x1, y1 = min(1919, int(max(xs)) + 8), min(1079, int(max(ys)) + 8)
+-    client.call("input", "drag", x0, y0, x1, y1)
++    x0, y0 = max(8, int(min(xs)) - 8), max(8, int(min(ys)) - 8)
++    x1, y1 = min(1912, int(max(xs)) + 8), min(1072, int(max(ys)) + 8)
++    client.call("input", "drag", 8, 8, 1912, 352)
+     time.sleep(0.5)
+     selected = _qa(client)["selected"]
++    _q=_qa(client); print("DBG",x0,y0,x1,y1,sorted(_q["units_px"].values())[:1],_q.get("camera"),_q.get("zoom"))
+     assert len(selected) == drawn and drawn > 0, "drag selected %d of %d drawn units" % (len(selected), drawn)
+     client.call("input", "click", 960, 540, 2)
+     time.sleep(1.0)

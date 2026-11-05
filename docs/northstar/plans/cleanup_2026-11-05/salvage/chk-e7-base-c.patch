@@ -1,0 +1,1632 @@
+diff --git a/tests/csim/conftest.py b/tests/csim/conftest.py
+index 7efbfb08..82b123e1 100644
+--- a/tests/csim/conftest.py
++++ b/tests/csim/conftest.py
+@@ -61,7 +61,7 @@ _build_libs()
+ # Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
+ # bug ids, and om_world_get_state_checksum / om_world_set_tick /
+ # om_abi_layout_check are new since version 1).
+-EXPECTED_ABI_VERSION = 7
++EXPECTED_ABI_VERSION = 8
+ 
+ 
+ # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----
+@@ -2276,6 +2276,7 @@ def _bind_e10(lib):
+     _bind(lib, "om_mission_get_deployed_force_count", [W], ctypes.c_uint32, ("w",))
+     _bind(lib, "om_mission_get_enemy_power", [W], ctypes.c_double, ("w",))
+     _bind(lib, "om_mission_get_force_count", [W], ctypes.c_uint32, ("w",))
++    _bind(lib, "om_mission_get_force_group", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "i"))
+     _bind(lib, "om_mission_get_force_unit", [W, ctypes.c_uint32, P(ctypes.c_int32), P(ctypes.c_int32)], ctypes.c_int, ("w", "i", "type", "tier"))
+     _bind(lib, "om_mission_get_objective_completion", [W, ctypes.c_uint32], ctypes.c_double, ("w", "objective_idx"))
+     _bind(lib, "om_mission_get_objective_score", [W], ctypes.c_double, ("w",))
+@@ -2603,8 +2604,8 @@ def _bind_e15(lib):
+     _bind(lib, "om_hazard_spawn_moving_interference", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_uint64], ctypes.c_uint32, ("w", "p1", "p2", "p3", "c_double", "p5"))
+     _bind(lib, "om_macro_set_force_fallback_point", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "force", "x", "y"))
+     _bind(lib, "om_mission_check_extraction_objectives", [W], None, ("w",))
+-    _bind(lib, "om_mission_compute_reinforcement_capacity", [ctypes.c_double, ctypes.c_uint64], ctypes.c_double, ("c_double", "time"))
+-    _bind(lib, "om_mission_compute_starting_force", [ctypes.c_double], ctypes.c_double, ("c_double",))
++    _bind(lib, "om_mission_compute_reinforcement_capacity", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("F", "share"))
++    _bind(lib, "om_mission_compute_starting_force", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("F", "share"))
+     _bind(lib, "om_mission_get_reinforcement_trickle", [W], ctypes.c_uint32, ("w",))
+     _bind(lib, "om_mission_set_player_held_structures_count", [W, ctypes.c_int32, ctypes.c_uint32], None, ("w", "faction_id", "held"))
+     _bind(lib, "om_mission_setup_extraction_point", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], None, ("w", "x", "y", "radius"))
+diff --git a/tests/csim/test_E01_T3_contract.py b/tests/csim/test_E01_T3_contract.py
+index 74c31ad6..afce9c28 100644
+--- a/tests/csim/test_E01_T3_contract.py
++++ b/tests/csim/test_E01_T3_contract.py
+@@ -161,7 +161,7 @@ def test_save_round_trip_keeps_era_kind_and_movement_kinds(lib, world_factory):
+     assert lib.om_roster_set_movement_kind(src, TYPE_A, MOVE_WALKING) == 0
+     assert lib.om_roster_set_movement_kind(src, TYPE_B, MOVE_WALKING) == 0
+     buf, n = _save(lib, src)
+-    assert int.from_bytes(bytes(buf[4:8]), "little") == 11, "K-e5 bumps OM_SAVE_FORMAT_VERSION to 10 (TD-VG-E-16); W2 bumps it to 11 (TD-VG-W-1)"
++    assert int.from_bytes(bytes(buf[4:8]), "little") == 12, "K-e5 bumps OM_SAVE_FORMAT_VERSION to 10 (TD-VG-E-16); W2 bumps it to 11 (TD-VG-W-1); E7 bumps it to 12 (TD-VG-E-27)"
+     dst = world_factory(n_regions=1)
+     assert lib.om_era_kind(dst) == 0   # control: a fresh world is space, kinds default flying
+     assert lib.om_unit_profile_movement_kind(dst, TYPE_A) == MOVE_FLYING
+diff --git a/tests/csim/test_E01_T3_mission_ground.py b/tests/csim/test_E01_T3_mission_ground.py
+index 855aa897..770d1ae3 100644
+--- a/tests/csim/test_E01_T3_mission_ground.py
++++ b/tests/csim/test_E01_T3_mission_ground.py
+@@ -28,6 +28,7 @@ from conftest import (
+     OMArchetype, OMEdge, OMFeature, OMTier, OMVec2,
+     set_edge, set_faction, set_owner, set_region,
+ )
++from test_VG_E_e7 import _bind as e7_bind, oracle_units, owners_of, roster_of  # TD-VG-E-34: the E7 starting-force oracle
+ 
+ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
+ V = ctypes.c_void_p
+@@ -191,14 +192,27 @@ def test_control_space_mission_has_no_terrain(lib, world_factory):
+ def test_every_unit_spawns_on_walkable_ground_and_objective_is_reachable(lib, world_factory, archetype):
+     """Spec 3a: every archetype at 20 seeds, ground era: every unit spawns (same count as the space era), each on
+     a walkable cell, the (snapped) objective node on a walkable cell and reachable from a player and an enemy unit
+-    by om_walk_route."""
++    by om_walk_route.
++
++    TD-VG-E-34 (pin move, start-count pins move with the starting-force cut, E7, Architect 2026-10-19): the player spawns
++    start_units of the composed force F in every era, with start = F * frac(share), share = p / (p + e) read from the era's own
++    structure placement (the ground era caps the strongpoints at the slope count, R-218-01, so its p and e differ from the space
++    era's). The expected count is the space era's enemy units (unchanged by E7) plus the ground world's start_units: it was the
++    space era's total, which held while both eras spawned all of F. The premise (F, p, e, share, start_units) is in the message."""
++    e7_bind(lib)
+     for seed in SEEDS:
+         space = _scene(lib, world_factory, ground=False, archetype=archetype, seed=seed)
+-        expect = lib.om_unit_count(space)
++        space_enemy = sum(1 for u in _units(lib, space) if lib.om_unit_get_faction(space, u) == ENEMY_FAC)
+         w = _scene(lib, world_factory, ground=True, archetype=archetype, seed=seed)
+         assert lib.om_terrain_present(w) == 1, f"seed {seed}: no terrain"
+         units = _units(lib, w)
+-        assert len(units) == expect, f"seed {seed}: {len(units)} units spawned, the space era spawns {expect}"
++        owners = owners_of(lib, w)
++        F, p, e = sum(roster_of(lib, w)), owners.count(PLAYER_FAC), owners.count(ENEMY_FAC)
++        start_units, _cap = oracle_units(F, p, e)
++        expect = space_enemy + start_units
++        print("PREMISE", f"archetype {archetype} seed {seed} F {F} p {p} e {e} share {p / (p + e) if p + e else None} start_units {start_units} enemy {space_enemy} expect {expect}")
++        assert len(units) == expect, (f"seed {seed}: {len(units)} units spawned, E7 wants the enemy's {space_enemy} + start_units "
++                                      f"{start_units} = {expect} (F {F}, p {p}, e {e}, share {p / (p + e) if p + e else None})")
+         for u in units:
+             x, y = _pos(lib, w, u)
+             assert lib.om_terrain_walkable_at(w, x, y) == 1, f"seed {seed}: unit {u} spawned unwalkable at {x},{y}"
+diff --git a/tests/csim/test_E02_S020_abi.py b/tests/csim/test_E02_S020_abi.py
+index 1ddab9d5..45b6baf3 100644
+--- a/tests/csim/test_E02_S020_abi.py
++++ b/tests/csim/test_E02_S020_abi.py
+@@ -19,7 +19,7 @@ from conftest import OMTier, OmCollision, OmDriftRow, OmTraceRow, set_region
+ 
+ 
+ def test_R_020_abi_version_is_4(lib):
+-    assert lib.om_abi_version() == 7
++    assert lib.om_abi_version() == 8
+ 
+ 
+ def test_R_020_layout_check_matches_caller_sizes(lib):
+diff --git a/tests/csim/test_E16_B5_save_version.py b/tests/csim/test_E16_B5_save_version.py
+index 52e2d06f..247c0c66 100644
+--- a/tests/csim/test_E16_B5_save_version.py
++++ b/tests/csim/test_E16_B5_save_version.py
+@@ -10,7 +10,7 @@ import ctypes
+ from conftest import OMTier, set_owner, set_region
+ 
+ VERSION_OFFSET = 4
+-EXPECTED_VERSION = 11
++EXPECTED_VERSION = 12
+ 
+ 
+ def _bind_save(lib):
+@@ -91,10 +91,10 @@ def test_R_111_03_a_version_3_save_is_refused_cleanly(lib, world_factory):
+ 
+ 
+ def test_R_111_03_a_version_6_save_is_refused_cleanly(lib, world_factory):
+-    """Given a save from a later build (version word 12), When loaded, Then it is refused: no migration either way, any other version is rejected."""
++    """Given a save from a later build (version word 13), When loaded, Then it is refused: no migration either way, any other version is rejected."""
+     src = _world(lib, world_factory, seed=37)
+     buf, size = _save(lib, src)
+-    newer = _with_version(buf, size, 12)
++    newer = _with_version(buf, size, 13)
+     dst = world_factory(n_regions=4, seed=38)
+     before = lib.om_world_get_state_checksum(dst)
+     assert lib.om_load_state_read(dst, newer, size) != 0
+diff --git a/tests/csim/test_E16_C2_save_version.py b/tests/csim/test_E16_C2_save_version.py
+index fb747485..332f0d3f 100644
+--- a/tests/csim/test_E16_C2_save_version.py
++++ b/tests/csim/test_E16_C2_save_version.py
+@@ -11,7 +11,7 @@ import ctypes
+ from conftest import OMTier, set_owner, set_region
+ 
+ VERSION_OFFSET = 4
+-EXPECTED_VERSION = 11
++EXPECTED_VERSION = 12
+ PRE_BUMP_VERSION = 9
+ 
+ 
+diff --git a/tests/csim/test_VG_E_contract.py b/tests/csim/test_VG_E_contract.py
+index 22eca744..de21c170 100644
+--- a/tests/csim/test_VG_E_contract.py
++++ b/tests/csim/test_VG_E_contract.py
+@@ -68,9 +68,9 @@ def test_control_existing_getter_still_works(lib, world_factory):
+ 
+ 
+ def test_abi_version_is_7(lib):
+-    """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1); K-e5 moved the pin to 7 (the hook om_terrain_set_heights, TD-VG-E-16). Red before K-e5: the library reports 6."""
++    """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1); K-e5 moved the pin to 7 (the hook om_terrain_set_heights, TD-VG-E-16). Red before K-e5: the library reports 6. E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group): red until then, the library reports 7."""
+     lib.om_abi_version.argtypes, lib.om_abi_version.restype = [], ctypes.c_uint32
+-    assert lib.om_abi_version() == 7
++    assert lib.om_abi_version() == 8
+ 
+ 
+ def test_new_symbols_present_and_bind(lib):
+@@ -134,14 +134,14 @@ def test_place_symbol_callable(lib, world_factory):
+ 
+ def test_save_round_trip_at_format_10_keeps_empty_new_state(lib, world_factory):
+     """K-e3: format 9 writes and re-reads; K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1): the version word is 11; the new state reads back empty / doctrine 3.
+-    Red before W2: the version word is 10."""
++    Red before W2: the version word is 10. E7 moved it to 12 (TD-VG-E-27): red until then, the version word is 11."""
+     bind(lib)
+     bind_save(lib)
+     src = world_factory(n_regions=1)
+     size = lib.om_save_state_size(src)
+     buf = (ctypes.c_uint8 * size)()
+     lib.om_save_state_write(src, buf, size)
+-    assert int.from_bytes(bytes(buf[4:8]), "little") == 11
++    assert int.from_bytes(bytes(buf[4:8]), "little") == 12
+     dst = world_factory(n_regions=1)
+     assert lib.om_load_state_read(dst, buf, size) == 0
+     assert lib.om_lot_count(dst) == 0 and lib.om_strongpoint_count(dst) == 0
+diff --git a/tests/csim/test_VG_E_e1h.py b/tests/csim/test_VG_E_e1h.py
+index 0b532a8f..09500e3e 100644
+--- a/tests/csim/test_VG_E_e1h.py
++++ b/tests/csim/test_VG_E_e1h.py
+@@ -307,9 +307,11 @@ def test_rubble_can_be_refounded(lib, world_factory):
+ def test_no_fixed_force_split(lib, world_factory):
+     """R-218-06: R-126-04's 0.20 starting-force split is dropped, so om_mission_compute_starting_force(F) != 0.20 F."""
+     bind(lib)
+-    lib.om_mission_compute_starting_force.argtypes = [ctypes.c_double]
++    lib.om_mission_compute_starting_force.argtypes = [ctypes.c_double, ctypes.c_double]  # (F, share): E7, TD-VG-E-28
+     lib.om_mission_compute_starting_force.restype = ctypes.c_double
+-    got = lib.om_mission_compute_starting_force(100.0)
++    # share 0.5, not 0.0: at share 0 the ruled floor is exactly a fifth (DRAFT-e7-floor-knee), 20.0, and the assertion would fail
++    # on a correct build; the point of this test is that the split is no longer a fixed 0.20 of F.
++    got = lib.om_mission_compute_starting_force(100.0, 0.5)
+     assert not math.isclose(got, 20.0, abs_tol=1e-5), "the fixed fifth is still applied (R-126-04 retired by R-218-06)"
+ 
+ 
+diff --git a/tests/csim/test_VG_E_ke2.py b/tests/csim/test_VG_E_ke2.py
+index 06682db9..4afac308 100644
+--- a/tests/csim/test_VG_E_ke2.py
++++ b/tests/csim/test_VG_E_ke2.py
+@@ -2,7 +2,8 @@
+ 
+ Spec: docs/northstar/plans/2026-10-07-visible-game-spec.md rev 8, "Lane E1 part a2: the K-e2 amendment".
+ Rules: R-218-01 (ground structure count capped at the slope count), R-218-05 (a structure at 0 HP stays
+-listed), R-218-06 (starting force is the whole force, reinforcement capacity 0; liberty 2026-10-10).
++listed), R-218-06 (starting force is the whole force, reinforcement capacity 0; liberty 2026-10-10; superseded by E7, TD-VG-E-28:
++(F, share) pins, see the section above the starting-force tests).
+ The entry points are internal (csrc/economy_internal.h) but exported by the shared object, so ctypes finds them.
+ """
+ import ctypes
+@@ -107,23 +108,55 @@ def test_R_218_01_ground_structure_count_at_most_slope_count(lib, world_factory,
+     assert not _over_cap(count, slopes), f"{count} structures over {slopes} slopes"
+ 
+ 
+-def test_R_218_06_starting_force_is_the_whole_force(lib):
+-    """R-218-06 (liberty 2026-10-10): om_mission_compute_starting_force(F) == F."""
+-    lib.om_mission_compute_starting_force.argtypes = [D]
++# E7 (VG-CONTRACT-E7, TD-VG-E-28): R-218-06 as rewritten by Westley 2026-10-11 ("players start with at least half-force when
++# a match begins, if not as far down as 20%"): both functions take (F, share) and the five pins below replace the whole-force
++# (F, 0) pair. Piecewise with START_KNEE 0.25 (DRAFT-e7-floor-knee, Westley to confirm): frac = 0.2 + 1.2 * share up to the
++# knee, 0.5 + 0.4 * (share - 0.25) above it. Red until E7: the one-argument and (D, U64) functions answer F and 0.
++ONE_THOUSAND = 1000.0
++
++
++def _starting_force(lib, f, share):
++    lib.om_mission_compute_starting_force.argtypes = [D, D]
+     lib.om_mission_compute_starting_force.restype = D
+-    assert lib.om_mission_compute_starting_force(1000.0) == 1000.0
++    return lib.om_mission_compute_starting_force(f, share)
+ 
+ 
+-def test_R_218_06_reinforcement_capacity_is_zero(lib):
+-    """R-218-06: om_mission_compute_reinforcement_capacity(1000.0, 1200) == 0.0."""
+-    lib.om_mission_compute_reinforcement_capacity.argtypes = [D, U64]
++def _capacity(lib, f, share):
++    lib.om_mission_compute_reinforcement_capacity.argtypes = [D, D]
+     lib.om_mission_compute_reinforcement_capacity.restype = D
+-    assert lib.om_mission_compute_reinforcement_capacity(1000.0, 1200) == 0.0
++    return lib.om_mission_compute_reinforcement_capacity(f, share)
++
++
++def test_R_218_06_starting_force_at_half_share_is_600(lib):
++    """R-218-06 (E7): om_mission_compute_starting_force(1000.0, 0.5) == 600.0 (old pin: (F) == F; TD-VG-E-28)."""
++    assert _starting_force(lib, ONE_THOUSAND, 0.5) == pytest.approx(600.0, abs=1e-5)
++
++
++def test_R_218_06_reinforcement_capacity_at_half_share_is_400(lib):
++    """R-218-06 (E7): om_mission_compute_reinforcement_capacity(1000.0, 0.5) == 400.0 (old pin: (1000.0, 1200) == 0.0; TD-VG-E-28)."""
++    assert _capacity(lib, ONE_THOUSAND, 0.5) == pytest.approx(400.0, abs=1e-5)
++
++
++def test_R_218_06_starting_force_at_zero_share_is_a_fifth(lib):
++    """R-218-06 (E7): a player holding none of the contested strongpoints starts with a fifth: (1000.0, 0.0) == 200.0."""
++    assert _starting_force(lib, ONE_THOUSAND, 0.0) == pytest.approx(200.0, abs=1e-5)
++
++
++def test_R_218_06_starting_force_at_the_knee_is_half(lib):
++    """R-218-06 (E7), DRAFT-e7-floor-knee: START_KNEE 0.25, half of F at the knee: (1000.0, 0.25) == 500.0."""
++    assert _starting_force(lib, ONE_THOUSAND, 0.25) == pytest.approx(500.0, abs=1e-5)
++
++
++def test_R_218_06_starting_force_at_full_share_is_four_fifths(lib):
++    """R-218-06 (E7): a player holding every contested strongpoint starts with four fifths: (1000.0, 1.0) == 800.0."""
++    assert _starting_force(lib, ONE_THOUSAND, 1.0) == pytest.approx(800.0, abs=1e-5)
+ 
+ 
+ def test_R_218_06_detector_control(lib):
+-    """Positive control: a non-whole starting force (a 0.2 share) is distinguishable from F."""
++    """Positive control (green today): a non-whole starting force (a 0.2 share of F) is distinguishable from F, and the
++    library exports both functions the pins above call."""
+     assert 0.2 * 1000.0 != 1000.0
++    assert hasattr(lib, "om_mission_compute_starting_force") and hasattr(lib, "om_mission_compute_reinforcement_capacity")
+ 
+ 
+ def _hp(lib, w, s):
+diff --git a/tests/csim/test_VG_E_ke3.py b/tests/csim/test_VG_E_ke3.py
+index a7db4154..52b26d6d 100644
+--- a/tests/csim/test_VG_E_ke3.py
++++ b/tests/csim/test_VG_E_ke3.py
+@@ -80,6 +80,6 @@ def test_ke3_density_economy_is_saved(lib, world_factory):
+ 
+ 
+ def test_ke3_save_format_version_is_10(lib, world_factory):
+-    """K-e3 added the density_economy and lot_hit_tick fields (format 9); K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1): OM_SAVE_FORMAT_VERSION is 11 (header bytes 4..8, the pin the save-pin tests use); red: 10."""
++    """K-e3 added the density_economy and lot_hit_tick fields (format 9); K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1): E7 moved it to 12 (TD-VG-E-27): OM_SAVE_FORMAT_VERSION is 12 (header bytes 4..8, the pin the save-pin tests use); red: 11."""
+     buf, _ = _save(lib, scene(lib, world_factory))
+-    assert int.from_bytes(bytes(buf[4:8]), "little") == 11
++    assert int.from_bytes(bytes(buf[4:8]), "little") == 12
+diff --git a/tests/csim/test_VG_E_ke5.py b/tests/csim/test_VG_E_ke5.py
+index 3e2eb8b8..22db0927 100644
+--- a/tests/csim/test_VG_E_ke5.py
++++ b/tests/csim/test_VG_E_ke5.py
+@@ -630,18 +630,18 @@ def test_ke5_load_rejects_core_cell_at_or_above_side_squared(klib, kmake):
+ # ------------------------------------------------------------------------------------------------ version pins
+ 
+ def test_ke5_save_format_version_is_10(klib, kmake):
+-    """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10; W2 moved it to 11 (TD-VG-W-1), read as the moved pins read it (header bytes 4..8 of a save)."""
+-    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 11
++    """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10; W2 moved it to 11 (TD-VG-W-1), E7 to 12 (TD-VG-E-27), read as the moved pins read it (header bytes 4..8 of a save)."""
++    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 12
+ 
+ 
+ def test_ke5_abi_version_is_7(klib):
+-    """K-e5: OM_ABI_VERSION 6 to 7 (the one new public symbol), read from om_abi_version() as the moved pins read it."""
+-    assert klib.om_abi_version() == 7
++    """K-e5: OM_ABI_VERSION 6 to 7 (the one new public symbol); E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group), read from om_abi_version() as the moved pins read it."""
++    assert klib.om_abi_version() == 8
+ 
+ 
+ def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
+-    """K-e5: OM_PIPE_SAVE_FORMAT_VERSION goes to 10 (it is 8 today; finding FINDING-pipe-save-version); W2 moved it to 11 (TD-VG-W-1). A save written through the
+-    pipe has sidecar format_version 11 and a version word 11 (the sidecar is the key the load-game screen reads). Control
++    """K-e5: OM_PIPE_SAVE_FORMAT_VERSION goes to 10 (it is 8 today; finding FINDING-pipe-save-version); W2 moved it to 11 (TD-VG-W-1), E7 to 12 (TD-VG-E-27). A save written through the
++    pipe has sidecar format_version 12 and a version word 12 (the sidecar is the key the load-game screen reads). Control
+     first: both exist and are integers."""
+     if not PIPE.exists():
+         pytest.fail("pipe/ouroboros_pipe is not built")
+@@ -658,8 +658,8 @@ def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
+         side = json.load(open(path + ".json"))
+         word = struct.unpack_from("<I", open(path, "rb").read(), 4)[0]
+     assert isinstance(side.get("format_version"), int) and isinstance(word, int)
+-    assert side["format_version"] == 11, f"sidecar format_version {side['format_version']} (save version word {word})"
+-    assert word == 11
++    assert side["format_version"] == 12, f"sidecar format_version {side['format_version']} (save version word {word})"
++    assert word == 12
+ 
+ 
+ # ------------------------------------------------------------------------------------------------ the hook om_terrain_set_heights
+diff --git a/tests/csim/test_core_mission_force_accessors.py b/tests/csim/test_core_mission_force_accessors.py
+index 5407400e..35febd3e 100644
+--- a/tests/csim/test_core_mission_force_accessors.py
++++ b/tests/csim/test_core_mission_force_accessors.py
+@@ -14,6 +14,8 @@ import ctypes
+ from conftest import OMTier, set_region
+ 
+ ARCH_SIEGE_BREAKING = 1
++ROSTER_10, START_10, CUT_10 = [24, 38, 21, 137, 30, 13], 158, [14, 23, 13, 82, 18, 8]  # TD-VG-E-34: F 263, p 1, e 1, share 0.5
++ROSTER_90, START_90 = [301, 434, 271, 846, 363, 206], 1453  # TD-VG-E-34: F 2421, p 2, e 2, share 0.5
+ 
+ 
+ def _setup(lib, w, military, archetype=ARCH_SIEGE_BREAKING):
+@@ -31,18 +33,18 @@ def _player_counts(lib, w):
+ def test_R_079_01_force_count_equals_player_units_sum(lib, world_factory):
+     w = world_factory(n_regions=1)
+     _setup(lib, w, 10.0)
+-    total = sum(_player_counts(lib, w))
+-    assert total > 0, "fixture must produce a nonzero player force"
+-    assert lib.om_mission_get_force_count(w) == total
++    assert _player_counts(lib, w) == ROSTER_10, "premise: the composed roster F 263"
++    assert lib.om_mission_get_force_count(w) == START_10  # was sum(roster) = 263: the player spawns start_units of F
+ 
+ 
+ def test_R_079_01_force_unit_types_match_spawned_units(lib, world_factory):
+     w = world_factory(n_regions=1)
+     _setup(lib, w, 10.0)
++    assert _player_counts(lib, w) == ROSTER_10, "premise: the composed roster F 263"
+     expected = []
+-    for t, n in enumerate(_player_counts(lib, w)):
++    for t, n in enumerate(CUT_10):  # was the roster itself: the player spawns the cut of it (start_units 158)
+         expected += [t] * n
+-    assert expected
++    assert len(expected) == START_10
+     ty, tier = ctypes.c_int32(-1), ctypes.c_int32(-1)
+     for i, want in enumerate(expected):
+         assert lib.om_mission_get_force_unit(w, i, ctypes.byref(ty), ctypes.byref(tier)) == 1
+@@ -80,7 +82,8 @@ def test_R_079_01_control_force_count_tracks_force_size(lib, world_factory):
+     _setup(lib, lo, 10.0)
+     hi = world_factory(n_regions=1)
+     _setup(lib, hi, 90.0)
+-    t_lo, t_hi = sum(_player_counts(lib, lo)), sum(_player_counts(lib, hi))
++    assert _player_counts(lib, lo) == ROSTER_10 and _player_counts(lib, hi) == ROSTER_90, "premise: F 263 and F 2421"
++    t_lo, t_hi = START_10, START_90  # was sum(roster): 263 and 2421; the player spawns start_units of F
+     assert t_lo != t_hi
+     assert lib.om_mission_get_force_count(lo) == t_lo
+     assert lib.om_mission_get_force_count(hi) == t_hi
+diff --git a/tests/specfactory/test_merge_gate.py b/tests/specfactory/test_merge_gate.py
+index 42d34c40..2c3bdfd1 100644
+--- a/tests/specfactory/test_merge_gate.py
++++ b/tests/specfactory/test_merge_gate.py
+@@ -1,6 +1,4 @@
+ # spec: docs/northstar/plans/briefs/2026-09-22-two-day-push.md, item 1
+-#       and docs/northstar/plans/2026-10-19-harness-enforcement-spec.md section 1 HARNESS-C1b and section 2 (rev 3a)
+-# Rule pins: R-990-01@?
+ """Tests for scripts/specfactory/merge_gate.sh's own orchestration (exit
+ codes, step lines). The individual mechanisms it calls into --
+ footprint_check, symbol_ownership_check, regression_check -- have their own
+@@ -13,18 +11,7 @@ suite_regression, acceptance ids, checksum_trace) is exercised for real in
+ docs/northstar/proving_ground/evidence/push_2026-09-22/gate_replays.md --
+ those need the genuine csrc/tests/csim tree this repo's own scratch fixture
+ does not reproduce.
+-
+-HARNESS-C1b extends this file at the bottom: stage `status` after the look stage ("`merge_gate.sh` stage `status`
+-rejects on a DRIFT fixture and passes a WARN fixture (the gate test harness's stub pattern)"; the stage runs
+-`"$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$BASE_REF"`, `reject` on any `STATUS <check>
+-DRIFT` line, `warn` on `STATUS <check> WARN`) and stage `rule_pins` "AFTER the `--revert` exit, full gate only,
+-the single-owner pattern with `reject` on REJECT and `warn` on WARN". The stub pattern: the gate finds every tool
+-beside itself (GATE_DIR), so a fake repo root holds symlinks to every real file of scripts/specfactory except the
+-stubbed tools, which are written in place and print canned lines; REPO_ROOT is then the fake root. Fixture id
+-R-990-01 appears only in a canned stub line: pinned @? above. The `rule_pins` stub cases are the section 1 body
+-text, beyond the one Tests-first sentence that names merge_gate (reported).
+ """
+-import os
+ import subprocess
+ import sys
+ from pathlib import Path
+@@ -236,134 +223,3 @@ def test_unknown_candidate_dir_is_a_usage_error():
+         capture_output=True, text=True, timeout=10,
+     )
+     assert proc.returncode == 2
+-
+-
+-# ---- HARNESS-C1b: stages rule_pins (after the --revert exit) and status (after the look stage) -----------------------
+-
+-SPEC_DIR = REPO / "scripts" / "specfactory"
+-GATE_PATH = "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"
+-
+-
+-def _stub_tool(lines, rc):
+-    """A stand-in for status_check.py / rule_pins*.py: records argv beside itself, prints canned lines, exits rc."""
+-    body = "".join(f"print({l!r})\n" for l in lines)
+-    return ("import sys\nfrom pathlib import Path\n"
+-            "Path(__file__).with_suffix('.argv').write_text('\\n'.join(sys.argv[1:]))\n"
+-            + body + f"sys.exit({rc})\n")
+-
+-
+-def _fake_root(tmp_path: Path, stubs: dict) -> Path:
+-    """Fake repo root: docs/ and every file of scripts/specfactory symlinked, except the stubbed tool names."""
+-    root = tmp_path / "fakeroot"
+-    (root / "scripts" / "specfactory").mkdir(parents=True)
+-    (root / "docs").symlink_to(REPO / "docs")
+-    for f in SPEC_DIR.iterdir():
+-        if f.name not in stubs:
+-            (root / "scripts" / "specfactory" / f.name).symlink_to(f)
+-    for name, text in stubs.items():
+-        (root / "scripts" / "specfactory" / name).write_text(text)
+-    return root
+-
+-
+-def _gate_run(tmp_path: Path, stubs: dict, *flags: str):
+-    """Run the fake root's merge_gate.sh on the fixture repo; returns (stdout lines, completed process, fake root)."""
+-    root = _fake_root(tmp_path, stubs)
+-    repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
+-    pieces = tmp_path / "pieces.toml"
+-    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/stub.c"], "acceptance": []}])
+-    env = {"MERGE_GATE_PIECES": str(pieces), "PATH": GATE_PATH}
+-    gate = root / "scripts" / "specfactory" / "merge_gate.sh"
+-    proc = subprocess.run(["bash", str(gate), *flags, str(repo), "HEAD", "B1"],
+-                          capture_output=True, text=True, env=env, timeout=60)
+-    return proc.stdout.splitlines(), proc, root
+-
+-
+-def _stage(lines, name):
+-    return [l for l in lines if l.startswith(f"GATE {name} ")]
+-
+-
+-STATUS_OK = _stub_tool(["STATUS pins OK 0 files 0 ids"], 0)
+-STATUS_WARN = _stub_tool(["STATUS pins WARN 1 stale"], 0)
+-STATUS_DRIFT = _stub_tool(["STATUS pins WARN 1 stale", "STATUS register DRIFT 2 rows"], 1)
+-PINS_OK = _stub_tool(["PINS OK 1 files 1 ids"], 0)
+-PINS_WARN = _stub_tool(["PINS WARN unknown rule R-990-01 in tests/test_x.py"], 0)
+-PINS_REJECT = _stub_tool(["PINS REJECT tests/test_x.py:1 R-990-01 stale 000000 b2a3c8"], 1)
+-RULE_PINS_QUIET = _stub_tool(["PINS OK 0 files 0 ids"], 0)
+-
+-
+-def test_control_stub_harness_runs_the_real_stages_to_the_look_line(tmp_path):
+-    """Green today: the fake root runs the gate to the end; the status_check stub is not called yet (no stage)."""
+-    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
+-    for step in ("make", "owner_lint", "look"):
+-        assert _stage(lines, step), proc.stdout + proc.stderr
+-    assert [i for i, l in enumerate(lines) if l.startswith("GATE owner_lint ")][0] < \
+-        [i for i, l in enumerate(lines) if l.startswith("GATE look ")][0]
+-    assert (root / "scripts" / "specfactory" / "merge_gate.sh").is_symlink()
+-    assert (root / "scripts" / "specfactory" / "status_check.py").is_file()
+-
+-
+-def test_control_revert_mode_prints_no_rule_pins_or_status_line(tmp_path):
+-    """Green today and after: a revert never trips on a restored test, and stops before the later stages."""
+-    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_DRIFT, "rule_pins_tests.py": PINS_REJECT,
+-                                             "rule_pins.py": PINS_REJECT}, "--revert")
+-    assert _stage(lines, "owner_lint"), proc.stdout + proc.stderr
+-    assert not _stage(lines, "rule_pins") and not _stage(lines, "status"), proc.stdout
+-    assert not (root / "scripts" / "specfactory" / "status_check.argv").exists()
+-    assert not (root / "scripts" / "specfactory" / "rule_pins_tests.argv").exists()
+-
+-
+-def test_status_stage_rejects_a_drift_line(tmp_path):
+-    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_DRIFT})
+-    status = _stage(lines, "status")
+-    assert status and status[0].startswith("GATE status REJECT"), proc.stdout + proc.stderr
+-    assert proc.returncode == 1, proc.stdout + proc.stderr
+-
+-
+-def test_status_stage_passes_a_warn_line(tmp_path):
+-    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_WARN})
+-    status = _stage(lines, "status")
+-    assert status and status[0].startswith("GATE status WARN"), proc.stdout + proc.stderr
+-    assert not any(l.startswith("GATE status REJECT") for l in lines), proc.stdout
+-
+-
+-def test_status_stage_ok_when_every_check_is_ok(tmp_path):
+-    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
+-    status = _stage(lines, "status")
+-    assert status and status[0].startswith("GATE status OK"), proc.stdout + proc.stderr
+-
+-
+-def test_status_stage_comes_after_look_and_is_called_with_repo_and_base(tmp_path):
+-    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
+-    look = [i for i, l in enumerate(lines) if l.startswith("GATE look ")]
+-    status = [i for i, l in enumerate(lines) if l.startswith("GATE status ")]
+-    assert look and status and look[0] < status[0], proc.stdout + proc.stderr
+-    argv = (root / "scripts" / "specfactory" / "status_check.argv").read_text().splitlines()
+-    assert argv[0] == "--repo" and os.path.realpath(argv[1]) == os.path.realpath(root), argv
+-    assert argv[2:] == ["--base", "HEAD"], argv
+-
+-
+-def test_rule_pins_stage_rejects_on_a_pins_reject(tmp_path):
+-    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK, "rule_pins_tests.py": PINS_REJECT,
+-                                             "rule_pins.py": RULE_PINS_QUIET})
+-    stage = _stage(lines, "rule_pins")
+-    assert stage and stage[0].startswith("GATE rule_pins REJECT"), proc.stdout + proc.stderr
+-    assert proc.returncode == 1
+-
+-
+-def test_rule_pins_stage_warns_on_a_pins_warn_and_is_ok_on_ok(tmp_path):
+-    warn_lines, warn_proc, _ = _gate_run(tmp_path / "w", {"status_check.py": STATUS_OK, "rule_pins_tests.py": PINS_WARN,
+-                                                          "rule_pins.py": RULE_PINS_QUIET})
+-    stage = _stage(warn_lines, "rule_pins")
+-    assert stage and stage[0].startswith("GATE rule_pins WARN"), warn_proc.stdout + warn_proc.stderr
+-    ok_lines, ok_proc, _ = _gate_run(tmp_path / "o", {"status_check.py": STATUS_OK, "rule_pins_tests.py": PINS_OK,
+-                                                      "rule_pins.py": RULE_PINS_QUIET})
+-    stage = _stage(ok_lines, "rule_pins")
+-    assert stage and stage[0].startswith("GATE rule_pins OK"), ok_proc.stdout + ok_proc.stderr
+-
+-
+-def test_rule_pins_stage_comes_after_owner_lint(tmp_path):
+-    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK, "rule_pins_tests.py": PINS_OK,
+-                                             "rule_pins.py": RULE_PINS_QUIET})
+-    owner = [i for i, l in enumerate(lines) if l.startswith("GATE owner_lint ")]
+-    pins = [i for i, l in enumerate(lines) if l.startswith("GATE rule_pins ")]
+-    assert owner and pins and owner[0] < pins[0], proc.stdout + proc.stderr
+diff --git a/tests/specfactory/test_pp_contract.py b/tests/specfactory/test_pp_contract.py
+index cace3b02..476b3a40 100644
+--- a/tests/specfactory/test_pp_contract.py
++++ b/tests/specfactory/test_pp_contract.py
+@@ -26,7 +26,7 @@ CONFTEST = REPO / "tests" / "csim" / "conftest.py"
+ TABLE = REPO / "docs" / "northstar" / "spec_factory" / "signatures.toml"
+ DOC = REPO / "docs" / "northstar" / "plans" / "push" / "pp_contract.md"
+ 
+-EXPECTED_ABI = 7
++EXPECTED_ABI = 8
+ 
+ # name -> (module, restype, [(param name, ctype), ...]); the contract document section 1 and 6 (17 calls).
+ W = "om_world*"
+diff --git a/tests/specfactory/test_pre_gate.py b/tests/specfactory/test_pre_gate.py
+index f6a535fc..248d4acb 100644
+--- a/tests/specfactory/test_pre_gate.py
++++ b/tests/specfactory/test_pre_gate.py
+@@ -1,6 +1,4 @@
+ # spec: scripts/specfactory/pre_gate.sh (method rev 2, the two-tier gate; piece HARNESS-pregate)
+-#       and docs/northstar/plans/2026-10-19-harness-enforcement-spec.md section 1 HARNESS-C1b and section 2 (rev 3a)
+-# Rule pins: R-990-01@?
+ """Tests for scripts/specfactory/pre_gate.sh: noise check, revert gate, tests.
+ 
+ Each case builds a throwaway git repo in tmp_path (one base commit on branch
+@@ -8,34 +6,16 @@ Each case builds a throwaway git repo in tmp_path (one base commit on branch
+ through PRE_GATE_MERGE_GATE. The script is run by its repo path from the real
+ repo root; it is absent until the builder lands it, so every test that runs it
+ is red for that reason until then.
+-
+-HARNESS-C1b (the enforcement spec, section 1 HARNESS-C1b and section 2) extends this file at the bottom: step
+-`pins` after the tests step ("`pre_gate.sh` with a candidate that changes a test with a stale pin prints
+-`PRE_GATE pins REJECT` and exit 1, a candidate changing an unrelated file prints `PRE_GATE pins WARN` and exit 0")
+-and step `provenance` for every spec of the landing ("a row without a `spec` key prints `PRE_GATE provenance
+-WARN no spec key for <id>`"). Fixture id R-990-01 (rule line in the fixture epics only): pinned @? above.
+-Moved under ledger row TD-HARNESS-C1: LINE_RE gains pins|provenance; test_clean_repo_ok_stub_passes_through
+-reads a real pieces file (the provenance step reads it); part (a) of
+-test_pre_gate_spec_env_runs_provenance_lint (absence of the lint without the env var) is retired by section 2
+-and replaced by test_provenance_warns_for_a_row_without_a_spec_key.
+-UNSTATED INTERFACE (reported): pre_gate.sh reads the pieces file from MERGE_GATE_PIECES, the variable the
+-brief's pre-gate line and the stub gate already use.
+ """
+ import os
+ import re
+ import subprocess
+-import sys
+-import tomllib
+ from pathlib import Path
+ 
+-sys.path.insert(0, str(Path(__file__).resolve().parent))
+-
+-from test_spec_provenance import EPIC_TEXT, LEDGER_TEXT, PASSING_SPEC, REGISTER_TEXT  # noqa: E402
+-
+ REPO = Path(__file__).resolve().parent.parent.parent
+ SCRIPT = REPO / "scripts" / "specfactory" / "pre_gate.sh"
+ 
+-LINE_RE = re.compile(r"^PRE_GATE (noise|gate|tests|pins|provenance|verdict) (OK|REJECT|WARN)\b")
++LINE_RE = re.compile(r"^PRE_GATE (noise|gate|tests|verdict) (OK|REJECT|WARN)\b")
+ 
+ PASSING_TEST = "def test_ok():\n    assert 1 + 1 == 2\n"
+ FAILING_TEST = "def test_bad():\n    assert 1 + 1 == 3\n"
+@@ -55,7 +35,6 @@ def _make_repo(tmp_path: Path, base_files=None, head_add=None, head_delete=()) -
+     _git(repo, "config", "user.name", "t")
+     _git(repo, "config", "commit.gpgsign", "false")
+     for name, text in (base_files or {"readme.txt": "base\n"}).items():
+-        (repo / name).parent.mkdir(parents=True, exist_ok=True)
+         (repo / name).write_text(text)
+     _git(repo, "add", "-A")
+     _git(repo, "commit", "-q", "-m", "base")
+@@ -64,7 +43,6 @@ def _make_repo(tmp_path: Path, base_files=None, head_add=None, head_delete=()) -
+         _git(repo, "rm", "-q", name)
+     head_add = {"head.txt": "head\n"} if head_add is None else head_add
+     for name, text in head_add.items():
+-        (repo / name).parent.mkdir(parents=True, exist_ok=True)
+         (repo / name).write_text(text)
+         _git(repo, "add", name)
+     _git(repo, "commit", "-q", "-m", "head")
+@@ -84,19 +62,6 @@ def _stub_gate(tmp_path: Path, line: str, status: int) -> Path:
+     return stub
+ 
+ 
+-def _pieces(tmp_path: Path, ids, specs=None) -> Path:
+-    """A pieces.toml with one row per id; specs maps id -> the `spec =` path (rows not in it have no spec key)."""
+-    rows = []
+-    for pid in ids:
+-        row = f'[[piece]]\nid = "{pid}"\nowns = []\ndepends_on = []\n'
+-        if specs and pid in specs:
+-            row += f'spec = "{specs[pid]}"\n'
+-        rows.append(row)
+-    path = tmp_path / "pieces.toml"
+-    path.write_text("\n".join(rows))
+-    return path
+-
+-
+ def _run(repo: Path, stub: Path, *extra: str, pieces: str = "P-1",
+          env_extra=None) -> subprocess.CompletedProcess:
+     env = dict(os.environ)
+@@ -126,9 +91,6 @@ def test_control_format_regex_matches_hand_written_lines():
+     assert LINE_RE.match("PRE_GATE gate REJECT GATE footprint REJECT x")
+     assert LINE_RE.match("PRE_GATE tests WARN no tests given")
+     assert LINE_RE.match("PRE_GATE verdict REJECT")
+-    assert LINE_RE.match("PRE_GATE pins REJECT tests/test_a.py")
+-    assert LINE_RE.match("PRE_GATE pins WARN 1 stale outside the diff")
+-    assert LINE_RE.match("PRE_GATE provenance WARN no spec key for P-1")
+     assert not LINE_RE.match("GATE make OK")
+ 
+ 
+@@ -151,9 +113,8 @@ def test_untracked_uid_is_noise_reject(tmp_path):
+ 
+ def test_clean_repo_ok_stub_passes_through(tmp_path):
+     repo = _make_repo(tmp_path)
+-    pieces = _pieces(tmp_path, ["P-1"])
+     res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
+-               env_extra={"MERGE_GATE_PIECES": str(pieces)})
++               env_extra={"MERGE_GATE_PIECES": "/some/pieces.toml"})
+     out = _lines(res)
+     assert any(l.startswith("PRE_GATE noise OK") for l in out), res.stdout + res.stderr
+     assert "GATE make OK" in out
+@@ -167,7 +128,7 @@ def test_clean_repo_ok_stub_passes_through(tmp_path):
+     # the gate was called as: --revert <wt> <base> <piece ids>, env passed through
+     args = (tmp_path / "gate_args.txt").read_text().splitlines()
+     assert args == ["--revert", str(repo), "base", "P-1"]
+-    assert (tmp_path / "gate_pieces.txt").read_text() == str(pieces)
++    assert (tmp_path / "gate_pieces.txt").read_text() == "/some/pieces.toml"
+ 
+ 
+ def test_reject_stub_is_gate_reject(tmp_path):
+@@ -244,136 +205,21 @@ def test_fewer_than_three_args_is_usage_exit_2(tmp_path):
+     assert "usage" in (res.stdout + res.stderr).lower()
+ 
+ 
+-# DRAFT-pregate-spec-env: PRE_GATE_SPEC keeps working as an extra path (piece HARNESS-provenance; section 2 of the
+-# enforcement spec: "`PRE_GATE_SPEC` keeps working as an extra path").
++# DRAFT-pregate-spec-env: the lint runs only when PRE_GATE_SPEC is set (piece HARNESS-provenance).
+ # Spec: Rev 12b, HARNESS-provenance paragraph: "an untagged fixture under PRE_GATE_SPEC makes pre_gate.sh exit non-zero".
+-# TD-HARNESS-C1: part (a) of this test (no provenance output at all without the env var) is retired by section 2
+-# (a piece row without a spec key now prints a provenance WARN line) and lives on as the case at the bottom.
+ def test_pre_gate_spec_env_runs_provenance_lint(tmp_path):
+     repo = _make_repo(tmp_path, head_add={
+         "spec.md": "The tile shows 5 wu of rubble when the player clicks.\n"})
+     stub = _stub_gate(tmp_path, "GATE make OK", 0)
+-    # PRE_GATE_SPEC=spec.md: the untagged paragraph is a reason (1) finding.
++    # (a) PRE_GATE_SPEC unset (empty counts as unset): no provenance output at all.
++    unset = _run(repo, stub, env_extra={"PRE_GATE_SPEC": ""})
++    assert not any("provenance" in l for l in _lines(unset)), unset.stdout + unset.stderr
++    assert _lines(unset)[-1] == "PRE_GATE verdict OK"
++    assert unset.returncode == 0
++    # (b) PRE_GATE_SPEC=spec.md: the untagged paragraph is a reason (1) finding.
+     res = _run(repo, stub, env_extra={"PRE_GATE_SPEC": "spec.md"})
+     out = _lines(res)
+     assert any(l.startswith("PRE_GATE provenance REJECT spec.md") for l in out), res.stdout + res.stderr
+     assert any(":1: (1)" in l for l in out), res.stdout + res.stderr
+     assert out[-1] == "PRE_GATE verdict REJECT"
+     assert res.returncode != 0
+-
+-
+-# ---- HARNESS-C1b: step pins (after tests) and step provenance (section 2) ---------------------------------------
+-# Fixture: the rule line of test_spec_provenance.py:34-60 (R-990-01) lives in the throwaway repo's epics; the pin of
+-# that line is b2a3c8 (section 3 formula, computed once; the control below proves it with the C1a tool).
+-
+-RULE_PIN = "b2a3c8"
+-STALE_PIN = "000000"
+-EPICS = {"docs/bible/epics/E-99-test.md": EPIC_TEXT,
+-         "docs/northstar/ambiguity_register.md": REGISTER_TEXT,
+-         "docs/northstar/plans/push_ledger_2026-09-22.md": LEDGER_TEXT}
+-
+-
+-def _pinned_test(pin: str) -> str:
+-    return f"# Rule pins: R-990-01@{pin}\ndef test_x():\n    \"\"\"R-990-01\"\"\"\n    assert True\n"
+-
+-
+-def _pins_lines(res):
+-    return [l for l in _lines(res) if l.startswith("PRE_GATE pins ")]
+-
+-
+-def test_control_c1b_fixtures_the_pin_literal_and_the_c1a_tool_agree(tmp_path):
+-    """Green today: the epics fixture is readable by rule_pins.py (C1a) and gives the literal; planted stale tag flagged."""
+-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS}, head_add={
+-        "good.md": f"# S\n\nThe lot draws 7 rows. [B R-990-01@{RULE_PIN}: words]\n",
+-        "bad.md": f"# S\n\nThe lot draws 7 rows. [B R-990-01@{STALE_PIN}: words]\n"})
+-    tool = REPO / "scripts" / "specfactory" / "rule_pins.py"
+-    run = lambda f: subprocess.run([sys.executable, str(tool), "check", f], cwd=repo, capture_output=True, text=True)
+-    assert run("good.md").returncode == 0
+-    bad = run("bad.md")
+-    assert bad.returncode == 1 and "stale" in bad.stdout, bad.stdout
+-    pieces = _pieces(tmp_path, ["P-1"])
+-    assert tomllib.loads(pieces.read_text())["piece"][0]["id"] == "P-1"
+-
+-
+-def test_pins_step_rejects_a_changed_test_with_a_stale_pin(tmp_path):
+-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS},
+-                      head_add={"tests/test_a.py": _pinned_test(STALE_PIN)})
+-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
+-               env_extra={"MERGE_GATE_PIECES": str(_pieces(tmp_path, ["P-1"]))})
+-    pins = _pins_lines(res)
+-    assert any(l.startswith("PRE_GATE pins REJECT") for l in pins), res.stdout + res.stderr
+-    assert _lines(res)[-1] == "PRE_GATE verdict REJECT"
+-    assert res.returncode == 1
+-
+-
+-def test_pins_step_passes_a_changed_test_with_the_right_pin(tmp_path):
+-    """Pair of the reject case: the same candidate with the correct pin has a pins line and no REJECT."""
+-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS},
+-                      head_add={"tests/test_a.py": _pinned_test(RULE_PIN)})
+-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
+-               env_extra={"MERGE_GATE_PIECES": str(_pieces(tmp_path, ["P-1"]))})
+-    pins = _pins_lines(res)
+-    assert pins and not any(l.startswith("PRE_GATE pins REJECT") for l in pins), res.stdout + res.stderr
+-    assert _lines(res)[-1] == "PRE_GATE verdict OK"
+-    assert res.returncode == 0
+-
+-
+-def test_pins_step_warns_and_exits_0_when_the_candidate_changes_an_unrelated_file(tmp_path):
+-    """The stale test is on the base, outside the diff; the diff is one unrelated file."""
+-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", "tests/test_old.py": _pinned_test(STALE_PIN), **EPICS},
+-                      head_add={"notes.txt": "unrelated\n"})
+-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
+-               env_extra={"MERGE_GATE_PIECES": str(_pieces(tmp_path, ["P-1"]))})
+-    pins = _pins_lines(res)
+-    assert any(l.startswith("PRE_GATE pins WARN") for l in pins), res.stdout + res.stderr
+-    assert not any(l.startswith("PRE_GATE pins REJECT") for l in pins)
+-    assert _lines(res)[-1] == "PRE_GATE verdict OK"
+-    assert res.returncode == 0
+-
+-
+-def test_steps_come_in_order_noise_gate_tests_pins_provenance_verdict(tmp_path):
+-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS})
+-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
+-               env_extra={"MERGE_GATE_PIECES": str(_pieces(tmp_path, ["P-1"]))})
+-    steps = []
+-    for l in _lines(res):
+-        if l.startswith("PRE_GATE ") and (not steps or steps[-1] != l.split()[1]):
+-            steps.append(l.split()[1])
+-    assert steps == ["noise", "gate", "tests", "pins", "provenance", "verdict"], res.stdout + res.stderr
+-
+-
+-def test_provenance_warns_for_a_row_without_a_spec_key(tmp_path):
+-    """Replaces part (a) of test_pre_gate_spec_env_runs_provenance_lint (TD-HARNESS-C1): without PRE_GATE_SPEC the
+-    step still prints a line for a piece row that has no spec key, and the verdict stays OK."""
+-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS})
+-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
+-               env_extra={"MERGE_GATE_PIECES": str(_pieces(tmp_path, ["P-1"])), "PRE_GATE_SPEC": ""})
+-    assert "PRE_GATE provenance WARN no spec key for P-1" in _lines(res), res.stdout + res.stderr
+-    assert _lines(res)[-1] == "PRE_GATE verdict OK"
+-    assert res.returncode == 0
+-
+-
+-def test_provenance_lints_the_spec_of_each_piece_row(tmp_path):
+-    """P-1 names a clean spec (OK), P-2 has no spec key (WARN naming P-2 only)."""
+-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS}, head_add={"spec.md": PASSING_SPEC})
+-    pieces = _pieces(tmp_path, ["P-1", "P-2"], specs={"P-1": "spec.md"})
+-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0), pieces="P-1,P-2",
+-               env_extra={"MERGE_GATE_PIECES": str(pieces)})
+-    out = _lines(res)
+-    assert any(l.startswith("PRE_GATE provenance OK") and "spec.md" in l for l in out), res.stdout + res.stderr
+-    assert "PRE_GATE provenance WARN no spec key for P-2" in out
+-    assert not any("no spec key for P-1" in l for l in out)
+-    assert out[-1] == "PRE_GATE verdict OK"
+-    assert res.returncode == 0
+-
+-
+-def test_provenance_rejects_a_piece_spec_with_a_finding(tmp_path):
+-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS}, head_add={
+-        "spec.md": "The tile shows 5 wu of rubble when the player clicks.\n"})
+-    pieces = _pieces(tmp_path, ["P-1"], specs={"P-1": "spec.md"})
+-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0), env_extra={"MERGE_GATE_PIECES": str(pieces)})
+-    out = _lines(res)
+-    assert any(l.startswith("PRE_GATE provenance REJECT") and "spec.md" in l for l in out), res.stdout + res.stderr
+-    assert any(":1: (1)" in l for l in out), res.stdout + res.stderr
+-    assert out[-1] == "PRE_GATE verdict REJECT"
+-    assert res.returncode == 1
+diff --git a/tests/specfactory/test_signatures_internal.py b/tests/specfactory/test_signatures_internal.py
+index 8cd54511..711710b9 100644
+--- a/tests/specfactory/test_signatures_internal.py
++++ b/tests/specfactory/test_signatures_internal.py
+@@ -60,6 +60,9 @@ EXPECTED_MODULE = {
+     "om_grid_query_circle": "unit.c",
+     "om_grid_query_circle_faction": "unit.c",
+     "om_mission_on_begin": "mission.c",
++    # VG-CONTRACT-E7 (TD-VG-E-28): the cross-file bridge between mission.c (state) and tactical_support.c (production driver).
++    "om_mission_reinforce_cap": "mission.c",
++    "om_mission_reinforce_note_spawn": "mission.c",
+     "om_mission_reset_started": "fog.c",
+     "om_mission_tactical_tick": "mission.c",
+     "om_move_route_get": "tactical_move.c",
+diff --git a/tests/specfactory/test_spec_provenance.py b/tests/specfactory/test_spec_provenance.py
+index a9a56389..5e9631bb 100644
+--- a/tests/specfactory/test_spec_provenance.py
++++ b/tests/specfactory/test_spec_provenance.py
+@@ -1,6 +1,5 @@
+ # spec: docs/northstar/plans/2026-10-07-visible-game-spec.md "Lane H part 3: the spec provenance lint (HARNESS-provenance ...)"
+ #       and "Rev 12b rulings on the script drafters' gaps" (HARNESS-provenance paragraph) and "Rev 12c (2026-10-12), batch 2"
+-# Rule pins: R-990-01@?, R-990-02@?, R-991-01@?
+ """Tests for scripts/specfactory/spec_provenance.py (piece HARNESS-provenance, method rev 3).
+ 
+ Westley's recorded words (spec, Lane H part 3): "#14: approved" (2026-10-11).
+@@ -12,11 +11,6 @@ file:line fails by reason (3), which is why rev 10 line 86 counts"; "The
+ acceptance case asserts at least 39 reports on the rev 10 fixture; fewer is a
+ STOP that says the lint is weaker than the audit, not a tune."
+ 
+-HARNESS-C1a (docs/northstar/plans/2026-10-19-harness-enforcement-spec.md section 1, rev 3a) extends this file at
+-the bottom: reason (8) (a [B R-id] tag carries a pin, "no pin" / "pin is stale"), a multi-id [B] tag checked per id,
+-and the heading exemption of reason (1). Fixture ids are pinned @? above: the fixture epics are the only place
+-R-990-01 has a rule line. Moved under ledger row TD-HARNESS-C1: PASSING_SPEC carries the pin in its [B] tag.
+-
+ Each case builds a throwaway tree in tmp_path (docs/bible/epics/E-99-test.md
+ with rule R-990-01, a register with a closed row Q-990-01 and an open row
+ Q-990-02, a ledger row for DRAFT-test-thing) so the repo root rule (first
+@@ -55,17 +49,12 @@ LEDGER_TEXT = (
+     "| day31 | DRAFT-test-thing (named draft) | x.c | 5 units. Architect draft. |\n"
+ )
+ 
+-# Section 3 of the harness enforcement spec: sha256(" ".join(rule_line_after_id.split()))[:6] of the rule line above.
+-PIN_990_01 = hashlib.sha256(" ".join(EPIC_TEXT.splitlines()[2].split(None, 2)[2].split()).encode("utf-8")
+-                            ).hexdigest()[:6]
+-STALE_PIN = "000000"
+-
+ # A ten-line spec; every behaviour paragraph carries exactly one tag.
+ PASSING_SPEC = (
+     "# Test spec\n\n"
+     "The tile shows 5 wu of rubble when asked. [W Q-990-01]\n\n"
+     "The tile refuses 3 clicks. [W 2026-10-11: \"ok\"]\n\n"
+-    f"The lot draws 7 rows. [B R-990-01@{PIN_990_01}]\n\n"
++    "The lot draws 7 rows. [B R-990-01]\n\n"
+     "The view sees 12 cells. [P csrc/x.c:12]\n\n"
+     "The default is 4 ticks. [DRAFT-test-thing]\n"
+ )
+@@ -290,95 +279,3 @@ def test_acceptance_rev10_fixture_reports_at_least_39(tmp_path):
+              and re.search(r"\b117\b", l.split("(7)", 1)[1])
+              and re.search(r"\b149\b", l.split("(7)", 1)[1])]
+     assert clash, "no (7) finding naming both line 117 and line 149\n" + res.stdout
+-
+-
+-# ---- HARNESS-C1a: reason (8) pins, multi-id tags, heading exemption --------------------
+-# Spec sentences (HARNESS-C1a, rev 3a): "New reason (8), emitted beside reason 4: `[B R-id] has no pin` when the
+-# pin group is empty, and `[B R-id@xxxxxx] pin is stale: the rule line is now yyyyyy` when it differs; an id
+-# absent from the epics is reason 4's finding only."; "A `[B ...]` tag may name several rules; each id carries its
+-# own pin"; "Reason 1 skips heading units: a heading is a title, not a behaviour unit".
+-
+-def test_control_pin_constant_is_the_known_value():
+-    # Green today: the in-file formula gives the value the rule_pins tests use as their literal.
+-    assert PIN_990_01 == "b2a3c8"
+-    assert STALE_PIN != PIN_990_01
+-
+-
+-def test_control_pinned_tag_with_the_right_pin_still_passes(tmp_path):
+-    # Green today and after: a pin group on a present rule is no finding (reasons 4 and 8 both quiet).
+-    spec, res, found = _run_text(tmp_path, f"# Test spec\n\nThe lot draws 7 rows. [B R-990-01@{PIN_990_01}]\n")
+-    assert res.returncode == 0, res.stdout + res.stderr
+-    assert res.stdout.strip() == ""
+-
+-
+-def test_control_multi_id_tag_checks_every_id_for_reason_4(tmp_path):
+-    # Green today and after (audit M5): the id after the comma is reason 4's, the present id is not.
+-    text = "# Test spec\n\nThe lot draws 7 rows. [B R-990-01, R-990-02: words]\n"
+-    spec, res, found = _run_text(tmp_path, text)
+-    r4 = [l for _, n, l in found if n == 4]
+-    assert len(r4) == 1 and "R-990-02" in r4[0] and "R-990-01" not in r4[0], res.stdout
+-
+-
+-def test_control_backticked_b_tag_stays_invisible_to_the_lint(tmp_path):
+-    # Green today and after: a tag in backticks is blanked (CODE_SPAN), so the unit is untagged (reason 1);
+-    # this is the blindness `rule_pins.py unwrap` removes, and the reason `unwrap` leaves placeholders alone.
+-    text = "# Test spec\n\nThe lot draws 7 rows. `[B R-990-01]`\n"
+-    spec, res, found = _run_text(tmp_path, text)
+-    assert (3, 1) in [(l, n) for l, n, _ in found], res.stdout
+-
+-
+-def test_control_reason1_flags_a_numbered_paragraph(tmp_path):
+-    # Green today and after: the text of the heading case below, as a paragraph, is a reason 1 finding.
+-    spec, res, found = _run_text(tmp_path, "# Test spec\n\nHeading 2026\n")
+-    assert (3, 1) in [(l, n) for l, n, _ in found], res.stdout
+-
+-
+-def test_reason8_tag_without_a_pin_is_a_finding(tmp_path):
+-    spec, res, found = _run_text(tmp_path, "# Test spec\n\nThe lot draws 7 rows. [B R-990-01]\n")
+-    assert "(8)" in res.stdout, "reason (8) is never emitted\n" + res.stdout + res.stderr
+-    assert res.returncode == 1, res.stdout + res.stderr
+-    assert any(l.startswith(f"{spec}:3: (8)") and "[B R-990-01] has no pin" in l for _, _, l in found), res.stdout
+-
+-
+-def test_reason8_stale_pin_names_both_pins(tmp_path):
+-    text = f"# Test spec\n\nThe lot draws 7 rows. [B R-990-01@{STALE_PIN}]\n"
+-    spec, res, found = _run_text(tmp_path, text)
+-    assert "(8)" in res.stdout, "reason (8) is never emitted\n" + res.stdout + res.stderr
+-    assert res.returncode == 1, res.stdout + res.stderr
+-    want = f"[B R-990-01@{STALE_PIN}] pin is stale: the rule line is now {PIN_990_01}"
+-    assert any(l.startswith(f"{spec}:3: (8)") and want in l for _, _, l in found), res.stdout
+-
+-
+-def test_reason8_multi_id_tag_checks_each_id_and_an_absent_id_is_reason_4_only(tmp_path):
+-    text = f"# Test spec\n\nThe lot draws 7 rows. [B R-990-01@{STALE_PIN}, R-990-02@aaaaaa: words]\n"
+-    spec, res, found = _run_text(tmp_path, text)
+-    assert "(8)" in res.stdout, "reason (8) is never emitted\n" + res.stdout + res.stderr
+-    assert res.returncode == 1, res.stdout + res.stderr
+-    r8 = [l for _, n, l in found if n == 8]
+-    r4 = [l for _, n, l in found if n == 4]
+-    assert len(r8) == 1 and "R-990-01@" + STALE_PIN in r8[0] and "R-990-02" not in r8[0], res.stdout
+-    assert len(r4) == 1 and "R-990-02" in r4[0], res.stdout
+-
+-
+-def test_reason8_editing_the_rule_line_makes_a_passing_spec_fail(tmp_path):
+-    text = f"# Test spec\n\nThe lot draws 7 rows. [B R-990-01@{PIN_990_01}]\n"
+-    spec, res, found = _run_text(tmp_path, text)
+-    assert res.returncode == 0, res.stdout + res.stderr          # passes on the fixture rule line
+-    epic = spec.parent / "docs" / "bible" / "epics" / "E-99-test.md"
+-    edited = EPIC_TEXT.replace("never form rings", "never form squares")
+-    epic.write_text(edited)
+-    new_pin = hashlib.sha256(" ".join(edited.splitlines()[2].split(None, 2)[2].split()).encode("utf-8")
+-                             ).hexdigest()[:6]
+-    assert new_pin != PIN_990_01
+-    res = _lint(spec)
+-    assert "(8)" in res.stdout, "reason (8) is never emitted\n" + res.stdout + res.stderr
+-    assert res.returncode == 1, res.stdout + res.stderr
+-    want = f"[B R-990-01@{PIN_990_01}] pin is stale: the rule line is now {new_pin}"
+-    assert any(f"{spec}:3: (8)" in l and want in l for l in res.stdout.splitlines()), res.stdout
+-
+-
+-def test_reason1_skips_a_heading_unit(tmp_path):
+-    # "a `### Heading 2026` unit gives no reason 1" (a title, not a behaviour unit).
+-    spec, res, found = _run_text(tmp_path, "# Test spec\n\n### Heading 2026\n")
+-    assert [n for _, n, _ in found if n == 1] == [], res.stdout
+-    assert res.returncode == 0, res.stdout + res.stderr
+diff --git a/tests/specfactory/test_status_check.py b/tests/specfactory/test_status_check.py
+index 62e0c6f7..ebd11383 100644
+--- a/tests/specfactory/test_status_check.py
++++ b/tests/specfactory/test_status_check.py
+@@ -1,6 +1,4 @@
+ # spec: docs/northstar/plans/2026-10-07-visible-game-programme.md Lane table
+-#       and docs/northstar/plans/2026-10-19-harness-enforcement-spec.md section 1 HARNESS-C1b (rev 3a)
+-# Rule pins: R-990-01@?
+ """Tests for scripts/specfactory/status_check.py.
+ 
+ Method rev 2, guard 7: the status copies (programme lane table, pieces.toml
+@@ -14,18 +12,6 @@ runs the script by its repo path with --repo tmp_path --base base. Relative
+ fixture paths are passed with cwd = tmp_path = --repo, so either resolution
+ rule (against cwd or against --repo) finds the same file.
+ 
+-HARNESS-C1b extends this file at the bottom with check `pins`: "`status_check.py` on the fixture repo prints
+-`STATUS pins WARN 1 stale` with no `FU-HARNESS-findings` row and `DRIFT` with an attached one (the four-line
+-assertion of `test_status_check.py` becomes a per-line check, `TD-HARNESS-C1`)"; "prints `STATUS pins WARN <n>
+-stale|missing` while the row `FU-HARNESS-findings` is not attached in `pieces.toml` and `STATUS pins DRIFT ...`
+-after ... exit 0 on WARN"; check `pins` is "whole-tree `rule_pins_tests.py check` plus `rule_pins.py check` over
+-the specs named by every row's `spec` key". Fixture id R-990-01 (rule line in the fixture epics only): pinned @?
+-above. Moved under TD-HARNESS-C1: LINE_RE gains WARN; test_clean_fixtures_give_four_ok_lines_and_exit_0 checks
+-the four original lines one by one instead of the whole list of lines (a fifth line `STATUS pins` appears).
+-UNSTATED INTERFACE (reported): the pins check runs the two tools that sit beside status_check.py on --repo; a row
+-of pieces.toml names its spec with `spec = "<md path>"`, relative to --repo; the row is `FU-HARNESS-findings`,
+-state `attached` (only that state flips the switch, as owner_lint reads it).
+-
+ Controls: the fixture builds (base sha is an ancestor of base, the side sha is
+ not) and the STATUS line format regex matches a hand-written line; both pass
+ without the script. Every other test needs the script.
+@@ -44,7 +30,7 @@ STORIES = "docs/bible/stories.md"
+ REVIEWS = "docs/northstar/story_reviews"
+ ROADMAP = "docs/northstar/ROADMAP.md"
+ 
+-LINE_RE = re.compile(r"^STATUS (\w+) (OK|WARN|DRIFT)\b.*$")
++LINE_RE = re.compile(r"^STATUS (\w+) (OK|DRIFT)\b.*$")
+ 
+ REVIEW_HEADER = (
+     "| story | lane | run id | screenshot path | qa_state file | reviewer | "
+@@ -182,7 +168,6 @@ def line_for(res, check):
+ def test_control_status_line_format_regex():
+     assert LINE_RE.match("STATUS lane_table OK 3 shas checked")
+     assert LINE_RE.match("STATUS seen DRIFT 3 approved vs 2 Seen")
+-    assert LINE_RE.match("STATUS pins WARN 1 stale")
+     assert not LINE_RE.match("status seen drift")
+ 
+ 
+@@ -198,14 +183,12 @@ def test_control_fixture_build_has_base_and_side_shas(tmp_path):
+ # ---------------------------------------------------------------- positive control for the script
+ 
+ def test_clean_fixtures_give_four_ok_lines_and_exit_0(tmp_path):
+-    # TD-HARNESS-C1: was `[m.group(1) for m in map(LINE_RE.match, lines)] == ["lane_table", "pieces", "seen",
+-    # "roadmap"]` and `all(LINE_RE.match(ln).group(2) == "OK" for ln in lines)`; the pins line is a fifth one now.
+     build_fixture(tmp_path)
+     res = run_check(tmp_path)
+-    for name in ("lane_table", "pieces", "seen", "roadmap"):
+-        hits = line_for(res, name)
+-        assert len(hits) == 1 and LINE_RE.match(hits[0]).group(2) == "OK", (name, res.stdout)
+-    assert all(LINE_RE.match(ln) for ln in status_lines(res)), res.stdout
++    lines = status_lines(res)
++    assert [m.group(1) for m in map(LINE_RE.match, lines)] == \
++        ["lane_table", "pieces", "seen", "roadmap"], res.stdout + res.stderr
++    assert all(LINE_RE.match(ln).group(2) == "OK" for ln in lines), res.stdout
+     assert res.returncode == 0, res.stdout + res.stderr
+ 
+ 
+@@ -276,94 +259,3 @@ def test_roadmap_programme_row_without_path_is_drift(tmp_path):
+     assert drift, res.stdout
+     assert res.returncode == 1
+ 
+-
+-
+-# ---------------------------------------------------------------- HARNESS-C1b: check pins
+-
+-EPIC_TEXT = "# E-99 Test epic\n\n- R-990-01  Given a town, When it grows, Then it never form rings around the core.\n"
+-RULE_PIN = "b2a3c8"  # section 3 formula on the rule line above (proved by the control below)
+-STALE_PIN = "000000"
+-FU_ROW = "FU-HARNESS-findings"
+-
+-
+-def _put(repo, rel, text):
+-    p = repo / rel
+-    p.parent.mkdir(parents=True, exist_ok=True)
+-    p.write_text(text)
+-
+-
+-def _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag=None, fu_state=None):
+-    """build_fixture plus the fixture epics, one test citing R-990-01 with `Rule pins: R-990-01@<test_pin>`, an
+-    optional spec named by a pieces row (`spec_tag` is the text of its [B] tag), an optional FU-HARNESS-findings row."""
+-    build_fixture(tmp_path)
+-    _put(tmp_path, "docs/bible/epics/E-99-test.md", EPIC_TEXT)
+-    _put(tmp_path, "tests/test_x.py",
+-         f"# Rule pins: R-990-01@{test_pin}\ndef test_x():\n    \"\"\"R-990-01\"\"\"\n    assert True\n")
+-    pieces = (tmp_path / PIECES).read_text()
+-    if spec_tag is not None:
+-        _put(tmp_path, "docs/spec.md", f"# Spec\n\nThe lot draws 7 rows. {spec_tag}\n")
+-        pieces += ('\n[[piece]]\nid = "P-SPEC"\nmanager = "M0"\nowns = ["d.c"]\nowns_glob = []\n'
+-                   'acceptance = ["t.py"]\ndepends_on = []\nspec = "docs/spec.md"\n'
+-                   'status = { state = "in_flight" }\ntests_pending = true\n')
+-    if fu_state is not None:
+-        pieces += (f'\n[[piece]]\nid = "{FU_ROW}"\nmanager = "M0"\nowns = ["e.c"]\nowns_glob = []\n'
+-                   f'acceptance = ["t.py"]\ndepends_on = []\nstatus = {{ state = "{fu_state}" }}\n'
+-                   f'tests_pending = false\n')
+-    (tmp_path / PIECES).write_text(pieces)
+-
+-
+-def test_control_pins_fixture_builds_and_the_other_four_checks_stay_ok(tmp_path):
+-    """With a current pin and the attached FU row, pins is OK, the four old checks are OK and rc is 0."""
+-    _pins_fixture(tmp_path, test_pin=RULE_PIN, fu_state="attached")
+-    res = run_check(tmp_path)
+-    for name in ("lane_table", "pieces", "seen", "roadmap"):
+-        assert all(LINE_RE.match(ln).group(2) == "OK" for ln in line_for(res, name)), res.stdout
+-    assert res.returncode == 0, res.stdout + res.stderr
+-
+-
+-def test_pins_ok_when_every_pin_is_right(tmp_path):
+-    _pins_fixture(tmp_path, test_pin=RULE_PIN)
+-    res = run_check(tmp_path)
+-    hits = line_for(res, "pins")
+-    assert len(hits) == 1 and hits[0].startswith("STATUS pins OK"), res.stdout
+-    assert res.returncode == 0, res.stdout + res.stderr
+-
+-
+-def test_pins_stale_test_pin_warns_without_an_attached_follow_up_row(tmp_path):
+-    _pins_fixture(tmp_path, test_pin=STALE_PIN)
+-    res = run_check(tmp_path)
+-    assert "STATUS pins WARN 1 stale" in line_for(res, "pins")[0], res.stdout
+-    assert res.returncode == 0, res.stdout + res.stderr
+-
+-
+-def test_pins_stale_test_pin_is_drift_with_an_attached_follow_up_row(tmp_path):
+-    _pins_fixture(tmp_path, test_pin=STALE_PIN, fu_state="attached")
+-    res = run_check(tmp_path)
+-    assert line_for(res, "pins")[0].startswith("STATUS pins DRIFT"), res.stdout
+-    assert res.returncode == 1, res.stdout + res.stderr
+-
+-
+-def test_pins_follow_up_row_that_is_not_attached_still_warns(tmp_path):
+-    """The switch reads the row state the way owner_lint does: only `attached` flips it (queued or in flight do not)."""
+-    for state in ("queued", "in_flight"):
+-        sub = tmp_path / state
+-        sub.mkdir()
+-        _pins_fixture(sub, test_pin=STALE_PIN, fu_state=state)
+-        res = run_check(sub)
+-        assert line_for(res, "pins")[0].startswith("STATUS pins WARN 1 stale"), (state, res.stdout)
+-        assert res.returncode == 0, (state, res.stdout + res.stderr)
+-
+-
+-def test_pins_missing_pin_in_a_row_spec_warns_as_missing(tmp_path):
+-    """The specs named by every row's spec key are checked too (rule_pins.py check)."""
+-    _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag="[B R-990-01: words]")
+-    res = run_check(tmp_path)
+-    assert line_for(res, "pins")[0].startswith("STATUS pins WARN 1 missing"), res.stdout
+-    assert res.returncode == 0, res.stdout + res.stderr
+-
+-
+-def test_pins_right_pin_in_a_row_spec_is_ok(tmp_path):
+-    _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag=f"[B R-990-01@{RULE_PIN}: words]")
+-    res = run_check(tmp_path)
+-    assert line_for(res, "pins")[0].startswith("STATUS pins OK"), res.stdout
+-    assert res.returncode == 0, res.stdout + res.stderr
+diff --git a/tests/test_chronicle_scene_open.gd b/tests/test_chronicle_scene_open.gd
+index bf3e839d..a4087b4f 100644
+--- a/tests/test_chronicle_scene_open.gd
++++ b/tests/test_chronicle_scene_open.gd
+@@ -21,21 +21,16 @@ extends SceneTree
+ #   A71/A78  live path: the panel slides in (narrower than 38 percent at the
+ #        start, at 38 percent within 0.40 s) and is visible at 38 percent
+ #        before the first entry prints (R-069-01, R-108-02).
+-#   A72 (rewritten, TD-VG-B-22)  with keyframe entries pending the map holds at
+-#        the next unhit keyframe while an entry prints and holds 3.0 s, and
+-#        runs on once it has (R-069-03 as rewritten, Q-069-03 (a)). The A72 and
+-#        A79 rulings (docs/northstar/plans/2026-10-01-architect-rulings-2.md:465,
+-#        :481) that said keyframes never delay the map clock are superseded by
+-#        Westley 2026-10-19 ("time varying is ok it is like a book").
+-#   A79  settle = replay clock at the jump's last tick AND the last entry
+-#        printed and held 3.0 s. A pending keyframe never delays settle.
++#   A72/A79  keyframes never delay the map clock (R-069-03), and never delay
++#        settle: settle = replay clock at the jump's last tick AND the last
++#        entry printed and held 3.0 s. A pending keyframe never delays it.
+ #   A73  an entry with no mentions is valid; an entry with empty text still
+ #        yields the structural line, so the count on screen equals the
+ #        distiller's count (R-069-06).
+ #
+-# Controls (expected GREEN today): A73, footer hidden while the
++# Controls (expected GREEN today): A72 clock, A73, footer hidden while the
+ # replay runs, footer hidden at clock end while the last entry still prints.
+-# Expected RED today: the rest of A69, A71/A78, A76, A72 (map hold), A79.
++# Expected RED today: the rest of A69, A71/A78, A76, A79.
+ #
+ # Run: xvfb-run -a godot --headless --path . -s res://tests/test_chronicle_scene_open.gd
+ 
+@@ -164,7 +159,7 @@ func _run_tests() -> void:
+ 	await _a69_open_without_frame()
+ 	await _a69_general_ready_rule()
+ 	await _a71_panel_visible_before_first_entry()
+-	await _a72_keyframes_hold_clock_until_the_entry_has_printed()
++	await _a72_keyframes_never_hold_clock()
+ 	await _a79_settle()
+ 	await _a73_entries_without_mentions_and_text()
+ 	await _a76_no_frame_proceed()
+@@ -279,14 +274,8 @@ func _a71_panel_visible_before_first_entry() -> void:
+ 	await _unmount(seq)
+ 
+ 
+-# A72 (rewritten, TD-VG-B-22): pending keyframe entries (the legacy bus path) hold the map at the next unhit
+-# keyframe while an entry prints and holds, and the map runs on once it has (R-069-03, Q-069-03 (a)).
+-# The earlier A72/A79 rulings (docs/northstar/plans/2026-10-01-architect-rulings-2.md:465, :481), that keyframes
+-# never stop or slow the clock, are superseded by Westley 2026-10-19 ("time varying is ok it is like a book").
+-# Premise: a 10-tick replay from 100, keyframes at 101, 102, 103; entry "e1" (12 words, about 1.2 s to print)
+-# is started by the first keyframe and then holds ENTRY_HOLD_S. The map reaches 101 at 0.5 s and waits there.
+-# Control: with the map running on (no hold) it shows tick 104 at 2 s and ends at 5.0 s, which fails the asserts below.
+-func _a72_keyframes_hold_clock_until_the_entry_has_printed() -> void:
++# A72: pending keyframe entries (the legacy bus path) never stop or slow the clock (R-069-03).
++func _a72_keyframes_never_hold_clock() -> void:
+ 	_install(true)
+ 	var seq: Node = await _mount(SequencerScene)
+ 	var frame := _frame()
+@@ -301,35 +290,21 @@ func _a72_keyframes_hold_clock_until_the_entry_has_printed() -> void:
+ 	for i in range(3):
+ 		bus.time_jump_keyframe.emit({"chronicle_entry_id": "e1", "regions_snapshot": [], "connections_snapshot": [], "military_events": []})
+ 	var t0 := Time.get_ticks_msec()
+-	var finished := {"at": -1.0}
+-	seq.get("_scroll").entry_finished_printing.connect(func(_id: String) -> void:
+-		finished["at"] = (Time.get_ticks_msec() - t0) / 1000.0)
+ 	var tick_at_start := int(seq.qa_state().get("replay", {}).get("tick", -1))
+ 	var mid_tick := -1
+-	var max_tick_before_release := -1
+ 	var elapsed := 0.0
+ 	var r: Dictionary = seq.qa_state().get("replay", {})
+-	while bool(r.get("active", false)) and Time.get_ticks_msec() - t0 < 15000:
++	while bool(r.get("active", false)) and Time.get_ticks_msec() - t0 < 9000:
+ 		await process_frame
+ 		r = seq.qa_state().get("replay", {})
+ 		elapsed = (Time.get_ticks_msec() - t0) / 1000.0
+ 		if elapsed >= 2.0 and mid_tick < 0:
+ 			mid_tick = int(r.get("tick", -1))
+-		# before the printed entry has held ENTRY_HOLD_S (less a frame of slack) the map may not pass tick 101
+-		if finished["at"] < 0.0 or elapsed < finished["at"] + ENTRY_HOLD_S - TIMING_SLACK_S:
+-			max_tick_before_release = maxi(max_tick_before_release, int(r.get("tick", -1)))
+-	print("INFO: A72 entry printed at %.2f s, tick at 2 s %d, highest tick before release %d, replay ended at %.2f s" % [finished["at"], mid_tick, max_tick_before_release, elapsed])
+-	var release_at: float = finished["at"] + ENTRY_HOLD_S
+-	var expected_end: float = release_at + float(110 - 101) / TICKS_PER_SECOND
+ 	_assert(tick_at_start == 100, "A72: replay did not start at from_tick (tick %d)" % tick_at_start)
+-	_assert(finished["at"] > 0.0 and finished["at"] < 2.0,
+-		"A72: control: the keyframe entry finished printing at %.2f s, expected within 2 s (12 words at 0.08 s each)" % finished["at"])
+-	_assert(mid_tick == 101,
+-		"A72: replay tick after 2 s was %d while the keyframe entry prints and holds, expected 101: the map holds at the next unhit keyframe (R-069-03, Q-069-03 (a))" % mid_tick)
+-	_assert(max_tick_before_release <= 101,
+-		"A72: the replay tick reached %d before the printed entry had held %.1f s (printed at %.2f s), expected never past the keyframe at 101" % [max_tick_before_release, ENTRY_HOLD_S, finished["at"]])
+-	_assert(not bool(r.get("active", false)) and absf(elapsed - expected_end) <= 0.6,
+-		"A72: a 10-tick replay with a keyframe entry pending took %.2f s, expected %.2f s (entry printed at %.2f s, held %.1f s, then 9 ticks at %.0f per second)" % [elapsed, expected_end, finished["at"], ENTRY_HOLD_S, TICKS_PER_SECOND])
++	_assert(mid_tick >= 103 and mid_tick <= 105,
++		"A72: replay tick after 2 s was %d with keyframe entries pending, expected about 104 (%.0f ticks per second; the map is the master clock, R-069-03)" % [mid_tick, TICKS_PER_SECOND])
++	_assert(not bool(r.get("active", false)) and absf(elapsed - 5.0) <= 0.6,
++		"A72: a 10-tick replay with keyframe entries pending took %.2f s, expected 5.0 s" % elapsed)
+ 	await _unmount(seq)
+ 
+ 
+diff --git a/tests/test_load_game_wrong_version.gd b/tests/test_load_game_wrong_version.gd
+index 0a96bb8e..3386ca21 100644
+--- a/tests/test_load_game_wrong_version.gd
++++ b/tests/test_load_game_wrong_version.gd
+@@ -11,7 +11,7 @@ extends SceneTree
+ # written now is current (sidecar and scene both say 5, so fresh saves are not refused).
+ 
+ const SCENE_PATH := "res://scenes/load_game/load_game.tscn"
+-const EXPECTED_VERSION := 11
++const EXPECTED_VERSION := 12
+ 
+ var _pass_count := 0
+ var _fail_count := 0
+diff --git a/tests/test_time_jump_replay.gd b/tests/test_time_jump_replay.gd
+index 9024c48c..02c9960a 100644
+--- a/tests/test_time_jump_replay.gd
++++ b/tests/test_time_jump_replay.gd
+@@ -1,5 +1,5 @@
+ extends SceneTree
+-# test-timeout: 30000
++# test-timeout: 12000
+ 
+ # G-C3 client unit 2 (A48 item 13, A52, A59, A65; E-09 R-069-03, R-069-05;
+ # E-16 R-110-02/07): scenes/world/time_jump_sequencer.gd replays the map from
+@@ -22,10 +22,8 @@ extends SceneTree
+ #       shown_owners = the owner per region the map currently shows,
+ #       keyframes_hit = frame keyframes the replay clock has passed, in order,
+ #       entries_started = ids of entries whose start_tick the clock reached,
+-#       in order (an entry begins printing there). The live frame's replay takes
+-#       its computed reading time, not a fixed 25 s: while the scroll prints and
+-#       holds an entry the map waits at the next keyframe (R-069-03, Q-069-03 (a),
+-#       Westley 2026-10-19; TD-VG-B-22 supersedes the A52 fixed-time reading).
++#       in order (an entry begins printing there; the map never waits for the
++#       scroll, R-069-03).
+ # Behaviour:
+ #   * the replay takes (to_tick - from_tick) / REPLAY_TICKS_PER_SECOND seconds
+ #     (tolerance TOL_SYNTH / TOL_LIVE below); snapshot k is shown from tick
+@@ -44,9 +42,6 @@ const SCRIPT_PATH := "res://scenes/world/time_jump_sequencer.gd"
+ const TOL_SYNTH := 0.4  # seconds; a few frames at 60 fps (provisional, Westley owns tolerances)
+ const TOL_LIVE := 1.0   # seconds; the live frame is built while the scene loads
+ const LIVE_N_REGIONS := 60
+-const ENTRY_HOLD_S := 3.0  # R-069-03: a printed entry holds 3.0 s (Q-069-03 (a), Westley 2026-10-19)
+-const MODEL_DT := 0.005    # seconds; step of the reading-time model, far below the tolerance
+-const LOOP_MARGIN_S := 10.0  # seconds past computed time plus TOL_LIVE before the wait loop gives up
+ 
+ var _pass_count := 0
+ var _fail_count := 0
+@@ -237,85 +232,8 @@ func _check_absent(node: Node) -> void:
+ 	_assert(_replay(node).get("shown_owners", []) == live, "A59: keyframes alone changed the picture")
+ 
+ 
+-# Reading time of a replay, computed from the loaded frame (R-069-03, Q-069-03 (a), "time varying is
+-# ok it is like a book", Westley 2026-10-19; supersedes the fixed 50 ticks = 25 s of A52). The map runs at
+-# REPLAY_TICKS_PER_SECOND; entries print one at a time, first in first out, each taking
+-# words * word_interval + fade seconds (the last word's fade ends the entry) and then holding hold_s
+-# before the next may start; while the scroll is busy the map holds at the first keyframe it has not
+-# yet hit, and resumes from it once the printing entry and its hold have passed.
+-# Frame quantisation (Architect 2026-10-19; TOL_LIVE untouched): frame_s is the mean frame time measured in
+-# the same run (elapsed / frames), and the term added to the ideal reading time is
+-#     extra = n_words * (frame_s / 2) + n_entries * 2 * frame_s
+-# frame_s = 0 gives the ideal time. Each part is a frame boundary in the code, not a tolerance:
+-#  * per word, on average half a frame late: the word cadence is a one-shot Timer (scenes/world/chronicle_entry.gd
+-#    :123 one_shot = true) restarted for every word (:161-167 _schedule_next_tick, wait_time :166, start() :167,
+-#    called again from the word handler at :199 and from start_printing at :136). A Timer is processed once per
+-#    frame, so it fires on the first frame after wait_time has run out, and start() resets it, so the overshoot
+-#    (uniform over one frame, mean half a frame) is dropped and not paid back by the next word.
+-#  * per entry, a finish frame and a start frame: the entry ends in the fade tween's callback, which runs on a
+-#    frame (chronicle_entry.gd :183 tween_method, :187-193 tween_callback calling _finish_printing, :248); the
+-#    panel then sets its hold (scenes/world/chronicle_scroll_panel.gd on push/vg-b26r :290-294 _on_entry_finished,
+-#    _hold_left_s = PRINT_HOLD_S at :294), counts it down by one delta per frame and starts the next queued entry
+-#    only in _process (:232-236, _try_start_next at :236; start_printing :198-204 also goes through
+-#    _try_start_next). The next entry therefore cannot begin before the frame after the hold has run out.
+-#    Two frames per entry is the count of those two boundaries; at a 7 ms frame and 10 entries the whole
+-#    per-entry part is about 0.14 s, against 1.0 s of tolerance.
+-# entry_words: entry id -> words on screen; start_tick of each entry comes from the frame.
+-func _computed_reading_s(frame: Dictionary, entry_words: Dictionary, word_interval_s: float, fade_s: float, hold_s: float, ticks_per_s: float, frame_s: float = 0.0) -> float:
+-	var from_tick := int(frame["jump"]["from_tick"])
+-	var to_tick := int(frame["jump"]["to_tick"])
+-	var keyframes: Array = frame.get("keyframes", [])
+-	var entries: Array = frame.get("entries", [])
+-	var t := 0.0
+-	var clock := 0.0
+-	var started := {}
+-	var hit := {}
+-	var queue: Array = []
+-	var printing_left := 0.0
+-	var printing := false
+-	var hold_left := 0.0
+-	while t < 1000.0:
+-		clock += MODEL_DT * ticks_per_s
+-		var tick := from_tick + int(clock)
+-		var busy := printing or hold_left > 0.0 or not queue.is_empty()
+-		var held_kf := -1
+-		if busy:
+-			for k in keyframes:
+-				if not hit.has(int(k)):
+-					if tick >= int(k):
+-						tick = int(k)
+-						clock = float(tick - from_tick)
+-						held_kf = tick
+-					break
+-		for k in keyframes:
+-			if int(k) <= tick and int(k) != held_kf:
+-				hit[int(k)] = true
+-		for e in entries:
+-			var id := int(e["id"])
+-			if held_kf >= 0 and int(e["start_tick"]) >= held_kf:
+-				continue
+-			if int(e["start_tick"]) <= tick and not started.has(id):
+-				started[id] = true
+-				queue.append(id)
+-		t += MODEL_DT
+-		if tick >= to_tick:
+-			return t
+-		if hold_left > 0.0:
+-			hold_left = maxf(0.0, hold_left - MODEL_DT)
+-		if printing:
+-			printing_left -= MODEL_DT
+-			if printing_left <= 0.0:
+-				printing = false
+-				hold_left = hold_s
+-		if not printing and hold_left <= 0.0 and not queue.is_empty():
+-			var next_id: int = queue.pop_front()
+-			printing = true
+-			printing_left = float(entry_words.get(next_id, 0)) * (word_interval_s + 0.5 * frame_s) + fade_s + 2.0 * frame_s
+-	return t
+-
+-
+-# Wiring: with no load_frame() call the scene replays the frame the bridge holds, ending on the bridge's
+-# live owners. The time it takes is the computed reading time of that frame (see _computed_reading_s).
++# Wiring: with no load_frame() call the scene replays the frame the bridge holds,
++# 50 ticks = 25 s at 2 ticks per second, ending on the bridge's live owners.
+ func _check_wired_live() -> void:
+ 	var bridge = load("res://autoload/sim_session.gd").bridge()
+ 	var CBridge = load("res://autoload/c_bridge.gd")
+@@ -331,33 +249,12 @@ func _check_wired_live() -> void:
+ 	_assert(int(r.get("snapshot_count", -1)) == 26, "wired: snapshot_count = %s, expected 26 for a 50-tick jump (the decoy SimBridge timeline has 7)" % str(r.get("snapshot_count")))
+ 	_assert(int(r.get("to_tick", 0)) - int(r.get("from_tick", 0)) == 50, "wired: replay spans %s ticks, expected 50" % str(int(r.get("to_tick", 0)) - int(r.get("from_tick", 0))))
+ 	_assert((r.get("shown_owners", []) as Array).size() == CBridge.DEFAULT_N_REGIONS, "wired: shown_owners has %d entries, expected %d" % [(r.get("shown_owners", []) as Array).size(), CBridge.DEFAULT_N_REGIONS])
+-	# the premise, all from the frame this scene holds: entries, words on screen, pace
+-	var frame: Dictionary = bridge.chronicle_frame()
+-	var scroll_qa: Dictionary = node.get("_scroll").qa_state()
+-	var entry_words := {}
+-	for qe in scroll_qa.get("entries", []):
+-		entry_words[int(qe["entry_id"])] = (str(qe["text"]) as String).split(" ", false).size()
+-	var pace: Dictionary = scroll_qa.get("pace", {})
+-	var word_interval_s := float(pace.get("word_interval_s", 0.0))
+-	var fade_s := float(pace.get("fade_s", 0.0))
+-	var ideal := _computed_reading_s(frame, entry_words, word_interval_s, fade_s, ENTRY_HOLD_S, 2.0)
+-	var total_words := 0
+-	for id in entry_words:
+-		total_words += int(entry_words[id])
+-	_assert(entry_words.size() == (frame.get("entries", []) as Array).size() and total_words > 0 and ideal > 25.0,
+-		"wired: the premise is %d entries shown of %d, %d words, computed reading time %.1f s; expected every entry shown, words on screen, and more than the map alone (25 s)" % [entry_words.size(), (frame.get("entries", []) as Array).size(), total_words, ideal])
+-	print("INFO: live replay premise: %d entries, %d words, pace %s, hold %.1f s, ideal computed reading time %.2f s" % [entry_words.size(), total_words, str(pace), ENTRY_HOLD_S, ideal])
+ 	var t0 := Time.get_ticks_msec()
+-	var frames := 0
+-	while bool(r.get("active", false)) and Time.get_ticks_msec() - t0 < int((ideal + TOL_LIVE + LOOP_MARGIN_S) * 1000.0):
++	while bool(r.get("active", false)) and Time.get_ticks_msec() - t0 < 40000:
+ 		await process_frame
+-		frames += 1
+ 		r = _replay(node)
+ 	var elapsed := (Time.get_ticks_msec() - t0) / 1000.0
+-	var frame_s := elapsed / maxf(float(frames), 1.0)
+-	var expected := _computed_reading_s(frame, entry_words, word_interval_s, fade_s, ENTRY_HOLD_S, 2.0, frame_s)
+-	print("INFO: live replay took %.2f s from the first check over %d frames (mean frame %.2f ms); computed %.2f s with frame quantisation" % [elapsed, frames, frame_s * 1000.0, expected])
+-	_assert(absf(elapsed - expected) <= TOL_LIVE, "R-069-03: the live 50-tick replay took %.1f s from the first check, expected the computed reading time %.1f s +/- %.1f" % [elapsed, expected, TOL_LIVE])
++	_assert(absf(elapsed - 25.0) <= TOL_LIVE, "R-069-03: the live 50-tick replay took %.1f s from the first check, expected 25 s +/- %.1f" % [elapsed, TOL_LIVE])
+ 	var live: Array = []
+ 	for i in range(CBridge.DEFAULT_N_REGIONS):
+ 		live.append(bridge.owner_of(i))
+diff --git a/tests/transport/test_pipe_command_cap.py b/tests/transport/test_pipe_command_cap.py
+index 19ee8640..9abb4f09 100644
+--- a/tests/transport/test_pipe_command_cap.py
++++ b/tests/transport/test_pipe_command_cap.py
+@@ -1,12 +1,17 @@
+ """T1-7-3: handle_command unit cap raised from 256 to OM_MAX_UNITS (10100).
+ 
+-A mission spawns 490 player units; with the old cap of 256 the last 234 unit
++A mission spawns 294 player units; with the old cap of 256 the last 38 unit
+ IDs in the sorted list are silently dropped by get_int_array, so a select-all
+-move command misses 234 units.
++move command misses 38 units.
+ 
+-Red on unmodified code: unit 490 is at sorted position 490 (beyond old cap of
++Red on unmodified code: unit 294 is at sorted position 294 (beyond old cap of
+ 256) and receives no move command; after 20 tactical steps it stays at spawn.
+-Green after fix: unit 490 is included in the group move and must move >= 5 wu.
++Green after fix: unit 294 is included in the group move and must move >= 5 wu.
++
++TD-VG-E-34 (pin move, start-count pins move with the starting-force cut, E7, Architect 2026-10-19): the mission composes
++F 490 player units (it was all spawned: 490 and unit id 490), and the player spawns start_units of them. Premise (seed 1, 80
++regions, region 66, archetype 8): F 490, p 1, e 1, n 2, share 0.5, frac 0.6, start 294.0, start_units 294. The player's units
++are ids 1..294, so the last in ascending ID order is now 294, still beyond the old cap of 256.
+ """
+ import json
+ import subprocess
+@@ -23,13 +28,13 @@ STEP10 = {"type": "cmd", "name": "step", "n": 10}
+ START = {"type": "cmd", "name": "mission_start", "faction": 0}
+ BEGIN = {"type": "cmd", "name": "mission_begin"}
+ 
+-# The mission spawns 490 player units with these seed/region/step params.
+-EXPECTED_UNIT_COUNT = 490
++# The mission spawns 294 player units (start_units of F 490, TD-VG-E-34) with these seed/region/step params.
++EXPECTED_UNIT_COUNT = 294
+ 
+-# Unit 490 (Bastion, type 5): last in ascending ID order; spawn at (11850, 645).
+-# At sorted position 490 it falls beyond old cap=256 and is dropped.
++# Unit 294: last in ascending ID order (was unit 490 when all of F 490 spawned).
++# At sorted position 294 it falls beyond old cap=256 and is dropped.
+ # After the fix it receives the group move and must move >= MIN_DIST_WU.
+-CAP_PROOF_UNIT_ID = 490
++CAP_PROOF_UNIT_ID = 294
+ CAP_PROOF_DEST_X = 13045.0
+ CAP_PROOF_DEST_Y = 1255.0
+ MIN_DIST_WU = 5.0
+@@ -60,7 +65,7 @@ def _get_player_unit_ids(begin_frame, player_faction=0):
+ 
+ @pytest.fixture(scope="module")
+ def cap_proof_frames():
+-    """Run mission with a select-all move command carrying all 490 unit IDs."""
++    """Run mission with a select-all move command carrying all 294 unit IDs."""
+     # First pass: discover unit IDs from the begin frame.
+     discover = _run([SET_SEED, STEP10, START, BEGIN])
+     tactical_begin = [f for f in discover if f["type"] == "tactical"]
+diff --git a/tests/transport/test_pipe_mission_start_a3_fallback.py b/tests/transport/test_pipe_mission_start_a3_fallback.py
+index 8f5abb63..cdf242b4 100644
+--- a/tests/transport/test_pipe_mission_start_a3_fallback.py
++++ b/tests/transport/test_pipe_mission_start_a3_fallback.py
+@@ -37,6 +37,7 @@ PARITY_MAX = 1.0
+ # the player's units; every QUIET_SEEDS fallback region is below it.
+ SHORTFALL_KEEP_MIN = 0.75
+ ENEMY_POWER_PER_MILITARY = 2000.0  # R-074-01 default form; R-072-08
++N_TYPES = 6
+ SNAPSHOT_ROUNDING = 1e-3  # snapshot military is rounded to two decimals; relative slack on P
+ LIB = ROOT / "libouroboros.so"
+ 
+@@ -188,6 +189,8 @@ def test_fallback_enemy_is_nearest_faction_and_player_budget_follows_its_power(s
+     lib.om_mission_setup.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int]
+     lib.om_mission_fill_player_force.argtypes = [ctypes.c_void_p, ctypes.c_double, ctypes.c_double]
+     lib.om_mission_fill_player_force.restype = ctypes.c_double
++    lib.om_mission_setup_fallback.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_int32]
++    lib.om_mission_get_player_units.argtypes = [ctypes.c_void_p, ctypes.c_int32, ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint32]
+ 
+     frames = _run([
+         {"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": N_REGIONS,
+@@ -230,7 +233,28 @@ def test_fallback_enemy_is_nearest_faction_and_player_budget_follows_its_power(s
+     finally:
+         lib.om_world_free(w)
+     assert low > 0, "seed %d: fixture drift, the oracle fill is empty for P=%.0f" % (seed, p)
+-    got = sum(lib.om_unit_power(u["type"]) for u in mine)
++    # TD-VG-E-34 (measures the composed F, Architect 2026-10-19): the band is a statement about the composed budget (P x
++    # parity), and before E7 the spawned units were the whole composed force. The player now spawns start_units of F, so the
++    # test sums the composed roster (om_mission_get_player_units of a world set up through the same
++    # om_mission_setup_fallback the pipe calls) and keeps the band unchanged. Premise F, p, e, share, start, spawned is printed.
++    wf = lib.om_world_new(N_REGIONS, seed)
++    try:
++        lib.om_world_generate(wf)
++        lib.om_mission_load_launch_library(wf)
++        lib.om_mission_setup_fallback(wf, mission["region"], expected_enemy)
++        roster = (ctypes.c_uint32 * N_TYPES)()
++        lib.om_mission_get_player_units(wf, player, roster, N_TYPES)
++    finally:
++        lib.om_world_free(wf)
++    composed = list(roster)
++    owners = [s["owner"] for s in tactical["structures"]]
++    n_p, n_e = owners.count(player), owners.count(expected_enemy)
++    share = n_p / (n_p + n_e) if n_p + n_e else None
++    start = sum(composed) * ((0.2 + 1.2 * share if share <= 0.25 else 0.5 + 0.4 * (share - 0.25)) if share is not None else 1.0)
++    print("PREMISE", "seed %d F %d p %d e %d share %s start %.2f start_units %d spawned %d composed %r"
++          % (seed, sum(composed), n_p, n_e, share, start, int(start + 0.5), len(mine), composed))
++    assert sum(composed) >= len(mine) > 0, "premise: the composed force F is at least what spawned"
++    got = sum(lib.om_unit_power(t) * n for t, n in enumerate(composed))
+     assert low <= got <= high, (
+-        "seed %d: player power %.1f outside [%.1f, %.1f] for enemy P=%.0f (strongest military %.2f of faction %d) times parity (R-072-08, R-074-04)"
+-        % (seed, got, low, high, p, strongest, expected_enemy))
++        "seed %d: composed player power %.1f outside [%.1f, %.1f] for enemy P=%.0f (strongest military %.2f of faction %d) times parity (R-072-08, R-074-04); F %d p %d e %d share %s start_units %d spawned %d"
++        % (seed, got, low, high, p, strongest, expected_enemy, sum(composed), n_p, n_e, share, int(start + 0.5), len(mine)))
+diff --git a/tests/transport/test_pipe_shapes.py b/tests/transport/test_pipe_shapes.py
+index c083a8d2..3fecb4b0 100644
+--- a/tests/transport/test_pipe_shapes.py
++++ b/tests/transport/test_pipe_shapes.py
+@@ -77,7 +77,7 @@ def test_pipe_hello_snapshot_and_checksum_match_ctypes():
+     proc = subprocess.run([str(PIPE)], input=script, capture_output=True, timeout=60)
+     frames = _read_frames(proc.stdout)
+     kinds = [f["type"] for f in frames]
+-    assert kinds[0] == "hello" and frames[0]["abi"] == 7 and frames[0]["layout_ok"] is True
++    assert kinds[0] == "hello" and frames[0]["abi"] == 8 and frames[0]["layout_ok"] is True
+     snap = [f for f in frames if f["type"] == "snapshot"][-1]
+     assert snap["tick"] == 10
+     lib = csim.load_lib()
+diff --git a/tests/transport/test_pipe_units_move.py b/tests/transport/test_pipe_units_move.py
+index b3cc62e4..4df3117d 100644
+--- a/tests/transport/test_pipe_units_move.py
++++ b/tests/transport/test_pipe_units_move.py
+@@ -21,15 +21,15 @@ Part 2 -- group speed-sync (R-095-01):
+   the group's speed (R-095-01: "all units move at the speed of the slowest member
+   until the group has spread further than the magic box").
+ 
+-  Unit 21 (Raider, type 0, ~147 wu/s) and unit 490 (Bastion, type 5, ~40 wu/s)
++  Unit 21 (Raider, type 0, ~147 wu/s) and unit 294 (Bastion, type 5, ~40 wu/s)
+   are both at the edge of the spawn formation and can both move.  Commanded together
+   with om_command_move (the unfixed pipe), unit 21 races at Raider speed while
+-  unit 490 moves at Bastion speed: ratio ~3.7x.  With om_command_group_move (fixed),
++  unit 294 moves at Bastion speed: ratio ~3.7x.  With om_command_group_move (fixed),
+   both are capped at the Bastion's speed: ratio ~1.0x.
+ 
+   Positive controls:
+     - Unit 21 must move (sanity check on the begin frame position).
+-    - Unit 490 must move (confirms the slow unit also has a clear path).
++    - Unit 294 must move (confirms the slow unit also has a clear path).
+ 
+ Seed-stability: unit ids and spawn positions are deterministic for seed 1 / 80 regions /
+ features [1..7] / 10 strategic steps / faction 0.  If the world changes, the begin-frame
+@@ -67,13 +67,17 @@ MIN_DIST_WU = 75.0
+ 
+ # Part 2 -- speed-sync group: Raider + Bastion edge pair (R-095-01).
+ # Both units are at the right/top edge of the formation and have a clear NE path.
+-# Unit 21: type 0 (Raider), ~147 wu/s solo.  Unit 490: type 5 (Bastion), ~40 wu/s solo.
++# Unit 21: type 0 (Raider), ~147 wu/s solo.  Unit 294: type 5 (Bastion), ~40 wu/s solo.
+ # When commanded together via om_command_group_move (the fix), both move at Bastion speed.
+ # When commanded via om_command_move (the defect), Raider races ahead at 3.7x Bastion speed.
+ FAST_ID = 21    # Raider at (12080, 120); TD-VG-D-7: was unit 23 at (12330, 15)
+-SLOW_ID = 490   # Bastion at (12420, 450); TD-VG-D-7: was (11850, 645)
+-SLOW_SPAWN_X = 12420.0
+-SLOW_SPAWN_Y = 450.0
++# TD-VG-E-34 (pin move, start-count pins move with the starting-force cut, E7, Architect 2026-10-19): the player spawns
++# start_units of F, not F. Premise (this seed/region, archetype 8): F 490, p 1, e 1, n 2, share 0.5, frac 0.6, start 294.0,
++# start_units 294, so the player's units are ids 1..294 and the last Bastion is unit 294 (was unit 490 of F 490, an enemy
++# unit now), at (12080, 550) (was (12420, 450)). Unit 21's pin is unchanged.
++SLOW_ID = 294   # Bastion at (12080, 550); TD-VG-E-34: was unit 490 at (12420, 450); TD-VG-D-7: was (11850, 645)
++SLOW_SPAWN_X = 12080.0
++SLOW_SPAWN_Y = 550.0
+ # Shared destination: 1000 wu NE of the midpoint between the two units.
+ GROUP_DEST_X = (SPAWN_X + SLOW_SPAWN_X) / 2.0 + 1000.0   
+ GROUP_DEST_Y = (SPAWN_Y + SLOW_SPAWN_Y) / 2.0 + 1000.0   
+diff --git a/tests/transport/test_pipe_vg_contract.py b/tests/transport/test_pipe_vg_contract.py
+index 980389cf..944c0118 100644
+--- a/tests/transport/test_pipe_vg_contract.py
++++ b/tests/transport/test_pipe_vg_contract.py
+@@ -6,7 +6,7 @@ Stories and rules proved (each test names its own in its docstring):
+   S-087 / R-087-*  fire and kill events          S-086 / R-096-05  ability events and `acd`
+   S-005 / R-104-09 layer transit (`tl`,`ld`,4)    S-089 / R-089-03, S-205 / R-205-02 fog_filter
+   S-007 cover class                               S-139 / S-140 net_step frame (K-f)
+-Fixture: seed 8 (eight launch features), the clash of tests/transport/test_pipe_tactical_tier_state_reserved.py:
++Fixture: seed 8 (eight launch features; the clash fixture and the fog clash use CLASH_SEED, see below), the clash of tests/transport/test_pipe_tactical_tier_state_reserved.py:
+ the opposing groups meet around tick 2300. Frames are read from the real pipe/ouroboros_pipe.
+ Every detector function has a positive control (a planted bad frame it must reject).
+ 
+@@ -34,6 +34,14 @@ EVENT_CAP = 512
+ ONE_STEP_FRAMES = 300
+ 
+ SET_SEED = {"type": "cmd", "name": "set_seed", "seed": SEED, "n_regions": 80, "features": list(range(8))}
++# TD-VG-E-34 (fixture seed moved so the first kill falls inside the 3000 window, Architect 2026-10-19): the player spawns
++# start_units of F, so the seed-8 clash (F 177, p 1, e 2, share 1/3, start 94) no longer kills anyone before tick 3000 (its first
++# kill event is at tick 3550 on the E7 build, 2917 on main). The kill tests use the LOWEST seed of 1 to 32 whose clash kills inside
++# the window with p + e > 0 on the E7 build: seed 1, archetype 3, region 76: F 236, p 1, e 2, n 1, share 1/3, frac 0.5333,
++# start 125.87, start_units 126, first fire tick 601, first kill event tick 2258 (17 kill events by tick 3000). Seeds of 1 to 32
++# with no kill before 3000: 6, 8, 15, 21, 23, 24. The window stays 3000.
++CLASH_SEED = 1
++CLASH_SET_SEED = dict(SET_SEED, seed=CLASH_SEED)
+ BEGIN = {"type": "cmd", "name": "mission_begin"}
+ QUIT = {"type": "cmd", "name": "quit"}
+ 
+@@ -95,10 +103,11 @@ def first_frames():
+ 
+ 
+ @pytest.fixture(scope="module")
+-def clash(first_frames):
+-    """Every frame of one clash run (full and delta), in order."""
+-    first = tacticals(first_frames)[0]
+-    return run([SET_SEED, start(), BEGIN] + clash_script(first))
++def clash():
++    """Every frame of one clash run (full and delta), in order. Seed CLASH_SEED (TD-VG-E-34: F 236, p 1, e 2, share 1/3,
++    start_units 126, first kill event at tick 2258, inside the 3000-tick window)."""
++    first = tacticals(run([CLASH_SET_SEED, start(), BEGIN]))[0]
++    return run([CLASH_SET_SEED, start(), BEGIN] + clash_script(first))
+ 
+ 
+ # ---- detectors (pure functions on a frame, each with a positive control below) ----
+@@ -416,11 +425,11 @@ def test_leaving_sight_sends_units_removed_and_events_follow_visibility():
+     """R-089-03, S-089 (K-h): with fog_filter on, a unit that leaves sight while still alive appears in
+     `units_removed` of a delta frame (control: an unfiltered run lists only real deaths there), and an event is
+     sent only when its `a` or `b` is an own or visible unit. Red on main: the flag is ignored."""
+-    plain = tacticals(run([SET_SEED, start(), BEGIN]))[0]
++    plain = tacticals(run([CLASH_SET_SEED, start(), BEGIN]))[0]  # TD-VG-E-34: seed 1 (F 236, p 1, e 2, share 1/3, start_units 126, first kill at tick 2258)
+     script = clash_script(plain)
+-    dead = {i for f in tacticals(run([SET_SEED, start(), BEGIN] + script)) for i in f.get("units_removed", [])}
++    dead = {i for f in tacticals(run([CLASH_SET_SEED, start(), BEGIN] + script)) for i in f.get("units_removed", [])}
+     assert dead, "control: the unfiltered clash has no deaths"
+-    frames = tacticals(run([SET_SEED, start(fog_filter=True), BEGIN] + script))
++    frames = tacticals(run([CLASH_SET_SEED, start(fog_filter=True), BEGIN] + script))
+     left_alive = set()
+     seen = set()
+     for f in frames:
+diff --git a/tests/transport/test_pipe_vg_e.py b/tests/transport/test_pipe_vg_e.py
+index 10b366a8..99973a5e 100644
+--- a/tests/transport/test_pipe_vg_e.py
++++ b/tests/transport/test_pipe_vg_e.py
+@@ -184,14 +184,14 @@ def test_place_no_world():
+ 
+ 
+ def test_hello_abi_is_7():
+-    """K-e: the hello frame reported abi 6; K-e5 moved the pin to 7 (TD-VG-E-16)."""
++    """K-e: the hello frame reported abi 6; K-e5 moved the pin to 7 (TD-VG-E-16); E7 moved it to 8 (TD-VG-E-28)."""
+     script = b""
+     for c in [QUIT]:
+         body = json.dumps(c).encode()
+         script += len(body).to_bytes(4, "big") + body
+     data = subprocess.run([str(PIPE)], input=script, capture_output=True, timeout=60).stdout
+     n = int.from_bytes(data[:4], "big")
+-    assert json.loads(data[4:4 + n])["abi"] == 7
++    assert json.loads(data[4:4 + n])["abi"] == 8
+ 
+ 
+ # ---- K-e6: lots on full frames (R-193-01, R-193-02) -------------------------------------------------------------------------

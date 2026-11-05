@@ -1,0 +1,13 @@
+diff --git a/project.godot b/project.godot
+index 1e70034b..f97369bb 100644
+--- a/project.godot
++++ b/project.godot
+@@ -14,7 +14,7 @@ config/name="Ouroboros"
+ run/main_scene="res://scenes/privacy_modal/privacy_modal.tscn"
+ config/use_custom_user_dir=true
+ config/custom_user_dir_name="data"
+-config/features=PackedStringArray("4.7", "Forward Plus")
++config/features=PackedStringArray("4.6", "Forward Plus")
+ config/icon="res://icon.svg"
+ 
+ [autoload]

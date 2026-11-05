@@ -1,0 +1,152 @@
+diff --git a/csrc/mission.c b/csrc/mission.c
+index ec94cfa3..9aea4d20 100644
+--- a/csrc/mission.c
++++ b/csrc/mission.c
+@@ -304,6 +304,7 @@ typedef struct {
+ 
+     /* S-074 force generation */
+     uint32_t player_units[OM_MISSION_N_UNIT_TYPES];
++    uint32_t reinforce_cap, reinforce_spawned;
+     char     shortfall_text[256];
+ 
+     /* S-075 objectives and termination */
+@@ -2747,7 +2748,27 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
+     om_map_add_cover(w, ox, oy, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
+     om_map_add_spawn_point(w, px, py, player);
+     om_map_add_spawn_point(w, ex, ey, enemy);
+-    if (om_mission_spawn_force(w, st, st->player_units, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
++    uint32_t cut_units[OM_MISSION_N_UNIT_TYPES];
++    {
++        uint32_t f_units = 0, big = 0;
++        for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) { f_units += st->player_units[t]; if (st->player_units[t] > st->player_units[big]) big = t; }
++        uint32_t total = om_structure_compute_count(w->regions[st->mission_region].military, cat);
++        if (om_era_kind(w) == 1 && total > om_terrain_slope_count(w)) total = om_terrain_slope_count(w);
++        uint32_t pp = 0, ee = 0, nn = 0;
++        om_structure_assign_owners((int)st->mission_archetype, total, &pp, &ee, &nn);
++        double share = (pp + ee == 0) ? 0.5 : (double)pp / (double)(pp + ee);
++        double frac = 0.2 + 0.6 * share; if (frac < 0.2) frac = 0.2; if (frac > 0.8) frac = 0.8;
++        uint32_t su = (uint32_t)(double)((uint64_t)(f_units * frac + 0.5));
++        int64_t sum = 0;
++        for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
++            cut_units[t] = f_units ? (uint32_t)((uint64_t)((double)st->player_units[t] * (double)su / (double)f_units + 0.5)) : 0;
++            sum += cut_units[t];
++        }
++        cut_units[big] = (uint32_t)((int64_t)cut_units[big] + ((int64_t)su - sum));
++        st->reinforce_cap = f_units - su;
++        st->reinforce_spawned = 0;
++    }
++    if (om_mission_spawn_force(w, st, cut_units, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
+         fprintf(stderr, "mission: player spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
+     if (om_mission_spawn_force(w, st, st->enemy_units, enemy, ex, ey, -1.0, reach, rcw, rch, rlayer, enemy_pocket))
+         fprintf(stderr, "mission: enemy spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
+@@ -3059,6 +3080,9 @@ int om_objective_get_done(const om_world *w, uint32_t idx) {
+ }
+ /* ---- end generated stubs ---- */
+ 
++uint32_t om_mission_reinforce_cap(const om_world *w) { const om_mission_state *st = om_mis_ro(w); return (st && st->mission_set) ? st->reinforce_cap : 0xFFFFFFFFu; }
++void om_mission_reinforce_note_spawn(om_world *w) { om_mission_state *st = (om_mission_state *)w->mission_state; if (st) st->reinforce_spawned++; }
++uint32_t om_mission_reinforce_spawned_proto(const om_world *w) { const om_mission_state *st = om_mis_ro(w); return st ? st->reinforce_spawned : 0; }
+ /* ---- net hooks (lockstep spec 2026-10-05) ---- */
+ #define OM_MIS_NET_PRIME 1099511628211ULL
+ #define OM_MIS_NET_SEED 14695981039346656037ULL
+@@ -3086,6 +3110,8 @@ static uint64_t om_mis_net_hash(const om_world *w) {
+     h = om_mis_h_word(h, (uint64_t)(int64_t)st->lineage_connection);
+     h = om_mis_h_word(h, (uint64_t)(int64_t)st->mission_set);
+     for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) h = om_mis_h_word(h, st->player_units[k]);
++    h = om_mis_h_word(h, st->reinforce_cap);
++    h = om_mis_h_word(h, st->reinforce_spawned);
+     h = om_mis_h_word(h, st->n_objectives);
+     for (uint32_t i = 0; i < st->n_objectives && i < OM_MISSION_MAX_OBJECTIVES; i++) {
+         const om_mission_objective *o = &st->objectives[i];
+@@ -3177,6 +3203,8 @@ static uint32_t om_mis_serialize(const om_mission_state *st, uint8_t *out) {
+     om_mis_w_i32(&m, st->lineage_connection);
+     om_mis_w_i32(&m, st->mission_set);
+     for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) om_mis_w_u32(&m, st->player_units[k]);
++    om_mis_w_u32(&m, st->reinforce_cap);
++    om_mis_w_u32(&m, st->reinforce_spawned);
+     om_mis_w_u32(&m, st->n_objectives);
+     for (uint32_t i = 0; i < st->n_objectives; i++) {
+         const om_mission_objective *o = &st->objectives[i];
+@@ -3304,6 +3332,8 @@ static int om_mis_net_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+     st->lineage_connection = om_mis_r_i32(&r);
+     st->mission_set = om_mis_r_i32(&r);
+     for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) st->player_units[k] = om_mis_r_u32(&r);
++    st->reinforce_cap = om_mis_r_u32(&r);
++    st->reinforce_spawned = om_mis_r_u32(&r);
+     st->n_objectives = om_mis_r_count(&r, OM_MISSION_MAX_OBJECTIVES);
+     memset(st->objectives, 0, sizeof st->objectives);
+     for (uint32_t i = 0; i < st->n_objectives; i++) {
+@@ -3379,3 +3409,4 @@ void om_mission_install_net_hooks(om_world *w) {
+     w->mission_state_write = om_mis_net_save_write;
+     w->mission_state_read = om_mis_net_save_read;
+ }
++int32_t om_mission_get_force_group(const om_world *w, uint32_t i) { (void)w; (void)i; return 0; }
+diff --git a/csrc/ouroboros_sim.h b/csrc/ouroboros_sim.h
+index 77346694..543501ed 100644
+--- a/csrc/ouroboros_sim.h
++++ b/csrc/ouroboros_sim.h
+@@ -2007,8 +2007,8 @@ uint32_t om_hazard_launch_type_count(void);
+ double om_hazard_sample_interference(om_world *w, double p1, double c_double);
+ uint32_t om_hazard_spawn_moving_interference(om_world *w, double p1, double p2, double p3, double c_double, uint64_t p5);
+ void om_mission_check_extraction_objectives(om_world *w);
+-double om_mission_compute_reinforcement_capacity(double c_double, uint64_t time);
+-double om_mission_compute_starting_force(double c_double);
++double om_mission_compute_reinforcement_capacity(double c_double, double share);
++double om_mission_compute_starting_force(double c_double, double share);
+ uint32_t om_mission_get_reinforcement_trickle(om_world *w);
+ void om_mission_set_player_held_structures_count(om_world *w, int32_t faction_id, uint32_t held);
+ void om_mission_setup_extraction_point(om_world *w, double x, double y, double radius);
+diff --git a/csrc/tactical_support.c b/csrc/tactical_support.c
+index 1dd81480..86d2de99 100644
+--- a/csrc/tactical_support.c
++++ b/csrc/tactical_support.c
+@@ -466,8 +466,9 @@ void om_enemy_production_adapt_target(const om_composition_ratio *target, const
+ 
+ /* ---- R-126-02/03/04/05/06: structures ---- */
+ 
+-double om_mission_compute_starting_force(double full_force) {
+-    return full_force; /* R-218-06, liberty 2026-10-10 until E-10 S-211 */
++double om_mission_compute_starting_force(double full_force, double share) {
++    double f = 0.2 + 0.6 * share; if (f < 0.2) f = 0.2; if (f > 0.2 + 0.6) f = 0.2 + 0.6;
++    return full_force * f;
+ }
+ 
+ /* Pure by design (no world, no structure/military context): the game is
+@@ -477,10 +478,8 @@ double om_mission_compute_starting_force(double full_force) {
+  * per-tick production simulation (that needs a real structure roster,
+  * out of a (double, uint64_t) function's reach). time_limit_ticks is kept
+  * as a parameter (0 rejected) so a future per-duration model can use it. */
+-double om_mission_compute_reinforcement_capacity(double full_force, uint64_t time_limit_ticks) {
+-    (void)full_force;
+-    (void)time_limit_ticks;
+-    return 0.0; /* R-218-06: strongpoint production is paid by the holder's economy (R-218-03) */
++double om_mission_compute_reinforcement_capacity(double full_force, double share) {
++    return full_force - om_mission_compute_starting_force(full_force, share);
+ }
+ 
+ uint32_t om_structure_production_interval_ticks(double power) {
+@@ -842,6 +841,9 @@ static void om_sup_objective_refresh_center(om_world *w, om_sup_objective *o, ui
+  * one step (the current period). Destroyed and neutral structures do not
+  * produce and restart their accrual when they do again.
+  * See also: om_structure_tick_capture, which does the same for capture. */
++uint32_t om_mission_reinforce_cap(const om_world *w);
++void om_mission_reinforce_note_spawn(om_world *w);
++uint32_t om_mission_reinforce_spawned_proto(const om_world *w);
+ static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structure *s, uint32_t idx) {
+     uint64_t now, elapsed;
+     uint32_t interval;
+@@ -860,8 +862,13 @@ static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structur
+     om_sup_structure_refresh_position(w, s);
+     while (s->timer >= interval) {
+         om_structure_tick_production(w, idx);
+-        if (om_structure_pop_spawned_unit(w, idx))
++        if (om_structure_pop_spawned_unit(w, idx)) {
++            if (s->owner == om_player_faction(w)) {
++                if (om_mission_reinforce_spawned_proto(w) >= om_mission_reinforce_cap(w)) continue;
++                om_mission_reinforce_note_spawn(w);
++            }
+             om_unit_spawn(w, (int)s->unit_type, s->owner, s->last_spawn_x, s->last_spawn_y, 0);
++        }
+     }
+ }
+ 

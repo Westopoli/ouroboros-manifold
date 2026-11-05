@@ -1,0 +1,21 @@
+diff --git a/scenes/tactical_c/tactical_view.gd b/scenes/tactical_c/tactical_view.gd
+index ba1f3619..ac3110aa 100644
+--- a/scenes/tactical_c/tactical_view.gd
++++ b/scenes/tactical_c/tactical_view.gd
+@@ -1048,6 +1048,8 @@ func _pan_input(delta: float) -> void:
+ 		dir.y -= 1.0
+ 	if Input.is_key_pressed(KEY_DOWN):
+ 		dir.y += 1.0
++	if Engine.get_process_frames() % 10 == 0:
++		print("DBG pan frame=", Engine.get_process_frames(), " seen=", _pointer_seen, " vpmouse=", get_viewport().get_mouse_position(), " inputmouse?=", " rect=", get_viewport().get_visible_rect().size, " delta=", delta, " scale=", _world_scale, " cam=", _camera)
+ 	if _pointer_seen:
+ 		var vp := get_viewport()
+ 		var m := vp.get_mouse_position()
+@@ -1073,6 +1075,7 @@ func _pan_speed() -> float:
+ func _unhandled_input(event: InputEvent) -> void:
+ 	if event is InputEventMouseMotion:
+ 		_pointer_seen = true
++		print("DBG motion pos=", event.position, " vpmouse=", get_viewport().get_mouse_position())
+ 	if event is InputEventKey and event.pressed and not event.echo:
+ 		if event.keycode == KEY_A:
+ 			_attack_move_mode = true

@@ -1,0 +1,26 @@
+diff --git a/scenes/space3d/space_view.gd b/scenes/space3d/space_view.gd
+index a3559bc4..c23570b1 100644
+--- a/scenes/space3d/space_view.gd
++++ b/scenes/space3d/space_view.gd
+@@ -269,6 +269,7 @@ func qa_state() -> Dictionary:
+ 		"units": _unit_info.duplicate(true),
+ 		"tube": tube,
+ 		"camera": {"x": q["x"], "y": q["y"], "height": _rig.camera_height(), "pitch": -rad_to_deg(cam.rotation.x)},
++		"draw_calls": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), "objects": Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME), "prims": Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
+ 		"frame_ms": ms / _frame_ms.size() if _frame_ms.size() > 0 else 0.0,
+ 	}
+ 	var upx := {}
+diff --git a/scenes/tactical_c/layer_view.gd b/scenes/tactical_c/layer_view.gd
+index a28f8497..f19e9247 100644
+--- a/scenes/tactical_c/layer_view.gd
++++ b/scenes/tactical_c/layer_view.gd
+@@ -144,7 +144,8 @@ func _draw() -> void:
+ 		var c := _colour(layer)
+ 		c.a = dim_alpha(layer)
+ 		var p := _screen(u)
+-		draw_arc(p, 14.0, 0.0, TAU, 24, c, 2.0)
++		if OS.get_environment("OM_NO_LV_ARCS") != "1":
++			draw_arc(p, 14.0, 0.0, TAU, 24, c, 2.0)
+ 		var t := transit(id)
+ 		if t != "":
+ 			var d := -1.0 if t == "rise" else 1.0

@@ -1,0 +1,257 @@
+diff --git a/tests/transport/test_pipe_chapter_lifecycle.py b/tests/transport/test_pipe_chapter_lifecycle.py
+index 608ac0af..0e465ebc 100644
+--- a/tests/transport/test_pipe_chapter_lifecycle.py
++++ b/tests/transport/test_pipe_chapter_lifecycle.py
+@@ -15,10 +15,12 @@ only. So after `set_seed` the selector has already seated the first commander (R
+ forced rotation whose unrelated pool creates the first character and lineage), and these tests
+ rely on that and never seed a character.
+ 
+-Fixtures, not thresholds: seed 156 with 1000-tick jumps loses every player region at the end of
+-its second post-mission jump while holding 3 at the end of the first. Found by scanning seeds 1 to
+-400 on the B6 reference build (the generator moved into the jump, so the old seed 389 no longer
+-collapses); see COLLAPSE_SEED. Seeds 152 and 281 also qualify.
++Fixtures, not thresholds: seed 389 with 1500-tick jumps loses every player region at the end of
++its second post-mission jump while holding 3 (pre-A81 world) or 4 (post-A81 world) at the end of
++the first, and faction 2 takes over. Found by scanning seeds 1 to 400 at 1000, 1500, 2000, 3000,
++4000 and 6000-tick jumps on both origin/main and the A81 build (events reach regions 64+ there, so
++the earlier seed 156 at 1000 ticks, which collapsed on main, keeps 7 regions on the A81 build);
++389 at 1500 ticks is the only pair that collapses on both. See COLLAPSE_SEED and TD-A89-4.
+ 
+ A15 (Addendum 6): when the collapse check fires, the player faction is reassigned in the same
+ jump (the snapshot's `player_faction` carries it). When no faction survives the jump takes the
+@@ -48,8 +50,9 @@ END = {"type": "cmd", "name": "mission_end"}
+ REFUSE = {"type": "cmd", "name": "mission_refuse"}
+ SNAPSHOT = {"type": "cmd", "name": "snapshot"}
+ QUIT = {"type": "cmd", "name": "quit"}
+-COLLAPSE_SEED = 156
+-COLLAPSE_JUMP_TICKS = 1000
++COLLAPSE_SEED = 389
++COLLAPSE_JUMP_TICKS = 1500
++COLLAPSE_SUCCESSOR = 2  # faction the collapse jump reassigns the player to, same on both builds
+ PLAYER = 0
+ REASON_NORMAL, REASON_FACTION_COLLAPSED = 0, 2
+ 
+@@ -234,6 +237,7 @@ def test_R_062_02_the_collapse_jump_reassigns_the_player_faction_on_the_wire():
+     final = snaps[-1]
+     assert _owned_by_player(final) == 0
+     assert final["player_faction"] not in (PLAYER, -1), "the collapse jump did not reassign the player faction"
++    assert final["player_faction"] == COLLAPSE_SUCCESSOR, "fixture drifted: successor faction is %r" % final["player_faction"]
+     held = sum(1 for r in final["regions"] if r["owner"] == final["player_faction"])
+     assert held > 0, "reassigned to a faction that holds no region"
+ 
+diff --git a/tests/transport/test_pipe_debrief_region_delta.py b/tests/transport/test_pipe_debrief_region_delta.py
+index 55e1c5e3..8c370ac1 100644
+--- a/tests/transport/test_pipe_debrief_region_delta.py
++++ b/tests/transport/test_pipe_debrief_region_delta.py
+@@ -1,9 +1,13 @@
+ """T1-11: debrief frame region_delta has at least one non-zero value after a
+-decided DEFENSIVE_STAND + TOTAL_SUCCESS mission.
++decided MULTI_FRONT_DEFENSE + TOTAL_SUCCESS mission.
+ 
+-Setup: seed 1, 80 regions, features 0-7, no strategic steps.  With these
+-params the pipe auto-selects archetype 0 (DEFENSIVE_STAND) -- the only
+-archetype whose consequence table has entries (R-078-02/03).
++Setup: seed 16, 80 regions, features 0-7, no strategic steps.  With these
++params the pipe draws archetype 5 (MULTI_FRONT_DEFENSE) at region 56, on both
++the pre-A81 and post-A81 builds; the test asserts both so a world change cannot
++swap in another archetype unnoticed.  Archetype 5's total_success row targets
++the mission region (R-078-02/03), so region_delta is non-zero.  (The earlier
++seed 1 only passed through the guard fall-through to SIEGE_BREAKING, and A81
++moved it to CONTAINMENT, whose row is not on the mission region; see TD-A89-1.)
+ 
+ The test drives objective 0 to completion=1.0 via objective_complete before
+ mission_end so the outcome band is TOTAL_SUCCESS (score >= 0.80), which is
+@@ -50,7 +54,7 @@ def _run(cmds):
+ 
+ def test_debrief_region_delta_has_at_least_one_nonzero_after_decided_mission():
+     """After mission_start + objective_complete(0, 1.0) + mission_end the debrief
+-    region_delta carries non-zero consequences (R-078-02/03 defensive_stand
++    region_delta carries non-zero consequences (R-078-02/03 multi_front_defense
+     total_success row).  At least one of military/economy/tension is non-zero.
+ 
+     Red on base: objective_complete verb unknown -> error frame -> objective stays
+@@ -62,13 +66,19 @@ def test_debrief_region_delta_has_at_least_one_nonzero_after_decided_mission():
+     consequence rows applied -> region_delta non-zero.
+     """
+     cmds = [
+-        {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80,
++        {"type": "cmd", "name": "set_seed", "seed": 16, "n_regions": 80,
+          "features": FEATURES, "new_campaign": False},
+         {"type": "cmd", "name": "mission_start", "faction": 0},
+         {"type": "cmd", "name": "objective_complete", "objective": 0, "completion": 1.0},
+         {"type": "cmd", "name": "mission_end"},
+     ]
+     frames = _run(cmds)
++    mission = next((f for f in frames if f.get("type") == "mission"), None)
++    assert mission is not None, (
++        "no mission frame; frames received: %r" % [f.get("type") for f in frames])
++    assert (mission["archetype"], mission["region"]) == (5, 56), (
++        "seed 16 no longer draws MULTI_FRONT_DEFENSE at region 56 (got archetype "
++        "%r region %r); re-pick the seed" % (mission["archetype"], mission["region"]))
+     debrief = next((f for f in frames if f.get("type") == "debrief"), None)
+     assert debrief is not None, (
+         "no debrief frame; frames received: %r" % [f.get("type") for f in frames])
+diff --git a/tests/transport/test_pipe_mission_over.py b/tests/transport/test_pipe_mission_over.py
+index 2f31f85c..c91e87f3 100644
+--- a/tests/transport/test_pipe_mission_over.py
++++ b/tests/transport/test_pipe_mission_over.py
+@@ -8,9 +8,13 @@ by pressing End Mission -- see the 2026-09-28 QA-run wiring brief.
+ The step bound comes from the rule, not a constant: missions are 30 to 60
+ minutes of battle time (R-076-02 table, Q-076-02), so the test reads the
+ deadline_ticks the mission frame reports and steps DEADLINE_MARGIN past it.
+-Seed 121 is a fixture choice for cost, not a threshold: its first mission is an
+-evacuation (30-minute base, shortest deadline of seeds 1-400, 30406 ticks) with
+-a small force, so the sim finishes in well under a minute. Evacuation's escort
++Seed 3 is a fixture choice for cost, not a threshold: its first mission is an
++evacuation (30-minute base, deadline about 30430 ticks) with a small force
++(about 500 units), so the sim finishes in about a minute. It is one of only two
++seeds in 1-400 that draw an evacuation on both the pre-A81 and post-A81 worlds
++(the other, 154, has a longer deadline post-A81); _steps_for_deadline asserts
++the draw, because a seed that falls through to a siege-breaking mission costs
++50 ms per tick (TD-A89-2). Evacuation's escort
+ objective is one of the two kinds the wiring brief leaves out, so only the
+ time-limit path (wired for every archetype) can end it.
+ """
+@@ -23,7 +27,7 @@ import pytest
+ ROOT = Path(__file__).resolve().parents[2]
+ PIPE = ROOT / "pipe/ouroboros_pipe"
+ FEATURES = [0, 1, 2, 3, 4, 5, 6, 7]
+-SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 121, "n_regions": 80, "features": FEATURES}
++SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 3, "n_regions": 80, "features": FEATURES}
+ STEP10 = {"type": "cmd", "name": "step", "n": 10}
+ START = {"type": "cmd", "name": "mission_start", "faction": 0}
+ BEGIN = {"type": "cmd", "name": "mission_begin"}
+@@ -34,6 +38,9 @@ QUIT = {"type": "cmd", "name": "quit"}
+ # this many ticks after it (same slack the first_over tick assertion allows).
+ DEADLINE_MARGIN = 2
+ 
++# Mission archetype id of Evacuation (docs/bible R-076-02 table).
++EVACUATION = 7
++
+ pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+ 
+ 
+@@ -57,7 +64,12 @@ def _run(cmds, timeout=120):
+ def _steps_for_deadline():
+     """Steps needed to cross this seed's deadline, read from the mission frame."""
+     frames = _run([SET_SEED, STEP10, START, BEGIN])
+-    deadline = [f for f in frames if f["type"] == "mission"][0]["deadline_ticks"]
++    mission = [f for f in frames if f["type"] == "mission"][0]
++    assert mission["archetype"] == EVACUATION, (
++        "seed 3 no longer draws an evacuation (archetype %r); re-pick the fixture seed"
++        % mission["archetype"])
++    deadline = mission["deadline_ticks"]
++    assert deadline < 31000, "evacuation deadline_ticks=%r, expected the 30-minute base" % deadline
+     assert deadline > 0, "deadline_ticks=%r" % deadline
+     return deadline, deadline + DEADLINE_MARGIN
+ 
+diff --git a/tests/transport/test_pipe_mission_start_context_and_fallback.py b/tests/transport/test_pipe_mission_start_context_and_fallback.py
+index 035c7389..03add081 100644
+--- a/tests/transport/test_pipe_mission_start_context_and_fallback.py
++++ b/tests/transport/test_pipe_mission_start_context_and_fallback.py
+@@ -40,7 +40,11 @@ RETRY_TICKS = 20
+ 
+ pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+ 
+-TELEGRAPH_SEEDS = [20, 24, 26, 31, 33, 43]
++# seed -> the one player region under telegraph, pinned so a world change shows
++# up as a clear failure. Only seeds 76 and 287 of 1-400 satisfy the test on both
++# the pre-A81 and post-A81 worlds with the same target (TD-A89-3; the earlier
++# seeds 20, 24, 26, 31, 33, 43 drifted when events began to reach regions 64+).
++TELEGRAPH_SEEDS = {76: 68, 287: 66}
+ TRIGGERED_SEEDS = [1, 2, 8, 20, 24, 43]
+ 
+ 
+@@ -80,7 +84,7 @@ def _player_regions(snap):
+     return [r for r in snap["regions"] if r["owner"] == snap["player_faction"]]
+ 
+ 
+-@pytest.mark.parametrize("seed", TELEGRAPH_SEEDS)
++@pytest.mark.parametrize("seed", sorted(TELEGRAPH_SEEDS))
+ def test_telegraphed_attack_on_player_region_selects_defensive_stand_there(seed):
+     """A2, R-072-02 (conflict term: recent attacks + committed attack budget):
+     a pending telegraph on one player region makes mission_start choose a
+@@ -94,6 +98,8 @@ def test_telegraphed_attack_on_player_region_selects_defensive_stand_there(seed)
+     own = {r["i"] for r in _player_regions(pre)}
+     targets = sorted({t["target"] for t in pre["telegraphs"] if t["target"] in own})
+     assert len(targets) == 1, "seed %d: fixture drift, player regions under telegraph = %r" % (seed, targets)
++    assert targets[0] == TELEGRAPH_SEEDS[seed], "seed %d: telegraph target %d, pinned %d" % (
++        seed, targets[0], TELEGRAPH_SEEDS[seed])
+     assert mission is not None, "seed %d: no mission frame: %r" % (seed, frames)
+     assert (mission["archetype"], mission["region"]) == (DEFENSIVE_STAND, targets[0]), (
+         "seed %d: telegraph pending on player region %d but mission_start chose archetype %r on region %r"
+diff --git a/tests/transport/test_pipe_tactical_delta_frame.py b/tests/transport/test_pipe_tactical_delta_frame.py
+index e664773b..581a188a 100644
+--- a/tests/transport/test_pipe_tactical_delta_frame.py
++++ b/tests/transport/test_pipe_tactical_delta_frame.py
+@@ -16,9 +16,14 @@ Contract under test:
+ - a client keeps id -> unit: full replaces, delta deletes `units_removed` then overwrites
+   `units_changed`; after any frame the dict equals the full state at that tick.
+ 
+-Fixture: seed 8 with the eight launch features is a small mission (81 units, 39 + 42 plus
+-waves; the opposing groups start 15,670 map units apart and meet around tick 2300 when the
+-player's units attack_target one enemy). Seed, tick and unit counts are fixtures, not thresholds.
++Fixture: seed 76 with the eight launch features draws a DEFENSIVE_STAND (archetype 0) at
++region 68, a small mission (118 units on the pre-A81 world, 145 on the A81 build, 80 regions);
++player units that attack_target their nearest enemy see deaths before tick 2400, and the
++objective's live completion creeps up every tick. Seed, tick and unit counts are fixtures,
++not thresholds. The earlier seed 8 (81 units, deaths near tick 2300) became a 363-unit world
++once events reached regions 64+ (A81), where no death arrived by tick 2400 (TD-A89-5); 76 was
++chosen by scanning seeds 1 to 400 on both builds for the same drawn mission, deaths and
++progress; seeds 26, 127, 158, 175 and 287 also pass the whole file on both.
+ """
+ import json
+ import math
+@@ -30,7 +35,8 @@ import pytest
+ ROOT = Path(__file__).resolve().parents[2]
+ PIPE = ROOT / "pipe/ouroboros_pipe"
+ FEATURES = [0, 1, 2, 3, 4, 5, 6, 7]
+-SEED = 8
++SEED = 76
++DRAWN = (0, 68)  # (archetype, region) the fixture seed draws on both builds
+ FULL_PERIOD = 20
+ UNIT_KEYS = {"id", "faction", "type", "tier", "x", "y", "hp", "layer", "facing", "target", "state"}
+ 
+@@ -79,6 +85,13 @@ def _begin_frames(extra):
+     return mission, _tacticals(frames)
+ 
+ 
++def _assert_drawn(frames):
++    mission = next(f for f in frames if f["type"] == "mission")
++    assert (mission["archetype"], mission["region"]) == DRAWN, (
++        "fixture drift: seed %d drew archetype %r region %r, expected %r" % (
++            SEED, mission["archetype"], mission["region"], DRAWN))
++
++
+ def _assert_full(f):
+     assert "full" in f, "tactical frame carries no `full` key (A7): %r" % sorted(f)
+     assert f["full"] is True, f["tick"]
+@@ -260,10 +273,11 @@ def test_objectives_ride_every_frame_full_and_delta():
+ 
+ 
+ def test_objective_progress_is_live_and_never_diffed_across_delta_frames():
+-    """Positive control for `progress`: on seed 8 the objective's live completion creeps up
++    """Positive control for `progress`: on seed 76 the objective's live completion creeps up
+     every tick, so consecutive delta frames carry different values; a diffed or cached array
+     would repeat or omit them."""
+     frames = _run([SET_SEED, START, BEGIN, _step(1), _step(1), _step(1)])
++    _assert_drawn(frames)
+     tac = _tacticals(frames)
+     assert all("objectives" in f for f in tac), "tactical frame has no objectives (A6/A7)"
+     progress = [f["objectives"][0]["progress"] for f in tac[1:]]
+@@ -341,6 +355,7 @@ def test_a_death_shows_in_units_removed_and_the_full_frame_agrees():
+     cmds = _death_script(first)
+     cmds.append(_step(0))
+     frames = _run([SET_SEED, START, BEGIN] + cmds)
++    _assert_drawn(frames)
+     tac = _tacticals(frames)
+     assert "full" in tac[1], "tactical frame carries no `full` key (A7)"
+     state, removed_at = _apply({}, tac[0]), None
+@@ -363,6 +378,7 @@ def test_death_positive_control_every_removed_id_belonged_to_the_previous_state(
+     first = _begin_units()
+     cmds = _death_script(first)
+     frames = _run([SET_SEED, START, BEGIN] + cmds)
++    _assert_drawn(frames)
+     tac = _tacticals(frames)
+     assert "full" in tac[1], "tactical frame carries no `full` key (A7)"
+     state = _apply({}, tac[0])

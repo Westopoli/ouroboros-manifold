@@ -1,0 +1,139 @@
+diff --git a/csrc/tactical_move.c b/csrc/tactical_move.c
+index cbed2529..0c2e6c69 100644
+--- a/csrc/tactical_move.c
++++ b/csrc/tactical_move.c
+@@ -332,6 +332,9 @@ uint32_t col_cur;
+     uint32_t kind_n;
+     int32_t  kind_type[OM_PP_REACH_MAX];
+     int32_t  kind_val[OM_PP_REACH_MAX];
++    uint32_t cone_n;
++    int32_t  cone_type[OM_PP_REACH_MAX];
++    double   cone_range[OM_PP_REACH_MAX], cone_half[OM_PP_REACH_MAX], cone_share[OM_PP_REACH_MAX], cone_cos[OM_PP_REACH_MAX];
+ } om_move_state;
+ 
+ enum { OM_LAY_NONE, OM_LAY_PENDING, OM_LAY_FLIGHT };
+@@ -3453,9 +3456,21 @@ int om_command_guard(om_world *w, const uint32_t *unit_ids, uint32_t n_units) {
+     return 0;
+ }
+ int om_roster_set_cone(om_world *w, int unit_type, double range, double half_angle_deg, double share) {
+-    /* LAB-REV2 E0 contract stub: -1 (not built) until LAB-REV2-E2 writes the cone table. See also: om_combat_can_engage. */
+-    (void)w; (void)unit_type; (void)range; (void)half_angle_deg; (void)share;
+-    return -1;
++    om_move_state *ms; uint32_t i;
++    if (!w || om_unit_profile_ability_count(w, unit_type) == 0u) return -1;
++    if (range < 0.0 || half_angle_deg < 1.0 || half_angle_deg > 180.0 || share < 0.0 || share > 10.0) return -2;
++    ms = om_ms(w);
++    for (i = 0; i < ms->cone_n && ms->cone_type[i] != unit_type; i++) {}
++    if (i == ms->cone_n) { if (i >= OM_PP_REACH_MAX) return -1; ms->cone_n++; ms->cone_type[i] = unit_type; }
++    ms->cone_range[i] = range; ms->cone_half[i] = half_angle_deg; ms->cone_share[i] = share;
++    ms->cone_cos[i] = om_sin(half_angle_deg * 0.017453292519943295 + 1.5707963267948966);
++    return 0;
++}
++int om_unit_profile_cone(const om_world *w, int unit_type, double *range, double *cosv, double *share) {
++    const om_move_state *ms = (const om_move_state *)w->move_state; uint32_t i;
++    for (i = 0; ms && i < ms->cone_n; i++) if (ms->cone_type[i] == unit_type && ms->cone_range[i] > 0.0) {
++        *range = ms->cone_range[i]; *cosv = ms->cone_cos[i]; *share = ms->cone_share[i]; return 1; }
++    return 0;
+ }
+ /* ---- end generated stubs ---- */
+ 
+diff --git a/csrc/unit.c b/csrc/unit.c
+index 395e05ef..24a577e5 100644
+--- a/csrc/unit.c
++++ b/csrc/unit.c
+@@ -1959,12 +1959,59 @@ static void om_tac_release(om_world *w, om_unit_row *u) {
+     }
+ }
+ 
++
++int om_unit_profile_cone(const om_world *w, int unit_type, double *range, double *cosv, double *share);
++static double om_tac_cosx(double a) { return om_sin(a + 1.5707963267948966); }
++static int om_tac_in_arc(om_world *w, const om_unit_row *u, const om_unit_row *t) {
++    double arc = om_tactical_get_param(w, OM_TP_FIRING_ARC_DEG), f, fx, fy, dx = t->x - u->x, dy = t->y - u->y, d;
++    if (arc >= 360.0) return 1;
++    d = sqrt(dx * dx + dy * dy);
++    if (d <= OM_TIE_EPSILON) return 1;
++    f = om_unit_get_facing(w, u->unit_id);
++    fx = om_tac_cosx(f); fy = om_sin(f);
++    return (fx * dx + fy * dy) / d >= om_tac_cosx(arc * 0.5 * 0.017453292519943295);
++}
++#ifndef CONE_READING
++#define CONE_READING 1
++#endif
++static void om_tac_fire_cone(om_world *w, om_unit_row *u, om_unit_row *t, double crange, double ccos, double cshare) {
++    om_tac_state *st = om_tac(w);
++    double cap = u->base_damage * OM_AOE_DAMAGE_CAP_MULTIPLIER, total, before = t->hp, f, fx, fy;
++    uint32_t j;
++    om_tactical_apply_hit(w, u, t);
++    total = before - t->hp;
++    f = om_unit_get_facing(w, u->unit_id); fx = om_tac_cosx(f); fy = om_sin(f);
++    for (j = 0; j < st->n_units; j++) {
++        om_unit_row *c = &st->units[j];
++        double dx, dy, d2, mult, dmg, rem;
++        if (!c->in_use || c->hp <= 0.0 || c == t || c->faction_id == u->faction_id) continue;
++        if (!om_tac_in_reach(w, u, c)) continue;
++        dx = c->x - u->x; dy = c->y - u->y; d2 = dx * dx + dy * dy;
++        if (d2 > crange * crange) continue;
++        if (fx * dx + fy * dy < ccos * sqrt(d2)) continue;
++        if (total >= cap) break;
++#if CONE_READING == 0
++        dmg = u->base_damage * cshare * om_tac_offset_mult(w, OM_REACH_AREA, u, c);
++#else
++        mult = om_resolve_hit_multiplier(w, u->category, c);
++        dmg = u->base_damage * mult * om_unit_output_multiplier(w, u->unit_id) * (1.0 - om_unit_damage_reduction(w, c->unit_id)) * cshare * om_tac_offset_mult(w, OM_REACH_AREA, u, c);
++#endif
++        rem = cap - total; if (dmg > rem) dmg = rem;
++        c->hp -= dmg; if (c->hp < 0.0) c->hp = 0.0;
++        om_grid_sync(st, c->unit_id - 1);
++        om_tac_note_attacker(w, st, c, u);
++        total += dmg;
++    }
++}
+ static void om_tac_fire(om_world *w, om_unit_row *u, om_unit_row *t) {
+     om_tac_state *st = om_tac(w);
+     om_tac_ev_emit(st, OM_TAC_EV_FIRE, u->unit_id, (int32_t)t->unit_id);
+     u->fired_tick = st->ev_tick ? st->ev_tick : st->current_tick + 1;
+     const om_unit_type_profile *prof = om_get_profile(w, u->unit_type);
+-    if (prof && prof->aoe_radius > 0.0) {
++    double cr, cc, cs;
++    if (om_unit_profile_cone(w, u->unit_type, &cr, &cc, &cs)) {
++        om_tac_fire_cone(w, u, t, cr, cc, cs);
++    } else if (prof && prof->aoe_radius > 0.0) {
+         om_unit_fire_aoe_attack(w, u->unit_id, t->unit_id, prof->aoe_radius);
+     } else {
+         om_tactical_apply_hit(w, u, t);
+@@ -2255,7 +2302,7 @@ static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
+         t = om_registry_find_in(st, u->target_id);
+         if (t && t->hp > 0.0 && om_tac_in_range(w, u, t)
+             && (u->cooldown >= u->attack_interval * (double)OM_TACTICAL_TICK_RATE - OM_TIE_EPSILON || !u->fired)
+-            && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
++            && om_combat_can_shoot(w, u->unit_id, t->unit_id) && om_tac_in_arc(w, u, t)) {
+             u->fire_pending = 2;
+         }
+     }
+@@ -3092,10 +3139,21 @@ int om_tactical_event_get_at(om_world *w, uint32_t i, int32_t *kind, uint32_t *a
+     if (tick) *tick = st->events[i].tick;
+     return 0;
+ }
+-int om_combat_can_engage(const om_world *w, uint32_t attacker, uint32_t target) {
+-    /* LAB-REV2 E0 contract stub: -1 (not built) until LAB-REV2-E2 writes the gates. See also: om_roster_set_cone. */
+-    (void)w; (void)attacker; (void)target;
+-    return -1;
++int om_combat_can_engage(const om_world *w_, uint32_t attacker, uint32_t target) {
++    om_world *w = (om_world *)w_;
++    om_tac_state *st = om_tac_ro(w);
++    om_unit_row *a, *t;
++    if (!st || attacker == 0 || target == 0 || attacker == target) return -1;
++    a = om_registry_find_in(st, attacker); t = om_registry_find_in(st, target);
++    if (!a || !t || !a->in_use || !t->in_use || a->hp <= 0.0 || t->hp <= 0.0) return -1;
++    if (a->faction_id < 0 || t->faction_id < 0 || a->faction_id == t->faction_id || om_tac_noncombat(a)) return -1;
++    om_tac_refresh_positions(w, st);
++    if (!om_tac_in_reach(w, a, t)) return 1;
++    if (t->stealth || (om_tac_by_sight(w) && !om_tac_faction_sees(w, a, t))) return 2;
++    if (!om_tac_in_range(w, a, t)) return 3;
++    if (!om_tac_in_arc(w, a, t)) return 4;
++    if (!om_combat_can_shoot(w, attacker, target)) return 5;
++    return 0;
+ }
+ /* ---- end generated stubs ---- */
+ 
