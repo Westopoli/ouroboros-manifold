@@ -12,7 +12,8 @@ MOVED_WU, clock from tick 0); cap. Silence with both sides alive is a stall (win
 Exit 0 with a FIGHT line, exit 2 with REJECT lines.
 H-063 (stage 3, the ground pushes back): the layout's features go to the engine (features.py: planar blocks, the slope band); a layout whose moving units cannot
 reach their destination is REJECTed `REJECT <id> R8 unreachable: side_b unit 2` (exit 2); a layout with features writes a per-frame `blocked` list (unit ids that
-stood still more than BLOCKED_SECONDS with a destination and no target; SNAPSHOT.md). `--control-dir D` also writes the control twin, the same layout with `features` emptied, as D/<id>-control-s<n>.fight.json.
+stood still more than BLOCKED_SECONDS with a destination and no target; SNAPSHOT.md). `--control-dir D` also writes the control twin, the same layout with `features` emptied
+and `movement` "walk" (`control_twin`: D/<id>-control.toml and .json), as D/<id>-control-s<n>.fight.json; its units walk on a canvas, so it differs from the main fight by the ground only.
 Known gap: `Engine.spawn` takes no facing and engine.py does not bind `om_unit_set_facing`, so the layout's per-row `facing` is not applied; units
 start at the engine default and attack-move turns them toward the enemy."""
 import argparse
@@ -24,7 +25,7 @@ from types import SimpleNamespace
 
 from scripts.skilllab.arena import features, snapshot
 from scripts.skilllab.arena.rate import rate
-from scripts.skilllab.catalogue.produce import _roster_ranges, check_layout, presets, rules
+from scripts.skilllab.catalogue.produce import _roster_ranges, check_layout, dump_toml, presets, rules
 from scripts.skilllab.engine import Engine
 from scripts.skilllab.fight import TICKS_PER_SECOND, _register_types
 
@@ -37,7 +38,7 @@ BLOCKED_SECONDS = 2                     # H-063: a unit still this long with a d
 STILL_WU = 2.0                          # moved no more than this since its anchor counts as still
 REACH_RULE = "R8"                       # catalogue/rules.toml
 MOVED_WU = 5.0                          # a living unit displaced more than this over the window is not silent
-RESULTS_HEAD = "| id | a:b | predict | winner | survivors | ticks | agree |\n|---|---|---|---|---|---|---|\n"
+RESULTS_HEAD = "| id | a:b | predict | winner | survivors | ticks | agree | blocked |\n|---|---|---|---|---|---|---|---|\n"
 
 
 def _setup_for(layout):
@@ -85,9 +86,32 @@ def _layout_centres(layout):
 
 
 def unreachable(layout):
-    """'side_b unit 2' for the first unit that cannot route to its orders point over the layout's planar features, else None (H-063 rule R8)."""
+    """'side_b unit 2' for the first unit that cannot route to its orders point over the ground the engine is given (planar blocks, the slope), else None (H-063 rule R8).
+    Builds a throwaway world to read the engine's own walk mask. See also: features.first_unreachable."""
     point, movers = _orders_point(layout, _layout_centres(layout))
-    return features.first_unreachable(layout, presets()[layout["landscape"]], point, movers)
+    preset = presets()[layout["landscape"]]
+    engine = Engine()
+    w = engine.new_world(layout.get("seed", 1))
+    try:
+        features.apply(engine, w, layout, preset, layout.get("seed", 1))
+        return features.first_unreachable(engine, w, layout, preset, point, movers)
+    finally:
+        engine.free_world(w)
+
+
+def control_twin(layout, layout_path, control_dir):
+    """(twin layout, path of its TOML) for a layout `features.bound` says the engine is given something for, else (None, None). The twin is the same layout with
+    `features` emptied and `movement` "walk" (its units still walk, `fight`); `<control_dir>/<id>-control.toml` and `.json` are written as `produce.write_layout` writes a
+    layout. `layout_path` is the main layout's file, kept for the signature the runner passes. See also: fight, _document."""
+    if not features.bound(layout):
+        return None, None
+    twin = {**layout, "features": [], "movement": "walk"}
+    control_dir = Path(control_dir)
+    control_dir.mkdir(parents=True, exist_ok=True)
+    toml_path = control_dir / ("%s-control.toml" % layout["id"])
+    toml_path.write_text(dump_toml(twin))
+    toml_path.with_suffix(".json").write_text(json.dumps(twin, indent=2) + "\n")
+    return twin, toml_path
 
 
 def fight(layout, seed, sight, cap_seconds):
@@ -99,9 +123,12 @@ def fight(layout, seed, sight, cap_seconds):
         engine.disable_abilities(w)
         if sight == "off":
             engine.set_param(w, engine.param_id("OM_TP_TARGET_BY_SIGHT"), 0)
-        ground = features.apply(engine, w, layout, presets()[layout["landscape"]], seed)
+        preset = presets()[layout["landscape"]]
+        ground = features.apply(engine, w, layout, preset, seed)
         types = _register_types(engine, w, _setup_for(layout))
-        if ground:
+        if ground or layout.get("movement") == "walk":   # the control twin has no features and still walks
+            if not ground:
+                engine.set_canvas(w, preset["width"], preset["height"])   # apply returns before it sets one, and a walker with no canvas never moves
             features.walk_on_ground(engine, w, types)
         rows, ids = [], {}
         for letter, faction, key in SIDES:
@@ -185,11 +212,15 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders):
         shown = Path(layout_path).as_posix()
     roster = _roster_ranges()
     roles = {u["role"] for u in frames[0]["units"]}
-    return {"schema": snapshot.SCHEMA_V2, "ranges": {r: roster[r] for r in sorted(roles)}, "layout_id": layout["id"], "layout_path": shown, "seed": seed, "tick_rate": TICKS_PER_SECOND,
+    walks = features.bound(layout) or layout.get("movement") == "walk"   # as fight(): the units walk (`ground`, or the control twin)
+    doc = {"schema": snapshot.SCHEMA_V2, "ranges": {r: roster[r] for r in sorted(roles)}, "layout_id": layout["id"], "layout_path": shown, "landscape": layout["landscape"], "seed": seed, "tick_rate": TICKS_PER_SECOND,
             "snapshot_every": every, "sight": sight, "orders": orders, "frames": [frames[t] for t in ticks],
             "result": {"winner": winner, "survivors": survivors, "ticks": last, "capped": end == "cap", "end": end, "stall": stall,
                        "predict": layout["predict"],
                        "agree": winner == layout["predict"]}}
+    if walks:
+        doc["movement_kind"] = features.WALKING_KIND
+    return doc
 
 
 def is_mirror(layout):
@@ -238,16 +269,16 @@ def main(argv=None):
         doc = _document(layout, args.layout, seed, args.sight, frames, last, end, orders)
         snapshot.write(doc, args.out / ("%s-s%d.fight.json" % (layout["id"], seed)))
         if args.control_dir and features.bound(layout):
-            twin = {**layout, "features": []}
-            args.control_dir.mkdir(parents=True, exist_ok=True)
-            snapshot.write(_document(twin, args.layout, seed, args.sight, *fight(twin, seed, args.sight, args.cap_seconds)),
+            twin, twin_path = control_twin(layout, args.layout, args.control_dir)
+            snapshot.write(_document(twin, twin_path, seed, args.sight, *fight(twin, seed, args.sight, args.cap_seconds)),
                            args.control_dir / ("%s-control-s%d.fight.json" % (layout["id"], seed)))
         fights.append(snapshot.read(args.out / ("%s-s%d.fight.json" % (layout["id"], seed))))
         res = doc["result"]
         results = args.out / "results.md"
-        row = "| %s | %d:%d | %s | %s | %d:%d | %d | %s |\n" % (
+        row = "| %s | %d:%d | %s | %s | %d:%d | %d | %s | %d |\n" % (
             layout["id"], len(layout["side_a"]["units"]), len(layout["side_b"]["units"]), res["predict"], res["winner"],
-            res["survivors"][0], res["survivors"][1], res["ticks"], "yes" if res["agree"] else "no")
+            res["survivors"][0], res["survivors"][1], res["ticks"], "yes" if res["agree"] else "no",
+            sum(len(fr.get("blocked", [])) for fr in doc["frames"]))
         head = "" if results.exists() and results.stat().st_size else RESULTS_HEAD
         with open(results, "a", encoding="utf-8") as f:
             f.write(head + row)

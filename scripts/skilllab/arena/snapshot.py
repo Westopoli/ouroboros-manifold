@@ -73,6 +73,8 @@ def validate(doc: dict) -> list[str]:
     top = dict(_TOP, orders=dict) if v2 else _TOP
     if v2 and "ranges" in doc:
         top = dict(top, ranges=dict)   # H-053: optional {role: range wu}, om-fight-2 only
+    if v2:
+        top = dict(top, **{k: t for k, t in (("landscape", str), ("movement_kind", int)) if k in doc})   # H-063: optional, om-fight-2 only
     _check_keys(doc, top, "", out)
     if v2 and isinstance(doc.get("ranges"), dict):
         for role, rng in doc["ranges"].items():
