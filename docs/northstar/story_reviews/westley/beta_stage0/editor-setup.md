@@ -37,7 +37,7 @@ scripts/setup_editor.sh
 
 What each line does:
 
-- Line 3 throws away your local edit of `project.godot` (the tag line above) and nothing else; it touches that one file. Main keeps the `4.7` tag, and H-060 adds its `[editor]` block to the same file, which is why this line comes before the pull.
+- Line 3 throws away your local edit of `project.godot` (the tag line above) and nothing else; it touches that one file. Main has carried the `4.6` tag since `4717d408` (so a clean checkout is not dirtied by the editor), and H-060 adds its `[editor]` block to the same file, which is why this line comes before the pull.
 - Line 4 deletes only the `.uid` files that main is about to add. It cannot reach anything main does not carry.
 - Line 5 resets only `.import` files that your editor rewrote. (Your checkout showed none when this was written; the line is there in case one appears.)
 - Lines 6, 7 and 9 keep your `README.md`: a copy goes to `~/README.westley.md`, the tracked one is restored so the pull can go through, then your copy is put back. If you would rather read main's README, skip line 9.
@@ -48,7 +48,7 @@ Then open `project.godot` in the editor and press F5.
 
 Left alone on purpose: `README.md`, `.claude/settings.local.json` and your untracked files. After the commands, `git status --short` should list only those and nothing ending in `.uid` or `.import`.
 
-Your 4.6.3 editor may re-save the tag in `project.godot` again (4.7 to 4.6) the next time it saves the project settings. That is harmless: it is the same one-line difference. Before your next `git pull`, run `git diff project.godot`; if it is only that line, run `git restore -- project.godot` first. What I could check without a window: on a tree tagged `4.7`, a headless `godot.real` 4.6.3 editor open and a headless game run both left `project.godot` byte-for-byte unchanged, so the tag is not rewritten by opening or importing. Whether your windowed editor rewrites it on open, or only when you save, only you can see.
+Main now carries the `4.6` tag, the one your 4.6.3 editor writes, so opening, importing and saving the project no longer dirties `project.godot`. If `git diff project.godot` ever shows something else before a pull, tell the Architect.
 
 If the pull still stops, it names the files. Send me the list; do not delete anything the list shows that you wrote yourself.
 
