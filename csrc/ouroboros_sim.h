@@ -28,8 +28,9 @@ extern "C" {
 /* ABI version reported by om_abi_version(). Bump when signatures change.
  * 8 (VG-CONTRACT-E7): om_mission_compute_starting_force and om_mission_compute_reinforcement_capacity take (F, share);
  * om_mission_get_force_group is declared.
- * 9 (LAB-REV2-E0): om_roster_set_cone and om_combat_can_engage are declared; OM_TP_FIRING_ARC_DEG is added. */
-#define OM_ABI_VERSION 9
+ * 9 (LAB-REV2-E0): om_roster_set_cone and om_combat_can_engage are declared; OM_TP_FIRING_ARC_DEG is added.
+ * 10 (H-041): om_roster_set_collision_radius is declared. */
+#define OM_ABI_VERSION 10
 
 /* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
 #define OM_LAYER_COUNT 5
@@ -1018,6 +1019,9 @@ typedef enum {
     OM_TP_ROUTE_ACROSS_LAYERS,
     OM_TP_ATTACK_MOVE_LEASH,
     OM_TP_RETURN_FIRE_FLEE_DIST,
+    /* Default 15. Reads as a multiplier on the per-type radius of om_roster_set_collision_radius: a type's collision
+     * radius in a pair push is this value times (its per-type radius / 15), so a type never set, at 15, collides at
+     * exactly this value. Spawn spacing and production slots take the per-type radii only (not this knob). */
     OM_TP_UNIT_COLLISION_RADIUS,
     OM_TP_VANTAGE_MULT,
     OM_TP_AOE_DAMAGE_CAP,
@@ -2006,6 +2010,7 @@ int om_command_set_layer(om_world *w, const uint32_t *unit_ids, uint32_t n_units
 double om_unit_transition_progress(const om_world *w, uint32_t unit);
 uint32_t om_unit_get_target_layer(const om_world *w, uint32_t unit);
 int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t layers_down);
+int om_roster_set_collision_radius(om_world *w, int unit_type, double radius);
 int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32_t *down);
 uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit);
 int om_unit_get_leash_anchor(const om_world *w, uint32_t unit, double *x, double *y);

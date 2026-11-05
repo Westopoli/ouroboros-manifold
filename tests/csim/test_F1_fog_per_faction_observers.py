@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@74cc9c
 """F1 (A7 sim-step fix 1, architect rulings 2 Addendum 3 A5/A6; profile docs/northstar/plans/
 2026-10-01-a7-sim-profile.md): om_fog_faction_sees (csrc/fog.c, B11) searches observers of the
 queried faction only, through a read-only per-faction grid accessor added to csrc/unit.c (B10).
@@ -299,10 +300,10 @@ def _visible_hash(lib, w):
 # Re-recorded day21 on push/pp-settle-gold (A184 collision settle epsilon 0.1 wu ends the push sequence early; was: day20 pp-c3-land recorded).
 # Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold recorded). TD-PP-A199-rerecord.
 GOLDEN = {
-    "clash": ("bf2579905e58570d2ff99517d472ab68fa6a40f0d77842e70d44859225de6d19",
-              "a80e06d526908813a66de304c975ce7c20449bc6930abc087e01dafae678b1be"),
-    "spread": ("cab249f337dcde0893fca4effd0069359c8539a55db9608f4ce029f374ae497f",
-               "19862e954619701daa3746923ffed76feeb2dc5d4fcda574139d6c95375608ec"),
+    "clash": ("e10663fd10109b51c6e14b44dfe0828a0031580bb15ca02fe52d1a55c56666eb",
+              "740858b42c174da068bb0ad94b10fddef168a6b370c8b6d5f99b51e9e89b57df"),
+    "spread": ("b98bdb02c701ee3a875e5566eef0b0580764186436f916411b7437da47856e61",
+               "4b28a8fba6ffbcd30bf97182d8cd4ded79232b2dd749fc664fab17d831f274db"),
 }
 
 

@@ -450,8 +450,9 @@ def test_control_not_used_list_is_still_the_trim_reports():
 #
 # THE STALL FIXTURE (8 Vanguard a side, sight off, attack range 300, speed 80 wu/s; rewritten after DEC-silence-clause-2026-11-01, which counts movement):
 #   The runner builds no walls (it spawns units and nothing else), so a "planted blocker" the engine can feel does not exist as a layout feature today. The
-#   blocker used is a standoff: side A (the held side) is two 4-unit clusters at x 1400 and x 2600 (y 2000), so its centre of mass (2020, 2020) is an empty point
-#   620 wu from the nearest unit of either cluster, outside weapon range (300). Side B (8 units) is a 4x2 block, 40 wu apart, centred on that point
+#   blocker used is a standoff: side A (the held side) is two 4-unit clusters at x 1100 and x 2900 (y 2000), so its centre of mass (2020, 2020) is an empty point
+#   920 wu from the nearest unit of either cluster, outside weapon range (300) and, since H-057 engage-on-sight (an idle unit acquires out to its type's
+#   sensor radius, about 700 wu), outside the distance at which A's idle units would walk out and fight (clusters at x 1400 and 2600, 620 wu, did). Side B (8 units) is a 4x2 block, 40 wu apart, centred on that point
 #   (centroid (2020, 2000)): it starts already at the attacker's order point under hold:A, so it has nowhere to walk and no unit of either side moves in the first
 #   10 s, and no unit of B is within weapon range of a unit of A. Hold (B attack-moves to A's centre, A no order): no shot and no movement, so the silence end
 #   is at 200 to 240 ticks. With both sides attack-moving to the midpoint (2020, 2010) A walks into B and the fight ends by wipe (both_same_point tests).
@@ -462,7 +463,7 @@ def test_control_not_used_list_is_still_the_trim_reports():
 # `orders` in a layout: check_layout reads named keys only (produce._violations), so the extra top-level key passes it (control below); `dump_toml` does not write it, so
 # the fixtures prepend the line.
 
-ORDERS_SPLIT_A = [(1400.0 + (i % 2) * 40.0, 2000.0 + (i // 2) * 40.0) for i in range(4)] + [(2600.0 + (i % 2) * 40.0, 2000.0 + (i // 2) * 40.0) for i in range(4)]
+ORDERS_SPLIT_A = [(1100.0 + (i % 2) * 40.0, 2000.0 + (i // 2) * 40.0) for i in range(4)] + [(2900.0 + (i % 2) * 40.0, 2000.0 + (i // 2) * 40.0) for i in range(4)]
 ORDERS_SPLIT_B = [(1960.0 + (i % 4) * 40.0, 1980.0 + (i // 4) * 40.0) for i in range(8)]   # already at A's centre: stopped, out of range (DEC-silence-clause-2026-11-01 counts movement)
 SILENCE_TICKS_LOW, SILENCE_TICKS_HIGH = 10 * TICK_RATE, 12 * TICK_RATE   # H-040 "about 10 s": the brief's window 10 s to 12 s; DRAFT-silence-seconds 10
 

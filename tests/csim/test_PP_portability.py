@@ -38,11 +38,12 @@ PYTHON = sys.executable
 # TD-VG-W-2: W2 stored routes add the route block to the movement section; old values 100: 14414279078877383414,
 # 500: 2462771596946682441, 1000: 2825217407474388049, 2000: 263473283203217348 (new values below).
 # re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged
+# re-recorded 2026-11-02 for H-057 (hashed leash default 200 to 0 at ticks 100/500/1000; engage-on-sight at tick 2000); earlier values in git log
 PINNED_FULL = {
-    100: 1340420882857523623,
-    500: 15065243673284983748,
-    1000: 13532818765593894311,
-    2000: 10749923395565833911,
+    100: 11242018148503011384,
+    500: 14652793870648350780,
+    1000: 6258976675792974759,
+    2000: 5533239151970042944,
 }
 
 
