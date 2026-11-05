@@ -4,7 +4,8 @@
 flank_route feature) as `Engine.block_rect` over every layer of the landscape, and the slope band as a generated terrain whose heights are replaced by
 `Engine.terrain_set_heights` (the walker then climbs at 1 / OM_TP_SLOPE_UP_DIV of the pace). Plateau, ring, band, pocket, disc and tier steps stay drawn only until
 a layout uses them. `first_unreachable` is the preflight route check behind the runner's reachability REJECT (rule R8 in catalogue/rules.toml), after
-scripts/skilllab/scenes.py `_unroutable`.
+scripts/skilllab/scenes.py `_unroutable`; it routes over the engine's own rules: NAV_CELL (50 wu) blocks rounded out as `block_rect` rounds them and, for a slope, the
+engine's walk mask on a world `apply` has run on.
 
 Slope heights: only heading 0 (rising toward +x) and from_band 0 to_band 1 are built (every catalogue slope is that); anything else raises ValueError. The band
 floors come from the highest cell (`om_terrain_set_heights` rule), so the cells of the ramp's two flanks beyond one buffer cell are a spike that is also the wall of the
@@ -12,10 +13,11 @@ cliff: the ribbon is the only way up. Planar blocks laid on a world with a slope
 that carries both has its planar kinds honoured by the collision grid only.
 See also: scripts/skilllab/arena/run.py (calls both), scenes/proto/layout_shot/layout_shot.gd (the drawing of the same features)."""
 import collections
+import math
 
 WALKING_KIND = 1          # om_roster_set_movement_kind: 0 flying (the default), 1 walking (the same number as scripts/skilllab/fight.py)
 PLANAR_KEYS = ("walls", "boxes", "buildings")
-ROUTE_CELL = 20.0         # wu; the reachability grid. Finer than 50 so a 40 wu strip always holds a cell centre
+NAV_CELL = 50.0           # wu; OM_NAVMESH_CELL_SIZE (csrc/tactical_mapgen.c): the reachability grid is the engine's own block grid
 TERRAIN_CELL = 100.0      # OM_TERRAIN_CELL_WU
 LOW_CM = 7000             # above the generator's dry level (6000 cm), so it is a band floor
 STEP_CM = 16000           # one band: big enough that a one-cell step is steeper than OM_TP_TERRAIN_STEEP_DEG allows
@@ -104,29 +106,37 @@ def walk_on_ground(engine, w, types):
         engine.set_movement_kind(w, type_id, WALKING_KIND)
 
 
-def _open_grid(layout, preset):
-    cols, rows = int(preset["width"] // ROUTE_CELL), int(preset["height"] // ROUTE_CELL)
-    grid = bytearray(b"\x01" * (cols * rows))   # 1 = open
-    for cx, cy, rw, rh in planar_rects(layout):
-        # cells whose centre lies strictly inside the rectangle
-        x0 = max(0, int((cx - rw / 2) // ROUTE_CELL))
-        x1 = min(cols - 1, int((cx + rw / 2) // ROUTE_CELL))
-        y0 = max(0, int((cy - rh / 2) // ROUTE_CELL))
-        y1 = min(rows - 1, int((cy + rh / 2) // ROUTE_CELL))
-        for gy in range(y0, y1 + 1):
-            for gx in range(x0, x1 + 1):
-                if abs((gx + 0.5) * ROUTE_CELL - cx) < rw / 2 and abs((gy + 0.5) * ROUTE_CELL - cy) < rh / 2:
+def _open_grid(engine, w, layout, preset):
+    """(grid, cols, rows) on NAV_CELL cells, 1 = open: every `_engine_boxes` rectangle rounded out to whole cells as `apply` sets them, and for a slope the cells whose
+    centre is walkable on no layer of the preset (`Engine.terrain_walk_mask`, one byte per TERRAIN_CELL; DRAFT-reach-mask-union). `w` has had `apply` run on it."""
+    cols, rows = int(preset["width"] // NAV_CELL), int(preset["height"] // NAV_CELL)
+    grid = bytearray(b"\x01" * (cols * rows))
+    for x0, y0, x1, y1 in _engine_boxes(layout):
+        gx0, gx1 = max(0, math.floor(x0 / NAV_CELL)), min(cols - 1, math.ceil(x1 / NAV_CELL) - 1)
+        for gy in range(max(0, math.floor(y0 / NAV_CELL)), min(rows - 1, math.ceil(y1 / NAV_CELL) - 1) + 1):
+            for gx in range(gx0, gx1 + 1):
+                grid[gy * cols + gx] = 0
+    if slopes(layout):
+        tw, _, _ = engine.terrain_dump_bands(w)
+        walk = None
+        for layer in range(preset["layers"]):
+            mask = engine.terrain_walk_mask(w, layer)
+            walk = mask if walk is None else bytes(a | b for a, b in zip(walk, mask))
+        for gy in range(rows):
+            for gx in range(cols):
+                if not walk[int((gy + 0.5) * NAV_CELL // TERRAIN_CELL) * tw + int((gx + 0.5) * NAV_CELL // TERRAIN_CELL)]:
                     grid[gy * cols + gx] = 0
     return grid, cols, rows
 
 
-def first_unreachable(layout, preset, point, sides):
+def first_unreachable(engine, w, layout, preset, point, sides):
     """'side_b unit 2' for the first unit (side_a rows first) of `sides` ('side_a', 'side_b') with no 4-connected path of open cells to `point`, else None.
-    A unit passes when its own cell or a neighbour is reached; a point inside a blocked area is moved to the nearest open cells."""
-    if not planar_rects(layout):
+    The open cells are the engine's (`_open_grid`; `apply` has already run on world `w`). A unit passes when its own cell or a neighbour is reached; a point inside a
+    blocked area is moved to the nearest open cells. None when the layout has neither planar rectangles nor a slope."""
+    if not bound(layout):
         return None
-    grid, cols, rows = _open_grid(layout, preset)
-    cell = lambda x, y: (min(max(int(x // ROUTE_CELL), 0), cols - 1), min(max(int(y // ROUTE_CELL), 0), rows - 1))
+    grid, cols, rows = _open_grid(engine, w, layout, preset)
+    cell = lambda x, y: (min(max(int(x // NAV_CELL), 0), cols - 1), min(max(int(y // NAV_CELL), 0), rows - 1))
     start = cell(*point)
     ring, seen_all = [start], {start}
     while ring and not any(grid[y * cols + x] for x, y in ring):   # the nearest open cells, ignoring blocks
