@@ -1,0 +1,14 @@
+# Lab stage 3: the ground pushes back
+
+Run 2026-11-05 from main: `scripts.skilllab.arena.run --seed 1` on four layouts (chokepoint L-0055, city L-0073, slope L-0045, cover L-0039), each with a control twin (the same fight with the ground taken away) beside it. The pictures below are the live replay scene in a real window, one frame each, taken through the screenshot portal and cropped to the game window (no desktop in them). The full page, with every frame and the control strips, is `docs/northstar/research/layer_dynamics/arena/stage3/index.html`.
+
+Numbers in short (seed 1, one fight each, not a rate): L-0055 blue wins 21:0 and agrees with your guess; L-0073 blue wins 17:0 and agrees; L-0045 (slope) red wins 50:0 and disagrees with your guess of blue; L-0039 (cover) ends in a draw at the time cap, 8:8, and disagrees. Rate files exist for L-0055 and L-0073 only (the slope and cover layouts carry no target rate, so the runner does not rate them).
+
+Known gap to judge with these: the control strips on the page redraw the walls and buildings of the layout even though the control fight ran without them, so a control picture shows units standing where a wall is drawn. The sim side of the control is right; the replay picture is not yet.
+
+| Picture | What to expect | Approve means | Deny means |
+|---|---|---|---|
+| `stage3-1-chokepoint-L-0055.png` | Two long yellow walls with a gap between them. Blue (right) holds a cluster just past the gap with its range rings drawn; red (left) is bunched at the mouth, several already fallen (grey). Tick 2000, 21 blue against 7 red. | Red has to come through the gap and blue holds it, as you drew it; the walls are where the layout puts them. | The walls, the gap or how the fight uses it do not read as a chokepoint; say what is off. |
+| `stage3-2-city-L-0073.png` | A field of grey buildings on a pale paved patch and a cyan road strip, with the fight in front of the first row. Tick 4000, 17 blue against 6 red. | The units fight round the buildings and respect them as obstacles, as a city should. | Units cross buildings, or the city does not read as one. |
+| `stage3-3-slope-L-0045.png` | A brown and olive diagonal band (the slope) across the green, with a small orange pad on it. Red (left, 56) pours in on blue (right, 40) on the slope pad; all blue are fallen, red wins. Tick 946, the end of the fight. | The slope shows as a slope and red's uphill push behaves plausibly, even though the result disagrees with your guess. | The slope does not read as ground that matters, or units move over it as if flat. |
+| `stage3-4-cover-L-0039.png` | Three tan cover boxes in a row with eight blue and eight red facing each other round them, very large range rings (the long-range units). Tick 7200, 8 against 8; this fight stalls to a draw. | The boxes read as cover and a stand-off is a fair result for this layout. | The boxes do not matter, or a draw is wrong for this layout; say which. |

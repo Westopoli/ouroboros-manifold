@@ -1,0 +1,22 @@
+{
+  "layout_id": "L-0055",
+  "seeds": [
+    1
+  ],
+  "wins_a": 1,
+  "wins_b": 0,
+  "stalls": 0,
+  "stall_seeds": [],
+  "none_seeds": [],
+  "rate_a": 1.0,
+  "predict_rate": 0.98,
+  "band": 0.1,
+  "band_gap": 2.0000000000000018,
+  "mirror": false,
+  "agree": true,
+  "firing_capable": {
+    "A": 24.0,
+    "B": 5.0
+  },
+  "median_seed": 1
+}
