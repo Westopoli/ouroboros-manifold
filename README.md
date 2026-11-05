@@ -122,6 +122,22 @@ Each of these is a scar, and the fix is in the repo. The incident records, with 
 
 Run `scripts/setup_editor.sh` once, and again after any pull that changes `csrc/` (it rebuilds a stale pipe, fills `addons/godotsteam/` and imports the project once). Then open `project.godot` in the Godot editor and press F5. The editor, the test gate and the beta export are all Godot 4.6.3. A stale pipe is refused at the galaxy with a message that says to run the script again. `scripts/setup_editor.sh --check` lists the steps and changes nothing.
 
+### Watch a lab fight
+
+A lab fight file (`L-####-s#.fight.json`, written by the arena runner) opens in the replay scene. On Linux:
+
+```
+OM_FIGHT=$PWD/<fight> scripts/play.sh --scene res://scenes/proto/fight_replay/fight_replay.tscn
+```
+
+On a Mac:
+
+```
+scripts/replay.sh <fight>
+```
+
+`scripts/replay.sh` finds Godot (`$GODOT`, `godot` on `PATH`, `~/.local/bin/godot.real`, the Godot app), imports the project once per checkout and opens the replay. `--shots <dir>` saves pictures there; `--dry-run` prints the two commands and runs nothing.
+
 ## Read next
 
 - [`docs/METHOD.md`](docs/METHOD.md): how this repo is run
