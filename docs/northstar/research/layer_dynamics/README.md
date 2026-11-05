@@ -181,6 +181,10 @@ The pursuit through ordinary movement, routing around terrain, attack-move group
 
 The arena runner (`scripts/skilllab/arena/run.py`) gives a layout's features to the engine (`features.py`: planar blocks, the slope band) and REJECTs (rule R8) a layout whose moving units cannot reach the orders point, routing on the engine's 50 wu cells and walk mask. `--control-dir` runs the same fight with `features` emptied and the units still walking, writing a twin layout beside it so the replay draws no walls; the fight file carries `landscape`, `movement_kind` and a per-frame `blocked` list. The page (`page.py --stage 3 --sentences arena/stage3/sentences.md`) shows each fight against its control with the words for what to approve or deny. Fight files live in `arena/stage3/`, the page and its frames in `docs/northstar/story_reviews/westley/arena_stage3/`; watch them with `scripts/replay.sh <fight.json>` (Mac and Linux) or `scripts/play.sh` (Linux).
 
+### Stage 4, sight (H-088, landed 2026-11-05)
+
+`run.py --sight on` is the stage 4 rule set: targeting by sight (R-093-02), a ground era with walking units, reach 0 up 1 down so the high ground fires down (DEC-stage4-vantage-reach), the holder of a `hold:` layout on `order_guard` (R-096-08). Fight files gain per-unit `seen`, `sights`, `result.first_seen`, `orders.guard`; `--control sight` writes the same fight with targeting by sight off beside each fight; the replay draws sight discs (V for per unit) and marks unseen units hollow; the page prints the sight control caption and a first-seen line per row. Cover blocks sight, never hits (R-007-04). Four fights in `arena/stage4/` (L-0061, L-0080, L-0083, L-0039), 20 seeds each; frames and page in `docs/northstar/story_reviews/westley/arena_stage4/`.
+
 ## 8. The plan
 
 1. This record. Done.

@@ -6,7 +6,7 @@ Everything Westley has to look at, judge or decide lives in this directory and n
 
 ## Waiting on you (the one list; the Architect keeps it current)
 
-Everything that waits on a word, a look or a command of yours is in this table and nowhere else (brought up to date 2026-11-05). Six items. Items 1, 5 and 8 of the 2026-11-03 list (the update notification, the B0 editor check, the night routine) were proof-gate blockers and went with the gate (DEC-mail-detached-2026-11-05). Nothing here blocks a build: the next stage of each staircase is a cascade plan you ask a Fable chat for.
+Everything that waits on a word, a look or a command of yours is in this table and nowhere else (brought up to date 2026-11-05). Seven items. Items 1, 5 and 8 of the 2026-11-03 list (the update notification, the B0 editor check, the night routine) were proof-gate blockers and went with the gate (DEC-mail-detached-2026-11-05). Nothing here blocks a build: the next stage of each staircase is a cascade plan you ask a Fable chat for.
 
 | Item | What it is, in player terms | What it blocks | Where to look |
 |---|---|---|---|
@@ -16,8 +16,9 @@ Everything that waits on a word, a look or a command of yours is in this table a
 | 4. Thresholds batch (ten rows) | Ten numbers or tolerances that are yours. Rows 5 to 8 are red tests on the known-red list, gone red because units now engage on sight. Row 9 (also on the known-red list) asks whether engage-on-sight stays as it is or is tuned. Row 10 is a new tolerance: how close a drawn unit must be to the radius you tuned (draft: 5 percent). | Nothing now: the sweep only rejects new reds. | `thresholds_batch_2026-11-01.md` |
 | 6. Two things on your machine | Stop the ollama service for good: `sudo systemctl disable --now ollama` (its model was unloaded 2026-11-02 and a client may reload it, which starved the gate of GPU memory). A nightly Agora digest job can reload the ollama model; ask the Architect for the options. And delete the dead untracked `Answers.md` in your checkout (`docs/northstar/story_reviews/westley/Answers.md`; its verdicts are recorded). | Nothing; the first protects the slow gate's GPU runs. | Your machine |
 | 7. Four old documents | Four documents in this directory that may be archived on your word: `display_debug_2026-10-31.md`, `method_audit_2026-10-27.md`, `method_retro_2026-10-24.md`, `wt_reap_dryrun_2026-10-24.md`. | Nothing. | The files named, in this directory |
+| 8. Stage 4: watch four fights | Four fights where sight is on: units fire only at what their side sees, high ground sees down, the defender waits on guard (a vantage, two traps, a field with cover), each beside the same fight with targeting by sight off. Do you agree who saw whom first? Say what you see per fight in your own words. Note: the vantage shows blue seeing first; the two traps tie at tick 0 and end as stand-offs, and the cover fight draws; all are findings listed in the folder's README, not fixed. | Stage 4 is Seen on your word; stage 5 waits. | `docs/northstar/story_reviews/westley/arena_stage4/` (README, `index.html`, frames); Mac `scripts/replay.sh docs/northstar/research/layer_dynamics/arena/stage4/L-0061-s10.fight.json`, Linux `OM_FIGHT=$PWD/<that file> scripts/play.sh --scene res://scenes/proto/fight_replay/fight_replay.tscn` |
 
-Not waiting on you, although it may look like it: the piecemeal-then-whole plan (answered, built after the lab; `2026-11-02-piecemeal-then-whole-proposal.md` is its history); the unit scale values (recorded; H-041 builds them).
+Not waiting on you, although it may look like it: the piecemeal-then-whole plan (answered, built after the lab; `2026-11-02-piecemeal-then-whole-proposal.md` is its history); the unit scale values (recorded; H-041 builds them); the stage 4 fights (item 8).
 
 ## What is here (newest first, by the day each was added; names are relative to this directory)
 
