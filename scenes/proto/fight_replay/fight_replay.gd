@@ -11,7 +11,7 @@ extends "res://scenes/proto/layout_shot/layout_shot.gd"
 
 const REPLAY_SCENE_PATH := "res://scenes/proto/fight_replay/fight_replay.tscn"
 const REPLAY_FPS := 1.0  # DRAFT-replay-fps (story): frames per second under OM_AUTOPLAY
-const REPLAY_LANDSCAPE := "small_flat"  # the stage 1 floor (DEC-lab-stage1-floor-2026-10-31); the fight file names no landscape
+const REPLAY_LANDSCAPE := "small_flat"  # the stage 1 floor (DEC-lab-stage1-floor-2026-10-31); the fallback for a fight file without a `landscape` key (lab-stage3 criterion 7)
 const BETWEEN_FRAMES := 2  # story: render frames between saved shots
 const DEAD_COLOUR := Color(0.5, 0.5, 0.5)  # DRAFT-replay-dead-grey: a fallen unit's flat marker
 const TARGET_ALPHA := 0.8  # DRAFT-replay-target-alpha: the target line is its side's colour, thin (a one pixel line)
@@ -41,8 +41,9 @@ var _ground: Node
 var _glyph_k := 1.0
 var _overlay: Node3D
 var _hud: Label
+var _landscape := REPLAY_LANDSCAPE  # lab-stage3: the preset the fight file names, built in _ready
 var _hud_end: Label
-var _hud_run: Label  # H-053: the seed and the win rate, on a line of their own so the tick line keeps its v1 words
+var _hud_run: Label  # H-053: the seed and the win rate, on a line of their own so the tick line stays short (it gained the blocked count in lab-stage3)
 var _first_shot := -1  # H-053: index of the first frame in which some unit's hp is lower than in the frame before; -1 when none
 var _ring_count := 0  # H-053: unit range rings drawn on the current frame (a role's range comes from the fight file's `ranges`; none without it)
 var _hud_end_label: Label  # H-053: `end: A wins (wipe)` and the like, last frame only
@@ -88,18 +89,21 @@ func _ready() -> void:
 	var rows := {"A": [], "B": []}
 	for u in _fight_frames[0]["units"]:
 		rows[u["side"]].append({"role": u["role"], "x": u["x"], "y": u["y"], "facing": u["facing"], "layer": u["layer"], "range": float(ranges.get(u["role"], 0.0))})
+	_landscape = String(_fight.get("landscape", REPLAY_LANDSCAPE))
 	var id := 0
 	for side in ["A", "B"]:
 		for u in _fight_frames[0]["units"]:
 			if u["side"] == side:
 				_ordinal[int(u["id"])] = id
 				id += 1
-	_layout = {"id": String(_fight["layout_id"]), "situation": "fight_replay", "landscape": REPLAY_LANDSCAPE, "defender": "",
+	_layout = {"id": String(_fight["layout_id"]), "situation": "fight_replay", "landscape": _landscape, "defender": "",
 			"predict": String(result.get("predict", "")),
 			"side_a": {"headcount": rows["A"].size(), "units": rows["A"]}, "side_b": {"headcount": rows["B"].size(), "units": rows["B"]}}
 	_features = _load_features()
-	var preset := _preset(REPLAY_LANDSCAPE)
-	var floors: Array = [0.0]
+	var preset := _preset(_landscape)
+	var floors: Array = []  # as the layout shot builds a tiered layout: one floor per layer of the preset
+	for k in int(preset["layers"]):
+		floors.append(k * BAND_HEIGHT_WU)
 	_terrain = _tiered_terrain(int(preset["width"]), int(preset["height"]), floors)
 	_ground = Ground3DHost.new()
 	add_child(_ground)
@@ -272,7 +276,7 @@ func _show(i: int) -> void:
 				var a := TAU * float(k) / float(SHOT_RING_SEGMENTS)
 				ring.append(_at(float(b["x"]) + BLOCKED_RING_WU * cos(a), float(b["y"]) + BLOCKED_RING_WU * sin(a), GLYPH_LIFT_WU))
 			_overlay.add_child(_line(ring, BLOCKED_COLOUR))
-	_hud.text = "tick %d  A %d  B %d  frame %d/%d" % [int(frame["tick"]), int(frame["alive"][0]), int(frame["alive"][1]), i, _fight_frames.size()]
+	_hud.text = "tick %d  A %d  B %d  blocked %d  frame %d/%d" % [int(frame["tick"]), int(frame["alive"][0]), int(frame["alive"][1]), _blocked_ids(frame).size(), i, _fight_frames.size()]
 	_hud_run.text = "seed %d" % int(_fight.get("seed", 0))
 	if _rate_a != null:
 		_hud_run.text += "  rate %.2f" % _rate_a
@@ -348,7 +352,7 @@ func qa_state() -> Dictionary:
 			"autoplay": _autoplay, "targets": _targets(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a, "ring_count": _ring_count,
 			"camera": {"fit": _fit, "unit_px": _unit_px}, "facing_px": maxf(FACING_MIN_PX, _unit_px), "rings": _ring_state(frame), "glyphs": _glyph_state(),
 			"end_label": _end_label if _cursor == _fight_frames.size() - 1 else "", "rate_label": _rate_label,
-			"features": _features_state(), "blocked_units": _blocked_ids(frame)}
+			"features": _features_state(), "blocked_units": _blocked_ids(frame), "landscape": _landscape, "hud_tick": _hud.text}
 
 
 ## The layout shot's `features` entry: {kind, x, y} per feature drawn.
