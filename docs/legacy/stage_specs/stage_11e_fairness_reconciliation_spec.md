@@ -165,7 +165,7 @@ Checkpoint G measures end-to-end mission generation time as a sanity check.
 - Replace `_safe_ratio(0, 0) = 1.0` with explicit skip semantics. Specific shape: each metric returns either a `Ratio(value, both_sides_zero=False)` tuple or sets a `metric_skipped` flag on `FairnessScore`.
 - Update `is_acceptable(score, archetype)` to exclude skipped metrics from the aggregate. Aggregate passes when all *non-skipped* metrics fall within their tolerances.
 - Add logging: at evaluator entry, log per-metric skip status. This surfaces the case where most metrics are getting skipped (which means the layout is too feature-sparse and is itself a red flag).
-- Add a `# See also: docs/stage_specs/stage_11e_fairness_reconciliation_spec.md` comment near the change.
+- Add a `# See also: docs/legacy/stage_specs/stage_11e_fairness_reconciliation_spec.md` comment near the change.
 
 **`simulation/archetype_filters.py`** (or wherever `FairnessTargetProfile`s live; verify at implementation) — pin the 6 placeholder profiles per D2.
 - Replace each archetype's reference to `_SYMMETRIC_DEFAULT` with an authored profile. Specific numerical values produced at Checkpoint C and approved by Westley before this code lands.
@@ -192,7 +192,7 @@ Checkpoint G measures end-to-end mission generation time as a sanity check.
 - Brief subsection under the fairness evaluator description (if one exists) explaining the both-sides-zero skip behavior and pointing to this spec.
 - Per CLAUDE.md, contract-shape changes go here; the `FairnessScore` shape gains a `metric_skipped` flag, which is a contract-shape change.
 
-**`docs/stage_specs/stage_11b_map_variety_spec.md`** — note this spec's relationship.
+**`docs/legacy/stage_specs/stage_11b_map_variety_spec.md`** — note this spec's relationship.
 - Add a short note at the top of Stage 11b's spec or in a forward-references section: *"Stage 11e (fairness reconciliation) closes the diagnostic gap surfaced at Stage 11b's Checkpoint D escalation. Once 11e ships, the original 0.8 layout-diversity expectation in this spec's earlier draft becomes achievable; Stage 11e Checkpoint H verifies."*
 - Do not alter Stage 11b's recalibrated Checkpoint D pass condition — it's correct for what 11b alone is responsible for.
 
@@ -451,7 +451,7 @@ Checkpoint G measures this directly. If average mission generation time regresse
 
 **Modify (docs):**
 - `docs/architecture.md` — `metric_skipped` flag and skip semantics in fairness evaluator.
-- `docs/stage_specs/stage_11b_map_variety_spec.md` — closing forward-reference noting Stage 11e closure.
+- `docs/legacy/stage_specs/stage_11b_map_variety_spec.md` — closing forward-reference noting Stage 11e closure.
 - `docs/bible_history/bible_2_00_world.md` — only if Checkpoint I surfaces design ambiguity.
 
 **Create:**

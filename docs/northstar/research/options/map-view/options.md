@@ -12,7 +12,7 @@ Three ways to give the commander a zoomed-out view of the battle, reached by pul
 
 **Honors:** move/attack-move only; minimap replacement; overlay on terrain; camera floor and canvas bound; drag box touches every layer; no naval grid. **Strains:** the snap from real terrain to flat shapes sits uneasily against "one continuous world."
 
-**Prior art:** World of Warships map view — VERIFIED (`docs/bible/references/E-17/E-17-8-wows-map-view.png`). SC2 minimap viewport — REPORTED (`docs/stage_specs/stage_11d_mid_mission_hud_spec.md`).
+**Prior art:** World of Warships map view — VERIFIED (`docs/bible/references/E-17/E-17-8-wows-map-view.png`). SC2 minimap viewport — REPORTED (`docs/legacy/stage_specs/stage_11d_mid_mission_hud_spec.md`).
 
 **Tradeoffs.** A quick, legible overview with little to learn, at the cost of a visible style break at the crossing.
 

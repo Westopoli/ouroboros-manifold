@@ -23,7 +23,7 @@
   - `simulation/spine_drift.py` defines `DriftingNode`, `_ping_pong`, `_loop`, and `update_drifting_nodes(engine, tick)`.
   - `simulation/map_viewer.py` (lines 324–339) is the exact interactive visual viewer referenced by Westley: it renders drift paths as dashed lines between waypoints, loops or ping-pongs over time, and renders a glowing white/colored circle tracking the live drift position at `drift_tick` with interactive slider scrubbing.
 - **The Authored Mechanical Gap**:
-  - In `simulation/objectives.py` (lines 35–39) and `docs/stage_specs/_completed/stage_7_spec.md` (line 456), `update_drifting_nodes` updated `SpineNode.position` visually, but `_update_hold_zone` read static initial `zone_x`/`zone_y` parameters and never queried `SpineNode.position`. The objectives moved on screen, but the capture zone remained stationary at origin.
+  - In `simulation/objectives.py` (lines 35–39) and `docs/legacy/stage_specs/_completed/stage_7_spec.md` (line 456), `update_drifting_nodes` updated `SpineNode.position` visually, but `_update_hold_zone` read static initial `zone_x`/`zone_y` parameters and never queried `SpineNode.position`. The objectives moved on screen, but the capture zone remained stationary at origin.
   - **C Implementation Contract**: In C, `om_objective` will query the live `SpineNode.position` dynamically every tick so capture zones travel with moving nodes.
 
 ### B. Where is it documented in the Bible?

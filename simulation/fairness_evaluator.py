@@ -22,7 +22,7 @@ from layout_instantiator import InstantiatedLayout
 from archetype_filters import get_fairness_profile
 
 
-# See also: docs/stage_specs/stage_11e_fairness_reconciliation_spec.md — D1 zero-count scope-narrowing
+# See also: docs/legacy/stage_specs/stage_11e_fairness_reconciliation_spec.md — D1 zero-count scope-narrowing
 @dataclass
 class FairnessScore:
     path_balance_ratio:   float

@@ -34,7 +34,7 @@ Game = pause-and-command tactical w/ generational chronicle. Player commands tro
 
 **Phase 1 scope:** simple 5-beat barebones first-mission tutorial in chronicle voice. NOT the multi-stage hallmark tutorial from `bible_monetization.md` component 8 (deferred post-launch).
 
-**Bible alignment:** matches `docs/priority_queue.md` Q#6 definition of done — "tutorial sequence covers movement, selection, control groups, mission objective, chronicle." Lore-tone, chronicle voice.
+**Bible alignment:** matches `docs/legacy/method_era1/priority_queue.md` Q#6 definition of done — "tutorial sequence covers movement, selection, control groups, mission objective, chronicle." Lore-tone, chronicle voice.
 
 **Trigger model:**
 - Tutorial fires ONCE on first-ever launch. Persistence via plain file `user://tutorial_completed` (string contents irrelevant; existence = completed).

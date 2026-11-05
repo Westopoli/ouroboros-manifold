@@ -15,4 +15,4 @@ The screenshots were shared in a prior Claude.ai chat and not saved into the rep
 
 ## What the reference is for
 
-Ouroboros Manifold's Stage 8 HUD adapts IGoP's layout with substantial subtractions (no resource counters, no unit-production grid, no tech tree, no build-assist sidebar) and a few additions (reinforcement-structure panel, layer selector). See `docs/stage_specs/stage_8_spec.md` for the authoritative HUD scope, and `docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout" for the conceptual layout reference.
+Ouroboros Manifold's Stage 8 HUD adapts IGoP's layout with substantial subtractions (no resource counters, no unit-production grid, no tech tree, no build-assist sidebar) and a few additions (reinforcement-structure panel, layer selector). See `docs/legacy/stage_specs/stage_8_spec.md` for the authoritative HUD scope, and `docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout" for the conceptual layout reference.

@@ -1,6 +1,6 @@
 # North Star — Agora-Driven Development of Ouroboros Manifold
 
-This directory is the current development method for the project. The complete approved plan is `PLAN.md` (canonical; this README is the short form). It overrides the workflow sections of `CLAUDE.md` and `docs/workflow.md` wherever they disagree. The game bible (`docs/bible/`) remains the source of truth for *what the game is*; this directory is the source of truth for *how it gets built*.
+This directory is the current development method for the project. The complete approved plan is `PLAN.md` (canonical; this README is the short form). It overrides the workflow sections of `CLAUDE.md` and `docs/legacy/method_era1/workflow.md` wherever they disagree. The game bible (`docs/bible/`) remains the source of truth for *what the game is*; this directory is the source of truth for *how it gets built*.
 
 ## The north star
 
@@ -66,7 +66,7 @@ A separate Claude Sonnet 5 chat walks every bible file and produces a ledger wit
 
 ### Stage 2 — Bible reformat
 
-Rewrite `docs/bible/**` into: a short human-facing hub; `stories.md`, the story catalog; `epics/E-##-<slug>.md`, one file per epic with stories, rules, inputs, outputs, invariants, scale requirements, references, ways this could be wrong, open flags, and dependencies; `references/E-##/` with screenshots and notes from games Westley points at; `algorithms.md`, the retained equations as named formulas. A script derives Agora's per-epic rules files from the epic files. Every epic runs the definition-completeness gate in `agile.md` before leaving this stage; the Layer System epic goes first. Also rewrites `CLAUDE.md`, `docs/workflow.md`, and retires `docs/priority_queue.md` in favor of the backlog.
+Rewrite `docs/bible/**` into: a short human-facing hub; `stories.md`, the story catalog; `epics/E-##-<slug>.md`, one file per epic with stories, rules, inputs, outputs, invariants, scale requirements, references, ways this could be wrong, open flags, and dependencies; `references/E-##/` with screenshots and notes from games Westley points at; `algorithms.md`, the retained equations as named formulas. A script derives Agora's per-epic rules files from the epic files. Every epic runs the definition-completeness gate in `agile.md` before leaving this stage; the Layer System epic goes first. Also rewrites `CLAUDE.md`, `docs/legacy/method_era1/workflow.md`, and retires `docs/legacy/method_era1/priority_queue.md` in favor of the backlog.
 
 The reference-gathering segment: for every epic with a visible surface, Claude asks Westley for two to five screenshots or clips from games that show what he wants, one sentence on what specifically in each is the target, and one sentence on what he does not want. Stories with a visible surface and no reference are not Ready.
 

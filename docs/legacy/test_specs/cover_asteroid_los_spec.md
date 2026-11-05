@@ -1,6 +1,6 @@
 # Cover-Asteroid LOS Spec — Wave 2.5R + 2.6
 
-**Status:** Locked 2026-05-23. Decision-source-of-truth for Wave 2.5R+2.6 leaf agents. Supersedes `docs/test_specs/cover_los_rework_spec.md` (polygon-binary symmetric-blind model — never committed to main).
+**Status:** Locked 2026-05-23. Decision-source-of-truth for Wave 2.5R+2.6 leaf agents. Supersedes `docs/legacy/test_specs/cover_los_rework_spec.md` (polygon-binary symmetric-blind model — never committed to main).
 
 ## Context
 

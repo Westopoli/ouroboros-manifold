@@ -179,7 +179,7 @@ Surfaces three cohort options against the current Pre-Zip Beta Readiness Gate an
 
 ## Conflict surfaced
 
-The pre-launch pipeline currently captured in `docs/priority_queue.md` and `docs/launch_todo.md` is sequenced as: friends-ZIP → Steam developer account ($100 Steam Direct fee) → Steam page live → 30-day Steam page minimum before launch → launch.
+The pre-launch pipeline currently captured in `docs/legacy/method_era1/priority_queue.md` and `docs/launch_todo.md` is sequenced as: friends-ZIP → Steam developer account ($100 Steam Direct fee) → Steam page live → 30-day Steam page minimum before launch → launch.
 
 **Conflict.** Next Fest participation requires (a) a playable demo on Steam during the fest and (b) the Steam page to be live well before the fest (Valve recommends 30+ days of Steam page presence before Next Fest for the algorithmic-surfacing momentum to build). The current 30-day-Steam-page rule in `docs/launch_todo.md` is the floor for launch readiness but is below the Next Fest pre-fest accumulation window of 60–120 days that the visibility-floor figures above suggest.
 

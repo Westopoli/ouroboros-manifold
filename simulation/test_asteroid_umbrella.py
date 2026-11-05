@@ -1,6 +1,6 @@
 """Wave 2.5R + 2.6 Cover-Asteroid LOS umbrella test.
 
-Encodes top-level acceptance criteria from `docs/test_specs/cover_asteroid_los_spec.md`.
+Encodes top-level acceptance criteria from `docs/legacy/test_specs/cover_asteroid_los_spec.md`.
 Initially RED. Goes GREEN only after all 9 leaves (L1-L9) merge.
 
 DO NOT EDIT leaf-by-leaf. Parent-owned end-to-end gate.

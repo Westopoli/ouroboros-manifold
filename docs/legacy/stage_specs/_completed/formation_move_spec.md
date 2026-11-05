@@ -1,7 +1,7 @@
 # Formation Movement — Group Offsets + Group-Level Completion
 # COMPLETE — implemented and signed off. FORMATION_MOVE_ENABLED = True (live default).
 
-> **Note on filing:** This is a sub-spec, not a roadmap stage. It targets a specific bug surfaced during Stage 6 attack_move debugging (units pile on a shared target pixel and oscillate). Filed here because `docs/stage_specs/` is the project's canonical home for implementation specs; `dev_rules.md` says stage specs are disposable once complete.
+> **Note on filing:** This is a sub-spec, not a roadmap stage. It targets a specific bug surfaced during Stage 6 attack_move debugging (units pile on a shared target pixel and oscillate). Filed here because `docs/legacy/stage_specs/` is the project's canonical home for implementation specs; `dev_rules.md` says stage specs are disposable once complete.
 
 ## Goal
 
@@ -179,7 +179,7 @@ Separate commit: `FORMATION_MOVE_ENABLED = True`. Kill switch remains.
 
 ### Step 8 — Docs
 
-Update `docs/stage_specs/stage_6_spec.md` to describe the new group-move semantics (formation offsets + group-level completion). Do not touch `docs/architecture.md` — the tick delta shape is unchanged. Update `docs/project_state.md` if it references movement behavior.
+Update `docs/legacy/stage_specs/stage_6_spec.md` to describe the new group-move semantics (formation offsets + group-level completion). Do not touch `docs/architecture.md` — the tick delta shape is unchanged. Update `docs/project_state.md` if it references movement behavior.
 
 Mark this spec file as COMPLETE at the top with the landing commit hash.
 

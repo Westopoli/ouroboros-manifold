@@ -2400,12 +2400,12 @@ size_estimate = "about 600 lines ported from simulation/strategic_viewer.py + te
 
 # SV-0 (simviewer spec): the setter variant (mission.c, header, signatures row, behind VG-CONTRACT-E7 and VG-W2) is superseded by the row below: Westley 2026-10-13 "go ahead with (c)" chose the pipe-only variant (no core or header change).
 
-# SV-0 (simviewer plan, Westley 2026-10-13 "go ahead with (c)"): debug-only optional `retention` on mission_end, set through om_unit_set_hp; spec docs/northstar/plans/sim_lane_2026-10-12/sv0_spec.md.
+# SV-0 (simviewer plan, Westley 2026-10-13 "go ahead with (c)"): debug-only optional `retention` on mission_end, set through om_unit_set_hp; spec docs/northstar/plans/archive/lanes/sim_lane_2026-10-12/sv0_spec.md.
 [[piece]]
 id = "SV-0"
 manager = "M0"
 wave = 9
-owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pipe_mission_end_retention.py", "docs/northstar/plans/sim_lane_2026-10-12/sv0_spec.md"]  # om_pipe.c: handle_mission_end only; architecture.md: the mission_end paragraph only
+owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pipe_mission_end_retention.py", "docs/northstar/plans/archive/lanes/sim_lane_2026-10-12/sv0_spec.md"]  # om_pipe.c: handle_mission_end only; architecture.md: the mission_end paragraph only
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_mission_end_retention.py"]
 depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E6", "VG-K-D1", "VG-W2", "VG-CONTRACT-E7", "VG-CONTRACT-force-groups"]  # attached owners of om_pipe.c (take-over convention, as VG-K-D1); om_pipe.c and architecture.md order (Architect 2026-10-20)
@@ -2433,8 +2433,8 @@ id = "SIM-LANE"
 manager = "M0"
 wave = 10
 impact = "harness"
-owns = ["docs/northstar/plans/sim_lane_2026-10-12/README.md"]
-owns_glob = ["docs/northstar/plans/sim_lane_2026-10-12/findings/**", "scripts/simlane/**"]
+owns = ["docs/northstar/plans/archive/lanes/sim_lane_2026-10-12/README.md"]
+owns_glob = ["docs/northstar/plans/archive/lanes/sim_lane_2026-10-12/findings/**", "scripts/simlane/**"]
 acceptance = []
 depends_on = []
 status = { state = "queued" }
@@ -3507,8 +3507,8 @@ id = "HARNESS-coverage"
 manager = "M0"
 wave = 13
 impact = "harness"
-owns = ["scripts/specfactory/coverage_run.sh", "scripts/specfactory/coverage_report.py", "docs/northstar/plans/drift_audits/coverage_baseline.json", "scripts/specfactory/status_check.py", "tests/specfactory/test_coverage_check.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
-owns_glob = ["docs/northstar/plans/drift_audits/coverage_runs/*"]
+owns = ["scripts/specfactory/coverage_run.sh", "scripts/specfactory/coverage_report.py", "docs/northstar/plans/archive/audits/drift_audits/coverage_baseline.json", "scripts/specfactory/status_check.py", "tests/specfactory/test_coverage_check.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
+owns_glob = ["docs/northstar/plans/archive/audits/drift_audits/coverage_runs/*"]
 acceptance = ["tests/specfactory/test_coverage_check.py"]
 depends_on = ["HARNESS-C235", "HARNESS-C4", "HARNESS-gate-keep-red-evidence", "HARNESS-mm-3"]  # keep-red-evidence added by the Architect 2026-10-21 (drift_audit.md order)
 status = { state = "queued" }
@@ -4194,8 +4194,8 @@ size_estimate = "step 3.2: unreferenced debug and mockup scenes to legacy/scenes
 id = "SHOWCASE-docs-legacy"
 manager = "Architect"
 wave = 9
-owns = ["docs/legacy/README.md", "docs/README.md", "docs/design_lane.md", "docs/legacy/design_lane_queue.md", "docs/legacy/research_lane.md", "docs/legacy/research_lane_queue.md", "docs/priority_queue.md", "docs/workflow.md", "docs/legacy/client_scene_graph.md"]
-owns_glob = ["docs/legacy/**", "docs/legacy/articles/**", "docs/legacy/claude_exchange/**", "docs/legacy/random/**", "docs/legacy/blender_stuff/**", "docs/legacy/design_questions/**", "docs/stage_specs/**", "docs/test_specs/**", "docs/research/**", "docs/northstar/proving_ground/**", "docs/northstar/research/**", "docs/northstar/plans/archive/**", "docs/northstar/plans/archive/proposals/**"]
+owns = ["docs/legacy/README.md", "docs/README.md", "docs/legacy/method_era1/design_lane.md", "docs/legacy/design_lane_queue.md", "docs/legacy/research_lane.md", "docs/legacy/research_lane_queue.md", "docs/legacy/method_era1/priority_queue.md", "docs/legacy/method_era1/workflow.md", "docs/legacy/client_scene_graph.md"]
+owns_glob = ["docs/legacy/**", "docs/legacy/articles/**", "docs/legacy/claude_exchange/**", "docs/legacy/random/**", "docs/legacy/blender_stuff/**", "docs/legacy/design_questions/**", "docs/legacy/stage_specs/**", "docs/legacy/test_specs/**", "docs/research/**", "docs/northstar/proving_ground/**", "docs/northstar/research/**", "docs/northstar/plans/archive/**", "docs/northstar/plans/archive/proposals/**"]
 acceptance = []
 depends_on = ["SHOWCASE-front-door", "SHOWCASE-junk", "LAB-REV2-L3", "LAB-REV2-L7", "LAB-REV2-FIX", "LAB-REV3-C"]
 status = { state = "attached", attach_sha = "2923962a" }  # landed 2923962a (records, e2063729 and the citation rewrite)

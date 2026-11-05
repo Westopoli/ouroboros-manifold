@@ -239,7 +239,7 @@ A latent tension in the precedent set: **async-friendly / save-anywhere framing 
 
 These framings are not mutually exclusive — RimWorld manages both — but they pull in different rhetorical directions. Confidence: ESTIMATED.
 
-For Ouroboros: the 7-era generational sweep + Foundation/hard-SF + Roman-free baseline creates a structural tension. If the headline framing is "every generational sweep is different" (replay framing), the time-shape pitch becomes a secondary affordance. If the headline framing is "your civilization's saga across centuries" (single-campaign-depth framing), the time-shape pitch aligns naturally as a primary affordance. The Design Lane has not resolved this fork at training-data floor — `docs/design_lane.md` and `docs/legacy/design_lane_queue.md` capture the parallel work. Confidence: REPORTED.
+For Ouroboros: the 7-era generational sweep + Foundation/hard-SF + Roman-free baseline creates a structural tension. If the headline framing is "every generational sweep is different" (replay framing), the time-shape pitch becomes a secondary affordance. If the headline framing is "your civilization's saga across centuries" (single-campaign-depth framing), the time-shape pitch aligns naturally as a primary affordance. The Design Lane has not resolved this fork at training-data floor — `docs/legacy/method_era1/design_lane.md` and `docs/legacy/design_lane_queue.md` capture the parallel work. Confidence: REPORTED.
 
 ## Cross-axis 4 — Roman-free baseline as async-pitch entry surface
 

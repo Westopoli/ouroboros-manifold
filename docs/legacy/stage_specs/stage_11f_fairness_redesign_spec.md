@@ -8,7 +8,7 @@
 
 **Unblock condition:** at least one full playtest cohort generating fairness logs across the full archetype × layout matrix, plus subjective "did this feel fair?" feedback from those players. Without both, the redesign would just be re-theorizing.
 
-**Reopen-when:** Steam playtest cohort is running (see `docs/priority_queue.md` Pre-Steam-submission group). Until then, the interim Stage 11e implementation (simple-random picker + JSONL logging) is the live behavior.
+**Reopen-when:** Steam playtest cohort is running (see `docs/legacy/method_era1/priority_queue.md` Pre-Steam-submission group). Until then, the interim Stage 11e implementation (simple-random picker + JSONL logging) is the live behavior.
 
 ## Goal
 
@@ -31,5 +31,5 @@ When the playtest corpus is large enough, this stage will:
 - `docs/bible_history/bible_2_00_world.md` §"Generation Pipeline" — the bible's two-layer fairness architecture passage and the interim-pivot note.
 - `simulation/fairness_evaluator.py` — current metric implementations (preserved intact by Stage 11e).
 - `simulation/archetype_filters.py` — current FairnessTargetProfile values (intent placeholders pending this spec).
-- `docs/stage_specs/stage_11e_fairness_reconciliation_spec.md` §"Pivot" — rationale for original 2026-05-03 deferral.
-- `docs/priority_queue.md` Pre-Steam-submission group — Steam playtest cohort is the unblock event.
+- `docs/legacy/stage_specs/stage_11e_fairness_reconciliation_spec.md` §"Pivot" — rationale for original 2026-05-03 deferral.
+- `docs/legacy/method_era1/priority_queue.md` Pre-Steam-submission group — Steam playtest cohort is the unblock event.

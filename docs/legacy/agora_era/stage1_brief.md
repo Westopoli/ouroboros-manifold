@@ -10,7 +10,7 @@ Read `docs/northstar/README.md`, `docs/legacy/agora_era/principles.md`, and `doc
 
 ## Rules
 
-1. **No bible edits.** You write only `docs/legacy/agora_era/stage1_audit.md`, `docs/northstar/vision_v2.md`, and additions to `docs/northstar/ambiguity_register.md`. Nothing under `docs/bible/` changes in this stage.
+1. **No bible edits.** You write only `docs/legacy/agora_era/stage1_audit.md`, `docs/legacy/agora_era/vision_v2.md`, and additions to `docs/northstar/ambiguity_register.md`. Nothing under `docs/bible/` changes in this stage.
 2. **No design decisions.** Westley decides every verdict. When you think a claim is wrong, stale, or contradictory, say so in the row's note and let him decide.
 3. **Never guess.** If a claim is ambiguous and Westley's verdict depends on the reading, add a `Q-` flag to `docs/northstar/ambiguity_register.md` with the concrete question and candidate answers, and mark the row `unsure` until answered.
 4. **Ledger tables are normal prose, not caveman.** Terse chat replies are fine; the ledger must read cleanly a year from now.
@@ -20,7 +20,7 @@ Read `docs/northstar/README.md`, `docs/legacy/agora_era/principles.md`, and `doc
 ## Inputs
 
 - `docs/bible/game_bible.md` (hub, 415 lines) and the nine spokes: `bible_simulation.md`, `bible_combat.md`, `bible_world.md`, `bible_missions.md`, `bible_chronicle.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`, `bible_animation_strategy.md`, `bible_design_vision.md`. About 4,100 lines total.
-- `docs/priority_queue.md`, especially the "Research-only / not committed" section (16 parked directions). Each of those is an idea that needs a verdict too.
+- `docs/legacy/method_era1/priority_queue.md`, especially the "Research-only / not committed" section (16 parked directions). Each of those is an idea that needs a verdict too.
 - `docs/bible/bible_design_vision.md` splits BINDING principles from ASPIRATIONAL targets. Audit both; note the binding status in each row.
 - The code-reality summary below.
 - The known stale claims below.
@@ -43,7 +43,7 @@ Use this to fill the built-status column without re-surveying. Statuses: built, 
 - `game_bible.md` line 348 hedges "if extant" about `bible_design_vision.md`, which exists.
 - `bible_ai_pipeline.md` still prices era packs at $2–3 under a hub that says no DLC.
 - `docs/architecture.md` line 194 and about 18 research briefs cite `bible_monetization.md`, deleted 2026-05-31.
-- `docs/design_lane.md` mandates "In Flux" sections the hub forbids.
+- `docs/legacy/method_era1/design_lane.md` mandates "In Flux" sections the hub forbids.
 - CLAUDE.md protected-file list names `templates.py`, `theme_scifi.py`, `event_engine.py`; none exist.
 - `autoload/tactical_bridge.gd` line 2 says "Owns the TCP connection"; the socket server was deleted.
 - `bible_missions.md` marks complications as deferred; check whether the hub still claims they fire every third mission.
@@ -52,7 +52,7 @@ Use this to fill the built-status column without re-surveying. Statuses: built, 
 
 ### Step 1 — Vision interview (do this first, before any bible row)
 
-Ask these one or two at a time. Write the answers into `docs/northstar/vision_v2.md` as a one-page statement, then ask Westley to confirm it. Every later verdict is checked against this page.
+Ask these one or two at a time. Write the answers into `docs/legacy/agora_era/vision_v2.md` as a one-page statement, then ask Westley to confirm it. Every later verdict is checked against this page.
 
 1. In one sentence, what is this game? Say it as you would to a friend who has never heard of it.
 2. Near the end of the last work period you had a crisis about what the game should be. What changed in your head? What did you stop believing, and what did you start believing?

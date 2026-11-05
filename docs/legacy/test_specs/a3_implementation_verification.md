@@ -2,7 +2,7 @@
 
 Date: 2026-05-20
 Agent: H (Sonnet implementer)
-Spec: BLOCKER A3 Option B per `docs/test_specs/a3_bible_audit_per_archetype_map.md` + `docs/test_specs/a3_map_cover_audit.md`.
+Spec: BLOCKER A3 Option B per `docs/legacy/test_specs/a3_bible_audit_per_archetype_map.md` + `docs/legacy/test_specs/a3_map_cover_audit.md`.
 
 ## Run protocol
 

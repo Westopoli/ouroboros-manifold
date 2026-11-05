@@ -12,7 +12,7 @@ E-20 S-151 "Later: eras that feel different" (`docs/bible/epics/E-20-multi-era-a
 
 ## 3. Westley's own words
 
-Vision v2 Q7, 2026-09-10 (`docs/northstar/vision_v2.md:73`): "Yes, we cannot build a different 'game' for every era, that task would be massive. However, I don't believe that the bible fully fleshed out how exactly we're going to accomplish the level of 'difference' across eras while still using the same 'skeleton' if you will. This will likely be an area that we need too investigate/hash out further in stage 2."
+Vision v2 Q7, 2026-09-10 (`docs/legacy/agora_era/vision_v2.md:73`): "Yes, we cannot build a different 'game' for every era, that task would be massive. However, I don't believe that the bible fully fleshed out how exactly we're going to accomplish the level of 'difference' across eras while still using the same 'skeleton' if you will. This will likely be an area that we need too investigate/hash out further in stage 2."
 
 D9, 2026-09-19 (`docs/northstar/research/harness_defects_2026-09-17/DECISIONS.md:109`): "D9: Q146: exact idential for MVP, different as we get farther into the game."
 

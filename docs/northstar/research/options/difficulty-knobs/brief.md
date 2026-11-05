@@ -22,7 +22,7 @@ A-150 (`:251`): "Westley: "perfectly true, a great example of what I want from t
 
 A-136 (`:237`): "knowledge is important to the game, same spirit as SC2. The game should create situations where a player's specific choices change how the opponent should respond, and should explicitly reward scouting and reasoning about the information the player has actually seen (not just theoretical uncertainty)."
 
-Vision v2 Q6 (`docs/northstar/vision_v2.md:65`): "the goal is to construct a situation with enough variables that creates a really high skill ceiling".
+Vision v2 Q6 (`docs/legacy/agora_era/vision_v2.md:65`): "the goal is to construct a situation with enough variables that creates a really high skill ceiling".
 
 Q-120-01, 2026-09-16 (`ambiguity_register.md:112`): "(b), AI postures deferred; enemy macro scripts use baseline movement/targeting speeds." Q-124-01 (`:115`): reinforcement waves ship, p = 0.07, foreshadowed.
 

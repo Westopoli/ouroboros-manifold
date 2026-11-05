@@ -6,8 +6,8 @@ You are drafting bible text against decisions already made. You do not design. T
 
 ## Read, in this order
 
-1. `docs/northstar/research/epics_audit_2026-10-02/BRIEF.md` (what the two decision sets are and where they live).
-2. `docs/northstar/research/epics_audit_2026-10-02/DECISIONS.md` (Westley's answers to the audit's holes; these override anything older).
+1. `docs/legacy/research/epics_audit_2026-10-02/BRIEF.md` (what the two decision sets are and where they live).
+2. `docs/legacy/research/epics_audit_2026-10-02/DECISIONS.md` (Westley's answers to the audit's holes; these override anything older).
 3. `docs/northstar/research/economy_design/current_system.md` and `docs/northstar/research/economy_design/README.md` (the economy as decided; his words verbatim by round).
 4. The findings file for your epics, named in your task. Every row there is something to resolve.
 5. The epics you own, in full.
@@ -61,7 +61,7 @@ Tests, code, `docs/bible/stories.md`, `docs/northstar/ambiguity_register.md`, an
 
 ## Your sidecar
 
-Write `docs/northstar/research/epics_audit_2026-10-02/sidecar_<your name>.md` with:
+Write `docs/legacy/research/epics_audit_2026-10-02/sidecar_<your name>.md` with:
 
 1. **Catalog rows** for `stories.md`, one per new or retitled story: `| S-### | E-## | "<one-line summary in the player's voice>" | <status and flags> | <file and anchor> |`.
 2. **Register rows** for every new flag: `| Q-###-## | E-## / S-### | <question> | <candidates> | open | |`.

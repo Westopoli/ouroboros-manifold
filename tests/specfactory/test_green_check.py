@@ -1,4 +1,4 @@
-# spec: docs/test_specs/drift-gate-and-green-check.md::Acceptance criteria::AC-5
+# spec: docs/legacy/test_specs/drift-gate-and-green-check.md::Acceptance criteria::AC-5
 """Tests for scripts/specfactory/green_check.py.
 
 Builds a throwaway git repo per test with one stub file and a tiny

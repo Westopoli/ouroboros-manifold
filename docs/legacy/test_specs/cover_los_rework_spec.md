@@ -1,6 +1,6 @@
 # Cover-LOS Rework Spec — Wave 2.5 (SUPERSEDED)
 
-**Status:** SUPERSEDED 2026-05-23 by `docs/test_specs/cover_asteroid_los_spec.md` (Wave 2.5R + 2.6).
+**Status:** SUPERSEDED 2026-05-23 by `docs/legacy/test_specs/cover_asteroid_los_spec.md` (Wave 2.5R + 2.6).
 
 Polygon-binary symmetric-blind model documented here was implemented in Wave 2.5 (briefs L1-L7 in `.swarm/briefs/wave_2_5_cover_los/`) but NEVER COMMITTED to main. Working-tree changes from Wave 2.5 will be overlaid by Wave 2.5R per-asteroid raycast impl. This doc retained for history.
 
@@ -10,7 +10,7 @@ Polygon-binary symmetric-blind model documented here was implemented in Wave 2.5
 
 ## Context
 
-Ship-readiness work surfaced spec conflict (`docs/test_specs/cover_semantics_bible_audit.md`). Bible (`docs/bible_history/bible_2_00_combat.md:421,440,529`, `docs/bible_history/bible_2_00_world.md:144`) defines `cover_density` as continuous-gradient damage-reduction multiplier. Live `simulation/damage.py:132-136,171-175` implements that spec. Westley locked new design 2026-05-21:
+Ship-readiness work surfaced spec conflict (`docs/legacy/test_specs/cover_semantics_bible_audit.md`). Bible (`docs/bible_history/bible_2_00_combat.md:421,440,529`, `docs/bible_history/bible_2_00_world.md:144`) defines `cover_density` as continuous-gradient damage-reduction multiplier. Live `simulation/damage.py:132-136,171-175` implements that spec. Westley locked new design 2026-05-21:
 
 **Cover = SC2-style binary LOS-blocker. Polygon model. Symmetric blind. No proximity reveal. No fire-reveal. Non-destructible Phase 1. AI peek = audit + minimal fix.**
 

@@ -11,7 +11,7 @@
 
 > **Folder purpose.** `docs/legacy/design_questions/` is the staging area for
 > open design questions — those actively being worked but not yet ready
-> for the bible (`docs/bible/`) or a stage spec (`docs/stage_specs/`).
+> for the bible (`docs/bible/`) or a stage spec (`docs/legacy/stage_specs/`).
 > Each file here is transient: a working doc that bridges chats and holds
 > in-progress design discussion until its questions resolve.
 >

@@ -189,7 +189,7 @@ T-W1 cross-ref `docs/legacy/topics/wishlist_conversion_benchmarks_2026.md`.
 
 ### Pre-Zip Steam-page-minimum-30-day gate fit
 
-Bible-locked Pre-Zip gate: friends-ZIP → Steam $100 → 30-day Steam page → launch (per CLAUDE.md and `docs/priority_queue.md` § Pre-Zip Beta Readiness Gate).
+Bible-locked Pre-Zip gate: friends-ZIP → Steam $100 → 30-day Steam page → launch (per CLAUDE.md and `docs/legacy/method_era1/priority_queue.md` § Pre-Zip Beta Readiness Gate).
 
 **Critical observation.** EA *is* a launch for Steam page purposes. The 30-day-Steam-page minimum applies *equally* to EA launches and 1.0 launches — Valve does not distinguish. From the Pre-Zip-gate perspective:
 

@@ -17,7 +17,7 @@ signal flash_conflict_requested(from_id: String, to_id: String, intensity: float
 
 signal highlight_changed(region_id: String)
 
-# Stage 11g — inspection metadata. See docs/stage_specs/stage_11g_world_view_inspection_spec.md
+# Stage 11g — inspection metadata. See docs/legacy/stage_specs/stage_11g_world_view_inspection_spec.md
 signal region_metadata_set(region_id: String)
 signal faction_metadata_set(faction_id: String)
 signal factions_cleared()

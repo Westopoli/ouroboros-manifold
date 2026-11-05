@@ -12,7 +12,7 @@ E-01 "Layer system", the game's defining mechanic (`docs/bible/epics/E-01-layer-
 
 ## 3. Westley's own words
 
-Vision v2 Q6, 2026-09-10 (`docs/northstar/vision_v2.md:65`): "A player with an inferior force but understanding of positional tactics (surround, high ground, game theory positioning) can overcome the opposition, the goal is to construct a situation with enough variables that creates a really high skill ceiling, and significantly favors players with an understanding of the layer system, specific units, and such. (we're really heavily basing based off of Starcraft 2 here, surrounds and high ground were really important in that game, we're trying to turn it up to 11 in our game)."
+Vision v2 Q6, 2026-09-10 (`docs/legacy/agora_era/vision_v2.md:65`): "A player with an inferior force but understanding of positional tactics (surround, high ground, game theory positioning) can overcome the opposition, the goal is to construct a situation with enough variables that creates a really high skill ceiling, and significantly favors players with an understanding of the layer system, specific units, and such. (we're really heavily basing based off of Starcraft 2 here, surrounds and high ground were really important in that game, we're trying to turn it up to 11 in our game)."
 
 Q-E01-01, 2026-09-12 (`ambiguity_register.md:9`): "There should always be 5 layers, regardless of era. Only 3 may have been an idea from when we were just implementing a toy version, but we're not doing that anymore, so every era should be a 5 layer system."
 
@@ -48,7 +48,7 @@ By design, none external for the look: "Not external screenshots — a design ph
 
 1. Vertical scale. Q-E01-01 records three elevation bands (0 to 30, 30 to 100, 100 to 300 wu) for five layers; R-010-01 calls that a defect; the P6 mockup uses 600 wu between layers; pass 3 terrain peaks are 3,000 to 5,000 wu. Should the five layers be tied to terrain height (a layer is a terrace of the mountain) or float above it (a layer is an altitude band the terrain pokes through)? What should one layer step look like next to a cliff?
 2. Cross-layer combat. `references/E-01/notes.md:15` records it as "an intended strategic tuning lever (range/damage vary by layer offset), still under research"; Q-008-01 closes the prototype as same-layer only. May the options explore how cross-layer strikes would read, or must they assume same-layer only?
-3. "Non-focused layers dim slightly" versus the spec's 60 percent dim (`docs/stage_specs/stage_11c_layer_visuals_and_fog_spec.md:59`). How much should the other four layers fall back when one has focus?
+3. "Non-focused layers dim slightly" versus the spec's 60 percent dim (`docs/legacy/stage_specs/stage_11c_layer_visuals_and_fog_spec.md:59`). How much should the other four layers fall back when one has focus?
 4. A-299's translucent grid around each unit versus the P6 mockup's translucent plane for a whole layer. One idea or two? Is a whole-layer plane wanted at all?
 5. The E-01 purpose still says "three to five" layers. Confirm the options assume exactly five everywhere.
 

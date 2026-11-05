@@ -39,7 +39,7 @@ This is the failure the plan is built to prevent. Every stage below carries a **
 - No "psychohistory prediction" system exists; CLAUDE.md only permits the concept.
 - Tests: 491 `def test_` across 65 pytest files, plus ~65 print-style `test_*.py` scripts in the same flat `simulation/` dir. `simulation/invariants.py` has ~70 trajectory invariants. 13 Godot scene tests in `tests/`.
 - Transport: `autoload/sim_bridge.gd` spawns `simulation/pipe_transport.py`; sim to Godot over stdout (4-byte BE length prefix + JSON); Godot to sim over a polled temp command file (Godot 4.6 bidirectional pipe bug). Delta shape in `simulation/snapshot_serializer.py`, documented in `docs/architecture.md`.
-- Bible: hub `docs/bible/game_bible.md` (415 lines) + 9 spokes (3,728 lines total). Hub is clean of append markers; drift now lives in spokes and orphaned cross-refs (deleted `bible_monetization.md` still cited in `docs/architecture.md:194` and ~18 research briefs; `docs/design_lane.md` still mandates In Flux sections the hub forbids; price $10–15 in hub vs $25–35 in research; "Roman-era sci-fi" in hub Monetization). 24 historical snapshots in `docs/bible_history/`.
+- Bible: hub `docs/bible/game_bible.md` (415 lines) + 9 spokes (3,728 lines total). Hub is clean of append markers; drift now lives in spokes and orphaned cross-refs (deleted `bible_monetization.md` still cited in `docs/architecture.md:194` and ~18 research briefs; `docs/legacy/method_era1/design_lane.md` still mandates In Flux sections the hub forbids; price $10–15 in hub vs $25–35 in research; "Roman-era sci-fi" in hub Monetization). 24 historical snapshots in `docs/bible_history/`.
 - Stale claims that Stage 1 must catch: CLAUDE.md protected-file list names `templates.py`, `theme_scifi.py`, `event_engine.py`, none of which exist; `autoload/tactical_bridge.gd:2` says "Owns the TCP connection" (socket server deleted); `library_builder.py --mode api` is a stub.
 - Priority queue NEXT is empty. 6 Soon, 24 Backlog, 16 research-only items.
 
@@ -214,7 +214,7 @@ Principle 13 applies to the factory itself. Each load-bearing claim above has a 
 
 **Inputs.**
 - `docs/bible/game_bible.md` + the 9 spokes (4,143 lines).
-- `docs/priority_queue.md` "Research-only" section (16 parked directions) and Soon/Backlog.
+- `docs/legacy/method_era1/priority_queue.md` "Research-only" section (16 parked directions) and Soon/Backlog.
 - `docs/bible/bible_design_vision.md` split (BINDING principles vs ASPIRATIONAL targets).
 - A code-reality summary (embedded in the brief): which bible systems are built, partial, or absent, taken from the survey above.
 - Known stale claims list (above) so the auditor flags them without re-discovering.
@@ -227,7 +227,7 @@ Principle 13 applies to the factory itself. Each load-bearing claim above has a 
 
 **Output.** `docs/legacy/agora_era/stage1_audit.md`:
 - One row per item: `id` (A-001…), source `file:line`, type (rule / mechanic / story / aspiration / impl-claim), built-status (built / partial / absent / unknown), verdict, note.
-- `docs/northstar/vision_v2.md` (one page).
+- `docs/legacy/agora_era/vision_v2.md` (one page).
 - A "contradictions resolved" list and a "stale claims to delete" list.
 
 **Done when.** Every heading in every bible file has at least one ledger row; no row is `unsure`; vision_v2 confirmed; algorithm pass complete. Estimated 500–700 rows; under protocol v2 the remaining spokes are one batch each.
@@ -264,7 +264,7 @@ Principle 13 applies to the factory itself. Each load-bearing claim above has a 
 
 **Worked example: Layer System.** Stage 2 runs the Layer System epic through the gate first, before any other epic, as the proof that the gate works. Expected flags include: what elevation each layer maps to on screen; whether a unit visibly moves when its layer changes and over how long; what a unit on layer 2 can see on layers 1 and 3 and at what range; whether layers change pathing, damage, or cover; what the player sees in the HUD about a unit's layer; what an enemy on another layer looks like under fog. Every one of these becomes a `Q-###-##` until Westley answers, and the answers become rules. If the gate produces fewer than a handful of flags on this epic, the gate is too weak and gets tightened before proceeding.
 
-**Also in this stage.** Rewrite CLAUDE.md for the new development style (Agora is the implementer, Claude is designer/tester; agile method and change protocol stated; protected-file list corrected; workflow section replaced by pointer to `docs/northstar/`). Rewrite `docs/workflow.md`, delete or rewrite `docs/design_lane.md` In Flux mandate, fix orphaned `bible_monetization.md` references, retire `docs/priority_queue.md` in favor of the Stage 4 product backlog (or reduce it to a pointer).
+**Also in this stage.** Rewrite CLAUDE.md for the new development style (Agora is the implementer, Claude is designer/tester; agile method and change protocol stated; protected-file list corrected; workflow section replaced by pointer to `docs/northstar/`). Rewrite `docs/legacy/method_era1/workflow.md`, delete or rewrite `docs/legacy/method_era1/design_lane.md` In Flux mandate, fix orphaned `bible_monetization.md` references, retire `docs/legacy/method_era1/priority_queue.md` in favor of the Stage 4 product backlog (or reduce it to a pointer).
 
 **Done when.** Every keep/rewrite row from Stage 1 maps to exactly one story, rule, or hub paragraph; every kill row's text is gone; every epic has run the completeness gate; the Layer System epic has passed it with all flags answered; `derive_agora_rules.py` runs clean for every flag-free epic; no doc in `docs/` references a deleted file (grep verified); CLAUDE.md describes the new style. Epics may reach Done individually; sim-core epics reach Done first so building can start.
 
@@ -441,7 +441,7 @@ Branch `wn/docs-northstar-plan` off `main`. Files:
 6. `docs/northstar/research/` — four stub files with the R1–R4 questions above, ready for the Research Lane chat.
 6b. `docs/northstar/proving_ground/README.md` — the probe structure, the A–G table, scoring rules, and the open choices; individual `P#-*.md` files are written in Stage 0 itself after Westley picks the open choices.
 7. `CLAUDE.md` — add a short "North Star" section at the top pointing at `docs/northstar/README.md` and stating the new development style (Agora builds, Claude designs and tests, agile stories, Definition of Ready gates building). No other CLAUDE.md edits yet (Stage 2 owns the rewrite).
-8. `docs/priority_queue.md` — set NEXT to "Stage 1 — Bible audit (Sonnet chat)".
+8. `docs/legacy/method_era1/priority_queue.md` — set NEXT to "Stage 1 — Bible audit (Sonnet chat)".
 9. Memory: save the north-star decisions (C path, QA tiers, escalation vehicle, agile + parallel build, layer-system lesson) as project memories.
 
 PR with the test deliverable: open the brief, paste into a fresh Sonnet 5 chat, confirm the chat asks the vision-interview questions first and presents batch 1 of the hub as a ledger table.
@@ -451,7 +451,7 @@ PR with the test deliverable: open the brief, paste into a fresh Sonnet 5 chat, 
 - `ls docs/northstar/` shows README, principles, agile, ambiguity_register, stage1_brief, research/{qa_driving,c_rewrite,escalation,rts_bug_catalog}.md, proving_ground/README.md.
 - `ambiguity_register.md` lists the Layer System flags with status open.
 - `grep -n "North Star" CLAUDE.md` hits the new section; CLAUDE.md still passes a read-through with no contradiction to the section it points at.
-- `docs/priority_queue.md` NEXT names Stage 1.
+- `docs/legacy/method_era1/priority_queue.md` NEXT names Stage 1.
 - Westley pastes `stage1_brief.md` into a Sonnet 5 chat; first reply is the vision interview, not a bible edit.
 
 ## Out of scope for this plan's execution

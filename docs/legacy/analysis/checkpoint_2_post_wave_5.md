@@ -29,7 +29,7 @@ Source briefs (all 10 W4+W5 inputs + checkpoint #1 substrate):
 - `/Users/westley/ouroboros/docs/research/topics/demo_strategy_norms.md` (T-D1)
 - `/Users/westley/ouroboros/docs/research/topics/steam_next_fest_timing.md` (T-D2)
 
-Plus baseline `/Users/westley/ouroboros/docs/research/analysis/checkpoint_1_post_wave_3.md`, `docs/bible/game_bible.md`, `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`, `docs/priority_queue.md` Pre-Zip Gate, `CLAUDE.md`.
+Plus baseline `/Users/westley/ouroboros/docs/research/analysis/checkpoint_1_post_wave_3.md`, `docs/bible/game_bible.md`, `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`, `docs/legacy/method_era1/priority_queue.md` Pre-Zip Gate, `CLAUDE.md`.
 
 ## Bible-locked baseline (continuity from checkpoint #1)
 
@@ -42,7 +42,7 @@ Verbatim restatement of locks carried + updates since checkpoint #1:
 - **RTS framing kill.** SC2/classic-RTS kill-zone. 2026-05-16 In Flux lock. VERIFIED.
 - **Unit target.** 80-200k @ $25-35 paid-base. VERIFIED across briefs.
 - **Monetization shape.** Buy-once base + DLC-per-era (7 eras, Roman free-tier). VERIFIED.
-- **Pre-Zip Beta Readiness Gate.** Friends-ZIP → $100 Steam Direct → 30-day Steam page → launch. Sourced `docs/priority_queue.md` Pre-Zip Gate top-of-file. VERIFIED.
+- **Pre-Zip Beta Readiness Gate.** Friends-ZIP → $100 Steam Direct → 30-day Steam page → launch. Sourced `docs/legacy/method_era1/priority_queue.md` Pre-Zip Gate top-of-file. VERIFIED.
 - **Conflict #2 status.** Downgraded to marketing-artifact 2026-05-17 per Westley; bible cleanup parked. Re-surface count stops incrementing for funnel-math purposes — tagline lives in capsule copy iteration not strategic re-baseline.
 - **Conflict #3 (L292 Fortnite).** Still forward-flagged to W8 T-B1 brand positioning capstone. Carried.
 - **T-W1 pull-forward DROPPED per user 2026-05-17.** DAG-order keeps T-W1 at W5; checkpoint #1 candidate-1 pull-forward retracted.
@@ -216,7 +216,7 @@ Surfaced this checkpoint. Load-bearing for pre-launch planning.
 
 ### Verbatim citations
 
-**Pre-Zip Beta Readiness Gate** (per `docs/priority_queue.md` top-of-file Pre-Zip Gate section + CLAUDE.md project workflow): friends-ZIP → $100 Steam Direct → 30-day Steam page → launch. The 30-day Steam page directive implies Steam page goes live 30 days before launch.
+**Pre-Zip Beta Readiness Gate** (per `docs/legacy/method_era1/priority_queue.md` top-of-file Pre-Zip Gate section + CLAUDE.md project workflow): friends-ZIP → $100 Steam Direct → 30-day Steam page → launch. The 30-day Steam page directive implies Steam page goes live 30 days before launch.
 
 **T-D2 Next Fest timing requirement** (verbatim, `docs/legacy/topics/steam_next_fest_timing.md`): "60-120 day Steam-page-pre-fest lead time" — title needs Steam page existing + accumulating wishlist for 60-120 days BEFORE Next Fest slot to enter on momentum. Next Fest cadence Feb / Jun / Oct. October > February > June for niche-strategy per T-D2 audience-availability ranking. 8-16 week gap between Next Fest end + launch is optimal (drift outside this window degrades momentum tail).
 
@@ -409,7 +409,7 @@ What Waves 6-8 must know before starting.
 
 Tag distribution aggregated across 10 W4-W5 briefs (REPORTED-weighted, ±5% per-brief variance):
 
-- **VERIFIED:** ~1-3% — bible-citation verbatim, Pre-Zip Gate sequencing per `docs/priority_queue.md`, Roman-free monetization lock per `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/).
+- **VERIFIED:** ~1-3% — bible-citation verbatim, Pre-Zip Gate sequencing per `docs/legacy/method_era1/priority_queue.md`, Roman-free monetization lock per `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/).
 - **REPORTED:** ~35-45% — Next Fest aggregate publisher data, Wildermyth/Manor Lords/Tempest Rising wishlist disclosure partials, "velocity > cumulative" Zukowski framing, niche-strategy stairstep shape, festival quality bifurcation, refund-rate bands, trailer length modal, page conversion patterns, capsule iteration cadence, screenshot slot-1 attention.
 - **ESTIMATED:** ~50-60% — per-milestone numeric breakouts, festival spike magnitudes by tier, trailer-drop spike norms, velocity threshold bands, refund-rate per-vector impact, page conversion lift multipliers, algorithmic visibility quantitative thresholds, demo-played conversion premium quantification, six-vector refund inventory pp-impact, scenario arithmetic.
 - **AMBIGUOUS:** ~3-5% — 2026 Next Fest specifics post-training-window, China + Russia + Argentina post-2022 conversion mix, Foundation-tribe specific velocity behavior, Roman-free-tier × Steam Demo product Steam-side product management specifics.

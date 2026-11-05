@@ -1,6 +1,6 @@
 """SV-0: optional `retention` on `mission_end` (debug pipe only).
 
-Spec: docs/northstar/plans/sim_lane_2026-10-12/sv0_spec.md.  R-077-01 (final
+Spec: docs/northstar/plans/archive/lanes/sim_lane_2026-10-12/sv0_spec.md.  R-077-01 (final
 score = 0.75 x objective score + 0.25 x retention) and R-077-02 (the band is
 the sim's own classification of that score).
 

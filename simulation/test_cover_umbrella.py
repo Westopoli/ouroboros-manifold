@@ -1,6 +1,6 @@
 """Wave 2.5 Cover-LOS Rework umbrella test.
 
-Encodes the top-level acceptance criteria from `docs/test_specs/cover_los_rework_spec.md`.
+Encodes the top-level acceptance criteria from `docs/legacy/test_specs/cover_los_rework_spec.md`.
 Initially RED. Goes GREEN only after all 7 leaves (L1-L7) merge.
 
 DO NOT EDIT leaf-by-leaf. This is the parent-owned end-to-end gate.

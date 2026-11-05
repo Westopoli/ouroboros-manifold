@@ -36,7 +36,7 @@ Three examples each (file:line, test-side missing, engine side):
 (Examples for the other three classes: none exist, count 0.)
 
 ### Existing triage
-docs/northstar/plans/sim_lane_2026-10-12/controls_triage.md (2026-10-18, Architect call B16 b) already classes all 92: 0 of 92 expected ids exist under the long name; 9 (all E-03) have a header alias 300-310 mirrored in conftest `OMBugE03` (:1157) with no C injection site; no OM_BUG_* exists for the rest. It lists a verdict per row (mostly "fill").
+docs/northstar/plans/archive/lanes/sim_lane_2026-10-12/controls_triage.md (2026-10-18, Architect call B16 b) already classes all 92: 0 of 92 expected ids exist under the long name; 9 (all E-03) have a header alias 300-310 mirrored in conftest `OMBugE03` (:1157) with no C injection site; no OM_BUG_* exists for the rest. It lists a verdict per row (mostly "fill").
 
 ### Does the gate run controls?
 - merge_gate.sh has no direct pytest call on controls. Stage 6 (merge_gate.sh:293-300) runs `merge_gate_support.py regression ... tests/csim` as a before/after comparison against BASE_REF (so controls run as part of all tests/csim, and the 92 fail on both sides, hence no new red).
@@ -50,7 +50,7 @@ docs/northstar/plans/sim_lane_2026-10-12/controls_triage.md (2026-10-18, Archite
 - lines 735-737 and 739: `A111/A112 pieces.toml draft` (G-controls row), `TD-A122-composite-pre-clamp`, `TD-A122-e03-fixture`, `A111 placeholder gate tests`.
 - push/pieces.toml:1049-1062 row `G-controls` (owns placeholder_controls.txt and tests/csim/controls/**; attached 6f757bfc).
 - docs/northstar/plans/2026-10-01-architect-rulings-2.md:590 A111 (92 placeholders counted in their own gate line), :600 A114 (seven dead controls brought to life).
-- drift audit note: docs/northstar/plans/drift_audits/2026-10-20-test-coverage-client-tooling.md:61 (gen_controls named-only, 95 files marker) and 2026-10-20-test-coverage-sim.md section 5 ("92 of them in controls, e.g. OMBug has no CONVOY_RETURNS_FIRE").
+- drift audit note: docs/northstar/plans/archive/audits/drift_audits/2026-10-20-test-coverage-client-tooling.md:61 (gen_controls named-only, 95 files marker) and 2026-10-20-test-coverage-sim.md section 5 ("92 of them in controls, e.g. OMBug has no CONVOY_RETURNS_FIRE").
 - gen_controls ledger rows: only docs/northstar/plans/archive/PLAN_MULTIAGENT_TEST_AUTHORING.md, preflight_2026-10-07/9-harness.md, harness-enforcement-2026-10-19.md and research/factory/A2-... mention it; the ledger itself has none by that name.
 
 ## Q2 Coverage stage

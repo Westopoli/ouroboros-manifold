@@ -1,7 +1,7 @@
 extends SceneTree
 
 # Wave 3 Pre-Zip Wiring Godot-side umbrella test.
-# Encodes top-level acceptance criteria from `docs/test_specs/wave_3_pre_zip_wiring.md`
+# Encodes top-level acceptance criteria from `docs/legacy/test_specs/wave_3_pre_zip_wiring.md`
 # that require Godot scene-tree / autoload instantiation to verify behaviorally.
 # Initially RED. Goes GREEN only after all 7 leaves (B5-A, B5-B, B2-A, B3-A, B2-B, B3-B, B5-C) merge.
 #

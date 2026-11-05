@@ -576,10 +576,10 @@ func move_camera_to(target_position: Vector3, look_at_target: Vector3, duration:
 	tw.tween_callback(func(): camera_move_completed.emit())
 
 func enable_manual_orbit() -> void:
-	pass # Deferred: see docs/stage_specs/main_menu_galaxy_spec.md (Stage B/C — manual orbit)
+	pass # Deferred: see docs/legacy/stage_specs/main_menu_galaxy_spec.md (Stage B/C — manual orbit)
 
 func disable_manual_orbit() -> void:
-	pass # Deferred: see docs/stage_specs/main_menu_galaxy_spec.md (Stage B/C — manual orbit)
+	pass # Deferred: see docs/legacy/stage_specs/main_menu_galaxy_spec.md (Stage B/C — manual orbit)
 
 func get_camera_position() -> Vector3:
 	return _camera.global_position
@@ -591,7 +591,7 @@ func set_opacity(_alpha: float) -> void:
 	pass
 
 func set_particle_color(_color: Color) -> void:
-	pass # Deferred: see docs/stage_specs/main_menu_galaxy_spec.md (Stage D — particle color)
+	pass # Deferred: see docs/legacy/stage_specs/main_menu_galaxy_spec.md (Stage D — particle color)
 
 func fade_in(_duration: float) -> void:
 	pass # Fade applied on the SubViewportContainer by the consumer

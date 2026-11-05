@@ -35,7 +35,7 @@ Mockup review 2 (`landscape_design/README.md:63`): "Protoptye has my go ahead (t
 ## 5. Prior art already named
 
 - World of Warships map view, image `docs/bible/references/E-17/E-17-8-wows-map-view.png`.
-- StarCraft 2 minimap viewport box (`docs/stage_specs/stage_11d_mid_mission_hud_spec.md:15`).
+- StarCraft 2 minimap viewport box (`docs/legacy/stage_specs/stage_11d_mid_mission_hud_spec.md:15`).
 - Age of Empires Online for the tactical band register.
 - Anti-reference: Total War's campaign and battle map split.
 

@@ -120,7 +120,7 @@ Smallest proud-to-ship version: 3 eras, past/present/future.
 
 1. Q1/Q7 answers (multiplayer, multi-era chronological match traversal as core, not research-only) diverge sharply from:
    - Code-reality baseline: multiplayer marked **absent**, not built.
-   - `docs/priority_queue.md` "Research-only / not committed" section: multi-era DLC ladder, branch system, etc. currently parked as research, not committed.
+   - `docs/legacy/method_era1/priority_queue.md` "Research-only / not committed" section: multi-era DLC ladder, branch system, etc. currently parked as research, not committed.
    - Bible/CLAUDE.md single-player "commander" framing assumptions in places.
    Not resolved here — goes to Step 3 cross-check list for Westley to rule on scope/sequencing (e.g. is multiplayer core-vision-but-later-stage, or core-and-blocking).
 
@@ -128,7 +128,7 @@ Smallest proud-to-ship version: 3 eras, past/present/future.
 
 3. Q9 resolves the known stale price claim from the Stage 1 brief: `game_bible.md`'s $10-15 figure is CONFIRMED current vision. Research briefs arguing $25-35 are superseded by this answer, not the other way around. Also new: $3/expansion, mixed grindable/exclusive model — not in the bible at all yet, needs to land in Stage 2.
 
-4. Q10 (MVP = 3 eras, past/present/future) conflicts with `docs/priority_queue.md`'s framing of multi-era as "research-only / not committed" and with the single-era "Settled Reach" framing elsewhere in the bible. Same underlying tension as flag 1 — multi-era is core vision, not a stretch goal.
+4. Q10 (MVP = 3 eras, past/present/future) conflicts with `docs/legacy/method_era1/priority_queue.md`'s framing of multi-era as "research-only / not committed" and with the single-era "Settled Reach" framing elsewhere in the bible. Same underlying tension as flag 1 — multi-era is core vision, not a stretch goal.
 
 ## Remaining questions (9-12)
 

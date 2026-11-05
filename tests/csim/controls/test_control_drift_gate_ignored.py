@@ -1,4 +1,4 @@
-# spec: docs/test_specs/drift-gate-and-green-check.md::Acceptance criteria::AC-1
+# spec: docs/legacy/test_specs/drift-gate-and-green-check.md::Acceptance criteria::AC-1
 """Positive control for OM_BUG_DRIFT_GATE_IGNORED.
 
 Watch-for: "Drift runs regardless of the OM_FEAT_DRIFT switch" (E-02 epic,

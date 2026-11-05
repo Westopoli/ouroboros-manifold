@@ -9,7 +9,7 @@ the rebuild, and the assertion line that went red.
 
 The pin line above the docstring is written by `scripts/specfactory/rule_pins_tests.py --write-line` (HARNESS-C1b).
 
-Mechanisms covered (evidence audit: docs/northstar/plans/drift_audits/2026-10-20-pipe-gaps.md, "Reachable and observable"):
+Mechanisms covered (evidence audit: docs/northstar/plans/archive/audits/drift_audits/2026-10-20-pipe-gaps.md, "Reachable and observable"):
   chronicle    significance scoring (R-066-01, R-066-02, R-066-05, R-070-01), 5-to-10 selection with category quotas
                (R-065-01, R-065-03, R-065-05), entry text assembly (R-068-01, R-068-04, R-068-06, R-068-07, R-068-08)
   generational commander stay-or-rotate (R-057-02), commander death (R-061-02, R-061-03, R-061-04), chapter phase

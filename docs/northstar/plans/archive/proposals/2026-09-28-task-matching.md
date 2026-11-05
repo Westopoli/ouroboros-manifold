@@ -93,7 +93,7 @@ What agents would get from a registry:
 - **Wiring checks.** A status column with "tested but unwired", backed by a reachability lint (every public symbol that has tests is reached from a tick step or a pipe handler, or is marked test-only), would have caught the reinforcement and structure-production gap days before a person found it.
 - **Change impact.** When a boundary moves, the registry row changes in the same branch, and the merge gate can check that.
 
-Recommendation: keep C4, but make it data first. A `docs/architecture/c4/mvp/components.toml` (or new columns on `pieces.toml` and `symbol_modules.toml`, which already hold half of it) is the source; the Markdown pages and Mermaid diagrams are generated from it. Two lints go in the merge gate: every `csrc` module and pipe command appears in the registry, and the reachability lint above. If the audit of the current draft shows it mostly restates `pieces.toml`, fold it into that file and drop the separate pages.
+Recommendation: keep C4, but make it data first. A `docs/legacy/architecture_c4/mvp/components.toml` (or new columns on `pieces.toml` and `symbol_modules.toml`, which already hold half of it) is the source; the Markdown pages and Mermaid diagrams are generated from it. Two lints go in the merge gate: every `csrc` module and pipe command appears in the registry, and the reachability lint above. If the audit of the current draft shows it mostly restates `pieces.toml`, fold it into that file and drop the separate pages.
 
 ## 6. Decisions for Westley
 

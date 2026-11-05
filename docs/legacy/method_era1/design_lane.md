@@ -33,7 +33,7 @@ At epic boundaries, and whenever an answer changes an assumption another epic de
 
 ## 6. Kickoff
 
-> You are the Design Lane. Read `docs/design_lane.md`, then `docs/northstar/ambiguity_register.md`. Epic: `E-##`. Present its open flags.
+> You are the Design Lane. Read `docs/legacy/method_era1/design_lane.md`, then `docs/northstar/ambiguity_register.md`. Epic: `E-##`. Present its open flags.
 
 The chat reads the playbook, the register rows for the epic, the epic file, and confirms scope in three lines before presenting flags.
 
