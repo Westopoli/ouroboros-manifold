@@ -51,6 +51,10 @@ Docs (parent-owned, written by the overlord in the landing commit; no leaf)
 
 Named DRAFTs: DRAFT-seeds-per-layout 20 (H-053, Westley's rule that predictions are probabilities), DRAFT-fight-cap 600 s (`snapshot.CAP_SECONDS`), DRAFT-blocked-seconds 2 and DRAFT-still-wu 2.0 (in `run.py`), DRAFT-replay-resolution 1919x1080 (as `play.sh`), DRAFT-reach-mask-union (criterion 1). Westley owns every threshold; none is new here beyond the last.
 
+## Decomposition
+
+Five cascade leaves: leaf-01 (spec leaves A and B merged, because `run.unreachable` calls the new `first_unreachable` signature and the two cannot be built apart: criteria 1, 3 to 6), leaf-02 (C: 7 to 9), leaf-03 (D: 10, 11), leaf-04 (E: 12, 13), leaf-05 (G: 14, 15). Spec leaf F (L-0039) was done by the Architect in the spec commit; criteria 2 and 16 and the `H-063.md` Scene copy are the overlord's, in the landing commit.
+
 ## Scale & Boundary Profile
 
 - **N typical / N peak:** 16 to 112 units a fight typical; 256 a side (512) peak (R4 maximum); frames at most 20 per fight (`snapshot` DRAFT-snapshot-count).

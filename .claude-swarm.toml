@@ -8,7 +8,7 @@ umbrella_test_cmd   = "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/pyt
 apex_test_cmd       = "scripts/specfactory/pre_gate.sh"
 briefs_dir          = "docs/northstar/plans/cascades/lab-stage3/briefs/"
 graphify_cmd        = ""
-worktree_link       = []
+worktree_link       = [".godot"]   # lab-stage3: leaf-02 runs Godot tests; reset to [] at the landing
 
 parent_owned = [
   "csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml",
