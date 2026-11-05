@@ -582,3 +582,15 @@ def test_darwin_fetch_keeps_sha256sum_when_it_is_present():
         assert r.unpacked()
     finally:
         r.close()
+
+
+def test_darwin_readme_open_in_the_editor_says_what_a_mac_needs():
+    """H-087 R-087-05: the README "Open in the editor" section names Godot 4.6.3 in /Applications and the Xcode command line tools (clang), and
+    still names the one command `scripts/setup_editor.sh`. Control: the section exists and already names the command today (so the red part is
+    the Mac sentence only)."""
+    text = (ROOT / "README.md").read_text()
+    m = re.search(r"### Open in the editor\n(.*?)(?=\n## |\n### )", text, re.S)
+    assert m, "README has no 'Open in the editor' section"
+    sec = m.group(1)
+    assert "scripts/setup_editor.sh" in sec
+    assert "/Applications" in sec and "4.6.3" in sec and re.search(r"command line tools", sec, re.I) and "clang" in sec, sec
