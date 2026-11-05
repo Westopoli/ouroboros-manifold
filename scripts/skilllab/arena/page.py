@@ -14,7 +14,7 @@ plain text (H-053 Replay readability, no per-seed strip pages).
 
 H-063 (stage 3): `--control-dir <dir>` adds, under a fight's strip (an unrated row's, a rated layout's median seed), the control strip: the same fight with the layout's
 `features` emptied, `<id>-control-s<n>.fight.json` in that directory with its frames in `<id>-control-s<n>/frame-<i>.png` (run.py `--control-dir` writes the fight).
-A fight without a control file shows no second strip. `--stage N` names the stage in the header (3 and 2 have words, any other is `Stage N`). `--sentences <md>`
+A fight without a control file shows no second strip. `--stage N` names the stage in the header (4, 3 and 2 have words, any other is `Stage N`). `--sentences <md>`
 is a table `| id | What to expect | Approve means | Deny means |` whose row for a layout id replaces the layout's `what_to_expect`, `approve_means`, `deny_means`.
 Every fight, rated or not, shows the three sentences and `blocked unit-frames: n` (n = sum of len(frame["blocked"]); a rated block counts its median seed's fight).
 """
@@ -48,7 +48,7 @@ def _layout(path):
 
 
 WORDS = (("What to expect", "what_to_expect"), ("Approve means", "approve_means"), ("Deny means", "deny_means"))
-STAGE_WORDS = {3: "Stage 3, the ground pushes back", 2: "Stage 2, roles and ranges"}
+STAGE_WORDS = {4: "Stage 4, sight", 3: "Stage 3, the ground pushes back", 2: "Stage 2, roles and ranges"}
 
 
 def _sentences(path):
@@ -69,6 +69,13 @@ def _words(layout, row):
 def _blocked(doc):
     """`blocked unit-frames: n`, n the sum over the fight's frames of len(frame["blocked"]) (0 for a fight with no `blocked` key)."""
     return "<p>blocked unit-frames: %d</p>" % sum(len(f.get("blocked", [])) for f in doc["frames"])
+
+
+def _first_seen(doc):
+    """`first seen A <tick|never>  B <tick|never>` from result.first_seen (H-088 stage 4); `first seen A -  B -` when the fight has no such key."""
+    fs = doc["result"].get("first_seen")
+    cell = lambda side: "-" if fs is None else "never" if fs.get(side) is None else str(fs[side])
+    return "<p>first seen A %s  B %s</p>" % (cell("A"), cell("B"))
 
 
 def _figure(src, tick, alive, height):
@@ -106,8 +113,8 @@ def _row(path, control_dir=None, sentences=None):
                "rowcls": ' class="stall"' if stall else "", "end": html.escape(res.get("end", "-")),
                "schema": html.escape(doc["schema"]), "flag": "<br><b>stall: bring to Westley</b>" if stall else "",
                "verdict": html.escape(layout.get("verdict") or "-"), "feedback": html.escape(layout.get("feedback", "")),
-               "strip": strip, "fall": fall, "words": _words(layout, (sentences or {}).get(doc["layout_id"], {})), "blocked": _blocked(doc),
-               "control": _control_row(control_dir, doc["layout_id"], doc["seed"])})
+               "strip": strip, "fall": fall, "words": _words(layout, (sentences or {}).get(doc["layout_id"], {})), "blocked": _blocked(doc) + _first_seen(doc),
+               "control": _control_row(control_dir, doc["layout_id"], doc["seed"], doc.get("sight"))})
 
 
 def _first_shot(frames):
@@ -205,19 +212,21 @@ def _row_html(cells, tag="td"):
     return "<tr>%s</tr>" % "".join('<%s%s>%s</%s>' % (tag, ' class="%s"' % c if c else "", html.escape(x), tag) for x, c in cells)
 
 
-def _control_strip(control_dir, layout_id, seed):
-    """The control strip of one seed, with its label; empty when no control fight file is there or it does not validate."""
+def _control_strip(control_dir, layout_id, seed, main_sight=None):
+    """The control strip of one seed, with its label (H-088: a sight off control of a sight on fight reads the sight caption, any other the ground one); empty when no control fight file is there or it does not validate."""
     stem = "%s-control-s%d" % (layout_id, seed)
     try:
         doc = read(Path(control_dir) / (stem + ".fight.json"))
     except (ValueError, OSError):
         return ""
-    return '<p>control: the same fight without the ground (features emptied)</p><div class="strip">%s</div>' % _strip(stem, doc["frames"], stem)
+    caption = ("control: the same fight with everyone seeing everyone (sight off)" if main_sight == "on" and doc.get("sight") == "off"
+               else "control: the same fight without the ground (features emptied)")
+    return '<p>%s</p><div class="strip">%s</div>' % (caption, _strip(stem, doc["frames"], stem))
 
 
-def _control_row(control_dir, layout_id, seed):
+def _control_row(control_dir, layout_id, seed, main_sight=None):
     """The control strip of an unrated fight as a table row; empty when there is none."""
-    strip = _control_strip(control_dir, layout_id, seed) if control_dir else ""
+    strip = _control_strip(control_dir, layout_id, seed, main_sight) if control_dir else ""
     return '\n<tr><td colspan="4">%s</td></tr>' % strip if strip else ""
 
 
@@ -233,12 +242,12 @@ def _layout_block(d, out_dir, rate, docs, layout, bad, control_dir=None, sentenc
                         for r, a, b, sa, sb in _survivors(list(docs.values()))) if docs else ""
     stem = "%s-s%d" % (rate["layout_id"], rate["median_seed"])
     strip = _strip(stem, median["frames"], stem, _first_shot(median["frames"])) if median else ""
-    words = _words(layout, (sentences or {}).get(rate["layout_id"], {})) + (_blocked(median) if median else "")
+    words = _words(layout, (sentences or {}).get(rate["layout_id"], {})) + (_blocked(median) + _first_seen(median) if median else "")
     return ('<h2>%s</h2><table border="1" cellpadding="6">%s%s</table>%s%s<table border="1" cellpadding="4"><tr><th>role</th><th>A mean survivors</th>'
             '<th>B mean survivors</th><th>A start</th><th>B start</th></tr>%s</table><p>median seed %d strip (first shot outlined)</p>'
             '<div class="strip">%s</div>%s<p>seeds: %s</p>%s'
             % (html.escape(rate["layout_id"]), _row_html([(h, "") for h in SUMMARY_HEAD], "th"), _row_html(cells), _gap_sentence(rate), words, survivors, rate["median_seed"], strip,
-               _control_strip(control_dir, rate["layout_id"], rate["median_seed"]) if control_dir else "", " ".join(seeds), "".join("<p><b>%s</b></p>" % html.escape(m) for m in bad)))
+               _control_strip(control_dir, rate["layout_id"], rate["median_seed"], median.get("sight") if median else None) if control_dir else "", " ".join(seeds), "".join("<p><b>%s</b></p>" % html.escape(m) for m in bad)))
 
 
 def build(d, out, control_dir=None, stage=None, sentences=None):
@@ -271,7 +280,7 @@ def main(argv=None):
     ap.add_argument("--dir", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--control-dir", help="directory of <id>-control-s<n>.fight.json control fights, shown as a second strip (H-063)")
-    ap.add_argument("--stage", type=int, help="the stage number named in the header (3: the ground pushes back, 2: roles and ranges)")
+    ap.add_argument("--stage", type=int, help="the stage number named in the header (4: sight, 3: the ground pushes back, 2: roles and ranges)")
     ap.add_argument("--sentences", help="markdown table | id | What to expect | Approve means | Deny means | overriding the layouts' own sentences")
     args = ap.parse_args(argv)
     return build(args.dir, args.out, args.control_dir, args.stage, args.sentences)

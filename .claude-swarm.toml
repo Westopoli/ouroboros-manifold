@@ -2,11 +2,11 @@
 # See also: docs/northstar/plans/cascades/README.md (layout and landing path), pieces row HARNESS-swarm-config
 
 spec_dir            = "docs/northstar/plans/cascades/"
-# set per cascade by its records commit (this one: b1-approved-screens, DEC-client-cascade-parent-owned-2026-11-05)
-type_contract_path  = "docs/northstar/plans/cascades/b1-approved-screens/contract.md"
-umbrella_test_cmd   = "python3 -m pytest tests/method/test_setup_editor.py -q -p no:cacheprovider -k darwin"
+# set per cascade by its records commit (placeholders between cascades; DEC-client-cascade-parent-owned-2026-11-05)
+type_contract_path  = "<the cascade's contract header, e.g. csrc/field_noise.h>"
+umbrella_test_cmd   = "python3 -m pytest <the cascade's umbrella file> -q -p no:cacheprovider"
 apex_test_cmd       = "make && godot.real --headless --import --path . && python3 -m pytest tests/qa/test_beta_b1_chain.py tests/method/test_beta_build_sha.py tests/method/test_setup_editor.py -q -p no:cacheprovider"
-briefs_dir          = "docs/northstar/plans/cascades/b1-approved-screens/briefs/"
+briefs_dir          = "docs/northstar/plans/cascades/<slug>/briefs/"
 graphify_cmd        = ""
 worktree_link       = []
 

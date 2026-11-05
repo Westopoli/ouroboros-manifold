@@ -28,6 +28,8 @@ const RING_ALPHA := 0.9  # DRAFT-stage2-ring-alpha: a role ring's line, in its s
 const FACING_MIN_PX := 8.0  # story: the facing tick is as long as the glyph, never under this
 const BLOCKED_RING_WU := 45.0  # DRAFT-blocked-ring-wu (H-063): radius of the ring on a unit blocked by the ground, wider than the first-shot ring
 const BLOCKED_COLOUR := Color(1.0, 0.45, 0.0)  # DRAFT-blocked-colour (H-063)
+const SIGHT_ALPHA := 0.25  # DRAFT-sight-alpha (lab-stage4): a sight disc's line, in its side's colour
+const HOLLOW_ALPHA := 0.35  # DRAFT-hollow-alpha (lab-stage4): the body of a unit no living enemy sees
 const Marks := preload("res://scenes/proto/fight_replay/replay_marks.gd")
 
 var _fight: Dictionary = {}
@@ -52,6 +54,7 @@ var _end_label := ""
 var _rate_label := ""  # `rate A <m> vs target <p> (gap <n> pts, not scored); guess <A|B|draw>: AGREE|DISAGREE|NOT SCORED (mirror)` from the rate file, "" when there is none
 var _role_rings: Array = []  # H-053: [{side, role, range, style, id}] one per role per side, id = the fight unit the ring follows (nearest the enemy at frame 0)
 var _unit_rings := false  # key R: a ring on every living unit instead of the per-role rings
+var _sight_units := false  # key V: a sight disc on every living unit instead of the per-role discs
 var _wide := false  # the camera follows each frame's centroid instead of holding the whole fight
 var _free_rect := Rect2()
 var _fit: Array = [0.0, 0.0, 0.0, 0.0]  # the world box the camera shows: the whole fight, or the part round the centroid on a wide field
@@ -225,11 +228,18 @@ func _show(i: int) -> void:
 	var by_id := {}
 	for u in frame["units"]:
 		by_id[int(u["id"])] = u
+	var hollow := _hollow_ids(frame)
 	for u in frame["units"]:
 		var node: Node3D = _units3d.unit_node(_ordinal[int(u["id"])])
 		node.scale = Vector3.ONE * _glyph_k
 		node.position.y += GLYPH_LIFT_WU
 		_dress(node as MeshInstance3D, String(u["role"]), String(u["side"]))
+		(node as MeshInstance3D).material_override = null
+		if bool(u["alive"]) and hollow.has(int(u["id"])):  # lab-stage4: no living enemy lists this unit in `seen`; the body fades, the arrow stays
+			var mat: StandardMaterial3D = (node as MeshInstance3D).mesh.surface_get_material(0).duplicate()
+			mat.albedo_color.a = HOLLOW_ALPHA
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			(node as MeshInstance3D).material_override = mat
 		if not bool(u["alive"]):
 			(node as MeshInstance3D).material_override = _unshaded(DEAD_COLOUR)
 			node.get_node("Arrow").visible = false
@@ -258,6 +268,13 @@ func _show(i: int) -> void:
 						pts.append(_at(p.x, p.y, LIFT_WU))
 					_overlay.add_child(_line(pts, Color(c.r, c.g, c.b, RING_ALPHA)))
 				_ring_count += 1
+	for d in _sight_state(frame, true):  # lab-stage4: sight discs, drawn as the role rings are
+		var c: Color = SIDE_COLOURS[d["side"]]
+		for run in Marks.ring_runs(Vector2(d["centre"][0], d["centre"][1]), float(d["radius"]), Marks.STYLES[maxi(ROLES.find(String(d["role"])), 0)]):
+			var pts := PackedVector3Array()
+			for p in run:
+				pts.append(_at(p.x, p.y, LIFT_WU))
+			_overlay.add_child(_line(pts, Color(c.r, c.g, c.b, SIGHT_ALPHA)))
 	if _wide:
 		_follow(frame)
 	if i == _first_shot:
@@ -276,7 +293,9 @@ func _show(i: int) -> void:
 				var a := TAU * float(k) / float(SHOT_RING_SEGMENTS)
 				ring.append(_at(float(b["x"]) + BLOCKED_RING_WU * cos(a), float(b["y"]) + BLOCKED_RING_WU * sin(a), GLYPH_LIFT_WU))
 			_overlay.add_child(_line(ring, BLOCKED_COLOUR))
-	_hud.text = "tick %d  A %d  B %d  blocked %d  frame %d/%d" % [int(frame["tick"]), int(frame["alive"][0]), int(frame["alive"][1]), _blocked_ids(frame).size(), i, _fight_frames.size()]
+	var sees := _hud_sight(frame)
+	_hud.text = "tick %d  A %d  B %d  blocked %d  %sframe %d/%d" % [int(frame["tick"]), int(frame["alive"][0]), int(frame["alive"][1]), _blocked_ids(frame).size(),
+			sees + "  " if sees != "" else "", i, _fight_frames.size()]
 	_hud_run.text = "seed %d" % int(_fight.get("seed", 0))
 	if _rate_a != null:
 		_hud_run.text += "  rate %.2f" % _rate_a
@@ -288,6 +307,9 @@ func _show(i: int) -> void:
 			_hud_end.text = "winner %s  predicted %s  %s" % [res.get("winner", ""), res.get("predict", ""), "agree" if res.get("agree", false) else "disagree"]
 		if res.get("stall", false):
 			_hud_end.text += "  STALL"
+		if res.get("first_seen") is Dictionary:  # lab-stage4: the first sampled tick each side saw an enemy; null is never
+			var fs: Dictionary = res["first_seen"]
+			_hud_end.text += ("  " if _hud_end.text != "" else "") + "first seen A %s  B %s" % [_tick_or_never(fs.get("A")), _tick_or_never(fs.get("B"))]
 	_hud_end.visible = _hud_end.text != ""
 	_hud_end_label.text = _end_label if last else ""
 	_hud_end_label.visible = _hud_end_label.text != ""
@@ -311,6 +333,9 @@ func _input(event: InputEvent) -> void:
 		_step(-1)
 	elif event.keycode == KEY_R:
 		_unit_rings = not _unit_rings
+		_show(_cursor)
+	elif event.keycode == KEY_V:
+		_sight_units = not _sight_units
 		_show(_cursor)
 
 
@@ -352,7 +377,9 @@ func qa_state() -> Dictionary:
 			"autoplay": _autoplay, "targets": _targets(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a, "ring_count": _ring_count,
 			"camera": {"fit": _fit, "unit_px": _unit_px}, "facing_px": maxf(FACING_MIN_PX, _unit_px), "rings": _ring_state(frame), "glyphs": _glyph_state(),
 			"end_label": _end_label if _cursor == _fight_frames.size() - 1 else "", "rate_label": _rate_label,
-			"features": _features_state(), "blocked_units": _blocked_ids(frame), "landscape": _landscape, "hud_tick": _hud.text}
+			"features": _features_state(), "blocked_units": _blocked_ids(frame), "landscape": _landscape, "hud_tick": _hud.text,
+			"sight_rings": _sight_state(frame, false), "sight_mode": "unit" if _sight_units else "role", "hollow_units": _hollow_ids(frame), "hud_sight": _hud_sight(frame),
+			"seen_counts": _seen_counts(frame)}
 
 
 ## The layout shot's `features` entry: {kind, x, y} per feature drawn.
@@ -381,6 +408,70 @@ func _ring_state(frame: Dictionary) -> Array:
 		var anchor: Dictionary = by_id[int(r["id"])]
 		out.append({"side": r["side"], "role": r["role"], "range": r["range"], "style": r["style"], "centre": [float(anchor["x"]), float(anchor["y"])]})
 	return out
+
+
+## lab-stage4: the sight discs, [{side, role, radius, centre}]. Role mode: one per role per side on the role ring's anchor (a role needs a ring, so a range, and a sight); with
+## `drawn` only while the anchor lives. Unit mode (key V): one per living unit whose role has a sight. [] when the fight file has no `sights`.
+func _sight_state(frame: Dictionary, drawn: bool) -> Array:
+	var sights = _fight.get("sights")
+	var out: Array = []
+	if not sights is Dictionary:
+		return out
+	var by_id := {}
+	for u in frame["units"]:
+		by_id[int(u["id"])] = u
+	if _sight_units:
+		for u in frame["units"]:
+			if bool(u["alive"]) and sights.has(u["role"]):
+				out.append({"side": u["side"], "role": u["role"], "radius": float(sights[u["role"]]), "centre": [float(u["x"]), float(u["y"])]})
+		return out
+	for r in _role_rings:
+		var anchor: Dictionary = by_id[int(r["id"])]
+		if sights.has(r["role"]) and (bool(anchor["alive"]) or not drawn):
+			out.append({"side": r["side"], "role": r["role"], "radius": float(sights[r["role"]]), "centre": [float(anchor["x"]), float(anchor["y"])]})
+	return out
+
+
+## lab-stage4: [A, B], the sizes of the unions of `seen` over each side's living units.
+func _seen_counts(frame: Dictionary) -> Array:
+	var seen := {"A": {}, "B": {}}
+	for u in frame["units"]:
+		if bool(u["alive"]):
+			for id in u.get("seen", []):
+				seen[u["side"]][int(id)] = true
+	return [seen["A"].size(), seen["B"].size()]
+
+
+## lab-stage4: the sorted ids of the living units no living enemy lists in `seen`; [] when no unit of the frame has a `seen` key.
+func _hollow_ids(frame: Dictionary) -> Array:
+	var out: Array = []
+	var has_seen := false
+	var listed := {}
+	for u in frame["units"]:
+		has_seen = has_seen or u.has("seen")
+		if bool(u["alive"]):
+			for id in u.get("seen", []):
+				listed[int(id)] = true
+	if not has_seen:
+		return out
+	for u in frame["units"]:
+		if bool(u["alive"]) and not listed.has(int(u["id"])):
+			out.append(int(u["id"]))
+	out.sort()
+	return out
+
+
+## lab-stage4: `A sees %d  B sees %d` for a frame with `seen` keys, "" otherwise.
+func _hud_sight(frame: Dictionary) -> String:
+	for u in frame["units"]:
+		if u.has("seen"):
+			var n := _seen_counts(frame)
+			return "A sees %d  B sees %d" % [n[0], n[1]]
+	return ""
+
+
+func _tick_or_never(t) -> String:
+	return "never" if t == null else str(int(t))
 
 
 func _glyph_state() -> Dictionary:

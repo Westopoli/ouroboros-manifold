@@ -1,0 +1,3 @@
+- **first-seen line placement**: a `<p>first seen A x  B y</p>` after the `blocked unit-frames: n` paragraph in the sentences cell (unrated row and rated block); the page has no printed first-shot line (it is an outlined frame), so "beside" is read as next to the blocked line — source: spec line 35, page.py `_row` / `_layout_block`
+- **main fight sight for the caption**: `doc.get("sight")` of the row's fight (rated: the median seed's fight) compared with the control document's `sight` — source: spec line 34
+- **first_seen cell for a key present but a side missing**: `never` (same as null); only a wholly absent `first_seen` prints `-` — source: no source — pure guess

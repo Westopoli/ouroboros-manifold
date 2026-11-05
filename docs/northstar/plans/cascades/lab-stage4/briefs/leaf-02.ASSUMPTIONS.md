@@ -1,0 +1,6 @@
+- **seen_counts and hollow ignore dead observers**: only living units' `seen` lists count (a dead unit's stale list is not an observer) — source: test_hollow_units_are_the_living_units_no_living_enemy_lists docstring (frame 2); spec line 31 "unions of seen"
+- **first-seen text lives on the old end line (HudEnd)**: appended to `_hud_end` after the winner/STALL text, joined by two spaces; shown with or without a rate file — source: spec line 31 "the last frame's end line"; no source for which Label
+- **disc line style**: each disc uses its role's ring line style (Marks.STYLES) through Marks.ring_runs, lifted at LIFT_WU like the role rings — source: spec line 29 "as the role rings are drawn"
+- **role-mode disc drawn only while its anchor lives; qa sight_rings lists it regardless** — source: mirrors _role_rings/_ring_state
+- **hollow body**: duplicate of the glyph mesh's surface material with albedo alpha 0.35 and alpha transparency, set as material_override (reset to null for other units); the arrow child untouched — source: spec line 30, no source for the mechanism
+- **a frame "has seen keys" when any unit of it has a `seen` key** — source: spec lines 30, 31

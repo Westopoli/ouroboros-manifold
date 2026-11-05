@@ -74,7 +74,7 @@ def validate(doc: dict) -> list[str]:
     if v2 and "ranges" in doc:
         top = dict(top, ranges=dict)   # H-053: optional {role: range wu}, om-fight-2 only
     if v2:
-        top = dict(top, **{k: t for k, t in (("landscape", str), ("movement_kind", int)) if k in doc})   # H-063: optional, om-fight-2 only
+        top = dict(top, **{k: t for k, t in (("landscape", str), ("movement_kind", int), ("sights", dict)) if k in doc})   # H-063, H-088 (sights): optional, om-fight-2 only
     _check_keys(doc, top, "", out)
     if v2 and isinstance(doc.get("ranges"), dict):
         for role, rng in doc["ranges"].items():
@@ -82,9 +82,13 @@ def validate(doc: dict) -> list[str]:
                 out.append(f"bad ranges.{role} (want a number at or above 0)")
     if doc.get("schema") not in SCHEMAS and "schema" in doc:
         out.append(f"schema is not {SCHEMA} or {SCHEMA_V2}")
+    if v2 and isinstance(doc.get("sights"), dict):
+        for role, rad in doc["sights"].items():
+            if not _kind_ok(rad, "num") or rad < 0:
+                out.append(f"bad sights.{role} (want a number at or above 0)")
     if v2 and isinstance(doc.get("orders"), dict):
         orders = doc["orders"]
-        _check_keys(orders, _ORDERS, "orders", out)
+        _check_keys(orders, dict(_ORDERS, guard=bool) if "guard" in orders else _ORDERS, "orders", out)
         if "mode" in orders and orders["mode"] not in _ORDER_MODES:
             out.append("orders.mode is not both_same_point or hold_and_attack")
         pt = orders.get("point")
@@ -118,7 +122,9 @@ def validate(doc: dict) -> list[str]:
                 if not isinstance(unit, dict):
                     out.append(f"bad type {uwhere}")
                     continue
-                _check_keys(unit, _UNIT, uwhere, out)
+                _check_keys(unit, dict(_UNIT, seen=list) if v2 and "seen" in unit else _UNIT, uwhere, out)   # H-088: optional ids of the living enemies the unit sees
+                if v2 and isinstance(unit.get("seen"), list) and not all(_kind_ok(e, int) for e in unit["seen"]):
+                    out.append(f"bad type {uwhere}.seen (want a list of unit ids)")
                 if unit.get("side") not in ("A", "B") and "side" in unit:
                     out.append(f"{uwhere}.side is not A or B")
                 if _kind_ok(unit.get("id"), int):
@@ -131,8 +137,10 @@ def validate(doc: dict) -> list[str]:
             out.append("frames[0].tick is not 0")
     result = doc.get("result")
     if isinstance(result, dict):
-        spec = dict(_RESULT, end=str, stall=bool) if v2 else _RESULT
+        spec = dict(_RESULT, end=str, stall=bool, **({"first_seen": dict} if "first_seen" in result else {})) if v2 else _RESULT   # H-088: first_seen optional
         _check_keys(result, spec, "result", out)
+        if v2 and isinstance(result.get("first_seen"), dict):
+            _check_keys(result["first_seen"], {"A": "int_or_null", "B": "int_or_null"}, "result.first_seen", out)
         winners = ("A", "B", "draw", "stall", "none") if v2 else ("A", "B", "draw")
         if result.get("winner") not in winners and "winner" in result:
             out.append("result.winner is not " + ", ".join(winners[:-1]) + " or " + winners[-1])

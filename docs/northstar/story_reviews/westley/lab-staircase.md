@@ -41,7 +41,7 @@ H-031 piece two (portal screen proof), H-038 part 2 (first scene drawn whatever 
 
 - Field: `open_field` preset, one layer, no features, no slope, no cover.
 - Units: one role per side (DRAFT: Vanguard both sides), headcounts from the layout, both sides `attack_move` to the other's centroid at tick 0.
-- Vision: off. DRAFT-sight-off: the arena registers every type with sight radius 1e6 world units, so every unit sees every enemy from tick 0 (the stat is passed in `_register_types`; no C change). If the sim has no sight stat the builder reports it and the stage stops for a ruling.
+- Vision: off. DRAFT-sight-off: the arena sets `OM_TP_TARGET_BY_SIGHT` to 0, so a unit acquires and fires at any enemy in range whether or not its side sees it (DEC-lab-stage1-floor-2026-10-31; no C change). Stage 4 turns it on (DEC-cover-blocks-sight-not-hits-2026-11-05).
 - Four parts (files, owners, parallel):
   1. **Snapshot contract** (lands first, half a day, its own `H-` story): `docs/northstar/research/layer_dynamics/arena/SNAPSHOT.md` and `scripts/skilllab/arena/snapshot.py` define `fight.json`: `layout_id`, `seed`, `tick_rate`, `frames: [{tick, units: [{id, side, role, x, y, facing, hp, alive, target}]}]`, `result: {winner, survivors_a, survivors_b, ticks, predict, agree}`. Frames every DRAFT-snapshot-seconds 5 s of sim time plus the first and last tick; DRAFT-snapshot-count 10 to 20 per fight (Westley 2026-10-30: 10 to 20 snapshots). Positive control: a frame missing `hp` fails `validate()`.
   2. **Arena runner** (`scripts/skilllab/arena/run.py`, new): `python3 -m scripts.skilllab.arena.run --layout <toml> --seed N --out <dir>` reads a layout, builds a `Setup` through the existing `fight.py` helpers, runs `engine.step` to death or DRAFT-fight-cap 600 s, writes `fight.json` and a `result.md` row. Deterministic: same layout and seed give a byte-identical `fight.json` (test).
@@ -74,8 +74,8 @@ H-031 piece two (portal screen proof), H-038 part 2 (first scene drawn whatever 
 
 "Fog: units see by sight range, eye height and cover; vantage sees further; the defender on guard waits until it sees something."
 
-- Adds: real sight (the 1e6 override removed), `can_see` recorded per frame (`seen` list per unit), defender uses `order_guard` (round two `defender` key), cover reduces hits per the sim's rule. Replay draws sight as a faint disc per selected unit and marks unseen enemies hollow.
-- Layouts: vantage, cover, staging, trap situations.
+- Adds: `--sight on` is the stage 4 rule set (DEC-stage4-sight-bundle-2026-11-05): targeting by sight on (R-093-02), ground era, walking units, reach 0 up 1 down so the high ground fires down (DEC-stage4-vantage-reach-2026-11-05), the holder on `order_guard` (R-096-08; DEC-stage4-guard-holder-2026-11-05), `can_see` recorded per frame (`seen` list per unit) and the tick each side first sees the other (`first_seen`). Cover blocks sight by height and never reduces damage (R-007-01, R-007-04): the stage 3 boxes, walls and buildings already hide units once sight is on, so there is no cover call (DEC-cover-blocks-sight-not-hits-2026-11-05). Replay draws sight as a faint disc per role (per unit on V) and marks unseen enemies hollow; the page's control strip is the same fight with sight off (DEC-stage4-control-sight-off-2026-11-05).
+- Layouts: vantage L-0061, traps L-0080 and L-0083, cover L-0039; staging is out ("Throw them out", 2026-11-01; DEC-stage4-layouts-2026-11-05).
 - Done when: he watches a vantage fight and a trap and agrees who saw whom first.
 
 ### Stage 5: facing, arcs and height bands
