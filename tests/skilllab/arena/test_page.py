@@ -354,3 +354,70 @@ def test_page_flags_only_the_stall_among_a_stall_and_a_wipe(stage):
     assert len([t for tag, toks in cells.classes for t in toks if t == "stall"]) == 1
     assert page.count("stall: bring to Westley") == 1
     assert page.index("L-0203") < page.index("stall: bring to Westley") < page.index("L-0204")
+
+
+# ================================================================ H-053 defect: stage 2 thumbnails at least 480 px tall
+# Brief to the test writer, 2026-11-02 (DRAFT-stage2-thumb-px 480, Westley rules): at 240 px a stage 2 frame is too small to judge a fight by. Intended: every frame image in a
+# STAGE 2 strip (a layout block with a `<id>.rate.json`: the median-seed strip on the page and each seed's `<id>-s<k>/strip.html`) is at least 480 px tall; the stage 1 strip
+# (240 px, "240 px high") is unchanged. Fixture: the `stage` fixture's L-0101 gets a rate file (so it is a stage 2 block); L-0102 stays a stage 1 row on the same page.
+
+class _Imgs(HTMLParser):
+    """Heights (px, from a height attribute or a style height) of every <img>, split by the container: a `div` with class strip (stage 2) or a `td` with class strip (stage 1)."""
+    def __init__(self):
+        super().__init__()
+        self.stack, self.div_strip, self.td_strip = [], [], []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag in ("div", "td"):
+            self.stack.append((tag, "strip" in (a.get("class") or "").split()))
+        if tag == "img":
+            m = re.search(r"height\s*[:=]\s*[\"']?(\d+)", (a.get("height") and "height=" + a["height"]) or a.get("style") or "")
+            h = int(m.group(1)) if m else None
+            for t, is_strip in reversed(self.stack):
+                if is_strip:
+                    (self.div_strip if t == "div" else self.td_strip).append(h)
+                    break
+
+    def handle_endtag(self, tag):
+        if tag in ("div", "td") and self.stack:
+            self.stack.pop()
+
+
+def _stage2(stage):
+    """Give L-0101 (11 frames, seed 1) a rate file so the page shows it as a stage 2 block; returns (page html, out dir)."""
+    import json
+    root, out, docs = stage
+    (out / "L-0101.rate.json").write_text(json.dumps(
+        {"layout_id": "L-0101", "seeds": [1], "wins_a": 1, "wins_b": 0, "stalls": 0, "stall_seeds": [], "none_seeds": [], "rate_a": 1.0, "predict_rate": 0.9, "band": 0.1,
+         "agree": True, "firing_capable": {"A": 2.0, "B": 2.0}, "median_seed": 1}) + "\n")
+    page, _ = _build(stage)
+    return page, out
+
+
+def test_control_stage1_strip_images_are_240_high_and_the_stage2_block_has_strip_images(stage):
+    """Control, green today: with L-0101 rated and L-0102 not, the page's stage 1 row strip (td.strip) holds 240-high images (the unchanged H-040 part 4 words), and the stage 2
+    block has a div.strip whose images the parser reads a height from (so the red below is their height, not the parser)."""
+    page, _ = _stage2(stage)
+    imgs = _Imgs()
+    imgs.feed(page)
+    assert imgs.td_strip and set(imgs.td_strip) == {240}, imgs.td_strip
+    assert imgs.div_strip and None not in imgs.div_strip, imgs.div_strip
+
+
+def test_stage2_strip_images_on_the_page_are_at_least_480_high(stage):
+    """DRAFT-stage2-thumb-px: every image in the stage 2 block's median-seed strip on the page is >= 480 px high (today 240), while the stage 1 row's strip stays 240."""
+    page, _ = _stage2(stage)
+    imgs = _Imgs()
+    imgs.feed(page)
+    assert imgs.div_strip and min(imgs.div_strip) >= 480, "stage 2 strip heights %s" % sorted(set(imgs.div_strip))
+    assert set(imgs.td_strip) == {240}, "stage 1 strip changed: %s" % sorted(set(imgs.td_strip))
+
+
+def test_stage2_layout_strip_images_are_at_least_480_high(stage):
+    """DRAFT-stage2-thumb-px: the one strip per layout (no per-seed strip pages, H-053 Replay readability item 6) carries images >= 480 px high."""
+    page, _ = _stage2(stage)
+    imgs = _Imgs()
+    imgs.feed(page)
+    assert imgs.div_strip and None not in imgs.div_strip, imgs.div_strip
+    assert min(imgs.div_strip) >= 480, "layout strip heights %s" % sorted(set(imgs.div_strip))

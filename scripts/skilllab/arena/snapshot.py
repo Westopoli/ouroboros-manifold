@@ -71,7 +71,13 @@ def validate(doc: dict) -> list[str]:
         return ["document is not a table"]
     v2 = doc.get("schema") == SCHEMA_V2
     top = dict(_TOP, orders=dict) if v2 else _TOP
+    if v2 and "ranges" in doc:
+        top = dict(top, ranges=dict)   # H-053: optional {role: range wu}, om-fight-2 only
     _check_keys(doc, top, "", out)
+    if v2 and isinstance(doc.get("ranges"), dict):
+        for role, rng in doc["ranges"].items():
+            if not _kind_ok(rng, "num") or rng < 0:
+                out.append(f"bad ranges.{role} (want a number at or above 0)")
     if doc.get("schema") not in SCHEMAS and "schema" in doc:
         out.append(f"schema is not {SCHEMA} or {SCHEMA_V2}")
     if v2 and isinstance(doc.get("orders"), dict):
@@ -94,7 +100,9 @@ def validate(doc: dict) -> list[str]:
             if not isinstance(frame, dict):
                 out.append(f"bad type {where}")
                 continue
-            ok = _check_keys(frame, _FRAME, where, out)
+            ok = _check_keys(frame, dict(_FRAME, blocked=list) if v2 and "blocked" in frame else _FRAME, where, out)   # H-063: optional, unit ids
+            if v2 and isinstance(frame.get("blocked"), list) and not all(_kind_ok(b, int) for b in frame["blocked"]):
+                out.append(f"bad type {where}.blocked (want a list of unit ids)")
             if _kind_ok(frame.get("tick"), int):
                 ticks.append(frame["tick"])
             if isinstance(frame.get("alive"), list):
@@ -123,7 +131,7 @@ def validate(doc: dict) -> list[str]:
     if isinstance(result, dict):
         spec = dict(_RESULT, end=str, stall=bool) if v2 else _RESULT
         _check_keys(result, spec, "result", out)
-        winners = ("A", "B", "draw", "stall") if v2 else ("A", "B", "draw")
+        winners = ("A", "B", "draw", "stall", "none") if v2 else ("A", "B", "draw")
         if result.get("winner") not in winners and "winner" in result:
             out.append("result.winner is not " + ", ".join(winners[:-1]) + " or " + winners[-1])
         if v2:
@@ -214,4 +222,5 @@ def example(frames: int = 3, units_per_side: int = 2, schema: str = SCHEMA) -> d
         doc["orders"] = {"mode": "both_same_point", "point": [120.0, 52.0], "attacker": None}
         doc["result"]["end"] = "wipe"
         doc["result"]["stall"] = False
+        doc["ranges"] = {"Raider": 200.0}
     return doc

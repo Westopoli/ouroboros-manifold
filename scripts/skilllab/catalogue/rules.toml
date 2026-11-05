@@ -1,4 +1,4 @@
-# H-025 layout rules, the closed list R1 to R6. check_layout in produce.py reads the numbers below.
+# H-025 layout rules, the closed list R1 to R8. check_layout in produce.py reads the numbers below.
 
 [R1]
 text = "every unit inside the preset's bounds"
@@ -22,3 +22,10 @@ roles = ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]
 [R6]
 text = "every layout except open_field carries its situation's feature, and every unit's centre stands off every wall, box, building and ridge rectangle of the features by standoff world units (the collision radius OM_UNIT_COLLISION_RADIUS 15, ALG-68)"
 standoff = 15
+
+[R7]
+text = "arc placement (H-053): when a side carries an arc, every unit of that side lies within tolerance world units of the arc's radius from its centre"
+tolerance = 1
+
+[R8]
+text = "reachability (H-063): the arena REJECTs a layout in which a unit that moves under the layout's orders cannot reach the orders point over open ground, naming the first such unit; checked by scripts/skilllab/arena/run.py, which knows the orders, not by check_layout"

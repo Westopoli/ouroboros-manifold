@@ -25,3 +25,5 @@ Row format (spec `docs/northstar/plans/2026-10-29-layered-gate-spec.md` section 
 | 2026-11-03 18:17 | d24245d83fc8d6743a6c30ac9aa351f7466ca55d | REJECT | new: tests/specfactory/test_size_lint.py::test_real_examples_from_the_repo | red: 119 | docs/northstar/plans/push/sweeps/2026-11-03-d24245d83fc8d6743a6c30ac9aa351f7466ca55d.txt |
 | 2026-11-03 20:08 | b44f6943a4f89e4f154f49ea99ca9ecff8d3d1f4 | PASS | new: none | red: 118 | docs/northstar/plans/push/sweeps/2026-11-03-b44f6943a4f89e4f154f49ea99ca9ecff8d3d1f4.txt |
 | 2026-11-04 05:05 | fbd8beb30a5b1edc48b1f2074f89b3fe94b2dfc0 | PASS | new: none | red: 0 |  |
+| 2026-11-04 15:52 | 7f6769b7ca73c5d2e2dc3b09f184ae6da887f482 | PASS | new: none | red: 119 | docs/northstar/plans/push/sweeps/2026-11-04-7f6769b7ca73c5d2e2dc3b09f184ae6da887f482.txt |
+| 2026-11-04 16:49 | 36a1355735b18e34f9e1868481ada4f97e54b230 | PASS | new: none | red: 118 | docs/northstar/plans/push/sweeps/2026-11-04-36a1355735b18e34f9e1868481ada4f97e54b230.txt |

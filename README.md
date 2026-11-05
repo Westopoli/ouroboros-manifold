@@ -118,6 +118,10 @@ Each of these is a scar, and the fix is in the repo. The incident records, with 
 
 **Not in this repo.** The cascade skill is its own repo above. Agent memory, the worktree workspace, gate locks and the overnight loop live on the build machine; the incidents in "What we learned" were copied out of that memory into [`docs/northstar/lessons.md`](docs/northstar/lessons.md).
 
+### Open in the editor
+
+Run `scripts/setup_editor.sh` once, and again after any pull that changes `csrc/` (it rebuilds a stale pipe, fills `addons/godotsteam/` and imports the project once). Then open `project.godot` in the Godot editor and press F5. The editor, the test gate and the beta export are all Godot 4.6.3. A stale pipe is refused at the galaxy with a message that says to run the script again. `scripts/setup_editor.sh --check` lists the steps and changes nothing.
+
 ## Read next
 
 - [`docs/METHOD.md`](docs/METHOD.md): how this repo is run

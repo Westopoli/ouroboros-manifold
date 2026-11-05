@@ -45,9 +45,9 @@ Read `docs/method/runner.md`, then this file. Your channel is `beta`; your lock 
 
 Rewritten by whoever moves a stage, in the same commit (ROADMAP.md section 1 carries the one-line state per stage; this table carries the words).
 
-| Stage | State 2026-11-02 |
+| Stage | State 2026-11-04 |
 |---|---|
-| B0 | Seen 2026-11-02 (Westley: 'I saw B0 and approved it'). The editor route (H-067) is finished in parallel: builder done, landing queued on the beta gate. |
-| B1 | H-060 build done (17 tests green); landing queued on the beta gate behind H-069 and H-067; the landings are blocked on environment faults (GPU memory held by a local ollama model, /tmp quota), not on code. |
-| B2 | H-061 Ready; builds after B1 is Seen |
+| B0 | Seen 2026-11-02 (Westley: 'I saw B0 and approved it'). The editor route (H-067) is finished in parallel: built, gated green on the 2026-11-02 main, not yet landed; the landing is in flight on the beta gate since 2026-11-04 (first of three: H-067, H-069, H-060). |
+| B1 | H-060 built (17 tests green) and gated green on the 2026-11-02 main; not landed, third in the beta landing order after H-067 and H-069. The 2026-11-02 landing blocks (GPU memory, /tmp quota) are cleared; the proofs of 2026-11-03 were rejected only because a Software Updater notification covered the game monitor. After the landing: standing-build refresh, then four B1 pictures for Westley. |
+| B2 | H-061 Ready; builds after Westley marks B1 Seen |
 | B3 to B9 | Spec'd in this table only; story files written one stage ahead |
