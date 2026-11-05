@@ -32,9 +32,9 @@ SILENT_RANGE, LOUD_GAP = 600.0, 600.0   # observer sensor 1000: seen at 600 only
 IDLE_FAR = 9000.0
 DUMMY = {"Dummy": {"base": "Raider", "set": {"base_damage": 0.0}}}   # never fires, so nothing dies and no fight ends early
 
-BASELINE_ROW = {'outcome': 'cap', 'margin': 0.0, 'strength_left_0': 0.7799999999999999,
-                'strength_left_1': 0.7799999999999999, 'survivors_0': 3, 'survivors_1': 3, 'heads_0': 3,
-                'heads_1': 3, 'ticks': 400, 'first_contact_tick': 65, 'firing_unit_seconds_0': 51.0,
+BASELINE_ROW = {'outcome': 'cap', 'margin': -0.07500000000000007, 'strength_left_0': 0.7799999999999999,
+                'strength_left_1': 0.855, 'survivors_0': 3, 'survivors_1': 3, 'heads_0': 3,
+                'heads_1': 3, 'ticks': 400, 'first_contact_tick': 65, 'firing_unit_seconds_0': 34.0,
                 'firing_unit_seconds_1': 50.75}
 
 

@@ -1,3 +1,4 @@
+# Rule pins: R-087-05@a79833, R-096-03@16d0c4
 """PP-unit: the 200 wu leash and the leash-before-damage switch (E-11 R-087-05, E-13 R-096-03;
 plan Phase A "Decisions": "200 wu leash before damage: a switch; the lab runs both; he picks";
 audit G03).
@@ -88,15 +89,19 @@ def test_R_087_05_target_beyond_200_from_the_anchor_is_dropped(lib, world_factor
     step(lib, w, 4)
     assert target(lib, w, u) == enemy, "fixture: unit should have acquired and anchored"
 
-    lib.om_unit_teleport(w, u, 0.0, -250.0, 0)
+    # Test-defect, H-057 (DEC-leash-anchor-return-2026-11-01): the leash is the type's sensor radius, a Vanguard's 700 wu, so the
+    # unit goes 750 wu from its anchor with the target moved along (150 wu from the unit, in range): the drop is the leash's.
+    lib.om_unit_teleport(w, u, 0.0, -750.0, 0)
+    lib.om_unit_teleport(w, enemy, 150.0, -750.0, 0)
     seen = watch_target(lib, w, u, 4)
 
-    assert -1 in seen, f"a unit 250 wu from its anchor never dropped its target: {seen}"
+    assert -1 in seen, f"a unit 750 wu from its anchor never dropped its target: {seen}"
 
 
 def test_control_R_087_05_target_inside_200_of_the_anchor_is_kept(lib, world_factory):
-    """Positive control for the drop test above (green today): moved from 150 to 190 wu, still
-    inside the leash and the range, the same measure reads 'kept' on every tick."""
+    """Positive control for the drop test above (green today): the unit moved to 650 wu from its anchor, still
+    inside the leash (a Vanguard's sensor radius 700, H-057) with the target 190 wu beside it, in range, the same
+    measure reads 'kept' on every tick."""
     w = world_factory(n_regions=1)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
     enemy = spawn(lib, w, SUPPLY, 1, 150.0, 0.0)
@@ -104,7 +109,8 @@ def test_control_R_087_05_target_inside_200_of_the_anchor_is_kept(lib, world_fac
     step(lib, w, 4)
     assert target(lib, w, u) == enemy
 
-    lib.om_unit_teleport(w, enemy, 190.0, 0.0, 0)
+    lib.om_unit_teleport(w, u, 0.0, -650.0, 0)
+    lib.om_unit_teleport(w, enemy, 190.0, -650.0, 0)
     seen = watch_target(lib, w, u, 4)
 
     assert seen == [enemy] * 4, f"target inside the leash was dropped: {seen}"
@@ -126,7 +132,8 @@ def test_R_096_03_switch_1_drops_before_damage_and_the_unit_walks_on(lib, world_
     assert target(lib, w, u) == enemy, "fixture: unit should have acquired and anchored"
     before = hp(lib, w, enemy)
 
-    lib.om_unit_teleport(w, u, 0.0, -250.0, 0)
+    lib.om_unit_teleport(w, u, 0.0, -750.0, 0)      # H-057: past the Vanguard's sensor radius 700, the leash (was 250 past 200)
+    lib.om_unit_teleport(w, enemy, 150.0, -750.0, 0)
     step(lib, w)
 
     assert target(lib, w, u) == -1, "switch 1: a unit past the leash must drop its target"

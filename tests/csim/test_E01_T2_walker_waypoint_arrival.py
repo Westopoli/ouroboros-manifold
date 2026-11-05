@@ -46,7 +46,7 @@ FLYER_TICKS = 200
 # (units, movement) sections.
 # TD-VG-W-2: old 11290823588580758478, new 12903589747027128004 (movement word only; units word 1545777915625493498 unchanged):
 # W2 stored routes add the route block to the movement section.
-FLYER_SECTIONS_200 = (1545777915625493498, 615507882537794494)   # re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged, positions identical to feb73b17; earlier: re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
+FLYER_SECTIONS_200 = (1545777915625493498, 2186885465155171946)   # re-recorded 2026-11-02 for H-057 (OM_TP_ATTACK_MOVE_LEASH default 200 to 0 is hashed in the movement section; units word unchanged); earlier: re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged, positions identical to feb73b17; earlier: re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
 
 
 def _units_movement(lib, w):

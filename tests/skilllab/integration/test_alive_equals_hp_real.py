@@ -31,7 +31,7 @@ def test_unit_alive_equals_hp_positive_at_every_tick(library):
         fight._issue_orders(library, w, setup, ids)
         sides = [[u for gi, g in enumerate(setup.groups) if g.side == s for u in ids[gi]] for s in (0, 1)]
         everyone, deaths = sides[0] + sides[1], 0
-        for _ in range(700):
+        for _ in range(1000):
             for u in everyone:
                 assert library.unit_alive(w, u) == (library.unit_hp(w, u) > 0), u
             deaths = sum(1 for u in everyone if not library.unit_alive(w, u))
