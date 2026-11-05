@@ -17,7 +17,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tests.method.test_setup_editor import (  # noqa: E402  (helpers only; no test functions are imported)
-    BUILT_MAC, LONG_AGO, OLD, SCRIPT, FETCH, DarwinRig, FetchRig, write_exec,
+    APP_STUB_NAME, BUILT_MAC, LONG_AGO, OLD, SCRIPT, FETCH, DarwinRig, FetchRig, write_exec,
 )
 
 DEFAULT_APP = "/Applications/Godot.app/Contents/MacOS/Godot"
@@ -34,9 +34,11 @@ def steam_line(rig):
     return f"step steam: copy {cache} to addons/godotsteam (cp -a); on a cache miss run scripts/fetch_godotsteam.sh"
 
 
-def run_without_app_seam(rig, *args):
-    """Like DarwinRig.run but OM_GODOT_APP is unset, so the script's own default app path applies."""
+def run_without_app_seam(rig, *args, app=None):
+    """Like DarwinRig.run but OM_GODOT_APP is unset (or, with app="", empty), so the script's own default app path applies."""
     env = {"HOME": str(rig.home), "PATH": f"{rig.bin}:{rig.tools}"}
+    if app is not None:
+        env["OM_GODOT_APP"] = app
     r = subprocess.run(["bash", str(rig.tree / "scripts" / "setup_editor.sh"), *args], cwd=str(rig.tree), env=env,
                        capture_output=True, text=True, timeout=60)
     r.lines = (r.stdout + r.stderr).splitlines()
@@ -113,6 +115,33 @@ def test_darwin_check_default_app_path_is_applications_when_om_godot_app_is_unse
         r.close()
 
 
+def test_darwin_check_with_a_fresh_pipe_a_filled_steam_dir_and_a_cache_changes_nothing_and_runs_no_stub():
+    """spec AC-4 ("changes nothing"): the case the other `--check` cases leave out: pipe fresh, addons/godotsteam already holding a file, cache
+    present. A `--check` that rebuilt, copied or imported would alter the snapshot or log a stub call. Red today for the four-line output."""
+    r = DarwinRig(pipe="fresh", cache=True)
+    try:
+        (r.tree / "addons" / "godotsteam" / "libgodotsteam.so").write_text("PRESENT\n")
+        before = r.snapshot()
+        p = r.run("--check")
+        assert p.returncode == 0 and len(p.lines) == 4 and p.lines[0] == pipe_line("arm64"), (p.returncode, p.lines)
+        assert r.calls() == [] and r.snapshot() == before and r.pipe() == OLD, r.calls()
+    finally:
+        r.close()
+
+
+def test_darwin_check_and_run_treat_an_empty_om_godot_app_as_the_default_path():
+    """contract Q4 (`${OM_GODOT_APP:-default}`): OM_GODOT_APP set but empty behaves as unset: `--check` and the failure line name the default
+    /Applications path, not an empty one."""
+    r = DarwinRig(godot="none")
+    try:
+        c = run_without_app_seam(r, "--check", app="")
+        assert f"step import: none found (looked at: godot.real on PATH, {DEFAULT_APP})" in c.lines, c.lines
+        p = run_without_app_seam(r, app="")
+        assert any("godot.real" in l and DEFAULT_APP in l for l in p.lines) and "EDITOR SETUP FAILED import" in p.lines, p.lines
+    finally:
+        r.close()
+
+
 # ---------------------------------------------------------------- Godot discovery (R-087-02)
 
 def test_darwin_run_failure_line_names_godot_real_and_the_default_app_path_once_before_the_failed_line():
@@ -123,6 +152,26 @@ def test_darwin_run_failure_line_names_godot_real_and_the_default_app_path_once_
         p = run_without_app_seam(r)
         named = [i for i, l in enumerate(p.lines) if "godot.real" in l and DEFAULT_APP in l]
         assert len(named) == 1 and "EDITOR SETUP FAILED import" in p.lines and named[0] < p.lines.index("EDITOR SETUP FAILED import"), p.lines
+    finally:
+        r.close()
+
+
+@pytest.mark.parametrize("mode", [0o755, 0o644])
+def test_darwin_the_app_binary_counts_only_when_it_is_executable(mode):
+    """contract Q1 (`-x`): an executable app is used (0o755, the control side: the import runs it); an app file with no execute bit is "none found":
+    `--check` says so and a run prints `EDITOR SETUP FAILED import` without running it."""
+    r = DarwinRig(godot="none")
+    try:
+        r.app.parent.mkdir(parents=True)
+        write_exec(r.app, f'echo "{APP_STUB_NAME} $*" >> {r.log}\n')
+        r.app.chmod(mode)
+        check = r.run("--check").lines
+        p = r.run()
+        if mode == 0o755:
+            assert f"step import: {r.app} {IMPORT_ARGS}" in check and f"{APP_STUB_NAME} {IMPORT_ARGS}" in r.calls() and f"EDITOR READY {r.tree}" in p.lines, (check, p.lines)
+        else:
+            assert f"step import: none found (looked at: godot.real on PATH, {r.app})" in check, check
+            assert "EDITOR SETUP FAILED import" in p.lines and not any(c.startswith(APP_STUB_NAME) for c in r.calls()), (p.lines, r.calls())
     finally:
         r.close()
 
@@ -187,6 +236,8 @@ def test_darwin_a_newer_file_nested_under_csrc_makes_the_pipe_stale():
         nested.parent.mkdir()
         nested.write_text("int y;\n")
         os.utime(nested, (LONG_AGO + 2000, LONG_AGO + 2000))
+        for d in (nested.parent, nested.parent.parent):  # only the nested FILE may be newer, not the directories (a shallow `-nt` check would see those)
+            os.utime(d, (LONG_AGO, LONG_AGO))
         p = r.run()
         assert p.returncode == 0 and r.calls().count("build-macos ARCH=arm64") == 1 and r.pipe() == BUILT_MAC, (p.lines, r.calls())
     finally:
@@ -230,6 +281,37 @@ def test_darwin_steps_run_in_order_and_a_mac_without_a_steam_cache_takes_the_fet
         r.close()
 
 
+def test_darwin_a_tree_path_with_a_space_runs_to_editor_ready():
+    """contract Q6 (every path expansion quoted): the tree directory has a space in its name; the Darwin run builds through the macOS script, copies
+    the pipe and ends `EDITOR READY <tree>`."""
+    r = DarwinRig()
+    try:
+        spaced = r.base / "my tree"
+        r.tree.rename(spaced)
+        r.tree = spaced
+        p = r.run()
+        assert (p.returncode, r.calls(), r.pipe()) == (0, ["build-macos ARCH=arm64", f"godot.real {IMPORT_ARGS}"], BUILT_MAC), (p.lines, r.calls())
+        assert f"EDITOR READY {spaced}" in p.lines, p.lines
+    finally:
+        r.close()
+
+
+def test_darwin_staleness_check_does_not_use_find_quit_which_bsd_find_lacks():
+    """contract ("must run under BSD `find`", no `-quit`): the rig's `find` exits 1 with a message on `-quit`, as BSD find does. A stale pipe still
+    rebuilds, a fresh one is kept, and the message never appears."""
+    s = DarwinRig(pipe="stale")
+    f = DarwinRig(pipe="fresh")
+    try:
+        ps = s.run()
+        assert ps.returncode == 0 and s.calls().count("build-macos ARCH=arm64") == 1 and s.pipe() == BUILT_MAC, (ps.lines, s.calls())
+        pf = f.run()
+        assert pf.returncode == 0 and "build-macos ARCH=arm64" not in f.calls() and f.pipe() == OLD, (pf.lines, f.calls())
+        assert not any("unknown primary" in l for l in ps.lines + pf.lines), (ps.lines, pf.lines)
+    finally:
+        s.close()
+        f.close()
+
+
 # ---------------------------------------------------------------- fetch_godotsteam.sh (R-087-03)
 
 def test_darwin_fetch_mismatch_with_shasum_exits_1_and_names_expected_and_got_exactly():
@@ -267,5 +349,16 @@ def test_control_fetch_prefers_sha256sum_over_shasum_when_both_exist():
         p = r.run()
         assert p.returncode == 1 and not r.unpacked(), (p.returncode, p.stderr)
         assert not any(c.startswith("shasum") for c in r.calls()), r.calls()
+    finally:
+        r.close()
+
+
+def test_control_fetch_with_neither_sha256sum_nor_shasum_fails_and_unpacks_nothing():
+    """CONTROL (green today, for the command-not-found reason; guards contract Q3 once shasum is a fallback): neither tool on PATH: exit non-zero,
+    nothing unpacked."""
+    r = FetchRig(sha256sum=False, shasum=False)
+    try:
+        p = r.run()
+        assert p.returncode != 0 and not r.unpacked(), (p.returncode, p.stderr)
     finally:
         r.close()

@@ -323,6 +323,10 @@ class DarwinRig(Rig):
         if godot in ("app", "none"):
             (self.bin / "godot.real").unlink()
         self.tools = tools_dir(self.base)
+        # BSD find (macOS) has no `-quit`: a `find` that rejects it stands in for the symlinked GNU one (contract: staleness test runs under BSD find)
+        (self.tools / "find").unlink()
+        write_exec(self.bin / "find", f'for a; do [ "$a" = -quit ] && {{ echo "find: unknown primary or operator: -quit" >&2; exit 1; }}; done\n'
+                   f'exec {shutil.which("find")} "$@"\n')
 
     def run(self, *args):
         env = {"HOME": str(self.home), "PATH": f"{self.bin}:{self.tools}", "OM_GODOT_APP": str(self.app)}
@@ -368,7 +372,7 @@ def test_darwin_check_prints_the_mac_build_line_the_godot_and_clang_and_changes_
         p = r.run("--check")
         assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
         assert any(l.startswith(MAC_CHECK_PIPE.format(arch="arm64")) for l in p.lines), p.lines
-        assert any(l.startswith("step import:") and str(r.bin / "godot.real") in l for l in p.lines), p.lines
+        assert any(l.startswith("step import:") and "godot.real" in l and "--headless --import --path ." in l for l in p.lines), p.lines
         assert "clang: present" in p.lines, p.lines
         assert not any("build_pipe_linux" in l for l in p.lines), p.lines
         for step in STEPS:
@@ -594,3 +598,4 @@ def test_darwin_readme_open_in_the_editor_says_what_a_mac_needs():
     sec = m.group(1)
     assert "scripts/setup_editor.sh" in sec
     assert "/Applications" in sec and "4.6.3" in sec and re.search(r"command line tools", sec, re.I) and "clang" in sec, sec
+    assert "godotengine.org" in sec and "xcode-select --install" in sec, sec  # AC-5
