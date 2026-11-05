@@ -24,7 +24,8 @@ def fight(layout: dict, seed: int, sight: str, cap_seconds: int):
 #   doc["sights"]: dict[str, float]              role -> sensor radius (engine.type_stats), as doc["ranges"]
 #   doc["result"]["first_seen"]: {"A": int | None, "B": int | None}   first sampled tick at which that side's living units see any living enemy
 #   doc["orders"]["guard"]: bool                 true when the holder was given order_guard, false for both_same_point
-# results.md (spec 4): header '| id | a:b | predict | winner | survivors | ticks | agree | blocked | first seen A | first seen B |', last two cells a tick or '-'
+# results.md (spec 4): with --sight on only, header '| id | a:b | predict | winner | survivors | ticks | agree | blocked | first seen A | first seen B |', last two cells a tick or '-'; with --sight off stage 3's header and rows, unchanged
+#   doc["movement_kind"]: 1 for every --sight on fight (spec 1)
 
 # --- scripts/skilllab/arena/snapshot.py (leaf A) ---
 
@@ -43,6 +44,7 @@ def build(d: str, out: str, control_dir: Optional[str] = None, stage: Optional[i
 
 
 # --- scenes/proto/fight_replay/fight_replay.gd (leaf B), qa_state() keys (spec 7, 8, 9) ---
+QA_STATE_KEYS_STAGE4 = ("sight_rings", "sight_mode", "hollow_units", "hud_sight", "seen_counts")   # spec 7, 8, 9: the keys fight_replay.gd qa_state() gains (the .gd file has no Python symbol)
 #   "sight_rings": list      [{side, role, radius, centre}, ...] as "rings"; [] when the fight file has no "sights"
 #   "sight_mode": str        "role" (default) or "unit" (key V toggles)
 #   "hollow_units": list     sorted unit ids drawn hollow at the current frame ([] when the frame has no "seen" keys)
