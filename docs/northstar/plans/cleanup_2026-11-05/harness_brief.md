@@ -8,7 +8,7 @@ Goal: one commit that makes the harness match those docs. Nothing else changes.
 
 ## Edits
 
-1. `.claude-swarm.toml`: `max_impl_lines = 100` becomes `1500`. Also `apex_test_cmd` becomes `"make && make pipe/ouroboros_pipe && ~/.local/bin/godot.real --headless --import --path ."` is NOT wanted; leave `apex_test_cmd` as it is. Only the cap line changes.
+1. `.claude-swarm.toml`: `max_impl_lines = 100` becomes `1500`. Only that line changes; leave `apex_test_cmd` and the rest as they are.
 2. `scripts/specfactory/size_lint.py`: `DEFAULT_WARN_LINES = 100` becomes `1500`.
 3. `scripts/specfactory/method_check.py`: remove the four CHECKS rows `plan_reread`, `comm_send`, `comm_state_checks`, `comm_mail_first`, and every function, constant and branch that exists only for them (`comm_hits`, `MAIL_WAIT`, `MAIL_READ`, `READING_LIST`, `reading_list()`, `PLAN_REREAD`, the `METHOD read first:` and `PLAN RE-READ` output, `PLANS_DIR` if unused after). Reword the `wakeups` rule to "No scheduled wakeups: the wait is the Workflow or Agent notification (docs/method/architect.md)." and the `polling` and `gate_runs` rules to cite `docs/method/story_loop.md` instead of `runner.md`/`clerk.md`; `live_tree` becomes "Never edit `~/Projects/ouroboros-manifold` itself; work on a worktree cut from it (docs/method/builder.md)." Six rules remain: wakeups, polling, gate_runs, live_tree, code_edits, context. `python3 scripts/specfactory/method_check.py` on an empty transcript must print exactly six `METHOD <id>` rule lines and no `read first` line.
 4. `scripts/specfactory/status_check.py`: remove `check_mail` and its call site (lines 178 to 184 region) so nothing reads `~/Projects/om-push/mail` or `agents.toml`.
