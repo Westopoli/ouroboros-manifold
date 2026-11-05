@@ -9,7 +9,7 @@ His direction: a batched, iterative, verified pipeline. Each stage ends in somet
 
 What this turns the lab into: a pre-placed game. A layout file puts units on a field; the real C sim runs the fight; the game's own 3D scene shows it; a diagram records who won against what he predicted. Nothing in the pipeline is new science: the game already moves, shoots and kills.
 
-Standing rules that apply unchanged: one story, one branch, one `--no-ff` landing (`docs/method/story_loop.md`); tests first by a different Sonnet; Sonnet look reviewer before any picture reaches his folder (DEC-look-reviewer-sonnet-2026-10-31); the eyes gate (no scene story lands until he reports a scene on his display, 2026-10-30); every number below is a DRAFT until he rules; Fable writes no code.
+Standing rules that apply unchanged: one story, one branch, one `--no-ff` landing (`docs/method/story_loop.md`); tests first by a different Sonnet; no pre-Westley look pass; he looks first (DEC-no-look-pass-2026-11-05); the eyes gate (no scene story lands until he reports a scene on his display, 2026-10-30); every number below is a DRAFT until he rules; Fable writes no code.
 
 ## What exists and is reused (read from origin/main b94fe97f)
 
@@ -50,7 +50,7 @@ H-031 piece two (portal screen proof), H-038 part 2 (first scene drawn whatever 
 - Scene run line (his): `scripts/play.sh --scene res://scenes/proto/fight_replay/fight_replay.tscn` with `OM_FIGHT=<path>` (play.sh passes the environment through; the story confirms this or adds `--env`).
 - Layouts for the stage: DRAFT 6, his or converted from his documents: open_field at 16:16, 16:32, 32:16, 8:64, 64:8, 128:128, predicted winner each.
 - Tests: `tests/skilllab/arena/test_snapshot.py`, `test_run.py` (determinism, cap, result agrees with hp), `tests/qa/test_fight_replay.py` (headless, `qa_state` frame count equals file, PNG per frame not blank; positive control: a `fight.json` with one frame removed changes `frame_count`).
-- Done when: he has watched at least three of the six fights in the replay scene on his display, the page is in his folder after a LOOK OK, and he writes a verdict per fight.
+- Done when: he has watched at least three of the six fights in the replay scene on his display, the page is in his folder, and he writes a verdict per fight.
 
 ### Stage 2: roles and ranges
 
@@ -125,7 +125,7 @@ After the staircase and the lab: piecemeal, then whole (planned 2026-11-02): the
 
 ## Verification
 
-- Stage 1 end to end on a fresh worktree: six layouts converted (`CONVERTED` lines), six fights run twice with byte-identical `fight.json`, replay scene opens through `scripts/play.sh` on his display with the portal proof line `PLAY proof <path> portal`, PNG per frame not blank, page lists six rows with predicted and actual, Sonnet look reviewer `LOOK OK` per picture, then his verdicts in `verdicts.md`.
+- Stage 1 end to end on a fresh worktree: six layouts converted (`CONVERTED` lines), six fights run twice with byte-identical `fight.json`, replay scene opens through `scripts/play.sh` on his display with the portal proof line `PLAY proof <path> portal`, PNG per frame not blank, page lists six rows with predicted and actual, then his verdicts in `verdicts.md`.
 - Positive controls: a frame missing `hp` fails `validate()`; a layout breaking R2 is rejected by the converter; a `fight.json` with a frame removed changes `frame_count`.
 - Determinism test runs in the sweep so a later stage cannot change stage 1's fights silently.
 

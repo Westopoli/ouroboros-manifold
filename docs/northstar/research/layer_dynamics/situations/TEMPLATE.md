@@ -36,4 +36,4 @@ none                        (or A or B; the defender holds on guard instead of a
 
 ## Notes for the eye
 
-What I expect to see in the replay, in one or two sentences, so the look reviewer and I check the same thing.
+What I expect to see in the replay, in one or two sentences, so what I expect and what I see can be compared.
