@@ -6,7 +6,7 @@
 
 [meta]
 abi_version = 10
-symbol_count = 803
+symbol_count = 805
 struct_count = 45
 ambiguous_remaining = 0
 
@@ -7374,6 +7374,26 @@ name = "om_mission_reinforce_note_spawn"
 module = "mission.c"
 restype = "void"
 params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_move_largest_radius"
+module = "tactical_move.c"
+restype = "double"
+params = [{ name = "w", ctype = "const om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_move_type_radius"
+module = "tactical_move.c"
+restype = "double"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "type", ctype = "int" }]
 internal = true
 epics = ["internal"]
 confidence = "certain"
