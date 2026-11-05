@@ -1,0 +1,58 @@
+diff --git a/tests/transport/test_pipe_mission_over.py b/tests/transport/test_pipe_mission_over.py
+index 47c55ef7..6c18e84b 100644
+--- a/tests/transport/test_pipe_mission_over.py
++++ b/tests/transport/test_pipe_mission_over.py
+@@ -6,10 +6,11 @@ limit. Before this piece `handle_tactical_step` never checked
+ by pressing End Mission -- see the 2026-09-28 QA-run wiring brief.
+ 
+ Base times (docs/bible/algorithms.md ALG-56, csrc/mission.c
+-om_archetype_base_time_ticks) top out at 4.5 minutes * 60 * 20 ticks/s = 5400
+-ticks; R-076-01's floor never drops an archetype's own base below 0.6x itself,
+-so 5400 ticks of `tactical_step` is enough to cross any archetype's deadline
+-regardless of which one the candidate pool selects for this seed. This test
++om_archetype_base_time_ticks, R-076-02) top out at 60 minutes * 60 * 20
++ticks/s = 72000 ticks. The step budget is therefore derived from the mission
++frame's own deadline_ticks (probed first) rather than a fixed count, so it
++crosses the deadline whichever archetype the candidate pool selects for this
++seed. This test
+ does not choose the archetype: whichever mission seed=1 draws, the time-limit
+ path (wired for every archetype, unlike the two objective kinds the wiring
+ brief leaves out -- see the report) must still end it.
+@@ -30,9 +31,10 @@ BEGIN = {"type": "cmd", "name": "mission_begin"}
+ STEP = {"type": "cmd", "name": "tactical_step", "n": 1}
+ QUIT = {"type": "cmd", "name": "quit"}
+ 
+-# Max base time (4.5 min) in ticks, plus margin for a floor-reduced deadline
+-# never landing exactly on a step boundary.
+-MAX_STEPS = 6000
++# Largest base time (60 min, R-076-02) in ticks; deadline_ticks must not exceed it.
++MAX_TICKS = 72000
++# Steps past the deadline, so it never lands exactly on the last step.
++MARGIN = 10
+ 
+ pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+ 
+@@ -70,10 +72,11 @@ def test_tactical_step_alone_reaches_mission_over_within_its_time_limit():
+     explicit mission_end command) still reaches mission_over, at or before
+     its own deadline_ticks, because om_tactical_step's own mission hook (not
+     the client) now calls om_mission_check_terminated and ends it."""
+-    frames = _run([SET_SEED, STEP10, START, BEGIN] + [STEP] * MAX_STEPS, timeout=180)
+-    mission = [f for f in frames if f["type"] == "mission"][0]
+-    deadline = mission["deadline_ticks"]
+-    assert 0 < deadline <= MAX_STEPS, "deadline_ticks=%r outside this test's MAX_STEPS margin" % deadline
++    probe = _run([SET_SEED, STEP10, START, BEGIN])
++    deadline = [f for f in probe if f["type"] == "mission"][0]["deadline_ticks"]
++    assert 0 < deadline <= MAX_TICKS, "deadline_ticks=%r outside the R-076-02 ceiling" % deadline
++    steps = deadline + MARGIN
++    frames = _run([SET_SEED, STEP10, START, BEGIN, {"type": "cmd", "name": "tactical_step", "n": steps}], timeout=600)
+ 
+     tacticals = [f for f in frames if f["type"] == "tactical"]
+     over = [t for t in tacticals if t["mission_over"]]
+@@ -93,6 +96,6 @@ def test_tactical_step_alone_reaches_mission_over_within_its_time_limit():
+     # End Mission must still work unchanged after an auto-ended mission: the
+     # explicit command still answers the normal debrief/snapshot pair, not
+     # an error, exactly as it does for a mission the client ends itself.
+-    end_frames = _run([SET_SEED, STEP10, START, BEGIN] + [STEP] * MAX_STEPS + [{"type": "cmd", "name": "mission_end"}], timeout=180)
++    end_frames = _run([SET_SEED, STEP10, START, BEGIN] + [{"type": "cmd", "name": "tactical_step", "n": steps}, {"type": "cmd", "name": "mission_end"}], timeout=600)
+     tail_types = [f["type"] for f in end_frames[-2:]]
+     assert tail_types == ["debrief", "snapshot"], end_frames[-2:]

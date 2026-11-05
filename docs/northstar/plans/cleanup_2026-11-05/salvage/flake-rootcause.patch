@@ -1,0 +1,95 @@
+diff --git a/autoload/qa_daemon.gd b/autoload/qa_daemon.gd
+index 2b2c5516..070a1be2 100644
+--- a/autoload/qa_daemon.gd
++++ b/autoload/qa_daemon.gd
+@@ -81,6 +81,10 @@ func tree() -> Dictionary:
+ 	var controls: Array = []
+ 	var node3ds: Array = []
+ 	_collect_tree(t.current_scene, controls, node3ds)
++	for c in controls:
++		if String(c["path"]).ends_with("/Deploy"):
++			var dn = t.current_scene.get_node_or_null(String(c["path"]))
++			print("QADBG tree f=%d ms=%d scene=%s deploy_rect=%s dirty_layout=%s" % [Engine.get_process_frames(), Time.get_ticks_msec(), t.current_scene.name, c["rect_px"], dn.is_layout_rtl() if dn != null else "?"])
+ 	return {"controls": controls, "node3ds": node3ds}
+ 
+ 
+@@ -224,6 +228,7 @@ func _dispatch_input(args: Array) -> Dictionary:
+ 			await _driver.call("_do_move", float(rest[0]), float(rest[1]))
+ 		"click":
+ 			var button: int = int(rest[2]) if rest.size() > 2 else MOUSE_BUTTON_LEFT
++			print("QADBG click-start f=%d ms=%d xy=%s,%s scene=%s" % [Engine.get_process_frames(), Time.get_ticks_msec(), rest[0], rest[1], get_tree().current_scene.name])
+ 			await _driver.call("_do_click", float(rest[0]), float(rest[1]), button)
+ 		"click_node":
+ 			await _driver.call("_do_click_node", String(rest[0]))
+diff --git a/autoload/scene_router.gd b/autoload/scene_router.gd
+index c4afd831..725ead60 100644
+--- a/autoload/scene_router.gd
++++ b/autoload/scene_router.gd
+@@ -36,6 +36,7 @@ func _ready() -> void:
+ 
+ func go_to(scene_name: String, params: Dictionary = {}) -> void:
+ 	if _transitioning:
++		print("QADBG go_to(%s) DROPPED: _transitioning f=%d ms=%d" % [scene_name, Engine.get_process_frames(), Time.get_ticks_msec()])
+ 		return
+ 	if not SCENES.has(scene_name):
+ 		if not ThemeConstants.IS_RELEASE_BUILD:
+@@ -55,7 +56,9 @@ func go_to(scene_name: String, params: Dictionary = {}) -> void:
+ 	tw.tween_property(_overlay, "modulate:a", 1.0, ThemeConstants.FADE_DURATION)
+ 	tw.tween_callback(_swap_scene.bind(scene_name, params))
+ 	tw.tween_property(_overlay, "modulate:a", 0.0, ThemeConstants.FADE_DURATION)
+-	tw.tween_callback(func(): _transitioning = false)
++	tw.tween_callback(func():
++		_transitioning = false
++		print("QADBG transition end (%s) f=%d ms=%d" % [scene_name, Engine.get_process_frames(), Time.get_ticks_msec()]))
+ 
+ 
+ func go_back() -> void:
+@@ -72,6 +75,7 @@ func _swap_scene(scene_name: String, params: Dictionary) -> void:
+ 	if old_scene:
+ 		old_scene.queue_free()
+ 
++	print("QADBG swap_scene(%s) f=%d ms=%d" % [scene_name, Engine.get_process_frames(), Time.get_ticks_msec()])
+ 	var new_scene_res = load(SCENES[scene_name])
+ 	var new_scene = new_scene_res.instantiate()
+ 	tree.root.add_child(new_scene)
+diff --git a/scenes/mission_briefing/mission_briefing.gd b/scenes/mission_briefing/mission_briefing.gd
+index fd60a270..3ed9391b 100644
+--- a/scenes/mission_briefing/mission_briefing.gd
++++ b/scenes/mission_briefing/mission_briefing.gd
+@@ -106,6 +106,7 @@ func _build_ui() -> void:
+ 	_build_footer(outer)
+ 
+ 	_animate_entrance()
++	print("QADBG briefing built f=%d ms=%d" % [Engine.get_process_frames(), Time.get_ticks_msec()])
+ 
+ 
+ func _build_header(parent: Control) -> void:
+@@ -691,6 +692,7 @@ func _build_footer(parent: Control) -> void:
+ 	deploy_btn.disabled = not bridge.mission_active() or bridge.mission_begun()
+ 	_deploy_btn = deploy_btn
+ 	deploy_btn.pressed.connect(func():
++		print("QADBG deploy pressed f=%d ms=%d" % [Engine.get_process_frames(), Time.get_ticks_msec()])
+ 		if begin_mission():
+ 			SceneRouter.go_to("tactical_c")
+ 	)
+diff --git a/scenes/mockups/_shared/qa_driver.gd b/scenes/mockups/_shared/qa_driver.gd
+index 1060497d..34b06da7 100644
+--- a/scenes/mockups/_shared/qa_driver.gd
++++ b/scenes/mockups/_shared/qa_driver.gd
+@@ -233,12 +233,16 @@ func _do_click(x: float, y: float, button: int) -> void:
+ 	down.global_position = pos
+ 	down.button_index = button
+ 	down.pressed = true
++	var hov = get_viewport().gui_get_hovered_control()
++	var dep = get_tree().current_scene.find_child("Deploy", true, false) if get_tree().current_scene != null else null
++	print("QADBG down f=%d ms=%d pos=%s hovered=%s deploy_rect=%s deploy_disabled=%s deploy_visible=%s" % [Engine.get_process_frames(), Time.get_ticks_msec(), pos, hov.get_path() if hov != null else "none", dep.get_global_rect() if dep != null else "none", dep.disabled if dep != null else "?", dep.is_visible_in_tree() if dep != null else "?"])
+ 	await _push_frame(down)
+ 	var up := InputEventMouseButton.new()
+ 	up.position = pos
+ 	up.global_position = pos
+ 	up.button_index = button
+ 	up.pressed = false
++	print("QADBG up f=%d ms=%d" % [Engine.get_process_frames(), Time.get_ticks_msec()])
+ 	await _push_frame(up)
+ 
+ 

@@ -132,7 +132,9 @@ def test_repo_toml_parses():  # 1
 
 
 def test_repo_toml_matches_section3_block():  # 2 RED (a)
-    assert key_check(load_repo(), spec_block()) == []
+    block = spec_block()
+    block["invariants"]["max_impl_lines"] = 1500  # the cap moved from the spec's 100 (DEC-cap-1500-2026-11-05)
+    assert key_check(load_repo(), block) == []
 
 
 def test_parent_owned_holds_frozen_contract_and_tests():  # 3 RED (a)
@@ -141,8 +143,8 @@ def test_parent_owned_holds_frozen_contract_and_tests():  # 3 RED (a)
         assert entry in po, entry
 
 
-def test_max_impl_lines_is_100():  # 4 RED (a)
-    assert load_repo()["invariants"]["max_impl_lines"] == 100
+def test_max_impl_lines_is_1500():  # 4 RED (a); was 100 until DEC-cap-1500-2026-11-05
+    assert load_repo()["invariants"]["max_impl_lines"] == 1500
 
 
 def _before_first_table(key):

@@ -8,7 +8,7 @@ Where the other crossing measures live:
 - `docs/northstar/research/layer_dynamics/catalogue/verdicts.md`: his verdict per catalogue layout, in his words (rows L-0037 and after carry the percentages).
 - `docs/stories/H-025.md` "Round three": the same rules as build instructions.
 - `docs/northstar/story_reviews/westley/decisions.md`: DEC-lab-arcs-and-win-rates-2026-11-01, DEC-lab-heuristics-2026-11-01 (and DEC-stage1-seen, DEC-stage2-replay-readability for the staircase).
-- `docs/northstar/plans/2026-10-31-lab-staircase.md` stage 6 "where positioning stops deciding (the scan)": the stage that measures the crossing.
+- `docs/northstar/story_reviews/westley/lab-staircase.md` stage 6 "where positioning stops deciding (the scan)": the stage that measures the crossing.
 
 Columns: **fight** the layout and seed; **what happened** the engine's result (measured, from the rate file); **his reason** why that side wins, in his words; **crossing here?** his yes/no/not-yet on whether the lines should cross in this situation; **measure** the number or rule that follows (filled with him, DRAFT until he rules).
 

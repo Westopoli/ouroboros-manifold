@@ -1,0 +1,125 @@
+diff --git a/scripts/specfactory/merge_gate_support.py b/scripts/specfactory/merge_gate_support.py
+index 7f944c9e..91696329 100755
+--- a/scripts/specfactory/merge_gate_support.py
++++ b/scripts/specfactory/merge_gate_support.py
+@@ -29,6 +29,7 @@ from pathlib import Path
+ sys.path.insert(0, str(Path(__file__).resolve().parent))
+ import suite_regression as sr  # noqa: E402
+ from red_check import is_placeholder_control  # noqa: E402
++from pieces import SHARED_RECORD_GLOBS  # noqa: E402
+ 
+ REPO = Path(__file__).resolve().parents[2]
+ DEFAULT_PIECES = REPO / "docs/northstar/plans/push/pieces.toml"
+@@ -44,6 +45,9 @@ DEFAULT_IGNORES = (".swarm/**", ".claude/**", "logs/**",
+     # commit sometimes sweeps this in from the shared worktree; never a piece's
+     # own footprint. See also: B10-1 merge reject 2026-09-22, owns ['csrc/...']
+     ".claude-swarm.toml",
++    # the Westley shot page and its copies: written by every shot-carrying piece in turn,
++    # shared by rule. See also: pieces.SHARED_RECORD_GLOBS, HARNESS-westley-folder
++    *SHARED_RECORD_GLOBS,
+ )
+ # A C return type: any run of qualifier/type words (const, static, unsigned,
+ # a `_t` typedef, an om_-prefixed struct/enum name, ...) plus optional
+diff --git a/scripts/specfactory/pieces.py b/scripts/specfactory/pieces.py
+index dd5e5275..aeb53c05 100755
+--- a/scripts/specfactory/pieces.py
++++ b/scripts/specfactory/pieces.py
+@@ -39,6 +39,11 @@ REPO = Path(__file__).resolve().parents[2]
+ DEFAULT_PIECES = REPO / "docs/northstar/plans/push/pieces.toml"
+ DEFAULT_PYTHON = "/home/westopoli/Projects/agora/.venv/bin/python"
+ ROOTS = ("tests/csim", "tests/qa/t1", "tests/qa/desktop", "tests/transport", "tests/specfactory")
++# Record folders every shot-carrying piece writes into (the Westley shot page and its
++# copies, docs/northstar/story_reviews/westley/README.md): shared by rule, so a piece
++# may list them in owns without an owns-overlap finding, and the footprint fence ignores
++# them (merge_gate_support.DEFAULT_IGNORES). See also: HARNESS-westley-folder.
++SHARED_RECORD_GLOBS = ("docs/northstar/story_reviews/westley/*",)
+ 
+ 
+ def load_pieces(path: Path) -> list[dict]:
+@@ -55,7 +60,13 @@ def _glob_prefix(pattern: str) -> str:
+     return pattern if idx == -1 else pattern[:idx]
+ 
+ 
++def is_shared_record(pattern: str) -> bool:
++    return any(fnmatch.fnmatch(pattern, g) for g in SHARED_RECORD_GLOBS)
++
++
+ def patterns_overlap(a: str, b: str) -> bool:
++    if is_shared_record(a) and is_shared_record(b):
++        return False
+     if a == b:
+         return True
+     a_glob, b_glob = "*" in a, "*" in b
+diff --git a/tests/specfactory/test_merge_gate_support.py b/tests/specfactory/test_merge_gate_support.py
+index 61113479..2b759b28 100644
+--- a/tests/specfactory/test_merge_gate_support.py
++++ b/tests/specfactory/test_merge_gate_support.py
+@@ -985,3 +985,26 @@ def test_real_repo_scale_list_names_every_scale_gated_test_present_today():
+     assert present - listed == set()
+     siege = [i for i in present if "test_scale_E13_siege_breaking.py" in i]
+     assert len(siege) == 3 and set(siege) <= listed
++
++
++def test_westley_folder_files_are_not_a_footprint(tmp_path):
++    """HARNESS-westley-folder: README.md and the shot copies of the Westley page are
++    shared by rule; a file next to them (the lane queue file) still is a reject."""
++    repo = _init_repo(tmp_path / "repo")
++    pieces = tmp_path / "pieces.toml"
++    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
++    (repo / "csrc" / "events.c").write_text("int om_event_stub(void) { return 1; }\n")
++    wdir = repo / "docs" / "northstar" / "story_reviews" / "westley"
++    wdir.mkdir(parents=True)
++    (wdir / "README.md").write_text("| row |\n")
++    (wdir / "A-S103-x.png").write_bytes(b"png")
++    _git(repo, "add", "-A")
++    _git(repo, "commit", "-q", "-m", "candidate")
++    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B1", pieces_path=pieces)
++    assert ok is True, detail
++
++    (repo / "docs" / "northstar" / "story_reviews" / "A.md").write_text("row\n")
++    _git(repo, "add", "-A")
++    _git(repo, "commit", "-q", "-m", "queue file")
++    ok, detail = mgs.footprint_check(repo, "HEAD~2", "B1", pieces_path=pieces)
++    assert ok is False and "story_reviews/A.md" in detail
+diff --git a/tests/specfactory/test_owner_lint.py b/tests/specfactory/test_owner_lint.py
+index f36cd3cf..bd2c6049 100644
+--- a/tests/specfactory/test_owner_lint.py
++++ b/tests/specfactory/test_owner_lint.py
+@@ -121,3 +121,37 @@ def test_real_pieces_toml_on_main_is_clean():
+     data = tomllib.loads(real_pieces.read_text())
+     findings = ol.in_flight_overlaps(list(data.get("piece", [])))
+     assert findings == [], findings
++
++
++def test_westley_folder_listed_by_two_in_flight_pieces_is_not_a_finding(tmp_path):
++    """Shared record folder (HARNESS-westley-folder): the shot page and its copies."""
++    pieces_toml = _write_pieces(tmp_path, """
++[[piece]]
++id = "X"
++owns = ["docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/westley/A-S1-x.png"]
++status = "pending"
++
++[[piece]]
++id = "Y"
++owns = ["docs/northstar/story_reviews/westley/README.md"]
++owns_glob = ["docs/northstar/story_reviews/westley/**"]
++status = "pending"
++""")
++    proc = _run(pieces_toml)
++    assert proc.returncode == 0, proc.stdout + proc.stderr
++
++
++def test_positive_control_neighbour_folder_still_overlaps(tmp_path):
++    """The exemption is the westley folder only: the lane queue file still fails."""
++    pieces_toml = _write_pieces(tmp_path, """
++[[piece]]
++id = "X"
++owns = ["docs/northstar/story_reviews/A.md"]
++status = "pending"
++
++[[piece]]
++id = "Y"
++owns = ["docs/northstar/story_reviews/A.md"]
++status = "pending"
++""")
++    assert _run(pieces_toml).returncode == 1

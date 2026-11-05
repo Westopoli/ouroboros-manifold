@@ -62,7 +62,7 @@ def test_small_owned_change_is_ok(tmp_path):
 def test_over_line_threshold_warns_but_does_not_fail(tmp_path):
     repo = _init_repo(tmp_path)
     _git(repo, "checkout", "-q", "-b", "feature")
-    big_body = "int foo(void) { return 1; }\n" + "\n".join(f"int f{i}(void) {{ return {i}; }}" for i in range(150))
+    big_body = "int foo(void) { return 1; }\n" + "\n".join(f"int f{i}(void) {{ return {i}; }}" for i in range(1600))
     (repo / "csrc" / "foo.c").write_text(big_body + "\n")
     _git(repo, "commit", "-aqm", "big change")
     pieces = _write_pieces(tmp_path, '[[piece]]\nid = "X"\nowns = ["csrc/foo.c"]\n')

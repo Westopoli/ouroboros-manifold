@@ -1,0 +1,23 @@
+diff --git a/tests/csim/test_VG_E_ke5.py b/tests/csim/test_VG_E_ke5.py
+index b65a069c..956d4674 100644
+--- a/tests/csim/test_VG_E_ke5.py
++++ b/tests/csim/test_VG_E_ke5.py
+@@ -434,14 +434,16 @@ def test_ke5_d_and_p_are_side_squared_doubles_in_q16(klib, kmake):
+ def test_ke5_next_lot_id_follows_lot_hit_tick_and_is_one(klib, kmake):
+     """K-e5: `lot_hit_tick[OM_LOT_CAP]` (OM_LOT_CAP 2048) then `uint32 next_lot_id`, always written; 1 on the K-e5 tree where the old
+     code still numbers lots n_lots + 1 (so it is 1 even with lots present; E1q retires the value)."""
+-    w = scene(klib, kmake)
++    # TD-VG-E-22: E1q retires the value 1 (spec E1q-lots: id = next_lot_id++, starting at 1, so the counter is n_lots + 1) and the
++    # field's D at economy 10 never reaches THRESHOLD_1, so the premise scene takes economy 40 (as TD-VG-E-20). See also: ledger.
++    w = scene(klib, kmake, economy=40.0)
+     steps(klib, w, 400)
+     assert klib.om_lot_count(w) > 0, "premise: the old code has raised lots by tick 400"
+     data = save(klib, w)
+     blk = locate(klib, w, data)
+     assert blk is not None, diagnose(klib, w, data)
+     assert blk["nid_off"] == blk["lh_off"] + 4 * LOT_CAP and blk["end"] == blk["nid_off"] + 4
+-    assert u32(data, blk["nid_off"]) == 1
++    assert u32(data, blk["nid_off"]) == klib.om_lot_count(w) + 1
+ 
+ 
+ def test_ke5_next_lot_id_is_written_without_a_field(klib, kmake):

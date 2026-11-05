@@ -1,0 +1,33 @@
+diff --git a/tests/qa/desktop/daemon_client.py b/tests/qa/desktop/daemon_client.py
+index e078de29..ab07c185 100644
+--- a/tests/qa/desktop/daemon_client.py
++++ b/tests/qa/desktop/daemon_client.py
+@@ -190,6 +190,7 @@ class GodotGame:
+         # execs (a grandchild, so proc.kill() alone never reaches it) in one
+         # process group, so stop() can kill the whole tree at once instead
+         # of leaking a headless godot behind an already-dead xvfb-run.
++        self._t0 = time.monotonic()
+         self.proc = subprocess.Popen(
+             cmd, cwd=str(self.scratch), env=env,
+             stdout=self._stdout_f, stderr=self._stderr_f,
+@@ -205,7 +206,8 @@ class GodotGame:
+                     % (self.qa_port, self.proc.returncode, self.stderr_tail())
+                 )
+             try:
+-                with socket.create_connection(("127.0.0.1", self.qa_port), timeout=1):
++                with socket.create_connection(("127.0.0.1", self.qa_port), timeout=1) as _s:
++                    _probe(self, _s)
+                     return
+             except OSError:
+                 time.sleep(0.25)
+@@ -272,3 +274,10 @@ def wait_for(client: DaemonClient, predicate, timeout: float, poll: float = 0.5,
+         "%s: timed out after %ss; last scene seen = %r; controls present = %r"
+         % (label, timeout, last_result.get("scene"), control_names(tree_resp))
+     )
++
++
++def _probe(g, s):
++    import subprocess as sp
++    out = sp.run("ss -tanp | grep ':%d' ; echo godot_alive=$(pgrep -fc godot.real)" % g.qa_port, shell=True, capture_output=True, text=True).stdout
++    with open(os.environ["PROBE_LOG"], "a") as f:
++        f.write("== %s port=%d elapsed_since_start=%.2f local=%s peer=%s\n%s\n" % (os.environ.get("PYTEST_CURRENT_TEST"), g.qa_port, time.monotonic()-getattr(g,"_t0",0), s.getsockname(), s.getpeername(), out))

@@ -1,0 +1,148 @@
+diff --git a/tests/qa/desktop/plays/A/play_support.py b/tests/qa/desktop/plays/A/play_support.py
+index b9d8337d..d3ffdef4 100644
+--- a/tests/qa/desktop/plays/A/play_support.py
++++ b/tests/qa/desktop/plays/A/play_support.py
+@@ -114,11 +114,44 @@ def moment(client, story: str, label: str) -> dict:
+     return state.get("qa", {})
+ 
+ 
++# DRAFT-scroll-cap-ticks (ledger, Architect draft; Westley owns the threshold)
++SCROLL_STALL_TICKS = 60  # the camera did not move (more than 1.0 wu, TD-VG-A-9i) over this many game ticks: stall
++SCROLL_CAP_TICKS = 400  # a scroll that lasts this many game ticks without arriving: cap
++SCROLL_LOG: list = []  # one line per scroll (A17): wall s, game s, notches, scales, camera from/to, how it ended
++_TICK_CHECKED = False
++
++
++def _zoom_out_fully(client) -> int:
++    """Wheel notches the way a player does: input wheel -1 is ONE notch OUT (qa_driver.gd _do_wheel: n < 0 = WHEEL_DOWN;
++    +1 zooms in, TD-VG-C-1). One notch at a time while qa scale changes; returns the count of notches that changed it."""
++    notches, scale = 0, qa(client)["scale"]
++    while True:
++        client.call("input", "wheel", -1)
++        now = qa(client)["scale"]
++        if now == scale:
++            return notches
++        notches, scale = notches + 1, now
++
++
+ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
+-    """TD-VG-A-9i/9j: the edge-scroll method. Edge from the WORLD delta (wx, wy) minus camera, one input move to 2 px inside
+-    the edge, poll project every 0.2 s, stop on two consecutive on_screen polls (True) or when the qa_state camera moved no
+-    more than 1 wu over 15 consecutive polls (3 s, False); then the pointer goes back to the centre. SCREEN_WU is a named
+-    draft (3000 wu, a screen's worth of world at the start height): both axes scroll only when both deltas exceed it."""
++    """A17 (spec rev 12): the edge-scroll method, measured in GAME ticks read from qa_state().tick.
++
++    R-103-09 (docs/bible/epics/E-16-client-camera-hud-and-world-view.md line 39): 'Given the player pans by keys or by
++    edge-scroll, When the zoom changes, Then the pan speed stays the same on screen, so the ground covered per second grows
++    in proportion as the camera zooms out; the Settings pan-speed slider (R-110-02) scales that speed.'
++    Westley 2026-10-11: 'more of a model doing the testing issue than an issue with the game's behaviour'. The game obeys the
++    rule; under the harness (--fixed-fps 30 at 2 to 4 software fps) one wall second is 0.075 to 0.13 game seconds, so the old
++    wall-clock windows saw about an eighth of the real pan rate, and the helper never zoomed out before a cross-map scroll.
++
++    Edge from the WORLD delta (wx, wy) minus camera (TD-VG-A-9i/9j), one input move to 2 px inside the edge. SCREEN_WU is a
++    named draft (3000 wu, a screen's worth of world at the start height): both axes scroll only when both deltas exceed it.
++    A scroll longer than one screen on the flat view (ground3d.present false) first zooms fully out with wheel notches; the
++    scroll then stops when the camera is within the half-screen extent, at the restored scale, of the target on each axis;
++    the zoom then restores by the same notch count (try/finally, every exit path). On the 3D rig (S-193) nothing zooms and
++    arrival is two consecutive project() on_screen polls as before (row FU-A17-3d-scroll). Stall = no camera movement over
++    SCROLL_STALL_TICKS, cap = SCROLL_CAP_TICKS ticks from the start of the scroll; either returns False with its own log line.
++    The 0.2 s wall sleep between polls is a harness wait, not a measurement. True = the target is on screen at the end."""
++    global _TICK_CHECKED
+     w, h = (int(v) for v in RESOLUTION.split("x"))
+     SCREEN_WU = 3000.0
+     ddx, ddy = wx - cam["x"], wy - cam["y"]
+@@ -128,23 +161,68 @@ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
+         ex_ = w - 3 if ddx > 0 else 2
+     if both or abs(ddy) > abs(ddx):
+         ey_ = h - 3 if ddy > 0 else 2
+-    client.call("input", "move", ex_, ey_)
+-    hits, still, last = 0, 0, (cam["x"], cam["y"])
+-    while hits < 2:
+-        time.sleep(0.2)
++    q = qa(client)
++    saved_scale, cam_from = q["scale"], (q["camera"]["x"], q["camera"]["y"])
++    flat = not q["ground3d"].get("present", False)
++    notches = 0
++    wall0 = time.monotonic()
++    if flat and max(abs(ddx), abs(ddy)) > SCREEN_WU:
++        notches = _zoom_out_fully(client)
++    out_scale = qa(client)["scale"]
++    half_x, half_y = (w / 2.0) / saved_scale, (h / 2.0) / saved_scale  # half-screen extent at the restored scale, in wu
++    ended, hits = "stall", 0
++    try:
++        q = qa(client)
++        t_start, last = q["tick"], (q["camera"]["x"], q["camera"]["y"])
++        client.call("input", "move", ex_, ey_)
++        last_move_tick = t_start
++        while True:
++            time.sleep(0.2)  # harness wait between polls; progress and stall below are game ticks
++            q = qa(client)
++            tick, c = q["tick"], q["camera"]
++            if not _TICK_CHECKED:
++                assert tick > t_start, "play_support: premise: tick frozen (qa tick %d at the start of the scroll, %d after the first poll window)" % (t_start, tick)
++                _TICK_CHECKED = True
++            if notches:
++                if abs(c["x"] - wx) <= half_x and abs(c["y"] - wy) <= half_y:
++                    ended = "arrival"
++                    break
++            else:
++                r = client.call("project", float(wx), float(wy))
++                assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
++                hits = hits + 1 if r["result"].get("on_screen") else 0
++                if hits >= 2:
++                    ended = "arrival"
++                    break
++            if abs(c["x"] - last[0]) > 1.0 or abs(c["y"] - last[1]) > 1.0:
++                last, last_move_tick = (c["x"], c["y"]), tick
++            elif tick - last_move_tick >= SCROLL_STALL_TICKS:
++                ended = "stall (no camera movement in %d ticks)" % SCROLL_STALL_TICKS
++                break
++            if tick - t_start >= SCROLL_CAP_TICKS:
++                ended = "cap (%d ticks without arriving)" % SCROLL_CAP_TICKS
++                break
++        t_end = tick
++    finally:
++        client.call("input", "move", w // 2, h // 2)
++        for _ in range(notches):
++            client.call("input", "wheel", 1)
++    q = qa(client)
++    cam_to = (q["camera"]["x"], q["camera"]["y"])
++    ticks, wall = t_end - t_start, time.monotonic() - wall0
++    line = ("SCROLL %s: wall %.1f s, game %.2f s (%d ticks, %.2f ticks per wall s), notches %d, scale saved %.5f out %.5f restored %.5f, "
++            "camera (%.0f, %.0f) to (%.0f, %.0f), target (%.0f, %.0f)" %
++            (ended, wall, ticks / 20.0, ticks, (ticks / wall if wall else 0.0), notches, saved_scale, out_scale, q["scale"], cam_from[0], cam_from[1], cam_to[0], cam_to[1], wx, wy))
++    ok = ended == "arrival"
++    if ok and notches:
+         r = client.call("project", float(wx), float(wy))
+         assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+-        hits = hits + 1 if r["result"].get("on_screen") else 0
+-        if hits:
+-            continue
+-        c = qa(client)["camera"]
+-        still = still + 1 if abs(c["x"] - last[0]) <= 1.0 and abs(c["y"] - last[1]) <= 1.0 else 0
+-        if still >= 15:
+-            break
+-        if still == 0:
+-            last = (c["x"], c["y"])
+-    client.call("input", "move", w // 2, h // 2)
+-    return hits >= 2
++        ok = bool(r["result"].get("on_screen"))
++        if not ok:
++            line += "; FAIL: target off screen after the zoom restore, camera (%.0f, %.0f) target (%.0f, %.0f)" % (cam_to[0], cam_to[1], wx, wy)
++    print(line)
++    SCROLL_LOG.append(line)
++    return ok
+ 
+ 
+ def follow_army_on() -> None:
+@@ -220,8 +298,8 @@ def nearest_enemy_px(client, q: dict) -> tuple:
+     if not r["result"].get("on_screen"):
+         if not _edge_scroll_to(client, e["x"], e["y"], qa(client)["camera"]):
+             c = qa(client)["camera"]
+-            assert False, "play_support: FINDING: enemy %s off screen, camera stopped making progress (%s, %s)" % (k, c["x"], c["y"])
++            assert False, "play_support: FINDING: enemy %s off screen, camera stopped making progress (%s, %s), target (%s, %s); %s" % (k, c["x"], c["y"], e["x"], e["y"], SCROLL_LOG[-1] if SCROLL_LOG else "")
+         r = client.call("project", float(e["x"]), float(e["y"]))
+-    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after the edge scroll toward it" % k
++    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after the edge scroll toward it, target (%s, %s), camera (%s, %s)" % (k, e["x"], e["y"], qa(client)["camera"]["x"], qa(client)["camera"]["y"])
+     px, py = r["result"]["x"], r["result"]["y"]
+     return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))

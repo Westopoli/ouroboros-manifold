@@ -1,0 +1,333 @@
+diff --git a/csrc/checksum_full.c b/csrc/checksum_full.c
+index 7054c9d1..efb57afa 100644
+--- a/csrc/checksum_full.c
++++ b/csrc/checksum_full.c
+@@ -31,7 +31,7 @@
+  *  * field order, F2i). * /
+  * #define OM_SAVE_MAGIC "OMSV"
+  * #define OM_SAVE_MAGIC_LEN 4
+- * #define OM_SAVE_FORMAT_VERSION 12 / * bumped 11 -> 12 (VG E7: reinforce_cap and reinforce_spawned in the mission slot): version-11 saves are refused, no migration (R-111-03). Earlier: bumped 10 -> 11 (W2 stored routes): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
++ * #define OM_SAVE_FORMAT_VERSION 11 / * bumped 10 -> 11 (W2 stored routes): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
+  * #define OM_SAVE_BYTE_BITS 8
+  * #define OM_SAVE_BYTE_MASK 0xFFu
+  * #define OM_SAVE_SLOT_TACTICAL     0
+diff --git a/csrc/mission.c b/csrc/mission.c
+index 4b31c7a5..ec94cfa3 100644
+--- a/csrc/mission.c
++++ b/csrc/mission.c
+@@ -370,12 +370,6 @@ typedef struct {
+     int      fallback_active;
+     int32_t  fallback_enemy;
+     double   fallback_power;
+-
+-    /* VG-CONTRACT-E7: the player's production allowance. reinforce_cap = F_units - start_units, set when the mission is
+-     * laid out (UINT32_MAX until then: a bare world is uncapped); reinforce_spawned counts the player's structure spawns
+-     * against it. Both saved (appended last) and hashed (om_mis_net_hash). */
+-    uint32_t reinforce_cap;
+-    uint32_t reinforce_spawned;
+ } om_mission_state;
+ 
+ static void om_mis_state_free(void *p) {
+@@ -389,7 +383,6 @@ static om_mission_state *om_mis(om_world *w) {
+     om_mission_state *st = (om_mission_state *)w->mission_state;
+     if (!st) {
+         st = (om_mission_state *)calloc(1, sizeof(om_mission_state));
+-        st->reinforce_cap = UINT32_MAX; /* VG-CONTRACT-E7: no mission laid out, no cap */
+         w->mission_state = st;
+         w->mission_state_free = om_mis_state_free;
+     }
+@@ -2683,8 +2676,7 @@ static void om_mission_space_snap(uint8_t *good, double *x, double *y, int take)
+ #define OM_MISSION_STRUCTURE_LATERAL 0.25
+ #define OM_MISSION_STRUCTURE_SLOTS 64
+ 
+-static void om_mission_place_structures(om_world *w, om_mission_state *st, int cat, double canvas, int32_t player, int32_t enemy, const uint8_t *good,
+-                                        uint32_t *out_p, uint32_t *out_e) {
++static void om_mission_place_structures(om_world *w, om_mission_state *st, int cat, double canvas, int32_t player, int32_t enemy, const uint8_t *good) {
+     uint8_t *free_cells = good ? (uint8_t *)malloc(OM_SPACE_FIELD_CELLS) : NULL;
+     if (free_cells) memcpy(free_cells, good, OM_SPACE_FIELD_CELLS);
+     uint32_t p = 0, e = 0, n = 0;
+@@ -2692,8 +2684,6 @@ static void om_mission_place_structures(om_world *w, om_mission_state *st, int c
+     if (om_era_kind(w) == 1 && total > om_terrain_slope_count(w)) total = om_terrain_slope_count(w); /* R-218-01 */
+     for (uint32_t i = 0; i < OM_MISSION_STRUCTURE_SLOTS; i++) om_structure_init(w, i, OM_MISSION_POWER_ANCHOR_UNIT_TYPE, 0.0);
+     om_structure_assign_owners((int)st->mission_archetype, total, &p, &e, &n);
+-    *out_p = p; /* VG-CONTRACT-E7: the player's share p / (p + e) of the contested strongpoints, n excluded */
+-    *out_e = e;
+     for (uint32_t i = 0; i < total; i++) {
+         int32_t owner = i < p ? player : (i < p + n ? -1 : enemy);
+         double side = (i % 2 == 0) ? -1.0 : 1.0;
+@@ -2708,31 +2698,6 @@ static void om_mission_place_structures(om_world *w, om_mission_state *st, int c
+     free(free_cells);
+ }
+ 
+-/* VG-CONTRACT-E7 (spec E7 paragraph; See also: om_mission_compute_starting_force in csrc/tactical_support.c): the player's
+- * roster cut to start_units, integer arithmetic. Per type n_t = floor(count_t * start_units / F_units + 0.5); the remainder
+- * (positive or negative) lands on the type with the largest count_t, lowest type index on ties, so the sum is start_units and
+- * the mix stays the roster's. A negative remainder that would take that type below zero spills to the next largest (a case
+- * the spec leaves open; unreachable on the F and rosters of the fixtures). */
+-static void om_mission_cut_roster(const uint32_t *roster, uint32_t start_units, uint32_t *out) {
+-    uint64_t f_units = 0, sum = 0;
+-    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) f_units += roster[t];
+-    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
+-        out[t] = f_units ? (uint32_t)((2ULL * roster[t] * start_units + f_units) / (2ULL * f_units)) : 0;
+-        sum += out[t];
+-    }
+-    while (f_units && sum != start_units) {
+-        int grow = sum < start_units;
+-        int best = -1;
+-        for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
+-            if (!grow && out[t] == 0) continue;
+-            if (best < 0 || roster[t] > roster[best]) best = (int)t;
+-        }
+-        if (best < 0) break;
+-        if (grow) { out[best]++; sum++; }
+-        else { out[best]--; sum--; }
+-    }
+-}
+-
+ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
+     int cat = om_map_archetype_canvas_category(st->mission_archetype);
+     double canvas = om_map_get_canvas_base_dimension(cat);
+@@ -2782,25 +2747,7 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
+     om_map_add_cover(w, ox, oy, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
+     om_map_add_spawn_point(w, px, py, player);
+     om_map_add_spawn_point(w, ex, ey, enemy);
+-    /* VG-CONTRACT-E7: the structures are placed first so p and e are known; the player spawns start_units of the composed
+-     * force F_units (st->player_units stays F) and may produce the rest, up to reinforce_cap. The enemy spawns as before.
+-     * See also: om_mission_compute_starting_force (csrc/tactical_support.c), the spec E7 paragraph. */
+-    uint32_t n_struct_p = 0, n_struct_e = 0;
+-    om_mission_place_structures(w, st, cat, canvas, player, enemy, space_good, &n_struct_p, &n_struct_e);
+-    uint32_t f_units = n_player, start_units = f_units;
+-    if (n_struct_p + n_struct_e > 0) {
+-        double start = om_mission_compute_starting_force((double)f_units, (double)n_struct_p / (double)(n_struct_p + n_struct_e));
+-        start_units = (uint32_t)(start + 0.5);
+-        if (start_units > f_units) start_units = f_units;
+-    }
+-    /* Spec E7 paragraph (Architect 2026-10-19): no composed force (F_units 0, e.g. a mission region with military 0) has no
+-     * cap: UINT32_MAX as on a bare world, so the structures of such a scene keep producing (R-218-02,
+-     * tests/csim/test_VG_E_e1h.py::test_held_strongpoint_produces_a_unit). Otherwise reinforce_cap = F_units - start_units. */
+-    st->reinforce_cap = f_units ? f_units - start_units : UINT32_MAX;
+-    st->reinforce_spawned = 0;
+-    uint32_t start_counts[OM_MISSION_N_UNIT_TYPES];
+-    om_mission_cut_roster(st->player_units, start_units, start_counts);
+-    if (om_mission_spawn_force(w, st, start_counts, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
++    if (om_mission_spawn_force(w, st, st->player_units, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
+         fprintf(stderr, "mission: player spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
+     if (om_mission_spawn_force(w, st, st->enemy_units, enemy, ex, ey, -1.0, reach, rcw, rch, rlayer, enemy_pocket))
+         fprintf(stderr, "mission: enemy spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
+@@ -2815,6 +2762,7 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
+      * the only reader of this registration. */
+     om_macro_init_force(w, 0, enemy);
+     om_macro_set_force_fallback_point(w, 0, ex, ey);
++    om_mission_place_structures(w, st, cat, canvas, player, enemy, space_good);
+     free(space_good);
+     om_economy_init(w);
+ }
+@@ -3109,26 +3057,8 @@ int om_objective_get_done(const om_world *w, uint32_t idx) {
+     if (o->spec.is_failed) return 2;
+     return (o->spec.is_complete || o->spec.completion >= 1.0) ? 1 : 0;
+ }
+-int32_t om_mission_get_force_group(const om_world *w, uint32_t i) {
+-    /* STUB */
+-    (void)w; (void)i;
+-    return 0;
+-}
+ /* ---- end generated stubs ---- */
+ 
+-/* VG-CONTRACT-E7; the contract is documented at the prototypes in csrc/om_internal.h. */
+-uint32_t om_mission_reinforce_cap(const om_world *w) {
+-    const om_mission_state *st = om_mis_ro(w);
+-    if (!st || st->reinforce_cap == UINT32_MAX) return UINT32_MAX;
+-    return st->reinforce_spawned < st->reinforce_cap ? st->reinforce_cap - st->reinforce_spawned : 0;
+-}
+-
+-void om_mission_reinforce_note_spawn(om_world *w) {
+-    om_mission_state *st = (om_mission_state *)w->mission_state;
+-    if (!st || st->reinforce_cap == UINT32_MAX) return;
+-    st->reinforce_spawned++;
+-}
+-
+ /* ---- net hooks (lockstep spec 2026-10-05) ---- */
+ #define OM_MIS_NET_PRIME 1099511628211ULL
+ #define OM_MIS_NET_SEED 14695981039346656037ULL
+@@ -3156,8 +3086,6 @@ static uint64_t om_mis_net_hash(const om_world *w) {
+     h = om_mis_h_word(h, (uint64_t)(int64_t)st->lineage_connection);
+     h = om_mis_h_word(h, (uint64_t)(int64_t)st->mission_set);
+     for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) h = om_mis_h_word(h, st->player_units[k]);
+-    h = om_mis_h_word(h, st->reinforce_cap);
+-    h = om_mis_h_word(h, st->reinforce_spawned);
+     h = om_mis_h_word(h, st->n_objectives);
+     for (uint32_t i = 0; i < st->n_objectives && i < OM_MISSION_MAX_OBJECTIVES; i++) {
+         const om_mission_objective *o = &st->objectives[i];
+@@ -3306,8 +3234,6 @@ static uint32_t om_mis_serialize(const om_mission_state *st, uint8_t *out) {
+     om_mis_w_i32(&m, st->fallback_active);
+     om_mis_w_i32(&m, st->fallback_enemy);
+     om_mis_w_f64(&m, st->fallback_power);
+-    om_mis_w_u32(&m, st->reinforce_cap);
+-    om_mis_w_u32(&m, st->reinforce_spawned);
+     return m.pos;
+ }
+ 
+@@ -3437,9 +3363,6 @@ static int om_mis_net_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+     st->fallback_active = om_mis_r_i32(&r);
+     st->fallback_enemy = om_mis_r_i32(&r);
+     st->fallback_power = om_mis_r_f64(&r);
+-    st->reinforce_cap = om_mis_r_u32(&r);
+-    st->reinforce_spawned = om_mis_r_u32(&r);
+-    if (st->reinforce_cap != UINT32_MAX && st->reinforce_spawned > st->reinforce_cap) r.ok = 0; /* impossible pair */
+     if (!r.ok || r.pos != r.len) {
+         free(st);
+         return 1;
+diff --git a/csrc/om_internal.h b/csrc/om_internal.h
+index a0a14cdb..954ed76f 100644
+--- a/csrc/om_internal.h
++++ b/csrc/om_internal.h
+@@ -33,7 +33,7 @@
+  * field order, F2i). */
+ #define OM_SAVE_MAGIC "OMSV"
+ #define OM_SAVE_MAGIC_LEN 4
+-#define OM_SAVE_FORMAT_VERSION 12 /* bumped 11 -> 12 (VG E7: reinforce_cap and reinforce_spawned in the mission slot): version-11 saves are refused, no migration (R-111-03). Earlier: bumped 10 -> 11 (VG W2: the movement section stores the walk routes: plan_layer, route_n, route_i, route_ends_at_goal and the route cells): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
++#define OM_SAVE_FORMAT_VERSION 11 /* bumped 10 -> 11 (VG W2: the movement section stores the walk routes: plan_layer, route_n, route_i, route_ends_at_goal and the route cells): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+ #define OM_SAVE_BYTE_BITS 8
+ #define OM_SAVE_BYTE_MASK 0xFFu
+ #define OM_SAVE_SLOT_TACTICAL     0
+@@ -516,15 +516,6 @@ void om_step_lifecycle(om_world *w);
+ void om_support_tick(om_world *w);
+ /* Deadline-baseline hook (csrc/mission.c); called by fog.c om_mission_begin right after the phase moves to tactical. */
+ void om_mission_on_begin(om_world *w);
+-/* VG-CONTRACT-E7 (csrc/mission.c; read and noted by the player's production driver in csrc/tactical_support.c; the spec E7
+- * paragraph). om_mission_reinforce_cap: how many more units the player's structures may still spawn this mission, i.e.
+- * reinforce_cap (F_units - start_units, set when the mission is laid out) minus reinforce_spawned (both saved and hashed in the
+- * mission slot). UINT32_MAX on a bare world with no mission set up and on a mission whose composed roster is empty (F_units 0),
+- * so production there is uncapped; the driver spawns for the player only while it is nonzero. The accessor returns the allowance
+- * left, not the raw cap (Architect 2026-10-19, accepted). om_mission_reinforce_note_spawn: counts one player spawn into
+- * reinforce_spawned; a no-op when there is no cap (nothing to count against). */
+-uint32_t om_mission_reinforce_cap(const om_world *w);
+-void om_mission_reinforce_note_spawn(om_world *w);
+ /* Resets the one-shot mission_started latch (csrc/fog.c); called by mission.c
+  * om_mission_setup so a new mission's recon phase can be re-entered via
+  * om_mission_begin. Without this, om_mission_is_started stays true forever
+diff --git a/csrc/ouroboros_sim.h b/csrc/ouroboros_sim.h
+index fadb4f4e..77346694 100644
+--- a/csrc/ouroboros_sim.h
++++ b/csrc/ouroboros_sim.h
+@@ -25,10 +25,8 @@
+ extern "C" {
+ #endif
+ 
+-/* ABI version reported by om_abi_version(). Bump when signatures change.
+- * 8 (VG-CONTRACT-E7): om_mission_compute_starting_force and om_mission_compute_reinforcement_capacity take (F, share);
+- * om_mission_get_force_group is declared. */
+-#define OM_ABI_VERSION 8
++/* ABI version reported by om_abi_version(). Bump when signatures change. */
++#define OM_ABI_VERSION 7
+ 
+ /* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
+ #define OM_LAYER_COUNT 5
+@@ -1807,7 +1805,6 @@ int32_t om_mission_get_enemy_faction(const om_world *w);
+ double om_mission_get_enemy_power(const om_world *w);
+ uint32_t om_mission_get_force_count(const om_world *w);
+ int om_mission_get_force_unit(const om_world *w, uint32_t i, int32_t *type, int32_t *tier);
+-int32_t om_mission_get_force_group(const om_world *w, uint32_t i);
+ double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx);
+ double om_mission_get_objective_score(const om_world *w);
+ uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, uint32_t max);
+@@ -2010,8 +2007,8 @@ uint32_t om_hazard_launch_type_count(void);
+ double om_hazard_sample_interference(om_world *w, double p1, double c_double);
+ uint32_t om_hazard_spawn_moving_interference(om_world *w, double p1, double p2, double p3, double c_double, uint64_t p5);
+ void om_mission_check_extraction_objectives(om_world *w);
+-double om_mission_compute_reinforcement_capacity(double F, double share);
+-double om_mission_compute_starting_force(double F, double share);
++double om_mission_compute_reinforcement_capacity(double c_double, uint64_t time);
++double om_mission_compute_starting_force(double c_double);
+ uint32_t om_mission_get_reinforcement_trickle(om_world *w);
+ void om_mission_set_player_held_structures_count(om_world *w, int32_t faction_id, uint32_t held);
+ void om_mission_setup_extraction_point(om_world *w, double x, double y, double radius);
+diff --git a/csrc/pipe/pipe_internal.h b/csrc/pipe/pipe_internal.h
+index d70e8a8a..1c73c34a 100644
+--- a/csrc/pipe/pipe_internal.h
++++ b/csrc/pipe/pipe_internal.h
+@@ -15,7 +15,7 @@
+ #include "ouroboros_sim.h"
+ #include "om_constants.h"
+ 
+-#define OM_PIPE_SAVE_FORMAT_VERSION 12
++#define OM_PIPE_SAVE_FORMAT_VERSION 11
+ 
+ /* csrc/generational.c GEN_PHASE_BRIEFING / GEN_PHASE_MISSION, not exported
+  * by ouroboros_sim.h. See the file-header comment above. */
+diff --git a/csrc/tactical_support.c b/csrc/tactical_support.c
+index 2408f1ae..1dd81480 100644
+--- a/csrc/tactical_support.c
++++ b/csrc/tactical_support.c
+@@ -466,26 +466,21 @@ void om_enemy_production_adapt_target(const om_composition_ratio *target, const
+ 
+ /* ---- R-126-02/03/04/05/06: structures ---- */
+ 
+-/* DRAFT-e7-floor-knee (register Q-218-07; Westley owns the number; See also the visible-game spec, E7 paragraph): the
+- * share at which the starting fraction is half of F. Below it the fraction slides from a fifth at share 0. */
+-#define OM_START_KNEE 0.25
+-#define OM_START_FRAC_FLOOR 0.2
+-#define OM_START_FRAC_SLOPE_LOW 1.2
+-#define OM_START_FRAC_AT_KNEE 0.5
+-#define OM_START_FRAC_SLOPE_HIGH 0.4
+-
+-/* R-218-06: the player starts with F * frac(share), share being p / (p + e) of the contested strongpoints at tick 0. */
+-double om_mission_compute_starting_force(double F, double share) {
+-    double frac;
+-    if (share < 0.0) share = 0.0;
+-    if (share > 1.0) share = 1.0;
+-    if (share <= OM_START_KNEE) frac = OM_START_FRAC_FLOOR + OM_START_FRAC_SLOPE_LOW * share;
+-    else frac = OM_START_FRAC_AT_KNEE + OM_START_FRAC_SLOPE_HIGH * (share - OM_START_KNEE);
+-    return F * frac;
++double om_mission_compute_starting_force(double full_force) {
++    return full_force; /* R-218-06, liberty 2026-10-10 until E-10 S-211 */
+ }
+ 
+-double om_mission_compute_reinforcement_capacity(double F, double share) {
+-    return F - om_mission_compute_starting_force(F, share);
++/* Pure by design (no world, no structure/military context): the game is
++ * tuned so the map's structures, held from the start, deliver the
++ * remaining 0.80 * F by whatever time_limit_ticks the caller's mission
++ * actually runs -- this contract value is what R-126-04 asserts, not a
++ * per-tick production simulation (that needs a real structure roster,
++ * out of a (double, uint64_t) function's reach). time_limit_ticks is kept
++ * as a parameter (0 rejected) so a future per-duration model can use it. */
++double om_mission_compute_reinforcement_capacity(double full_force, uint64_t time_limit_ticks) {
++    (void)full_force;
++    (void)time_limit_ticks;
++    return 0.0; /* R-218-06: strongpoint production is paid by the holder's economy (R-218-03) */
+ }
+ 
+ uint32_t om_structure_production_interval_ticks(double power) {
+@@ -865,17 +860,8 @@ static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structur
+     om_sup_structure_refresh_position(w, s);
+     while (s->timer >= interval) {
+         om_structure_tick_production(w, idx);
+-        if (om_structure_pop_spawned_unit(w, idx)) {
+-            /* VG-CONTRACT-E7: the player's production stops once reinforce_spawned reaches reinforce_cap (F minus the units
+-             * spawned at tick 0); the enemy's is unchanged. Payment (R-218-03) is NOT done here: FU-E7-production-paid,
+-             * lane E2. See also: om_mission_reinforce_cap in csrc/mission.c (the allowance left; UINT32_MAX on a bare world,
+-             * so uncapped there) and the spec E7 paragraph. */
+-            if (s->owner == om_player_faction(w)) {
+-                if (om_mission_reinforce_cap(w) == 0) continue;
+-                om_mission_reinforce_note_spawn(w);
+-            }
++        if (om_structure_pop_spawned_unit(w, idx))
+             om_unit_spawn(w, (int)s->unit_type, s->owner, s->last_spawn_x, s->last_spawn_y, 0);
+-        }
+     }
+ }
+ 
+diff --git a/csrc/terrain.c b/csrc/terrain.c
+index 61abab80..a290e82c 100644
+--- a/csrc/terrain.c
++++ b/csrc/terrain.c
+@@ -31,7 +31,7 @@
+  *  * field order, F2i). * /
+  * #define OM_SAVE_MAGIC "OMSV"
+  * #define OM_SAVE_MAGIC_LEN 4
+- * #define OM_SAVE_FORMAT_VERSION 12 / * bumped 11 -> 12 (VG E7: reinforce_cap and reinforce_spawned in the mission slot): version-11 saves are refused, no migration (R-111-03). Earlier: bumped 10 -> 11 (W2 stored routes): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
++ * #define OM_SAVE_FORMAT_VERSION 11 / * bumped 10 -> 11 (W2 stored routes): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
+  * #define OM_SAVE_BYTE_BITS 8
+  * #define OM_SAVE_BYTE_MASK 0xFFu
+  * #define OM_SAVE_SLOT_TACTICAL     0

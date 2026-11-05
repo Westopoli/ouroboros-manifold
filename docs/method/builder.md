@@ -4,7 +4,7 @@ Sonnet 5.5, `subagent_type: doer`. Read this card, then the story file the brief
 
 ## Setup
 
-- `python3 ~/Projects/ouroboros-manifold/scripts/specfactory/wt.py new <name> [--channel beta] --owner <you> --purpose "<id>" --base origin/<branch>` where the branch is the story's `s/<id>-<slug>`. Every command names the absolute path. Never cd into, or touch, `~/Projects/ouroboros-manifold`.
+- A cascade leaf works in the worktree the skill made and never runs git. A lone builder works on a worktree cut from the repository: `git -C ~/Projects/ouroboros-manifold worktree add ~/Projects/om-wt/<name> -b <branch> origin/main`. Every command names the absolute path; never edit `~/Projects/ouroboros-manifold` itself.
 - Build: `make && make pipe/ouroboros_pipe pipe/ouroboros_pipe_dbg`; `godot.real --headless --import` once first. Python `.venv/bin/python`; Godot `~/.local/bin/godot.real`.
 - Godot tests: `timeout 1800 scripts/run_godot_tests.sh <file>`; display-needing files under `xvfb-run -a -s '-screen 0 1920x1080x24'`. Every Godot or xvfb run under `timeout 1800`.
 - Long runs: `systemd-run --user --scope -q -p MemoryMax=6G -p MemorySwapMax=0 -- nice -n 10 <cmd>`.
@@ -17,17 +17,15 @@ Sonnet 5.5, `subagent_type: doer`. Read this card, then the story file the brief
 - New code in new files; wiring is its own commit. Behaviour a rule says happens in play is reachable from the tick, the jump or a pipe handler, not only from tests.
 - No stash, rebase, amend, force, `make clean`; never push to main; never stage `*.import` or `*.uid` noise (a `.uid` beside a new script of yours is committed).
 - No stink: no unasked layers, wrappers or config; no cosmetic refactoring inside the change; a doc claim the change makes wrong is rewritten in the same commit.
-- Before the push: `scripts/specfactory/pre_gate.sh <worktree> origin/main <id> [<test paths>]` must end `PRE_GATE verdict OK`. A reject here is yours to fix.
-- Push the branch, `wt.py done <path> <sha>`, stop. Stop past 120k context. Up to three rounds on one story; the third reject goes to the Architect through the clerk.
+- Before the push, `story_loop.md` step 5: `make`, the story's tests, `godot.real --headless --import`, console clean of `SCRIPT ERROR`, `ERROR:`, `Parser Error`.
+- Push the branch, stop. Stop past 120k context.
 
 ## Report
 
 ```
 ok: true|false
 branch, sha
-summary: the story's test lines verbatim, the PRE_GATE line
+summary: the story's test lines verbatim, the import and console lines
 red_ids: []
 stop_reason: none | test-defect: ... | file outside list: ... | number nobody gave: ...
 ```
-
-StructuredOutput fields when launched by `land_story`: `{ok: bool, pushed_sha: string, blocked: bool, reason: string, test_defect: string}`.

@@ -367,24 +367,6 @@ def test_5_queue_s_in_the_runs_row_equals_the_tickets_wait(tmp_path):
     assert abs(int(row[5]) - wait) <= 2, (row[5], wait)
 
 
-def test_6_each_result_sends_one_info_mail_to_the_requester(tmp_path):
-    """H-080 Tests 6: "Each result sends one `info` mail to the requester (fixture registry, H-077's `mail.py`)."
-    Mail line (H-077): class info, from gate-queue, to the requester, re the story id."""
-    e = Env(tmp_path)
-    mail = e.root / "scripts" / "method" / "mail.py"
-    reg = subprocess.run([sys.executable, str(mail), "register", "runner-lab"], capture_output=True, text=True, env=e.env)
-    assert reg.returncode == 0, f"scripts/method/mail.py (H-077) missing or failing: {reg.stdout}{reg.stderr}"
-    c = e.candidate("H-901")
-    assert e.submit(c).returncode == 0
-    r = e.run("--once", "--channel", CHANNEL)
-    assert r.returncode == 0, r.stdout + r.stderr
-    lines = (e.push / "mail" / "runner-lab" / "inbox.jsonl").read_text().splitlines()
-    assert len(lines) == 1, lines
-    m = json.loads(lines[0])
-    assert (m["from"], m["to"], m["class"], m["re"]) == ("gate-queue", "runner-lab", "info", "H-901"), m
-    assert m["text"].startswith("gate H-901 OK") and str(e.result_path("H-901")) in m["text"], m["text"]
-
-
 def test_7_worker_holds_the_channel_lock_while_running(tmp_path):
     """H-080 Tests 7: "The worker holds `gate-lab.lock` while running: a `flock -n` from the test fails during a run and
     succeeds after." (Change: each worker holds `~/Projects/om-push/gate-<channel>.lock` with `flock`.)"""

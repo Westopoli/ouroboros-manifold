@@ -1,0 +1,202 @@
+diff --git a/tests/csim/test_VG_W_w2_routes.py b/tests/csim/test_VG_W_w2_routes.py
+index 599ff170..c3d8e712 100644
+--- a/tests/csim/test_VG_W_w2_routes.py
++++ b/tests/csim/test_VG_W_w2_routes.py
+@@ -43,6 +43,10 @@ name; R is also red for the unit_id refusal, which is absent today).
+   F    fresh-row hash (GAP 7): a read does not change the checksum.
+   G    the getter is a read: no checksum change; cap; no row. K: a reused id reports route_n 0.
+   L    a plan longer than 512 points stores nothing and keeps today's walk.
++  Architect ruling 2026-10-14 (TD-VG-W-4 controls, after the checker's findings on origin/push/vg-w2s 09130f3e):
++  N1   a slope crossing of the stored route marks the route stale; the next waypoint arrival replans (seed 7, one walker).
++  N2   an ORDERED layer change discards the stored route and replans at once.
++  N3   a stale route is never saved as live: after an arrival or a stop the saved and hashed state has route_n 0, route_i 0.
+ """
+ import ctypes
+ import math
+@@ -696,9 +700,186 @@ def test_L_getter_a_plan_beyond_512_points_stores_nothing_and_a_short_one_does(l
+     assert _pos_layer(lib, w, (lu,))[0] != start, "premise: the long walker did not move"
+ 
+ 
++# ---------------------------------------------------------------- N1, N2, N3: the Architect ruling of 2026-10-14
++
++STALE_SEED, STALE_CANVAS = 7, 12000.0
++STALE_START, STALE_START_LAYER, STALE_GOAL = (10450.0, 4450.0), 1, (7150.0, 1550.0)
++STALE_TICKS = (41, 42, 48, 1200)
++
++
++def _stale_world(lib, make):
++    """The checker's single-walker world: seed 7 on a 12,000 wu canvas (120 x 120 cells), one walking Vanguard (id 1) on layer 1
++    at STALE_START, ordered to STALE_GOAL (a goal the planner cannot reach: it paths to a stand-in cell and stops)."""
++    _bind(lib)
++    w = make(n_regions=1)
++    lib.om_world_set_feature(w, w1.OMFeature.TACTICAL, 1)
++    assert lib.om_map_set_canvas(w, STALE_CANVAS, STALE_CANVAS) == 0
++    assert lib.om_terrain_generate(w, STALE_SEED, STALE_CANVAS, STALE_CANVAS) == 0
++    assert lib.om_roster_set_movement_kind(w, w1.VANGUARD, w1.KIND_WALKING) == 0
++    u = lib.om_unit_spawn(w, w1.VANGUARD, 0, *STALE_START, STALE_START_LAYER)
++    assert u == 1, "premise: the walker is unit id 1 (got %d)" % u
++    assert lib.om_command_move(w, [u], 1, *STALE_GOAL) == 0
++    return w, u
++
++
++def test_N1_a_slope_crossing_of_the_stored_route_is_stale_and_the_next_waypoint_replans_like_the_old_walker(lib, world_factory):
++    """Architect ruling 2026-10-14 (TD-VG-W-4 control): "a slope crossing made by the walker's stored route updates plan_layer
++    (no replan at the crossing; the slope tests stay green) and marks the stored route STALE; at the NEXT waypoint arrival the
++    walker discards it and replans on its current layer, exactly as the old walker did, so routes and `seconds` are
++    byte-identical to the old tree again". [B R-004-07] the slope crossing; [B R-001-05] a goal blocked on every layer: the
++    unit "paths as close as it can and stops". Seed 7, 12,000 wu canvas, one walker (unit id 1, layer 1) from (10450, 4450)
++    to the unreachable (7150, 1550). It climbs from layer 1 to 2 at tick 42 by the walker's own slope crossing. GOLDEN_STALE is
++    the old tree's (the unmodified walker, per-waypoint replan; measured by the checker and re-measured by the writer on
++    origin/main b64ff6d2): at tick 48 (10275.45454545453, 4450.0, layer 2); at tick 1200 it stands at (6750, 2850) on layer 3.
++    The build at 09130f3e keeps the pre-crossing stored route past the crossing and gives (10276.216182500768,
++    4447.773099120325, 2) at tick 48. The positions at ticks 48 and 1200 must be equal to the old tree's, exactly."""
++    w, u = _stale_world(lib, world_factory)
++    n, pts = _plan(lib, w, u, STALE_GOAL)
++    print("N1 premise: planner route %d points, last %r, goal %r" % (n, pts[-1], STALE_GOAL))
++    assert pts[-1] != STALE_GOAL, "premise: the goal is reachable, it must not be"
++    t = 0
++    for stop in STALE_TICKS:
++        _steps(lib, w, stop - t)
++        t = stop
++        got = _pos_layer(lib, w, (u,))[0]
++        if stop == 41:
++            assert got[2] == 1, "premise: the walker already left layer 1 at tick 41 (%r)" % (got,)
++        elif stop == 42:
++            assert got[2] == 2, "premise: the walker did not climb from layer 1 to 2 at tick 42 (%r)" % (got,)
++        else:
++            print("N1 tick %d: walker at %r, old tree %r" % (stop, got, GOLDEN_STALE[stop]))
++            assert got == GOLDEN_STALE[stop], "tick %d: walker at %r, the old tree (per-waypoint replan) at %r" % (
++                stop, got, GOLDEN_STALE[stop])
++
++
++LAYER_ORDER_TARGET, LAYER_ORDER_TICKS = 3, (24, 25, 50)
++
++
++def test_N2_an_ordered_layer_change_discards_the_stored_route_and_replans_at_once(lib, world_factory):
++    """Architect ruling 2026-10-14 (TD-VG-W-4 control): the stale-route rule covers only "a slope crossing made by the walker's
++    stored route"; every other layer change of a walker with a stored route replans at once on the new layer (the fourth
++    replan trigger, ruling 2026-10-13: "a layer change"). [B R-001-05] the route is planned from where the unit is, on the
++    layer it is on. A walker is ordered to another layer by om_command_set_layer, which R-001-07 makes a no-op for a walker
++    (tests/csim/test_E01_R001_07_walking_kind.py), so the order is given while the Vanguard type is set to flying and the type
++    is set back to walking before the first step; the transfer lands at tick 25 on the old tree and on the build. Ten walkers
++    of the W1 fixture at tick 50 hold a 317-point route (route_i 3 or more); unit 1 is ordered to layer 3. At tick 24 it is
++    still on layer 0 and its route equals the twin's (a twin world without the order keeps route_n 317 and a route_i above 1
++    at tick 25: the control that a restart at 1 is the order's doing); at tick 25 it is on layer 3 and its stored route is NOT
++    the old one (route_n differs, route_i is 1, re-stored: route_n 2 or more); its positions at ticks 25 and 50 equal
++    GOLDEN_LAYER_ORDER, measured on origin/main b64ff6d2 (the old walker replans every waypoint). May already be green on the
++    build: then it is the positive control of the ruling."""
++    _bind(lib)
++    ref, ids = _small_walker_world(lib, world_factory, 50)
++    w, ids_w = _small_walker_world(lib, world_factory, 50)
++    assert ids == ids_w
++    u = ids[0]
++    before = _route_read(lib, w, u)
++    print("N2 premise: unit %d layer %d, route_n %d, route_i %d at tick 50" % (u, lib.om_unit_get_layer(w, u), before[0], before[1]))
++    assert before[0] > 2 and before[1] > 1 and lib.om_unit_get_layer(w, u) == 0, "premise: no stored route on layer 0"
++    assert lib.om_roster_set_movement_kind(w, w1.VANGUARD, 0) == 0                 # flying, for the order only
++    assert lib.om_command_set_layer(w, (ctypes.c_uint32 * 1)(u), 1, LAYER_ORDER_TARGET) == 0
++    assert lib.om_roster_set_movement_kind(w, w1.VANGUARD, w1.KIND_WALKING) == 0
++    t = 0
++    for stop in LAYER_ORDER_TICKS:
++        _steps(lib, w, stop - t)
++        _steps(lib, ref, stop - t)
++        t = stop
++        got, route, twin = _pos_layer(lib, w, (u,))[0], _route_read(lib, w, u), _route_read(lib, ref, u)
++        print("N2 tick %d: walker at %r, route_n %d route_i %d; twin without the order: route_n %d route_i %d" % (
++            stop, got, route[0], route[1], twin[0], twin[1]))
++        if stop == LAYER_ORDER_TICKS[0]:
++            assert got[2] == 0, "premise: the transfer landed before tick 25 (%r)" % (got,)
++            assert route[:2] == twin[:2], "no layer change yet, but the stored route differs from the twin's"
++        elif stop == LAYER_ORDER_TICKS[1]:
++            assert got[2] == LAYER_ORDER_TARGET, "premise: the transfer did not land at tick 25 (%r)" % (got,)
++            assert twin[0] == before[0] and twin[1] > 1, "control: the twin's route_n %d route_i %d" % (twin[0], twin[1])
++            assert route[0] >= 2 and route[1] == 1 and route[0] != before[0], (
++                "an ordered layer change must replan at once on the new layer: route_n %d route_i %d (stored before: %d, %d)" % (
++                    route[0], route[1], before[0], before[1]))
++        assert got == GOLDEN_LAYER_ORDER.get(stop, got), "tick %d: walker at %r, the old tree at %r" % (
++            stop, got, GOLDEN_LAYER_ORDER.get(stop))
++
++
++def _n3_check(lib, make, w, dead, live, label):
++    """`dead` units have no order (the event happened), `live` units are walking. The saved and hashed state must carry route_n 0
++    and route_i 0 for every dead unit, read through the getter before the save and after the load; two saves of the same world
++    are byte-identical; the load reproduces om_world_checksum_full; the live units' routes round-trip (the control that a 0 is
++    not the getter failing)."""
++    stale = {u: _route_read(lib, w, u)[:2] for u in dead}
++    print("N3 %s: dead units' (route_n, route_i) %r; live units' %r" % (label, stale, {u: _route_read(lib, w, u)[:2] for u in live}))
++    assert all(_route_read(lib, w, u)[0] > 1 for u in live), "premise: a live unit has no stored route"
++    assert all(v == (0, 0) for v in stale.values()), "%s: a unit with no order still carries a stored route (route_n, route_i): %r" % (
++        label, {u: v for u, v in stale.items() if v != (0, 0)})
++    buf1, size1 = _save(lib, w)
++    buf2, size2 = _save(lib, w)
++    assert bytes(buf1) == bytes(buf2), "%s: two saves of the same world differ" % label
++    dst = w1._prepare(lib, make(n_regions=1))
++    assert _load(lib, dst, buf1, size1) == 0
++    for u in dead:
++        assert _route_read(lib, dst, u)[:2] == (0, 0), "%s: after the load unit %d carries a stored route" % (label, u)
++    for u in live:
++        assert _stored(lib, dst, u) == _stored(lib, w, u), "%s: after the load live unit %d reads a different route" % (label, u)
++    assert _full(lib, dst) == _full(lib, w), "%s: om_world_checksum_full differs after the round trip" % label
++
++
++def test_N3_a_walker_that_arrived_saves_and_hashes_no_route(lib, world_factory):
++    """Architect ruling 2026-10-14 (TD-VG-W-4 control, finding F2 of the checker): a stale route is never saved as live; after a
++    plan_valid = 0 or has_dest = 0 event (arrival, relocation, terrain guard, transit) the saved and hashed state carries
++    route_n 0 and route_i 0. Event here: the arrival. One walker is ordered to the sixth point of its own planned route (a
++    reachable cell, about 550 wu away) and stepped until it stops; a second walker keeps walking the long route (the control).
++    Expected green on the build: the arrival branch clears the route."""
++    _bind(lib)
++    w = w1._world(lib, world_factory, w1.WALK_SEED)
++    a = lib.om_unit_spawn(w, w1.VANGUARD, 0, w1.WALK_ORIGIN[0], w1.WALK_ORIGIN[1], w1.WALK_LAYER)
++    b = lib.om_unit_spawn(w, w1.VANGUARD, 0, w1.WALK_ORIGIN[0] + w1.WALK_SPACING, w1.WALK_ORIGIN[1], w1.WALK_LAYER)
++    assert a and b
++    n, pts = _plan(lib, w, a, w1.WALK_GOAL)
++    near = pts[6]
++    assert lib.om_command_move(w, [a], 1, *near) == 0
++    assert lib.om_command_move(w, [b], 1, *w1.WALK_GOAL) == 0
++    _steps(lib, w, 40)
++    mid = _route_read(lib, w, a)
++    print("N3 premise: walker %d to %r, route_n %d route_i %d at tick 40" % (a, near, mid[0], mid[1]))
++    assert mid[0] > 1, "premise: the short walk stores no route"
++    _steps(lib, w, 460)
++    x, y = lib.om_unit_get_pos(w, a)
++    print("N3 arrival: walker %d at (%.1f, %.1f), goal %r" % (a, x, y, near))
++    assert math.hypot(x - near[0], y - near[1]) < 20.0, "premise: the walker did not arrive"
++    _n3_check(lib, world_factory, w, [a], [b], "arrival")
++
++
++def test_N3_a_walker_stopped_by_an_order_saves_and_hashes_no_route(lib, world_factory):
++    """Architect ruling 2026-10-14 (TD-VG-W-4 control, finding F2): after a has_dest = 0 event the saved and hashed state carries
++    route_n 0 and route_i 0. Event here: om_unit_clear_orders (csrc/tactical_move.c:3039, which om_command_guard calls) on one of
++    two walkers 30 ticks into a 317-point walk; one step later the stopped walker is still where it stopped (premise: it has no
++    order) and must hold no route; the other walker keeps its stored route (control). Red if the stop leaves the stale route_n
++    of the order it ended."""
++    _bind(lib)
++    w, ids = _small_walker_world(lib, world_factory, 30, n=2)
++    a, b = ids
++    before = _route_read(lib, w, a)
++    print("N3 premise: walker %d route_n %d route_i %d before the stop" % (a, before[0], before[1]))
++    assert before[0] > 2, "premise: the walk stores no route"
++    lib.om_unit_clear_orders(w, a)
++    pos = lib.om_unit_get_pos(w, a)
++    _steps(lib, w, 1)
++    assert lib.om_unit_get_pos(w, a) == pos, "premise: the stopped walker moved"
++    _n3_check(lib, world_factory, w, [a], [b], "stop")
++
++
+ # ==== GOLDEN TABLE (begin): recorded 2026-10-13 on origin/main c762aab4, the unmodified walker (per-waypoint replan) ====
+ GOLDEN_L = {
+     100: ((650.0, 250.0, 0), (450.0, 650.0, 0)),
+     300: ((1450.0, 250.0, 0), (450.0, 1450.0, 0)),
+ }
++# N1 and N2: recorded by the writer 2026-10-14 on origin/main b64ff6d2 (the old walker, per-waypoint replan); N1 equals the
++# checker's values. N2 is also equal on the build at 09130f3e (positive control). Each row is (x, y, layer) of the walker.
++GOLDEN_STALE = {
++    48: (10275.45454545453, 4450.0, 2),
++    1200: (6750.0, 2850.0, 3),
++}
++GOLDEN_LAYER_ORDER = {
++    25: (17449.372024048957, 6581.3636779130875, 3),
++    50: (17449.806604379126, 6490.455625740275, 3),
++}
+ # ==== GOLDEN TABLE (end) ====

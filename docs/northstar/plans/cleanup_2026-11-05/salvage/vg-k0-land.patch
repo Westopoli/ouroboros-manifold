@@ -1,0 +1,13 @@
+diff --git a/docs/northstar/plans/push/pieces.toml b/docs/northstar/plans/push/pieces.toml
+index 42424d42..488b1917 100644
+--- a/docs/northstar/plans/push/pieces.toml
++++ b/docs/northstar/plans/push/pieces.toml
+@@ -1404,7 +1404,7 @@ owns = [
+     "docs/northstar/spec_factory/signatures.toml", "autoload/c_bridge.gd",
+     "tests/csim/conftest.py", "tests/csim/test_E02_S020_abi.py", "tests/transport/test_pipe_shapes.py",
+     "tests/csim/test_VG_contract.py", "tests/test_c_bridge_vg.gd",
+-    "tests/transport/test_pipe_vg_contract.py", "tests/transport/test_pipe_vg_park_dead_slot.py",
++    "tests/transport/test_pipe_vg_contract.py",
+ ]
+ owns_glob = ["tests/qa/desktop/plays/K/**"]
+ acceptance = ["tests/csim/test_VG_contract.py", "tests/transport/test_pipe_vg_contract.py", "tests/test_c_bridge_vg.gd"]

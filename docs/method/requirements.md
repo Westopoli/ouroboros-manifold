@@ -38,7 +38,7 @@ Rules use concrete values, never adjectives. "Sees further" is not a rule; "sees
 
 ## Status
 
-Spec'd (written), Ready (below), Tested (landed on main with its tests green, the game opened and the scene reached by the clerk), Revised (built, then changed; back to Spec'd for the changed rules), Killed, Seen (Tested, and Westley approved the scene). In flight is not a status: it is the branch `s/S-###-*` on origin.
+Spec'd (written), Ready (below), Tested (landed on main with its tests green, the game opened and the scene reached by the overlord), Revised (built, then changed; back to Spec'd for the changed rules), Killed, Seen (Tested, and Westley approved the scene). In flight is not a status: it is the branch `s/S-###-*` on origin.
 
 ## Definition of Ready
 
@@ -61,4 +61,4 @@ A question the Architect cannot answer from the epic, the references, `docs/bibl
 
 ## Change protocol
 
-When a requirement changes: rewrite the story and its rules in the epic (delete the old text; history is `git log`); set the catalog row to Revised, then Spec'd for the changed rules; the tests are rewritten in the same change; the story file under `docs/stories/` is rewritten; one commit carries all of it. The bible never lags the tests and the tests never lag the bible. A story that cannot fit 1,000 implementation lines is split in the epic, never in the queue.
+When a requirement changes: rewrite the story and its rules in the epic (delete the old text; history is `git log`); set the catalog row to Revised, then Spec'd for the changed rules; the tests are rewritten in the same change; the story file under `docs/stories/` is rewritten; one commit carries all of it. The bible never lags the tests and the tests never lag the bible. A story that cannot fit 1,500 implementation lines is split in the epic, never in the queue.

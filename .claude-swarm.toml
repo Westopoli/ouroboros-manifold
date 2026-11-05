@@ -18,7 +18,7 @@ parent_owned = [
 ]
 
 [invariants]
-max_impl_lines      = 100
+max_impl_lines      = 1500
 max_test_assertions = 40
 ambiguous_verbs = [
   "decide", "choose", "design", "determine",

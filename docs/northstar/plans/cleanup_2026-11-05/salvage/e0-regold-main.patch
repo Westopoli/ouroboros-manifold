@@ -1,0 +1,47 @@
+diff --git a/tests/csim/test_E01_T2_collision_mask.py b/tests/csim/test_E01_T2_collision_mask.py
+index 0d80e0c6..ed799407 100644
+--- a/tests/csim/test_E01_T2_collision_mask.py
++++ b/tests/csim/test_E01_T2_collision_mask.py
+@@ -26,7 +26,7 @@ BLOB_R = 60.0              # lab's shape: 16 units in a 60 wu blob
+ # 3388087635923795345); the pin is now the (units, movement) sections, which K-e5 does not touch.
+ # TD-VG-W-2: old 59688484827617401, new 15349036910042598830 (movement word only; units word 5542676384425136191 unchanged):
+ # W2 stored routes add the route block to the movement section.
+-FLYER_SECTIONS_50 = (5542676384425136191, 15349036910042598830)   # re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
++FLYER_SECTIONS_50 = (5542676384425136191, 4978792054462148355)   # re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged, positions identical to feb73b17; earlier: re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
+ 
+ 
+ def _units_movement(lib, w):
+diff --git a/tests/csim/test_E01_T2_walker_waypoint_arrival.py b/tests/csim/test_E01_T2_walker_waypoint_arrival.py
+index 3c062802..59fdc5fb 100644
+--- a/tests/csim/test_E01_T2_walker_waypoint_arrival.py
++++ b/tests/csim/test_E01_T2_walker_waypoint_arrival.py
+@@ -45,7 +45,7 @@ FLYER_TICKS = 200
+ # (units, movement) sections.
+ # TD-VG-W-2: old 11290823588580758478, new 12903589747027128004 (movement word only; units word 1545777915625493498 unchanged):
+ # W2 stored routes add the route block to the movement section.
+-FLYER_SECTIONS_200 = (1545777915625493498, 12903589747027128004)   # re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
++FLYER_SECTIONS_200 = (1545777915625493498, 615507882537794494)   # re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged, positions identical to feb73b17; earlier: re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
+ 
+ 
+ def _units_movement(lib, w):
+diff --git a/tests/csim/test_PP_portability.py b/tests/csim/test_PP_portability.py
+index 73930373..580f44cb 100644
+--- a/tests/csim/test_PP_portability.py
++++ b/tests/csim/test_PP_portability.py
+@@ -36,11 +36,12 @@ PYTHON = sys.executable
+ # Re-recorded 2026-10-11 (TD-VG-E-21): E1q changes the growth hashed in the economy block; old values in the ledger row
+ # TD-VG-W-2: W2 stored routes add the route block to the movement section; old values 100: 14414279078877383414,
+ # 500: 2462771596946682441, 1000: 2825217407474388049, 2000: 263473283203217348 (new values below).
++# re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged
+ PINNED_FULL = {
+-    100: 15870404153552538785,
+-    500: 5368266331726284326,
+-    1000: 1335582271474088983,
+-    2000: 6505739661716914864,
++    100: 1340420882857523623,
++    500: 15065243673284983748,
++    1000: 13532818765593894311,
++    2000: 10749923395565833911,
+ }
+ 
+ 

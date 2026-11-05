@@ -1,0 +1,3031 @@
+diff --git a/scripts/skilllab/__main__.py b/scripts/skilllab/__main__.py
+index d304a1b8..11dffed4 100644
+--- a/scripts/skilllab/__main__.py
++++ b/scripts/skilllab/__main__.py
+@@ -2,7 +2,7 @@ import argparse
+ import sys
+ from pathlib import Path
+ 
+-from scripts.skilllab import batches, plays, report, rows, scan
++from scripts.skilllab import batches, plays, report, rows, scan, sweep
+ from scripts.skilllab.contract import Batch
+ 
+ SIZE = 16
+@@ -14,7 +14,7 @@ def _scan_plays(out_dir, plays_by_label, csv_name, title):
+     out_dir.mkdir(parents=True, exist_ok=True)
+     scans, firing_example, fight_rows = {}, {}, []
+     for label, build in plays_by_label.items():
+-        result = scan.scan(build, SIZE, ENEMY_FROM, ENEMY_TO, replicates=REPLICATES)
++        result = scan.scan(build, SIZE, ENEMY_FROM, ENEMY_TO, replicates=REPLICATES, full_scan=True)
+         scans[label] = result
+         for cell in result.cells:
+             if cell.enemy_heads == SIZE:
+@@ -57,6 +57,29 @@ def _batch(name, out_dir, workers=1, layouts=200):
+     return 0
+ 
+ 
++def _sweep(name, out_dir, workers):
++    if name in (None, "all"):
++        families = list(sweep.FAMILY_ORDER)
++    elif name in sweep.FAMILY_ORDER:
++        families = [name]
++    else:
++        print("sweep needs one of: all, " + ", ".join(sweep.FAMILY_ORDER))
++        return 2
++    summary = sweep.run(families, out_dir, workers=workers)
++    for entry in summary["families"].values():
++        if entry.get("csv"):
++            print(out_dir / entry["csv"])
++    print(out_dir / "sweep_summary.json")
++    return 0
++
++
++def _smoke(out_dir, workers):
++    summary = sweep.run_smoke(out_dir, workers=workers)
++    print(out_dir / "smoke.csv")
++    print(out_dir / "smoke_summary.json")
++    return 0
++
++
+ def _workers(text):
+     try:
+         value = int(text)
+@@ -80,7 +103,7 @@ def main(argv=None) -> int:
+     parser.add_argument("name", nargs="?")
+     parser.add_argument("--out", default="./skilllab_out")
+     parser.add_argument("--factor", type=_positive, default=1.2)
+-    parser.add_argument("--workers", type=_workers, default=1,
++    parser.add_argument("--workers", type=_workers, default=None,
+                         help="batch only: fight in this many worker processes (default 1; try the number of idle cores)")
+     parser.add_argument("--layouts", type=_workers, default=200, help="batch layout_search only: how many layouts to draw (default 200)")
+     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
+@@ -89,7 +112,11 @@ def main(argv=None) -> int:
+     if args.command == "reach":
+         return _reach(Path(args.out), args.factor)
+     if args.command == "batch":
+-        return _batch(args.name, Path(args.out), args.workers, args.layouts)
++        return _batch(args.name, Path(args.out), args.workers or 1, args.layouts)
++    if args.command == "sweep":
++        return _sweep(args.name, Path(args.out), args.workers or 1)
++    if args.command == "smoke":
++        return _smoke(Path(args.out), args.workers or 12)
+     return 2
+ 
+ 
+diff --git a/scripts/skilllab/batches.py b/scripts/skilllab/batches.py
+index a9312c5f..43fbf017 100644
+--- a/scripts/skilllab/batches.py
++++ b/scripts/skilllab/batches.py
+@@ -5,17 +5,17 @@ from html import escape
+ from pathlib import Path
+ from typing import Optional
+ 
+-from scripts.skilllab import compose, depth, maps, matchup, mopup, plays, pool, positions, profile, report, rows, scan, skills, summary
++from scripts.skilllab import compose, depth, maps, matchup, plays, pool, positions, profile, report, rows, scan, skills, summary
+ from scripts.skilllab.asym import Side, asym_play
+ from scripts.skilllab.contract import trim_series
+ from scripts.skilllab.ground.scenes_ground import tall_cover, tall_cover_terrain
+-from scripts.skilllab.scenes import guard_defenders, phase_b_choke
++from scripts.skilllab.scenes import guard_defenders
+ from scripts.skilllab.terrain import with_terrain
+ 
+-NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers", "layout_search")
++NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layout_search")
+ BASE_SETTINGS = {"OM_TP_PURSUE_BY_STEERING": 1}
+-MOPUP_NOTE = (mopup.RULE_TEXT + " Setting: mopup=%s, mopup_interval_ticks=%d. Each fight's count is the mopup_orders column."
+-              % (plays.MOPUP, plays.MOPUP_INTERVAL_TICKS))
++RULE_NOTE = ("A fight ends when one side is eliminated (Q-LAB-03). A capped fight is a lab defect, never a result; "
++             "a draw (both sides die on one tick) is a defect too.")
+ NOT_SINGLE = "not a single group order"
+ REFINE_FACTOR = 3
+ PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
+@@ -24,16 +24,9 @@ REPLICATES = 10
+ DEFENDER_ORDER = "guard"
+ UNIT_TYPES = ("Vanguard", "Raider", "Bombard", "Bastion")
+ REFERENCE = "reference"
+-_STALLED = ("stalemate",)   # quiet stalemate only; caps and draws are counted apart (A201)
+ PROFILE_NOTE = ("One row per subset of the five skills; break-even and advantage in whole units "
+                 "(unconfirmed definition).")
+ DRAFT_NUMBERS = "draft numbers: turn or spring tick 100, bait share 0.25, none confirmed"
+-LAYER_SCENES = ("mirror", "choke", "choke_phase_b")
+-LAYER_REACH = {"Vanguard": (0, 0)}   # the reach table's Vanguard row (REACH_TABLE); the type's reach goes in through set_reach
+-REACH_NOTE = ("reach set per the reach table (Vanguard 0 up 0 down); every unit is on layer 0, so the "
+-              "layer settings have no effect in this scene (a layered scene is still needed)")
+-REACH_TABLE = ("Vanguard and Warden 0 up 0 down; Raider 1 up 1 down; Interceptor 2 up 1 down; "
+-               "Bombard and Bastion 0 up 2 down (set per cell on the unit type through om_roster_set_reach)")
+ 
+ 
+ @dataclass(frozen=True)
+@@ -58,7 +51,6 @@ class BatchDef:
+     cells: tuple
+     variants: tuple
+     unexpressed: tuple
+-    weighted: bool = False
+ 
+ 
+ def _cell(label, size, build, status, note="", enemy=None, reference=None, settings=None):
+@@ -121,14 +113,14 @@ def _matchup():
+         title="Skill lab matchup batch",
+         scene=("Open map, no terrain, blob against blob. Side 0 of N units of one type or an even two-type mix against "
+                "side 1 of half to one and a half times N of another. Sizes 16 and 32; every row against every column. "
+-               "The weighted firing count is on. Layered cells (short-range types in front, long-range behind) run at size 16 only, "
++               "The type-weighted firing count is recorded for every fight. Layered cells (short-range types in front, long-range behind) run at size 16 only, "
+                "so the batch stays under about 30 minutes."),
+         cells=tuple(cells), variants=(("default", {}),),
+-        unexpressed=("the weighted count reads the engine's target (its sight and reach), so a unit counts once the engine has given it a target",
++        unexpressed=("the weighted count reads the target of record (the engine's target when it can engage, else the nearest eligible enemy)",
+                      "only even two-type mixes; unequal mixes and three-type mixes are not included",
+                      "arrangement: interleaved in every cell; layered (short range in front, long range behind) only at size 16 "
+                      "and only on the even two-type mixes, in the first pass; the reverse arrangement and layered at 32 are not run"),
+-        weighted=True)
++        )
+ 
+ 
+ def _landscape():
+@@ -200,80 +192,6 @@ def _combinations():
+                      "skills with no registered skilled play (defined with Westley later)"))
+ 
+ 
+-def _layer_settings(u1=None, u2=None, d=None):
+-    s = {}
+-    for n, v in ((1, 0.5), (2, 0.2), (3, 0.0), (4, 0.0)):
+-        s["OM_TP_VISION_UP_%d" % n] = s["OM_TP_VISION_DOWN_%d" % n] = v
+-    for n in (1, 2):
+-        for kind in ("RANGE", "DAMAGE"):
+-            s["OM_TP_%s_UP_%d" % (kind, n)] = s["OM_TP_%s_DOWN_%d" % (kind, n)] = 1.0
+-    if u1 is not None:
+-        s["OM_TP_RANGE_UP_1"], s["OM_TP_RANGE_UP_2"] = u1, u2
+-    if d is not None:
+-        s["OM_TP_DAMAGE_UP_1"], s["OM_TP_DAMAGE_UP_2"] = d, d / 2
+-    return s
+-
+-
+-def _with_reach(build):
+-    """Side units become a Vanguard-based type that carries its table reach (stale gate removed: set_reach is bound)."""
+-    name = "VanguardL"
+-
+-    def wrapped(enemy_heads, swap):
+-        setup = build(enemy_heads, swap)
+-        groups = tuple(dataclasses.replace(g, unit=name) if g.unit == "Vanguard" else g for g in setup.groups)
+-        types = {**setup.unit_types, name: {"base": "Vanguard", "reach": LAYER_REACH["Vanguard"]}}
+-        return dataclasses.replace(setup, groups=groups, unit_types=types)
+-    wrapped.labels = getattr(build, "labels", None)
+-    return wrapped
+-
+-
+-def _layers():
+-    scenes = {"mirror": asym_play(16, Side("blob"), Side("blob")),
+-              "choke": with_terrain(asym_play(16, Side("blob"), Side("blob")), maps.sample_map("wall", 0)),
+-              "choke_phase_b": phase_b_choke(8)}
+-    pairs = [(u1, u2) for u1 in (0.5, 0.75, 1.0) for u2 in (0.25, 0.5)]
+-    cells = []
+-
+-    def add(table, scene, suffix, settings):
+-        build = scenes[scene] if table == "LA" else _with_reach(scenes[scene])
+-        label = "%s:%s%s" % (table, scene, suffix)
+-        size, enemy = (8, (7, 12)) if scene == "choke_phase_b" else (16, (8, 24))
+-        note = "settings are draft sweep points (A174)" if table == "LA" else REACH_NOTE
+-        cells.append(_cell(label, size, build, skills.DRAFT, note, enemy=enemy, settings=settings))
+-
+-    for scene in LAYER_SCENES:
+-        add("LA", scene, "", _layer_settings())
+-    for scene in LAYER_SCENES:
+-        for u1, u2 in pairs:
+-            add("LB", scene, ":up1=%s,up2=%s" % (u1, u2), _layer_settings(u1, u2))
+-    for scene in LAYER_SCENES:
+-        for d in (0.5, 0.75):
+-            for u1, u2 in pairs:
+-                add("LC", scene, ":up1=%s,up2=%s,dmg1=%s" % (u1, u2, d), _layer_settings(u1, u2, d))
+-    for r in (10, 15, 20, 30):
+-        for a in (150, 200, 300, 450):
+-            name = "RaiderR%d" % a
+-            side = Side("blob", mix=((name, 1),))
+-            build = asym_play(16, side, side, {name: {"base": "Raider", "set": {"attack_range": a}}})
+-            ratio = "%.1f" % (a / (2 * r))
+-            cells.append(_cell("body%d_range%d_ratio%s" % (2 * r, a, ratio), 16, build, skills.DRAFT,
+-                               "collision radius %d, body size %d, attack range %d, range-to-body ratio %s"
+-                               % (r, 2 * r, a, ratio), enemy=(8, 24), settings={"OM_TP_UNIT_COLLISION_RADIUS": r}))
+-    return BatchDef(
+-        name="layers",
+-        title="Skill lab layers batch",
+-        scene=("Tables LA (vision only), LB (vision and reach) and LC (vision, reach and damage) by three scenes: a "
+-               "mirror and two chokes. 16 Vanguards against 8 to 24. The LB and LC values are sweep points "
+-               "proposed by the Architect as drafts (A174), not confirmed by Westley. The sampled choke is a sampled wall from "
+-               "maps.sample_map and the Phase B choke is its own cell: a 3000 by 1600 canvas with a gap in the wall, "
+-               "where the defenders attack-move (the idle version is in the landscape batch) and side 0 is the 8 "
+-               "defenders against 7 to 12 attackers. The last 16 cells are a Raider mirror over collision radius "
+-               "and attack range (reach against body size), also drafts."),
+-        cells=tuple(cells), variants=(("default", {}),),
+-        unexpressed=("the tall-cover scene (units on different layers; reach is bound but this batch has no layered scene, see the landscape batch)", REACH_TABLE,
+-                                          "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b"))
+-
+-
+ def get(name):
+     if name == "formation":
+         return _formation()
+@@ -287,16 +205,13 @@ def get(name):
+         return _enemy_position()
+     if name == "combinations":
+         return _combinations()
+-    if name == "layers":
+-        return _layers()
+     raise ValueError("unknown batch %r; valid names: %s" % (name, ", ".join(NAMES)))
+ 
+ 
+-def _with_settings(build, settings, weighted=False):
++def _with_settings(build, settings):
+     def wrapped(enemy_heads, swap):
+         setup = build(enemy_heads, swap)
+-        setup = dataclasses.replace(setup, settings={**setup.settings, **BASE_SETTINGS, **settings})
+-        return dataclasses.replace(setup, weighted=True) if weighted else setup
++        return dataclasses.replace(setup, settings={**setup.settings, **BASE_SETTINGS, **settings})
+     return wrapped
+ 
+ 
+@@ -337,30 +252,34 @@ def _spread_text(sc):
+     return " | pair spread %.2f to %.2f" % (low, high)
+ 
+ 
++def _beats_text(sc):
++    if sc.ceiling_hit:
++        return "%d units beat all %d enemy units (ceiling hit)" % (sc.size, sc.beats)
++    if sc.beats is None:
++        return "no break-even in range"
++    return "%d units beat %d, lose to %d" % (sc.size, sc.beats, sc.loses_to)
++
++
+ def _result_line(cell, variant, sc):
+     fights = [f for c in sc.cells for f in c.fights]
+-    beats = ("no break-even in range" if sc.beats is None
+-             else "%d units beat %d, lose to %d" % (sc.size, sc.beats, sc.loses_to))
+-    weighted = [f.weighted_unit_seconds for f in fights if f.weighted_unit_seconds is not None]
+-    weighted_text = ("; mean weighted firing unit-seconds %.2f side 0, %.2f side 1"
+-                     % (_mean([w[0] for w in weighted]), _mean([w[1] for w in weighted]))) if weighted else ""
++    weighted = [f.weighted_unit_seconds for f in fights]
+     spread = _spread_text(sc)
+-    return ("- %s%s, %s: %s; mean fight ticks %.1f; mean firing unit-seconds %.2f side 0, %.2f side 1%s; "
+-            "stalled fights %d (quiet stalemates only); caps %d; draws %d%s"
+-            % (cell.label, _tag(cell), variant, beats, _mean([f.ticks for f in fights]),
+-               _mean([f.firing_unit_seconds[0] for f in fights]),
+-               _mean([f.firing_unit_seconds[1] for f in fights]), weighted_text,
+-               sum(f.outcome in _STALLED for f in fights), sum(f.outcome == "cap" for f in fights),
+-               sum(f.outcome == "draw" for f in fights), spread))
++    return ("- %s%s, %s: %s; mean fight ticks %.1f; mean firing unit-seconds %.2f side 0, %.2f side 1; "
++            "mean weighted firing unit-seconds %.2f side 0, %.2f side 1; caps %d; draws %d; defect cells %d%s"
++            % (cell.label, _tag(cell), variant, _beats_text(sc), _mean([f.ticks for f in fights]),
++               _mean([f.firing_unit_seconds[0] for f in fights]), _mean([f.firing_unit_seconds[1] for f in fights]),
++               _mean([w[0] for w in weighted]), _mean([w[1] for w in weighted]),
++               sum(f.outcome == "cap" for f in fights), sum(f.outcome == "draw" for f in fights),
++               sum(c.defect for c in sc.cells), spread))
+ 
+ 
+ def _reference_line(sc):
+-    if sc.beats is None:
+-        return "naive against naive on this map: no break-even in range"
+-    return "naive against naive on this map: %d units beat %d, lose to %d" % (sc.size, sc.beats, sc.loses_to)
++    return "naive against naive on this map: " + _beats_text(sc)
+ 
+ 
+ def _units(sc):
++    if sc.ceiling_hit:
++        return "%d units beat all %d (ceiling hit)" % (sc.size, sc.beats)
+     if sc.beats is None:
+         return "%d units: no break-even in range" % sc.size
+     return "%d units beat %d" % (sc.size, sc.beats)
+@@ -411,7 +330,7 @@ def _changes(defn, scans):
+ 
+ 
+ def _run_file(defn, scans, names):
+-    lines = ["# " + defn.title, "", PROVISIONAL, "", MOPUP_NOTE, "", "## Scene", "", defn.scene, "", "## Cells", "",
++    lines = ["# " + defn.title, "", PROVISIONAL, "", RULE_NOTE, "", "## Scene", "", defn.scene, "", "## Cells", "",
+              "| cell | size | enemy range | replicates | fights per cell | status |", "|---|---|---|---|---|---|"]
+     for c in defn.cells:
+         lines.append("| %s | %d | %d to %d | %d | %d | %s |" % (c.label, c.size, c.enemy_from, c.enemy_to,
+@@ -448,7 +367,7 @@ def _run_file(defn, scans, names):
+ 
+ 
+ def _matchup_page(defn, scans):
+-    body = ["<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(MOPUP_NOTE),
++    body = ["<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(RULE_NOTE),
+             "<p>%s</p>" % escape(defn.scene)]
+     names = list(dict.fromkeys(c.label.split("_v_")[0] for c in defn.cells))
+     plain = [c for c in defn.cells if not c.label.endswith(":layered")]
+@@ -469,7 +388,7 @@ def _matchup_page(defn, scans):
+ def _page(defn, scans, examples):
+     if defn.name == "matchup":
+         return _matchup_page(defn, scans)
+-    body = ["<h1>%s</h1>" % escape(defn.title), "<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(MOPUP_NOTE),
++    body = ["<h1>%s</h1>" % escape(defn.title), "<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(RULE_NOTE),
+             "<p>%s</p>" % escape(defn.scene)]
+     for c in defn.cells:
+         body.append("<h2>%s (%s)</h2>" % (escape(c.label), escape(c.status)))
+@@ -537,11 +456,11 @@ def _run(defn, out_dir, scan_fn=None, map_fn=None):
+         if c.build is None:
+             continue
+         if c.reference is not None:
+-            scans[(c.label, REFERENCE)] = _trimmed(scan_fn(_with_settings(c.reference, defn.variants[0][1], defn.weighted),
++            scans[(c.label, REFERENCE)] = _trimmed(scan_fn(_with_settings(c.reference, defn.variants[0][1]),
+                                                   c.size, c.enemy_from, c.enemy_to, replicates=c.replicates,
+                                                   refine_factor=REFINE_FACTOR, **more), None)
+         for v, overlay in defn.variants:
+-            result = scan_fn(_with_settings(c.build, {**overlay, **c.settings}, defn.weighted), c.size, c.enemy_from, c.enemy_to,
++            result = scan_fn(_with_settings(c.build, {**overlay, **c.settings}), c.size, c.enemy_from, c.enemy_to,
+                              replicates=c.replicates, refine_factor=REFINE_FACTOR, **more)
+             scans[(c.label, v)] = result
+             keep = None
+@@ -557,7 +476,7 @@ def _run(defn, out_dir, scan_fn=None, map_fn=None):
+     rows.write_rows(fight_rows, paths["csv"])
+     paths["run"].write_text(_run_file(defn, scans, [p.name for p in paths.values()]), encoding="utf-8")
+     paths["page"].write_text(_page(defn, scans, examples), encoding="utf-8")
+-    summary.write(defn, scans, paths["summary"], MOPUP_NOTE)
++    summary.write(defn, scans, paths["summary"], RULE_NOTE)
+     return paths
+ 
+ 
+diff --git a/scripts/skilllab/breakeven.py b/scripts/skilllab/breakeven.py
+index 8d3e808f..ba2e26f1 100644
+--- a/scripts/skilllab/breakeven.py
++++ b/scripts/skilllab/breakeven.py
+@@ -5,7 +5,7 @@ import dataclasses
+ from dataclasses import dataclass
+ from typing import Any, Optional
+ 
+-from scripts.skilllab.contract import BuildFn, CellResult, ScanResult, Setup, WIN_MARGIN
++from scripts.skilllab.contract import BuildFn, CellResult, ScanResult, Setup
+ from scripts.skilllab.scan import cell_jobs, cell_result, run_jobs, scan
+ 
+ 
+@@ -25,6 +25,7 @@ class BreakEven:
+     loses_to: Optional[int]
+     refined: list
+     rounds: int
++    ceiling_hit: bool = False
+ 
+ 
+ @dataclass
+@@ -41,7 +42,7 @@ def _flips(cells: list) -> list:
+ 
+ 
+ def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates: int = 10,
+-                    near_replicates: int = 30, max_rounds: int = 2, win_margin: float = WIN_MARGIN,
++                    near_replicates: int = 30, max_rounds: int = 2,
+                     fight_fn: Any = None, map_fn: Any = None) -> BreakEven:
+     if near_replicates < replicates:
+         raise ValueError("near_replicates must be at least replicates")
+@@ -49,7 +50,7 @@ def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, r
+         raise ValueError("max_rounds must not be negative")
+     if fight_fn is not None and map_fn is not None:
+         raise ValueError("pass fight_fn or map_fn, not both")
+-    result = scan(build, size, enemy_from, enemy_to, replicates, win_margin, fight_fn, map_fn)
++    result = scan(build, size, enemy_from, enemy_to, replicates, fight_fn=fight_fn, map_fn=map_fn, full_scan=True)
+     cells = result.cells
+     flips = _flips(cells)
+     refined: set = set()
+@@ -65,8 +66,7 @@ def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, r
+                 results = run_jobs([j for jobs in per_cell for j in jobs], fight_fn, map_fn)
+                 pos = 0
+                 for i, jobs in zip(idx, per_cell):
+-                    cells[i] = cell_result(cells[i].enemy_heads, cells[i].fights + results[pos:pos + len(jobs)],
+-                                           win_margin)
++                    cells[i] = cell_result(cells[i].enemy_heads, cells[i].fights + results[pos:pos + len(jobs)])
+                     pos += len(jobs)
+             refined |= near
+         flips = _flips(cells)
+@@ -75,9 +75,12 @@ def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, r
+     first = next((f for f in flips if f.direction == "win_to_loss"), None)
+     beats = first.before if first else None
+     loses_to = first.after if first else None
+-    final = dataclasses.replace(result, cells=cells, beats=beats, loses_to=loses_to)
++    ceiling = all(c.won for c in cells)
++    if ceiling:
++        beats = cells[-1].enemy_heads
++    final = dataclasses.replace(result, cells=cells, beats=beats, loses_to=loses_to, ceiling_hit=ceiling)
+     return BreakEven(scan=final, flips=flips, multi_flip=len(flips) > 1, beats=beats,
+-                     loses_to=loses_to, refined=sorted(refined), rounds=rounds)
++                     loses_to=loses_to, refined=sorted(refined), rounds=rounds, ceiling_hit=ceiling)
+ 
+ 
+ def flip_sides(setup: Setup) -> Setup:
+diff --git a/scripts/skilllab/contract.py b/scripts/skilllab/contract.py
+index 8b29a508..3be3c70d 100644
+--- a/scripts/skilllab/contract.py
++++ b/scripts/skilllab/contract.py
+@@ -92,7 +92,7 @@ class Setup:
+     states: bool = False      # True records FightResult.states
+     target_policy: Optional[tuple] = None   # (side 0, side 1), each None, 0 nearest or 1 most damaged; None sets nothing (A196)
+     point: Optional[tuple] = None   # (x, y) the shared attack-move point; None: each group aims at the first anchor of the other side
+-    orders_per_unit: bool = True    # one order_attack_move call per unit at the opening; later timeline steps stay group-level (L4 flips the default)
++    orders_per_unit: bool = False   # one order_attack_move call per unit at the opening; later timeline steps stay group-level (L4 flips the default)
+     firing_arc_deg: float = 360.0   # set on the world through OM_TP_FIRING_ARC_DEG when below 360 and the library has the parameter
+     cone: dict = field(default_factory=dict)   # type name -> (range, half-angle degrees, share), applied through Engine.set_cone
+ 
+@@ -132,6 +132,7 @@ class CellResult:
+     fights: list              # [FightResult, ...]
+     mean_margin: float
+     won: bool
++    defect: bool = False
+ 
+ 
+ @dataclass
+@@ -140,7 +141,8 @@ class ScanResult:
+     cells: list               # [CellResult, ...] in increasing enemy_heads
+     beats: Optional[int]
+     loses_to: Optional[int]
+-    win_margin: float
++    ceiling_hit: bool = False
++    multi_flip: bool = False
+ 
+ 
+ @dataclass
+@@ -151,7 +153,6 @@ class Batch:
+     rows: list                # [dict, ...] one per fight, from fight_row
+ 
+ 
+-WIN_MARGIN = 0.05
+ TICKS_PER_SECOND = 20
+ OPENING_WINDOW_TICKS = 40     # DRAFT-opening-window-ticks (Westley to confirm): the primary prediction window after first contact
+ SHIFT_MAX = 10.0              # replicate position shift, per axis, world units
+@@ -205,12 +206,12 @@ def unit_stats(name: str) -> dict:
+ 
+ # scan.py
+ def cell(build: BuildFn, enemy_heads: int, replicates: int,
+-         win_margin: float = WIN_MARGIN, fight_fn: Any = None) -> CellResult:
++         fight_fn: Any = None) -> CellResult:
+     raise NotImplementedError
+ 
+ 
+ def scan(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates: int = 10,
+-         win_margin: float = WIN_MARGIN, fight_fn: Any = None) -> ScanResult:
++         fight_fn: Any = None) -> ScanResult:
+     raise NotImplementedError
+ 
+ 
+diff --git a/scripts/skilllab/depth.py b/scripts/skilllab/depth.py
+index ae20f0ec..1c7db585 100644
+--- a/scripts/skilllab/depth.py
++++ b/scripts/skilllab/depth.py
+@@ -13,7 +13,7 @@ from scripts.skilllab import maps, plays_space, pool, report, rows, scan, scenes
+ from scripts.skilllab.contract import Batch
+ 
+ G = 2                       # draft gain threshold in units (Q-LS-01, Westley's)
+-UNITS, ENEMY_FROM, ENEMY_TO = 16, 8, 24
++UNITS, ENEMY_FROM, ENEMY_TO = 16, 8, 48
+ SKILL_NAMES = ("S1", "S2", "S3", "S4", "S5")
+ VALUES = {"choke_width_bodies": (0, 2, 4, 8), "detour_ratio": (0, 1.5, 3), "lane_count": (0, 1, 2),
+           "blocked_layer_top": (0, 2, 4), "cover_density_corridor": (0, 0.1, 0.3), "start_distance": (1400, 2800)}
+@@ -82,7 +82,7 @@ def run_layout(values, seed, replicates, scan_fn):
+     builds.update({name: scenes.placed_scene(layout, name, d, features, counter=True) for name in COUNTERS})
+     builds.update({name: scenes.placed_scene(layout, name, d, features) for name in scenes.NAIVE_PLAYS})
+     results = {label: scan_fn(label, build, replicates) for label, build in builds.items()}
+-    be = {label: r.beats for label, r in results.items()}
++    be = {label: ENEMY_TO if r.ceiling_hit else r.beats for label, r in results.items()}
+     skilled, counters = skill_break_evens({n: be[n] for n in SKILLED}), skill_break_evens({n: be[n] for n in COUNTERS})
+     scored = score_layout(skilled, be["naive"], counters)
+     scored_line = score_layout(skilled, be["naive_line"], counters)
+@@ -94,8 +94,9 @@ def run_layout(values, seed, replicates, scan_fn):
+             for f in c.fights:
+                 out.append(rows.fight_row(f, features, play=label, variant=variant, enemy_heads=c.enemy_heads,
+                                           break_even=r.beats, no_gain=skill in scored["no_gain"], winner=f.winner,
+-                                          placement_shift=builds[label].labels["placement_shift"]))
+-    return {"features": dict(values), "rows": out, **scored,
++                                          ceiling_hit=int(r.ceiling_hit)))
++    ceiling = sorted({plays_space.PLAYS[l].skill for l, r in results.items() if r.ceiling_hit and l not in scenes.NAIVE_PLAYS})
++    return {"features": dict(values), "rows": out, **scored, "ceiling_hits": ceiling,
+             "gains_naive_line": scored_line["gains"], "score_naive_line": scored_line["score"]}
+ 
+ 
+diff --git a/scripts/skilllab/scan.py b/scripts/skilllab/scan.py
+index a7e7f72c..0192e394 100644
+--- a/scripts/skilllab/scan.py
++++ b/scripts/skilllab/scan.py
+@@ -3,7 +3,7 @@ from __future__ import annotations
+ 
+ from typing import Any
+ 
+-from scripts.skilllab.contract import BuildFn, CellResult, ScanResult, WIN_MARGIN
++from scripts.skilllab.contract import BuildFn, CellResult, ScanResult
+ 
+ 
+ def run_jobs(jobs: list, fight_fn: Any = None, map_fn: Any = None) -> list:
+@@ -21,24 +21,25 @@ def run_jobs(jobs: list, fight_fn: Any = None, map_fn: Any = None) -> list:
+     return [fight_fn(*job) for job in jobs]
+ 
+ 
+-def cell(build: BuildFn, enemy_heads: int, replicates: int,
+-         win_margin: float = WIN_MARGIN, fight_fn: Any = None, map_fn: Any = None) -> CellResult:
++COARSE_STEP = 8
++
++
++def cell(build: BuildFn, enemy_heads: int, replicates: int, fight_fn: Any = None, map_fn: Any = None) -> CellResult:
+     if replicates < 1:
+         raise ValueError("replicates must be at least 1")
+     fights = run_jobs(cell_jobs(build, enemy_heads, 0, replicates), fight_fn, map_fn)
+-    return cell_result(enemy_heads, fights, win_margin)
++    return cell_result(enemy_heads, fights)
+ 
+ 
+ def cell_jobs(build: BuildFn, enemy_heads: int, start: int, stop: int) -> list:
+     return [(build(enemy_heads, swap), seed, swap) for swap in (False, True) for seed in range(start, stop)]
+ 
+ 
+-def cell_result(enemy_heads: int, fights: list, win_margin: float) -> CellResult:
++def cell_result(enemy_heads: int, fights: list) -> CellResult:
+     mean_margin = sum(f.margin for f in fights) / len(fights)
+-    decided = all(f.outcome not in ("stalemate", "cap") and (f.outcome not in ("decided", "held") or f.winner == "side0")
+-                  for f in fights)
++    defect = any(f.outcome in ("draw", "cap") for f in fights)
+     return CellResult(enemy_heads=enemy_heads, fights=fights, mean_margin=mean_margin,
+-                      won=mean_margin > win_margin and decided)
++                      won=all(f.outcome == "side0" for f in fights), defect=defect)
+ 
+ 
+ def pair_spread(c: CellResult) -> tuple:
+@@ -50,6 +51,10 @@ def pair_spread(c: CellResult) -> tuple:
+     return min(pairs), max(pairs)
+ 
+ 
++def _changes(cells: list) -> list:
++    return [(a.enemy_heads, b.enemy_heads) for a, b in zip(cells, cells[1:]) if a.won != b.won]
++
++
+ def _crossing(cells: list) -> tuple:
+     for prev, cur in zip(cells, cells[1:]):
+         if prev.won and not cur.won:
+@@ -58,19 +63,36 @@ def _crossing(cells: list) -> tuple:
+ 
+ 
+ def scan(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates: int = 10,
+-         win_margin: float = WIN_MARGIN, fight_fn: Any = None, map_fn: Any = None,
+-         refine_factor: int = 1, refine_band: int = 2) -> ScanResult:
++         fight_fn: Any = None, map_fn: Any = None, refine_factor: int = 1, refine_band: int = 2,
++         full_scan: bool = False) -> ScanResult:
+     if replicates < 1:
+         raise ValueError("replicates must be at least 1")
+     if refine_factor < 1:
+         raise ValueError("refine_factor must be at least 1")
+     if enemy_from > enemy_to:
+         raise ValueError("enemy_from must not exceed enemy_to")
+-    heads_range = range(enemy_from, enemy_to + 1)
+-    per_cell = [cell_jobs(build, heads, 0, replicates) for heads in heads_range]
+-    results = run_jobs([job for jobs in per_cell for job in jobs], fight_fn, map_fn)
+-    cells = [cell_result(heads, results[i * len(jobs):(i + 1) * len(jobs)], win_margin)
+-             for i, (heads, jobs) in enumerate(zip(heads_range, per_cell))]
++    if fight_fn is not None and map_fn is not None:
++        raise ValueError("pass fight_fn or map_fn, not both")
++    done = {}
++
++    def probe(heads_list):
++        todo = [h for h in heads_list if h not in done]
++        per_cell = [cell_jobs(build, h, 0, replicates) for h in todo]
++        results = run_jobs([j for jobs in per_cell for j in jobs], fight_fn, map_fn)
++        for i, (h, jobs) in enumerate(zip(todo, per_cell)):
++            done[h] = cell_result(h, results[i * len(jobs):(i + 1) * len(jobs)])
++
++    if full_scan:
++        probe(range(enemy_from, enemy_to + 1))
++    else:
++        probe(sorted({enemy_from, enemy_to} | set(range(enemy_from, enemy_to + 1, COARSE_STEP))))
++        ordered = [done[h] for h in sorted(done)]
++        lo, hi = _crossing(ordered)
++        while lo is not None and hi - lo > 1:
++            mid = (lo + hi) // 2
++            probe([mid])
++            lo, hi = (mid, hi) if done[mid].won else (lo, mid)
++    cells = [done[h] for h in sorted(done)]
+     beats, loses_to = _crossing(cells)
+     if refine_factor > 1 and beats is not None:
+         total = replicates * refine_factor
+@@ -79,7 +101,10 @@ def scan(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates:
+                 continue
+             extra = run_jobs(cell_jobs(build, c.enemy_heads, replicates, total), fight_fn, map_fn)
+             half, old_half = len(extra) // 2, len(c.fights) // 2
+-            fights = c.fights[:old_half] + extra[:half] + c.fights[old_half:] + extra[half:]
+-            cells[i] = cell_result(c.enemy_heads, fights, win_margin)
++            cells[i] = cell_result(c.enemy_heads, c.fights[:old_half] + extra[:half] + c.fights[old_half:] + extra[half:])
+         beats, loses_to = _crossing(cells)
+-    return ScanResult(size=size, cells=cells, beats=beats, loses_to=loses_to, win_margin=win_margin)
++    ceiling = all(c.won for c in cells)
++    if ceiling:
++        beats = cells[-1].enemy_heads
++    return ScanResult(size=size, cells=cells, beats=beats, loses_to=loses_to, ceiling_hit=ceiling,
++                      multi_flip=len(_changes(cells)) > 1)
+diff --git a/tests/skilllab/fakes_batches.py b/tests/skilllab/fakes_batches.py
+index 0455f9df..cfae879e 100644
+--- a/tests/skilllab/fakes_batches.py
++++ b/tests/skilllab/fakes_batches.py
+@@ -1,32 +1,37 @@
+ """Fakes for the batch tests: hand-built ScanResults, a recording scan function and a defn with fake builds. No engine."""
+ import dataclasses
+ 
++import pytest
++
+ from scripts.skilllab.contract import CellResult, FightResult, ScanResult, Setup
+ 
+ 
+-WEIGHTED_US = (1.5, 0.75)     # what a fight reports when its Setup asked for weighted firing
++WEIGHTED_US = (1.5, 0.75)     # what every fight reports: weighted_unit_seconds is always populated (LAB-REV2 L1/L2; Setup.weighted is gone)
+ 
+ 
+-def fight(ticks=100, outcome="side0", fus=(0.5, 0.25), wus=None):
++def fight(ticks=100, outcome="side0", fus=(0.5, 0.25), wus=WEIGHTED_US):
+     return FightResult(outcome=outcome, margin=0.1, strength_left=(0.5, 0.2), survivors=(8, 2), heads=(16, 16),
+                        ticks=ticks, first_contact_tick=1, firing=[(0, 1, 1), (5, 1, 0)],
+-                       firing_unit_seconds=fus, weighted=None if wus is None else [(0, 1.0, 1.0)],
+-                       weighted_unit_seconds=wus)
++                       firing_unit_seconds=fus, weighted_unit_seconds=wus)
+ 
+ 
+-def make_scan(size, enemy_from, enemy_to, beats, stalled=0, ticks=100, wus=None):
+-    """One cell per enemy count with two fights each; the first `stalled` fights of the first cell stall."""
++def make_scan(size, enemy_from, enemy_to, beats, capped=0, ticks=100, wus=WEIGHTED_US, ceiling=False):
++    """One cell per enemy count with two fights each (side0 where won, side1 where lost); the first `capped` fights of the first
++    cell are caps (a lab defect). ceiling=True: won all the way, beats = enemy_to, loses_to None, ceiling_hit."""
+     cells = []
+     for i, n in enumerate(range(enemy_from, enemy_to + 1)):
+-        outs = ["stalemate" if (i == 0 and k < stalled) else "side0" for k in range(2)]
+-        cells.append(CellResult(enemy_heads=n, fights=[fight(ticks, o, wus=wus) for o in outs],
+-                                mean_margin=0.1, won=beats is not None and n <= beats))
+-    return ScanResult(size=size, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1,
+-                      win_margin=0.05)
++        won = ceiling or (beats is not None and n <= beats)
++        outs = ["cap" if (i == 0 and k < capped) else ("side0" if won else "side1") for k in range(2)]
++        cells.append(CellResult(enemy_heads=n, fights=[fight(ticks, o, wus=wus) for o in outs], mean_margin=0.1,
++                                won=won and "cap" not in outs, defect="cap" in outs))
++    if ceiling:
++        beats = enemy_to
++    return ScanResult(size=size, cells=cells, beats=beats, loses_to=None if beats is None or ceiling else beats + 1,
++                      ceiling_hit=ceiling)
+ 
+ 
+ class FakeScan:
+-    """Callable like scan.scan. results: {(cell_label, policy_or_None): beats or (beats, stalled)}; default beats 15.
++    """Callable like scan.scan. results: {(cell_label, policy_or_None): beats or (beats, capped)}; default beats 15.
+     Calls the build once (enemy_from, False) and records the Setup it returns."""
+ 
+     def __init__(self, results=None, default=15):
+@@ -36,11 +41,11 @@ class FakeScan:
+         setup = build(enemy_from, False)
+         label = setup.unit_types["_cell"]
+         policy = setup.settings.get("OM_TP_TARGET_POLICY")
+-        self.calls.append(dict(label=label, weighted=setup.weighted, policy=policy, size=size, enemy_from=enemy_from, enemy_to=enemy_to,
++        self.calls.append(dict(label=label, policy=policy, size=size, enemy_from=enemy_from, enemy_to=enemy_to,
+                                replicates=replicates, setup=setup, kw=kw))
+         got = self.results.get((label, policy), self.default)
+-        beats, stalled = got if isinstance(got, tuple) else (got, 0)
+-        return make_scan(size, enemy_from, enemy_to, beats, stalled, wus=WEIGHTED_US if setup.weighted else None)
++        beats, capped = got if isinstance(got, tuple) else (got, 0)
++        return make_scan(size, enemy_from, enemy_to, beats, capped)
+ 
+ 
+ def _marked(build, label):
+@@ -78,3 +83,13 @@ def fake_sensors(monkeypatch):
+                                                           "attack_interval": 20.0, "attack_range": 100.0, "speed": 5.0,
+                                                           "sensor_radius": 700.0, "layer_transition_time": 0.0,
+                                                           "aoe_radius": 0.0})
++
++
++@pytest.fixture(autouse=True)
++def stub_summary_write(monkeypatch):
++    """Import this into a test module and it applies to every test there. summary.py is L5's file and still reads
++    FightResult.mopup_orders (retired by L2), so batches.run would crash in it until L5 rewrites it. L4's tests are about the batch
++    definitions, the run file, the page and the csv; they replace summary.write with a stub that writes an empty object.
++    # See also: test_batches.py::test_run_hands_the_summary_to_summary_write_with_the_rule_note (the call itself is pinned there)."""
++    from scripts.skilllab import summary
++    monkeypatch.setattr(summary, "write", lambda defn, scans, path, rule, *a, **k: path.write_text("{}", encoding="utf-8"))
+diff --git a/tests/skilllab/fakes_scans.py b/tests/skilllab/fakes_scans.py
+index 78db5511..54708189 100644
+--- a/tests/skilllab/fakes_scans.py
++++ b/tests/skilllab/fakes_scans.py
+@@ -1,5 +1,7 @@
+ """Hand-built ProfileMap/ScanResult objects for the profile and conditions-all tests. No engine."""
+-from scripts.skilllab.contract import CellResult, FightResult, ScanResult
++import dataclasses
++
++from scripts.skilllab.contract import CellResult, FightResult, ScanResult, Setup
+ from scripts.skilllab.evidence import Thresholds
+ from scripts.skilllab.profile import PROFILE_SKILLS, ProfileMap, subsets
+ 
+@@ -37,9 +39,17 @@ def cell(heads, fights, won=True):
+     return CellResult(enemy_heads=heads, fights=list(fights), mean_margin=0.0, won=won)
+ 
+ 
+-def scan_of(size, beats, cells):
++def scan_of(size, beats, cells, ceiling_hit=False, multi_flip=False):
++    """LAB-REV2-L4: ScanResult has no win_margin and carries ceiling_hit and multi_flip. Written to build on both sides of L4's
++    contract change (it passes win_margin only while the field exists), so other pieces' tests that use it stay green."""
++    names = {f.name for f in dataclasses.fields(ScanResult)}
++    extra = {}
++    if "win_margin" in names:
++        extra["win_margin"] = 0.05
++    if "ceiling_hit" in names:
++        extra["ceiling_hit"], extra["multi_flip"] = ceiling_hit, multi_flip
+     return ScanResult(size=size, cells=list(cells), beats=beats,
+-                      loses_to=None if beats is None else beats + 1, win_margin=0.05)
++                      loses_to=None if beats is None or ceiling_hit else beats + 1, **extra)
+ 
+ 
+ def make_map(map_id="m", base=None, over=None, size=10, kind="open", offers=PROFILE_SKILLS,
+@@ -65,3 +75,76 @@ def make_map(map_id="m", base=None, over=None, size=10, kind="open", offers=PROF
+     for k, v in (counters or {}).items():
+         cs[k] = scan_of(size, v, [cell(size, [fight(0.0)])])
+     return ProfileMap(map_id=map_id, kind=kind, offers=frozenset(offers), size=size, scans=scans, counters=cs)
++
++
++# ---- LAB-REV2-L4: fakes for the sweep and smoke tests. No engine, no map. -------------------------------------------------
++
++def _fr(outcome, enemy_heads, firing=((0, 16, 16),), fus=(1.0, 1.0), margin=None, survivors=None):
++    """A FightResult with the new fields left at their decision-1 defaults; side0 wins, side1 wins, draw or cap."""
++    won0 = outcome == "side0"
++    if survivors is None:
++        survivors = (16, 16) if outcome == "cap" else ((8, 0) if won0 else (0, 8)) if outcome in ("side0", "side1") else (0, 0)
++    return FightResult(outcome=outcome, margin=margin if margin is not None else 0.5 if won0 else -0.5 if outcome == "side1" else 0.0,
++                       strength_left=(0.5, 0.0) if won0 else (0.0, 0.5), survivors=survivors, heads=(16, enemy_heads),
++                       ticks=100, first_contact_tick=0, firing=list(firing), firing_unit_seconds=fus,
++                       winner="side0" if won0 else "side1" if outcome == "side1" else None)
++
++
++def fake_builds(refuse=None, log=None):
++    """builds(play, role, layout) -> BuildFn, the sweep's seam (test_sweep.py header). The Setup carries what the sweep put on it;
++    unit_types holds the cell's identity so a fight_fn can read it. `refuse`: {(play, role): prefight word}. `log`: appended
++    (play, role) per builds call. build.labels['prefight'] is set at call time, as scenes.placed_scene does."""
++    refuse = refuse or {}
++
++    def builds(play, role, layout):
++        if log is not None:
++            log.append((play, role))
++        word = refuse.get((play, role), "ok")
++
++        def build(enemy_heads, swap):
++            build.labels["prefight"] = word
++            return Setup(groups=(), unit_types={"enemy": enemy_heads, "swap": swap, "_play": play, "_role": role})
++        build.labels = {"placement_shift": 0.0, "prefight": None}
++        return build
++    return builds
++
++
++class ScriptedFight:
++    """fight_fn(setup, seed, swap): side0 wins when enemy_heads <= be_of(setup), else side1 wins. be_of(setup) -> int, or None
++    for 'always lost'; `result_of`, when given, replaces the result entirely. Records every call as a dict."""
++
++    def __init__(self, be_of=None, result_of=None):
++        self.be_of, self.result_of, self.calls = be_of, result_of, []
++
++    def __call__(self, setup, seed, swap):
++        enemy = setup.unit_types["enemy"]
++        self.calls.append(dict(setup=setup, seed=seed, swap=swap, enemy=enemy, role=setup.unit_types["_role"],
++                               play=setup.unit_types["_play"], settings=dict(setup.settings), states=setup.states,
++                               key=(setup.unit_types["_play"], setup.unit_types["_role"], tuple(sorted(setup.settings.items())),
++                                    enemy, seed, swap)))
++        if self.result_of is not None:
++            return self.result_of(setup, seed, swap)
++        be = self.be_of(setup)
++        return _fr("side0" if be is not None and enemy <= be else "side1", enemy)
++
++
++class FakePool:
++    """Stands in for pool.FightPool: map(jobs) fights each (setup, seed, swap) job through `fight_fn` in order."""
++    instances = []
++
++    def __init__(self, workers, library_path=None, lean=False):
++        self.workers, self.lean, self.fight_fn, self.maps = workers, lean, FakePool.fight_fn, []
++        FakePool.instances.append(self)
++
++    fight_fn = None
++
++    def map(self, jobs):
++        jobs = list(jobs)
++        self.maps.append(len(jobs))
++        return [self.fight_fn(*job) for job in jobs]
++
++    def __enter__(self):
++        return self
++
++    def __exit__(self, *exc):
++        return False
+diff --git a/tests/skilllab/integration/lean_batch_probe.py b/tests/skilllab/integration/lean_batch_probe.py
+index cc1581db..bc18eeba 100644
+--- a/tests/skilllab/integration/lean_batch_probe.py
++++ b/tests/skilllab/integration/lean_batch_probe.py
+@@ -9,15 +9,15 @@ ROOT = Path(__file__).resolve().parents[3]
+ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+-from scripts.skilllab import batches, engine, plays  # noqa: E402
++from scripts.skilllab import batches, engine, plays, summary  # noqa: E402
+ 
+ 
+ def small_batch(replicates, enemy=(7, 9)):
+-    """One real cell, blob against blob at 8 units, weighted count on so the weighted columns are covered."""
++    """One real cell, blob against blob at 8 units; the weighted columns are always recorded (LAB-REV2: no Setup.weighted)."""
+     cell = batches._cell("blob@8", 8, plays.blob_play(8), "naive", enemy=enemy)
+     cell = batches.CellDef(**{**cell.__dict__, "replicates": replicates})
+     return batches.BatchDef(name="enemy_position", title="Lean probe", scene="one cell", cells=(cell,),
+-                            variants=(("default", {}),), unexpressed=("none",), weighted=True)
++                            variants=(("default", {}),), unexpressed=("none",))
+ 
+ 
+ def digests(paths):
+@@ -27,6 +27,9 @@ def digests(paths):
+ def main(out_dir, replicates, workers):
+     """Print {fights, kb_per_fight} for the parent's peak RSS growth over the run."""
+     engine.Engine()
++    # summary.py is L5's file and still reads FightResult.mopup_orders (retired by L2); this probe is about the parent's memory and
++    # the csv, page and run file, so it replaces summary.write with an empty-object writer. See also: fakes_batches.stub_summary_write.
++    summary.write = lambda defn, scans, path, rule, *a, **k: Path(path).write_text("{}", encoding="utf-8")
+     base = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+     paths = batches.run(small_batch(replicates), out_dir, workers=workers)
+     grown = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - base
+diff --git a/tests/skilllab/integration/test_batch_lean_real.py b/tests/skilllab/integration/test_batch_lean_real.py
+index 075dba59..4f173f69 100644
+--- a/tests/skilllab/integration/test_batch_lean_real.py
++++ b/tests/skilllab/integration/test_batch_lean_real.py
+@@ -9,14 +9,11 @@ ROOT = Path(__file__).resolve().parents[3]
+ PROBE = Path(__file__).with_name("lean_batch_probe.py")
+ PY = sys.executable
+ 
+-# recorded on origin/main before the change: 3 replicates, workers 2; re-recorded once 2026-10-06
+-# (TD-SL-goldens-rerecord-1006: group speed-cap fix dcb83d5f, re-order rule efdc5548, which added summary.json)
+-BEFORE = {"csv": "e7b9dca1a1b85858a038e79f74af60e4c63f358072559767bcd42fde220b8fdd",
+-          "page": "e4d1bc887c6f2f16afcbd7cf1d742cc29a708eb0b5618f8e620ce2ac1a652bd6",
+-          "run": "574b22110687eb1060ef0c43766bf47de4c3c97a5e9619d1344e38688538dbe8",
+-          "summary": "e23287200d62021ebb408efca856b8d24e71d72530906e82162e1773efc1ec21"}
+ # measured on origin/main: about 206 KB per finished fight (weighted on); after: about 3.4 KB. Bound sits between.
+ KB_PER_FIGHT_BOUND = 40.0
++# LAB-REV2-L4: the digests recorded on main (5c2e1d04, re-recorded 2026-10-06) cannot hold: the CSV gained columns (firing_window_*,
++# weighted_*, predicted_*, agreement, knob, baseline, ceiling_hit, prefight) and the run file lost the stalled count. The test below
++# compares one worker with two instead; a new golden is recorded with TD-LAB-REV2-golden once the lab lands.
+ 
+ 
+ def _probe(out_dir, replicates, workers):
+@@ -25,10 +22,13 @@ def _probe(out_dir, replicates, workers):
+     return json.loads(out.stdout.strip().splitlines()[-1])
+ 
+ 
+-def test_small_batch_output_is_byte_identical_to_before(tmp_path):
+-    got = _probe(tmp_path, 3, 2)
+-    assert got["digests"] == BEFORE
+-    assert "units able to fire through one fight" in (tmp_path / "enemy_position_page.html").read_text()
++def test_small_batch_output_is_byte_identical_at_one_and_two_workers(tmp_path):
++    one = _probe(tmp_path / "one", 3, 1)
++    two = _probe(tmp_path / "two", 3, 2)
++    assert one["digests"].keys() == two["digests"].keys() >= {"csv", "page", "run"}
++    for k in ("csv", "page", "run"):
++        assert one["digests"][k] == two["digests"][k], k
++    assert "units able to fire through one fight" in (tmp_path / "two" / "enemy_position_page.html").read_text()
+ 
+ 
+ def test_parent_memory_per_finished_fight_stays_small(tmp_path):
+diff --git a/tests/skilllab/integration/test_pool_real.py b/tests/skilllab/integration/test_pool_real.py
+index e76b7162..d3066a1d 100644
+--- a/tests/skilllab/integration/test_pool_real.py
++++ b/tests/skilllab/integration/test_pool_real.py
+@@ -39,7 +39,7 @@ def test_pooled_scan_equals_serial_scan_field_by_field():
+     serial = scan(build, 4, 3, 5, replicates=2)
+     with FightPool(2) as fp:
+         pooled = scan(build, 4, 3, 5, replicates=2, map_fn=fp.map)
+-    assert pooled.size == serial.size and pooled.win_margin == serial.win_margin
++    assert pooled.size == serial.size and (pooled.ceiling_hit, pooled.multi_flip) == (serial.ceiling_hit, serial.multi_flip)
+     assert (pooled.beats, pooled.loses_to) == (serial.beats, serial.loses_to)
+     assert len(pooled.cells) == len(serial.cells)
+     for a, b in zip(pooled.cells, serial.cells):
+@@ -57,3 +57,15 @@ def test_pooled_find_break_even_equals_serial():
+     with FightPool(2) as fp:
+         pooled = find_break_even(build, 4, 3, 5, map_fn=fp.map, **kw)
+     assert pooled == serial
++
++
++def test_pooled_bisection_scan_equals_serial_and_the_full_scan_agrees_on_the_break_even():
++    """LAB-REV2-L4: the default scan bisects; through the pool it must still equal the serial run, and the linear sweep (which
++    fights every headcount) reads the same break-even on the same engine."""
++    build = plays.blob_play(4)
++    serial = scan(build, 4, 2, 8, replicates=2)
++    with FightPool(2) as fp:
++        assert scan(build, 4, 2, 8, replicates=2, map_fn=fp.map) == serial
++        full = scan(build, 4, 2, 8, replicates=2, map_fn=fp.map, full_scan=True)
++    assert [c.enemy_heads for c in full.cells] == list(range(2, 9))
++    assert (full.beats, full.loses_to, full.ceiling_hit) == (serial.beats, serial.loses_to, serial.ceiling_hit)
+diff --git a/tests/skilllab/integration/test_pool_scan_real.py b/tests/skilllab/integration/test_pool_scan_real.py
+index b2dbbe61..a87ba3de 100644
+--- a/tests/skilllab/integration/test_pool_scan_real.py
++++ b/tests/skilllab/integration/test_pool_scan_real.py
+@@ -4,6 +4,8 @@ import dataclasses
+ import sys
+ from pathlib import Path
+ 
++import pytest
++
+ ROOT = Path(__file__).resolve().parents[3]
+ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+@@ -21,10 +23,12 @@ def _scan(**kw):
+     return scan(plays.blob_play(8), 8, 6, 8, replicates=3, **kw)
+ 
+ 
+-def test_pooled_scan_equals_serial_and_with_explicit_library_path():
+-    serial = _fights(_scan())
++@pytest.mark.parametrize("full", [False, True])
++def test_pooled_scan_equals_serial_and_with_explicit_library_path(full):
++    """Both the default bisection and the linear sweep (LAB-REV2-L4)."""
++    serial = _fights(_scan(full_scan=full))
+     with FightPool(3) as fp:
+-        assert _fights(_scan(map_fn=fp.map)) == serial
++        assert _fights(_scan(map_fn=fp.map, full_scan=full)) == serial
+     path = engine._cached_library()
+     with FightPool(2, library_path=path) as fp:
+-        assert _fights(_scan(map_fn=fp.map)) == serial
++        assert _fights(_scan(map_fn=fp.map, full_scan=full)) == serial
+diff --git a/tests/skilllab/test_batches.py b/tests/skilllab/test_batches.py
+index 5a89c14d..0249e9e2 100644
+--- a/tests/skilllab/test_batches.py
++++ b/tests/skilllab/test_batches.py
+@@ -14,7 +14,7 @@ if str(ROOT) not in sys.path:
+ 
+ import scripts.skilllab.scan as scan_mod  # noqa: E402
+ from scripts.skilllab import batches, skills  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
+ 
+ PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
+ DRAFT = "draft"
+@@ -42,7 +42,7 @@ def _section(text, head):
+ 
+ 
+ def test_names_and_get():
+-    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers", "layout_search")
++    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layout_search")
+     assert batches.BASE_SETTINGS == {"OM_TP_PURSUE_BY_STEERING": 1}
+     for n in batches.NAMES:
+         if n == "layout_search":
+@@ -259,14 +259,71 @@ def test_no_break_even_in_range_when_beats_is_none(tmp_path):
+     assert other and "no break-even in range" not in "\n".join(other)
+ 
+ 
+-def test_stalled_count_beside_each_result(tmp_path):
++def test_caps_and_defect_cells_beside_each_result(tmp_path):
++    """LAB-REV2-L4: the stalled count is gone (no quiet stalemate exists); caps, draws and defect cells are counted."""
+     fake = FakeScan({("blob@16", None): (15, 2)})
+     _, _, paths = _run("formation", tmp_path, fake)
+     res = _section(_text(paths["run"]), "Results")
+     block = "\n".join(ln for ln in res.splitlines() if "blob@16" in ln)
+-    assert re.search(r"stalled\D{0,15}2\b|\b2\D{0,15}stalled", block)
++    assert "caps 2; draws 0; defect cells 1" in block
+     block0 = "\n".join(ln for ln in res.splitlines() if "line@16" in ln)
+-    assert re.search(r"stalled\D{0,15}0\b|\b0\D{0,15}stalled", block0)
++    assert "caps 0; draws 0; defect cells 0" in block0
++    assert "stalled" not in res and "stalemate" not in res
++
++
++def test_run_file_states_the_elimination_rule_and_not_the_retired_ones(tmp_path):
++    _, _, paths = _run("formation", tmp_path)
++    for text in (_text(paths["run"]), _text(paths["page"])):
++        assert "one side is eliminated" in text
++        low = text.lower()
++        for gone in ("mopup", "mop-up", "re-issue", "reissue", "quiet stalemate"):
++            assert gone not in low, gone
++
++
++def test_a_ceiling_hit_is_reported_as_one_never_as_no_break_even(tmp_path):
++    fake = FakeScan({("line@16", None): None})
++    _, _, p = _run("formation", tmp_path, fake, sub="none")
++    none_line = "\n".join(ln for ln in _section(_text(p["run"]), "Results").splitlines() if "line@16" in ln)
++    assert "no break-even in range" in none_line and "ceiling hit" not in none_line
++    from tests.skilllab.fakes_batches import make_scan
++
++    class Ceiling(FakeScan):
++        def __call__(self, build, size, enemy_from, enemy_to, replicates=10, **kw):
++            got = super().__call__(build, size, enemy_from, enemy_to, replicates, **kw)
++            return make_scan(size, enemy_from, enemy_to, None, ceiling=True) if self.calls[-1]["label"] == "line@16" else got
++
++    _, _, p2 = _run("formation", tmp_path, Ceiling(), sub="ceil")
++    res = _section(_text(p2["run"]), "Results")
++    line = "\n".join(ln for ln in res.splitlines() if "line@16" in ln and ":Raider" not in ln)
++    assert "ceiling hit" in line and "no break-even in range" not in line and "lose to" not in line
++
++
++def test_layers_batch_is_retired_with_tables_la_lb_lc_and_the_body_size_table():
++    """Spec L4: tables LA, LB, LC and the body-size table are deleted; they were the whole 'layers' batch, and the sweep command
++    replaces them. The batch name, its scene constants and its builders go with them."""
++    assert "layers" not in batches.NAMES
++    with pytest.raises(ValueError):
++        batches.get("layers")
++    for gone in ("LAYER_SCENES", "LAYER_REACH", "REACH_NOTE", "REACH_TABLE", "_layer_settings", "_with_reach", "_layers",
++                 "MOPUP_NOTE", "_STALLED"):
++        assert not hasattr(batches, gone), gone
++
++
++def test_batches_module_imports_no_retired_module():
++    import ast
++    src = (ROOT / "scripts/skilllab/batches.py").read_text()
++    imported = {a.name for n in ast.walk(ast.parse(src)) if isinstance(n, (ast.Import, ast.ImportFrom)) for a in n.names}
++    assert not imported & {"mopup", "approach"}
++    assert "plays.MOPUP" not in src and "MOPUP_INTERVAL_TICKS" not in src
++
++
++def test_run_hands_the_summary_to_summary_write_with_the_rule_note(tmp_path, monkeypatch):
++    """summary.json content is L5's (summary.py); batches only has to call summary.write(defn, scans, path, rule_note)."""
++    from scripts.skilllab import summary
++    seen = []
++    monkeypatch.setattr(summary, "write", lambda defn, scans, path, rule, *a, **k: seen.append((defn.name, path.name, rule)))
++    _, _, paths = _run("formation", tmp_path)
++    assert len(seen) == 1 and seen[0][:2] == ("formation", "summary.json") and "eliminated" in seen[0][2]
+ 
+ 
+ FOCUS_RESULTS = {("identical", 0): 14, ("identical", 1): 16,      # gains
+@@ -322,7 +379,6 @@ def test_formation_raider_cells_scanned_with_same_range_and_statuses(tmp_path):
+     got = {c["label"]: (c["size"], c["enemy_from"], c["enemy_to"]) for c in fake.calls}
+     for label, n, *_ in FORMATION:
+         assert got[label] == (n, n // 2, n * 3 // 2), label
+-    assert all(not c["weighted"] for c in fake.calls)
+ 
+ 
+ RAIDER_RESULTS = {("line@16", None): 15, ("line@16:Raider", None): 16,       # Raider larger
+@@ -378,7 +434,7 @@ def test_vanguard_against_raider_in_page_and_not_in_other_batches(tmp_path):
+     assert "Vanguard against Raider" not in _text(p2["run"]) + _text(p2["page"])
+ 
+ 
+-@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers"])
++@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations"])
+ def test_deterministic_byte_identical(tmp_path, name):
+     _, _, a = _run(name, tmp_path, FakeScan(FOCUS_RESULTS), sub="one")
+     _, _, b = _run(name, tmp_path, FakeScan(FOCUS_RESULTS), sub="two")
+diff --git a/tests/skilllab/test_batches_combinations.py b/tests/skilllab/test_batches_combinations.py
+index 304adce1..8918be53 100644
+--- a/tests/skilllab/test_batches_combinations.py
++++ b/tests/skilllab/test_batches_combinations.py
+@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+ from scripts.skilllab import batches, profile, skills  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
+ 
+ PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
+ DRAFT = "draft"
+@@ -63,7 +63,7 @@ def test_33_cells_in_order_with_fields():
+     assert d.name == "combinations" and d.title and d.scene
+     assert len(LABELS) == 33 and LABELS[0] == "combo:none" and LABELS[-1] == "counter:S2"
+     assert [c.label for c in d.cells] == LABELS
+-    assert d.variants == (("default", {}),) and d.weighted is False
++    assert d.variants == (("default", {}),)
+     for c in d.cells:
+         assert (c.size, c.enemy_from, c.enemy_to, c.replicates) == (16, 8, 24, 10), c.label
+ 
+diff --git a/tests/skilllab/test_batches_landscape.py b/tests/skilllab/test_batches_landscape.py
+index 8125adf5..947d9f30 100644
+--- a/tests/skilllab/test_batches_landscape.py
++++ b/tests/skilllab/test_batches_landscape.py
+@@ -12,7 +12,7 @@ if str(ROOT) not in sys.path:
+ 
+ from scripts.skilllab import batches, maps  # noqa: E402
+ from scripts.skilllab.terrain import shift_terrain  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
+ 
+ PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
+ KINDS = ("open", "block", "wall", "lane", "cover_field")
+@@ -46,7 +46,7 @@ def test_landscape_cells_in_order_with_fields():
+     assert d.name == "landscape" and d.title and d.scene
+     assert [c.label for c in d.cells] == SCANNED
+     assert d.variants == (("guard", {}),)
+-    assert d.weighted is False and batches.DEFENDER_ORDER == "guard"
++    assert batches.DEFENDER_ORDER == "guard"
+     for c in d.cells[:10]:
+         assert (c.size, c.enemy_from, c.enemy_to, c.replicates, c.status) == (16, 8, 24, 10, "naive"), c.label
+         assert c.build is not None and c.reference is not None and c.reference is not c.build
+@@ -96,7 +96,6 @@ def test_scan_once_per_cell_and_once_per_reference(tmp_path):
+     assert sorted(c["label"][:-4] for c in refs) == sorted(SCANNED)
+     for c in fake.calls:
+         assert (c["size"], c["enemy_from"], c["enemy_to"], c["replicates"]) == (16, 8, 24, 10)
+-        assert c["setup"].weighted is False
+     assert {c["label"] for c in fake.calls} >= set(TALL)
+ 
+ 
+diff --git a/tests/skilllab/test_batches_landscape_guard.py b/tests/skilllab/test_batches_landscape_guard.py
+index 5fa5aee7..162dc0f3 100644
+--- a/tests/skilllab/test_batches_landscape_guard.py
++++ b/tests/skilllab/test_batches_landscape_guard.py
+@@ -10,7 +10,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
+     if str(_p) not in sys.path:
+         sys.path.insert(0, str(_p))
+ 
+-from fakes_batches import fake_sensors  # noqa: E402
++from fakes_batches import fake_sensors, stub_summary_write  # noqa: E402,F401
+ from scripts.skilllab import batches  # noqa: E402
+ 
+ TALL = ("tall_cover", "tall_cover_counter")
+diff --git a/tests/skilllab/test_batches_landscape_no_effect.py b/tests/skilllab/test_batches_landscape_no_effect.py
+index 4d62ebe2..86021c26 100644
+--- a/tests/skilllab/test_batches_landscape_no_effect.py
++++ b/tests/skilllab/test_batches_landscape_no_effect.py
+@@ -13,7 +13,7 @@ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+ from scripts.skilllab import batches  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, faked, make_scan  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, faked, make_scan, stub_summary_write  # noqa: E402,F401
+ 
+ 
+ def test_equal_scans_had_no_effect_and_different_ones_did():
+diff --git a/tests/skilllab/test_batches_layers.py b/tests/skilllab/test_batches_layers.py
+index 0d1cfe34..96f28e74 100644
+--- a/tests/skilllab/test_batches_layers.py
++++ b/tests/skilllab/test_batches_layers.py
+@@ -1,286 +1,41 @@
+-# spec: batch runner spec addendum 3 (batch3_spec.md) - the "layers" batch in scripts/skilllab/batches.py
+-"""Layers batch: LA, LB, LC tables by three scenes, plus the 16 reach-against-body-size cells. Fake scan; no engine."""
+-import csv
+-import dataclasses
++# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md row L4: tables LA, LB, LC and the body-size table deleted from batches.py
++"""The 'layers' batch is retired (LAB-REV2-L4). It was tables LA, LB, LC by three scenes plus the sixteen body-size cells, all at
++draft sweep points that ran on same-layer scenes (the 2026-10-13 audit: identical fights). The `sweep` command replaces it
++(test_sweep.py). This file keeps the guards that nothing of it comes back; the old cell-by-cell tests are retired with it."""
+ import re
+ import sys
+ from pathlib import Path
+ 
++import pytest
++
+ ROOT = Path(__file__).resolve().parents[2]
+ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+-from scripts.skilllab import batches, maps  # noqa: E402
+-from scripts.skilllab.terrain import shift_terrain  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
+-
+-PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
+-DRAFT = "draft"
+-SCENES = ("mirror", "choke", "choke_phase_b")
+-UPS = ((0.5, 0.25), (0.5, 0.5), (0.75, 0.25), (0.75, 0.5), (1.0, 0.25), (1.0, 0.5))
+-SWEEP_NOTE = "settings are draft sweep points (A174)"
+-REACH_NOTE = ("reach set per the reach table (Vanguard 0 up 0 down); every unit is on layer 0, so the "
+-              "layer settings have no effect in this scene (a layered scene is still needed)")
+-REACH_TABLE_TEXT = ("Vanguard and Warden 0 up 0 down; Raider 1 up 1 down; Interceptor 2 up 1 down; "
+-                    "Bombard and Bastion 0 up 2 down (set per cell on the unit type through om_roster_set_reach)")
+-
+-
+-def _la():
+-    s = {}
+-    for n, v in ((1, 0.5), (2, 0.2), (3, 0.0), (4, 0.0)):
+-        s["OM_TP_VISION_UP_%d" % n] = s["OM_TP_VISION_DOWN_%d" % n] = v
+-    for n in (1, 2):
+-        for name in ("RANGE", "DAMAGE"):
+-            s["OM_TP_%s_UP_%d" % (name, n)] = s["OM_TP_%s_DOWN_%d" % (name, n)] = 1.0
+-    return s
+-
+-
+-def _lb(u1, u2):
+-    return {**_la(), "OM_TP_RANGE_UP_1": u1, "OM_TP_RANGE_UP_2": u2}
+-
+-
+-def _lc(u1, u2, d):
+-    return {**_lb(u1, u2), "OM_TP_DAMAGE_UP_1": d, "OM_TP_DAMAGE_UP_2": d / 2, "OM_TP_DAMAGE_DOWN_1": 1.0,
+-            "OM_TP_DAMAGE_DOWN_2": 1.0}
+-
+-
+-def _dims(label):
+-    """(size, enemy_from, enemy_to) of a cell: the Phase B choke is 8 defenders against 7 to 12 attackers."""
+-    return (8, 7, 12) if "choke_phase_b" in label else (16, 8, 24)
+-
+-
+-def _expected():
+-    """[(label, settings, expressed, note_ok)] in the spec's order."""
+-    out = []
+-    for scene in SCENES:
+-        out.append(("LA:" + scene, _la(), True))
+-    for scene in SCENES:
+-        for u1, u2 in UPS:
+-            out.append(("LB:%s:up1=%s,up2=%s" % (scene, u1, u2), _lb(u1, u2), True))
+-    for scene in SCENES:
+-        for d in (0.5, 0.75):
+-            for u1, u2 in UPS:
+-                out.append(("LC:%s:up1=%s,up2=%s,dmg1=%s" % (scene, u1, u2, d), _lc(u1, u2, d), True))
+-    for r in (10, 15, 20, 30):
+-        for a in (150, 200, 300, 450):
+-            out.append(("body%d_range%d_ratio%.1f" % (2 * r, a, a / (2 * r)), {"OM_TP_UNIT_COLLISION_RADIUS": r}, True))
+-    return out
+-
+-
+-EXPECTED = _expected()
+-BODY = [e for e in EXPECTED if e[0].startswith("body")]
+-EXPRESSED = [e[0] for e in EXPECTED if e[2]]
+-NOT_EXPRESSED = [e[0] for e in EXPECTED if not e[2]]
+-
+-
+-def _text(p):
+-    return Path(p).read_text(encoding="utf-8")
+-
+-
+-def _section(text, head):
+-    m = re.search(r"^## %s\s*$" % re.escape(head), text, re.M)
+-    assert m, head
+-    nxt = re.search(r"^## ", text[m.end():], re.M)
+-    return text[m.end():m.end() + nxt.start()] if nxt else text[m.end():]
+-
+-
+-def _run(tmp_path, fake=None, sub="out", real=False, mutate=None):
+-    defn = faked(batches.get("layers"), real=real)
+-    if mutate:
+-        defn = mutate(defn)
+-    fake = fake or FakeScan()
+-    return defn, fake, batches.run(defn, tmp_path / sub, scan_fn=fake)
+-
+-
+-def test_counts_and_order_and_labels():
+-    d = batches.get("layers")
+-    assert d.name == "layers" and d.title and d.scene
+-    assert len(EXPECTED) == 3 + 18 + 36 + 16 == 73
+-    assert [c.label for c in d.cells] == [e[0] for e in EXPECTED]
+-    assert d.variants == (("default", {}),) and d.weighted is False
+-
+-
+-def test_every_cell_is_16_units_against_8_to_24_with_10_replicates_except_choke_phase_b():
+-    for c in batches.get("layers").cells:
+-        assert (c.size, c.enemy_from, c.enemy_to, c.replicates) == _dims(c.label) + (10,), c.label
+-
+-
+-def test_choke_phase_b_cells_are_8_defenders_against_7_to_12():
+-    cells = [c for c in batches.get("layers").cells if "choke_phase_b" in c.label]
+-    assert [c.label for c in cells][0] == "LA:choke_phase_b" and len(cells) == 1 + 6 + 12
+-    for c in cells:
+-        assert (c.size, c.enemy_from, c.enemy_to, c.replicates) == (8, 7, 12, 10), c.label
+-
+-
+-def test_settings_per_cell_including_not_expressed():
+-    d = batches.get("layers")
+-    for c, (label, settings, _) in zip(d.cells, EXPECTED):
+-        assert c.settings == settings, label
+-    for c in d.cells:
+-        if c.build is None:
+-            assert c.settings, c.label            # kept on not-expressed cells so a later change only adds a build
+-
+-
+-def test_celldef_settings_field_defaults_to_empty():
+-    assert batches.CellDef("x", 1, 1, 1, 1, None, "naive").settings == {}
+-    assert batches.get("formation").cells[0].settings == {}
+-
+-
+-def test_which_cells_are_expressed():
+-    d = batches.get("layers")
+-    assert [c.label for c in d.cells if c.build is not None] == EXPRESSED
+-    assert [c.label for c in d.cells if c.build is None] == NOT_EXPRESSED
+-    assert len(EXPRESSED) == 3 + 54 + 16 and "LA:mirror" in EXPRESSED and "LA:choke" in EXPRESSED
+-    assert "LA:choke_phase_b" in EXPRESSED
+-    for c in d.cells:
+-        if c.build is not None:
+-            assert c.status == DRAFT, c.label
+-        else:
+-            assert c.status == "not expressed", c.label
+-
+-
+-def test_notes():
+-    d = {c.label: c for c in batches.get("layers").cells}
+-    assert d["LA:mirror"].note == SWEEP_NOTE and d["LA:choke"].note == SWEEP_NOTE
+-    assert d["LA:choke_phase_b"].note == SWEEP_NOTE
+-    for label, c in d.items():
+-        if label.startswith(("LB:", "LC:")):
+-            assert c.note == REACH_NOTE, label
+-    for label, settings, _ in BODY:
+-        r, c = settings["OM_TP_UNIT_COLLISION_RADIUS"], d[label]
+-        body, rng = int(label[4:].split("_")[0]), int(label.split("_range")[1].split("_")[0])
+-        ratio = label.split("_ratio")[1]
+-        assert body == 2 * r
+-        for token in (str(r), str(body), str(rng), ratio):
+-            assert token in c.note, (label, token, c.note)
+-
+-
+-def test_lb_lc_cells_are_expressed_with_reach_per_the_table(monkeypatch):
+-    """test-defect fix: the stale gate said LB/LC need set_reach, which engine.py binds and G5 provides."""
+-    fake_sensors(monkeypatch)
+-    d = {c.label: c for c in batches.get("layers").cells}
+-    for label, c in d.items():
+-        if label.startswith(("LB:", "LC:")):
+-            assert c.build is not None and c.status == DRAFT, label
+-            setup = c.build(8 if "phase_b" in label else 16, False)
+-            names = {g.unit for g in setup.groups}
+-            assert len(names) == 1, label
+-            (name,) = names
+-            assert setup.unit_types[name] == {"base": "Vanguard", "reach": (0, 0)}, label
+-
+-
+-def test_body_cells_are_raider_mirrors_with_ranged_unit_types(monkeypatch):
+-    fake_sensors(monkeypatch)
+-    d = {c.label: c for c in batches.get("layers").cells}
+-    for label, settings, _ in BODY:
+-        rng = int(label.split("_range")[1].split("_")[0])
+-        name = "RaiderR%d" % rng
+-        setup = d[label].build(16, False)
+-        assert {g.unit for g in setup.groups} == {name}, label
+-        assert [g.side for g in setup.groups] == [0, 1] and [g.count for g in setup.groups] == [16, 16]
+-        assert setup.unit_types[name] == {"base": "Raider", "set": {"attack_range": rng}}, label
+-        assert setup.terrain is None and all(g.layer == 0 for g in setup.groups)
+-
+-
+-def test_mirror_is_one_layer_blob_v_blob_and_choke_is_the_sampled_wall(monkeypatch):
+-    fake_sensors(monkeypatch)
+-    d = {c.label: c for c in batches.get("layers").cells}
+-    mirror, choke = d["LA:mirror"].build(16, False), d["LA:choke"].build(12, False)
+-    for setup, heads in ((mirror, 16), (choke, 12)):
+-        assert [(g.side, g.formation, g.layer, g.order, g.unit) for g in setup.groups] == [
+-            (0, "blob", 0, "attack_move", "Vanguard"), (1, "blob", 0, "attack_move", "Vanguard")]
+-        assert setup.groups[1].count == heads
+-    assert mirror.terrain is None
+-    assert choke.terrain == shift_terrain(maps.sample_map("wall", 0), 2000.0, 2000.0)
+-
+-
+-def test_choke_phase_b_build_is_the_phase_b_scene(monkeypatch):
+-    fake_sensors(monkeypatch)
+-    d = {c.label: c for c in batches.get("layers").cells}
+-    setup = d["LA:choke_phase_b"].build(9, False)
+-    assert [(g.side, g.count, g.formation, g.order) for g in setup.groups] == [
+-        (0, 8, "line", "attack_move"), (1, 9, "blob", "attack_move")]
+-    assert setup.terrain.canvas == (3000.0, 1600.0) and len(setup.terrain.blocks) == 2
+-    assert [g.layer for g in setup.groups] == [0, 0]
+-
+-
+-def test_scan_calls_only_expressed_cells_with_the_overlay(tmp_path):
+-    _, fake, _ = _run(tmp_path)
+-    assert [c["label"] for c in fake.calls] == EXPRESSED
+-    assert not {c["label"] for c in fake.calls} & set(NOT_EXPRESSED)
+-    want = {e[0]: e[1] for e in EXPECTED}
+-    for c in fake.calls:
+-        assert c["setup"].settings == {**batches.BASE_SETTINGS, **want[c["label"]]}, c["label"]
+-        assert (c["size"], c["enemy_from"], c["enemy_to"], c["replicates"]) == _dims(c["label"]) + (10,)
+-
+-
+-def test_settings_overlay_order_base_then_variant_then_cell(tmp_path):
+-    def mutate(defn):
+-        variants = (("v", {"A": 1, "B": 2, "OM_TP_PURSUE_BY_STEERING": 5}),)
+-        cells = []
+-        for c in defn.cells:
+-            if c.label == "LA:mirror":
+-                c = dataclasses.replace(c, settings={"B": 3, "C": 4})
+-            elif c.label == "LA:choke":
+-                c = dataclasses.replace(c, settings={"OM_TP_PURSUE_BY_STEERING": 0})
+-            cells.append(c)
+-        return dataclasses.replace(defn, variants=variants, cells=tuple(cells))
+-    _, fake, _ = _run(tmp_path, mutate=mutate)
+-    got = {c["label"]: c["setup"].settings for c in fake.calls}
+-    assert got["LA:mirror"] == {"OM_TP_PURSUE_BY_STEERING": 5, "A": 1, "B": 3, "C": 4}
+-    assert got["LA:choke"] == {"OM_TP_PURSUE_BY_STEERING": 0, "A": 1, "B": 2}
+-
++from scripts.skilllab import batches  # noqa: E402
+ 
+-def test_unexpressed_lines():
+-    d = batches.get("layers")
+-    joined = " ".join(d.unexpressed)
+-    assert "tall" in joined and "reach" in joined
+-    assert "om_roster_set_reach" in joined and "Phase C G5" not in joined
+-    assert "the LB and LC tables wait for reach" not in d.unexpressed   # test-defect fix: the binding exists
+-    assert "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b" in d.unexpressed
+-    assert any(REACH_TABLE_TEXT in u for u in d.unexpressed)
++SRC = (ROOT / "scripts" / "skilllab" / "batches.py").read_text()
+ 
+ 
+-def test_scene_text_says_drafts_and_sampled_wall():
+-    scene = batches.get("layers").scene
+-    assert "A174" in scene and "Architect" in scene and "not confirmed" in scene
+-    assert "LB" in scene and "LC" in scene
+-    assert "sampled wall" in scene
+-    assert "Phase B choke" in scene and "attack-move" in scene and "8 defenders" in scene
++def test_layers_is_not_a_batch_name_and_get_refuses_it():
++    assert "layers" not in batches.NAMES
++    with pytest.raises(ValueError):
++        batches.get("layers")
+ 
+ 
+-def test_run_file(tmp_path):
+-    _, _, paths = _run(tmp_path, FakeScan({("body20_range150_ratio7.5", None): 21}))
+-    t = _text(paths["run"])
+-    assert t.index(PROVISIONAL) < t.index("## Scene")
+-    cells = _section(t, "Cells")
+-    assert all(label in cells for label, _, _ in EXPECTED)
+-    results = _section(t, "Results")
+-    line = [ln for ln in results.splitlines() if ln.startswith("- body20_range150_ratio7.5")][0]
+-    assert "(unconfirmed draft)" in line and "16 units beat 21, lose to 22" in line
+-    assert sum(ln.startswith("- ") for ln in results.splitlines()) == 73
+-    sec = _section(t, "What the instrument could not express")
+-    assert "the LB and LC tables wait for reach" not in sec
+-    assert REACH_TABLE_TEXT in sec and "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b" in sec
+-    assert "LB:mirror:up1=0.5,up2=0.25" not in sec
+-    assert "None" not in t
++@pytest.mark.parametrize("name", ["_layers", "_layer_settings", "_with_reach", "LAYER_SCENES", "LAYER_REACH", "REACH_NOTE", "REACH_TABLE"])
++def test_the_layers_builders_and_constants_are_gone(name):
++    assert not hasattr(batches, name)
+ 
+ 
+-def test_page_and_csv(tmp_path):
+-    _, _, paths = _run(tmp_path)
+-    page = _text(paths["page"])
+-    assert PROVISIONAL in page and page.count("<svg") >= 73
+-    for label in EXPRESSED:
+-        assert label in page
+-    with open(paths["csv"], newline="", encoding="utf-8") as fh:
+-        rows = list(csv.DictReader(fh))
+-    assert len(rows) == 54 * 17 * 2 + 19 * 6 * 2
+-    assert {r["cell"] for r in rows} == set(EXPRESSED)
+-    assert {r["status"] for r in rows} == {DRAFT}
++def test_no_table_label_or_body_size_cell_is_built_by_any_batch():
++    for n in batches.NAMES:
++        if n == "layout_search":
++            continue
++        labels = [c.label for c in batches.get(n).cells]
++        assert not [lb for lb in labels if re.match(r"L[ABC]:", lb) or lb.startswith("body")], n
+ 
+ 
+-def test_layers_deterministic(tmp_path):
+-    _, _, a = _run(tmp_path, sub="one")
+-    _, _, b = _run(tmp_path, sub="two")
+-    for k in ("csv", "run", "page"):
+-        assert Path(a[k]).read_bytes() == Path(b[k]).read_bytes(), k
++def test_batches_does_not_set_layer_vision_or_reach_factors():
++    """Vision, range and damage multipliers are swept knobs now (sweep.py); a batch never sets them."""
++    assert not re.search(r"OM_TP_(VISION|RANGE|DAMAGE)_(UP|DOWN)", SRC)
+diff --git a/tests/skilllab/test_batches_lean.py b/tests/skilllab/test_batches_lean.py
+index 85990523..e29f6b74 100644
+--- a/tests/skilllab/test_batches_lean.py
++++ b/tests/skilllab/test_batches_lean.py
+@@ -1,5 +1,6 @@
+ # spec: skill lab memory - trim_series drops per-tick series, keeps row values; batches keep only the charted example whole
+ """No engine: fake fights."""
++import dataclasses
+ import sys
+ from pathlib import Path
+ 
+@@ -9,13 +10,13 @@ if str(ROOT) not in sys.path:
+ 
+ from scripts.skilllab import batches, pool, rows  # noqa: E402
+ from scripts.skilllab.contract import CellResult, ScanResult, trim_series  # noqa: E402
+-from tests.skilllab.fakes_batches import fight  # noqa: E402
++from tests.skilllab.fakes_batches import fight, stub_summary_write  # noqa: E402,F401
+ 
+ 
+ def _full(**kw):
+     f = fight(**kw)
+     f.firing = [(t, 3, 3) for t in range(0, 500, 5)]
+-    f.trace, f.states, f.weighted = [(1,)], [(1,)], [(1, 2, 3)]
++    f.trace, f.states = [(1,)], [(1,)]
+     f.weighted_unit_seconds = (1.0, 2.0)
+     return f
+ 
+@@ -23,20 +24,20 @@ def _full(**kw):
+ def test_trim_series_keeps_every_row_value_and_empties_series():
+     f = _full()
+     t = trim_series(f)
+-    assert t.firing == [] and t.trace == [] and t.states == [] and t.weighted == []
++    assert t.firing == [] and t.trace == [] and t.states == [] and t.weighted_unit_seconds == (1.0, 2.0)
+     assert rows.fight_row(t, a=1) == rows.fight_row(f, a=1)
+     assert f.firing  # the original is untouched
+ 
+ 
+ def test_trim_series_leaves_off_series_off():
+-    f = fight()
++    f = dataclasses.replace(fight(), states=None)      # fight() sets states None when Setup.states is off (the field default is [])
+     t = trim_series(f)
+-    assert t.trace is None and t.states is None and t.weighted is None
++    assert t.trace is None and t.states is None
+ 
+ 
+ def test_trimmed_keeps_only_the_example_whole():
+     fs = [_full() for _ in range(4)]
+-    res = ScanResult(size=8, cells=[CellResult(8, fs, 0.0, False)], beats=None, loses_to=None, win_margin=0.0)
++    res = ScanResult(size=8, cells=[CellResult(8, fs, 0.0, False)], beats=None, loses_to=None)
+     batches._trimmed(res, fs[0])
+     out = res.cells[0].fights
+     assert out[0] is fs[0] and out[0].firing
+@@ -50,5 +51,8 @@ def test_worker_trims_all_but_seed_zero_unswapped(monkeypatch):
+     assert pool.run_job((None, 0, False)).firing
+     assert pool.run_job((None, 1, False)).firing == []
+     assert pool.run_job((None, 0, True)).firing == []
++    # LAB-REV2-L4: the sweep and smoke run with Setup.states on, so a lean worker must drop the states rows as well, or 12 workers
++    # ship a row per unit per sample tick back for every fight
++    assert pool.run_job((None, 0, False)).states == [(1,)] and pool.run_job((None, 1, False)).states == []
+     monkeypatch.setattr(pool, "_lean", False)
+-    assert pool.run_job((None, 1, False)).firing
++    assert pool.run_job((None, 1, False)).firing and pool.run_job((None, 1, False)).states == [(1,)]
+diff --git a/tests/skilllab/test_batches_matchup.py b/tests/skilllab/test_batches_matchup.py
+index f2d4fa10..89b76c20 100644
+--- a/tests/skilllab/test_batches_matchup.py
++++ b/tests/skilllab/test_batches_matchup.py
+@@ -1,5 +1,6 @@
+ # spec: batch runner spec addendum 2 (batch2_spec.md) - the "matchup" batch in scripts/skilllab/batches.py
+-"""Matchup batch: 10 x 10 pairs of unit types and even mixes, weighted firing on. Fake scan only; no engine."""
++"""Matchup batch: 10 x 10 pairs of unit types and even mixes; the type-weighted count is always recorded (LAB-REV2: no
++Setup.weighted, no BatchDef.weighted). Fake scan only; no engine."""
+ import csv
+ import dataclasses
+ import re
+@@ -12,7 +13,7 @@ if str(ROOT) not in sys.path:
+ 
+ from scripts.skilllab import batches  # noqa: E402
+ from scripts.skilllab.matchup import matchup_grid_html  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
+ 
+ PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
+ PURE = ("Vanguard", "Raider", "Bombard", "Bastion")
+@@ -60,7 +61,7 @@ def _run(tmp_path, fake=None, sub="out", mutate=None):
+ def test_matchup_definition_fields_and_cell_order():
+     d = batches.get("matchup")
+     assert d.name == "matchup" and d.title and d.scene
+-    assert d.weighted is True
++    assert "weighted" not in {f.name for f in dataclasses.fields(d)}      # the count is always recorded; there is no switch
+     assert d.variants == (("default", {}),)
+     assert len(d.cells) == 284                                               # 200 interleaved + 84 layered
+     assert [c.label for c in d.cells[:200]] == [_label(*x) for x in EXPECTED]      # size 16 then 32
+@@ -71,8 +72,9 @@ def test_matchup_definition_fields_and_cell_order():
+ 
+ def test_matchup_scene_and_unexpressed_lines():
+     d = batches.get("matchup")
+-    for want in ("the weighted count reads the engine's target (its sight and reach), so a unit counts once the engine has given it a target",
+-                 "only even two-type mixes; unequal mixes and three-type mixes are not included",
++    assert not any("reads the engine's target (its sight and reach)" in u for u in d.unexpressed)      # superseded by ruling 5
++    assert any("target of record" in u for u in d.unexpressed)
++    for want in ("only even two-type mixes; unequal mixes and three-type mixes are not included",
+                  "arrangement: interleaved in every cell; layered (short range in front, long range behind) only at size 16 and only on the even two-type mixes, in the first pass; the reverse arrangement and layered at 32 are not run"):
+         assert want in d.unexpressed
+     assert "weighted" in d.scene and "blob" in d.scene
+@@ -101,25 +103,17 @@ def test_matchup_builds_put_the_mix_on_each_side(monkeypatch):
+     assert counts(setup, 0) == {"Vanguard": 32} and counts(setup, 1) == {"Raider": 24}
+ 
+ 
+-def test_matchup_scanned_once_per_cell_with_range_and_weighted_setups(tmp_path):
++def test_matchup_scanned_once_per_cell_with_range_setups(tmp_path):
+     _, fake, _ = _run(tmp_path)
+     assert len(fake.calls) == 284
+     want = sorted((_label(*x), x[2], x[2] // 2, x[2] * 3 // 2) for x in EXPECTED)
+     old = [c for c in fake.calls if ":layered" not in c["label"]]
+     assert sorted((c["label"], c["size"], c["enemy_from"], c["enemy_to"]) for c in old) == want
+     assert sum(":layered" in c["label"] for c in fake.calls) == 84
+-    assert all(c["setup"].weighted is True for c in fake.calls)
++    assert not any(hasattr(c["setup"], "weighted") for c in fake.calls)
+     assert all(c["replicates"] == 10 and c["setup"].settings == {"OM_TP_PURSUE_BY_STEERING": 1} for c in fake.calls)
+ 
+ 
+-def test_weighted_comes_from_the_batch_flag(tmp_path):
+-    """A matchup run whose batch is not weighted must not turn weighted on (mutant catcher for a hard-coded flag)."""
+-    _, fake, _ = _run(tmp_path, sub="off", mutate=lambda d: dataclasses.replace(d, weighted=False))
+-    assert all(c["setup"].weighted is False for c in fake.calls)
+-    _, fake, _ = _run(tmp_path, sub="on")
+-    assert all(c["setup"].weighted is True for c in fake.calls)
+-
+-
+ def test_matchup_results_carry_weighted_unit_seconds(tmp_path):
+     _, _, paths = _run(tmp_path)
+     res = _section(_text(paths["run"]), "Results")
+@@ -144,7 +138,7 @@ def test_matchup_run_file_lists_unexpressed(tmp_path):
+     t = _text(paths["run"])
+     assert t.index(PROVISIONAL) < t.index("## Scene")
+     sec = _section(t, "What the instrument could not express")
+-    assert "weighted count reads the engine's target" in sec
++    assert "target of record" in sec and "reads the engine's target (its sight and reach)" not in sec
+     assert "only even two-type mixes" in sec and "interleaved in every cell; layered" in sec
+ 
+ 
+diff --git a/tests/skilllab/test_batches_matchup_layered.py b/tests/skilllab/test_batches_matchup_layered.py
+index 4fb784cd..d5fca8ab 100644
+--- a/tests/skilllab/test_batches_matchup_layered.py
++++ b/tests/skilllab/test_batches_matchup_layered.py
+@@ -14,7 +14,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
+ import scripts.skilllab.asym as asym  # noqa: E402
+ from scripts.skilllab import batches  # noqa: E402
+ from scripts.skilllab.matchup import matchup_grid_html  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, faked, stub_summary_write  # noqa: E402,F401
+ from tests.skilllab.test_batches_matchup import AXIS, EXPECTED, MIXED, PURE, _beats, _label, _section, _text  # noqa: E402
+ 
+ RANGES = {"Raider": 200.0, "Vanguard": 300.0, "Bombard": 500.0, "Bastion": 250.0}
+diff --git a/tests/skilllab/test_batches_notes.py b/tests/skilllab/test_batches_notes.py
+index 46b7e39c..826b6df4 100644
+--- a/tests/skilllab/test_batches_notes.py
++++ b/tests/skilllab/test_batches_notes.py
+@@ -8,7 +8,7 @@ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+ from scripts.skilllab import batches  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, faked, stub_summary_write  # noqa: E402,F401
+ 
+ PHRASE = "not a single group order"
+ NOTES = {"bait": "the bait is a second group, so the play is not a single group order",
+diff --git a/tests/skilllab/test_batches_outcomes.py b/tests/skilllab/test_batches_outcomes.py
+index bd66143e..c6d6e9b2 100644
+--- a/tests/skilllab/test_batches_outcomes.py
++++ b/tests/skilllab/test_batches_outcomes.py
+@@ -1,5 +1,5 @@
+-# spec: ruling A201: the run file result line counts quiet stalemates, caps and draws separately
+-"""batches._STALLED and the result line over a scripted scan: 1 stalemate, 2 caps, 3 draws."""
++# spec: ruling A201 as superseded by Q-LAB-03 / LAB-REV2-L4: the run file result line counts caps, draws and defect cells
++"""The result line over a scripted scan: caps, draws and defect cells (no stalled count: there is no stalemate)."""
+ import dataclasses
+ import re
+ import sys
+@@ -10,7 +10,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
+     if str(_p) not in sys.path:
+         sys.path.insert(0, str(_p))
+ 
+-from fakes_batches import fight, make_scan  # noqa: E402
++from fakes_batches import fight, make_scan, stub_summary_write  # noqa: E402,F401
+ from scripts.skilllab import batches  # noqa: E402
+ 
+ 
+@@ -29,26 +29,41 @@ def _line(outcomes):
+     return batches._result_line(Cell(), "plain", _scan(outcomes))
+ 
+ 
+-def test_stalled_is_quiet_stalemate_only():
+-    assert batches._STALLED == ("stalemate",)
++def test_no_stalled_state_exists_any_more():
++    """Q-LAB-03: there is no quiet stalemate; a fight ends by elimination or hits the cap."""
++    assert not hasattr(batches, "_STALLED")
++    line = _line(["cap", "cap", "draw", "draw", "draw", "side0", "side1"])
++    assert "stalled" not in line and "stalemate" not in line
+ 
+ 
+-def test_result_line_carries_the_three_counts_in_order():
+-    line = _line(["stalemate", "cap", "cap", "draw", "draw", "draw", "side0", "side1"])
+-    assert "stalled fights 1 (quiet stalemates only); caps 2; draws 3" in line
++def test_result_line_carries_caps_draws_and_defect_cells_in_order():
++    line = _line(["cap", "cap", "draw", "draw", "draw", "side0", "side1"])
++    assert "caps 2; draws 3; defect cells 0" in line      # _scan() builds one cell whose own `defect` flag is the fake's default
+ 
+ 
+-def test_caps_and_draws_are_not_in_the_stalled_count():
+-    line = _line(["cap", "cap", "draw", "draw", "draw", "side0"])
+-    assert "stalled fights 0 (quiet stalemates only); caps 2; draws 3" in line
++def test_defect_cells_are_counted_from_the_scan_cells():
++    sc = _scan(["cap", "side0"])
++    sc = dataclasses.replace(sc, cells=[dataclasses.replace(sc.cells[0], defect=True)])
++    assert "caps 1; draws 0; defect cells 1" in batches._result_line(Cell(), "plain", sc)
+ 
+ 
+-def test_positive_control_a_stalemate_is_counted_as_stalled():
+-    line = _line(["stalemate", "stalemate", "side0"])
+-    assert re.search(r"stalled fights 2 \(quiet stalemates only\); caps 0; draws 0", line)
++def test_positive_control_a_clean_scan_has_zero_of_each():
++    line = _line(["side0", "side0", "side1"])
++    assert re.search(r"caps 0; draws 0; defect cells 0", line)
+ 
+ 
+-def test_counts_sit_where_the_stalled_text_was():
+-    """After the firing text, before any pair spread."""
++def test_counts_sit_after_the_firing_text_and_before_any_pair_spread():
+     line = _line(["draw", "side0"])
+-    assert line.index("mean firing unit-seconds") < line.index("stalled fights")
++    assert line.index("mean firing unit-seconds") < line.index("caps ")
++
++
++def test_weighted_text_is_always_present_now_that_the_count_is_always_recorded():
++    """Setup.weighted is gone: weighted_unit_seconds is populated on every fight, so every result line carries its mean."""
++    assert re.search(r"mean weighted firing unit.seconds 1\.50 side 0, 0\.75 side 1", _line(["side0", "side1"]))
++
++
++def test_a_ceiling_hit_scan_line_says_so():
++    sc = make_scan(16, 40, 48, None, ceiling=True)
++    line = batches._result_line(Cell(), "plain", sc)
++    assert "ceiling hit" in line and "no break-even in range" not in line and "lose to" not in line
++    assert "beat all 48 enemy units" in line or "beat 48" in line
+diff --git a/tests/skilllab/test_batches_positions.py b/tests/skilllab/test_batches_positions.py
+index 3001be45..44d65d4b 100644
+--- a/tests/skilllab/test_batches_positions.py
++++ b/tests/skilllab/test_batches_positions.py
+@@ -10,7 +10,7 @@ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+ from scripts.skilllab import batches  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
+ 
+ PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
+ DRAFT = "draft"
+@@ -50,7 +50,6 @@ def test_definition_cells_in_order_with_fields():
+         assert c.status == DRAFT and c.build is not None, c.label
+     for c in d.cells[4:]:
+         assert c.build is None and c.status == "not expressed" and c.note == NOTES[c.label], c.label
+-    assert d.weighted is False
+ 
+ 
+ def test_unexpressed_lists_the_four_and_the_draft_numbers():
+@@ -78,7 +77,7 @@ def test_scans_only_the_four_expressed_cells_never_the_not_expressed(tmp_path):
+     assert not {c["label"] for c in fake.calls} & set(NOTES)
+     for c in fake.calls:
+         assert (c["size"], c["enemy_from"], c["enemy_to"], c["replicates"]) == (16, 8, 24, 10)
+-        assert c["setup"].settings == batches.BASE_SETTINGS and c["setup"].weighted is False
++        assert c["setup"].settings == batches.BASE_SETTINGS
+ 
+ 
+ def test_scan_sees_the_timeline_of_each_real_build(tmp_path, monkeypatch):
+diff --git a/tests/skilllab/test_batches_refine.py b/tests/skilllab/test_batches_refine.py
+index a3e89a94..b44d6e3d 100644
+--- a/tests/skilllab/test_batches_refine.py
++++ b/tests/skilllab/test_batches_refine.py
+@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+ from scripts.skilllab import batches  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, faked, stub_summary_write  # noqa: E402,F401
+ 
+ SENTENCE = "Cells within 2 enemy units of a break-even run 3 times the fights."
+ 
+diff --git a/tests/skilllab/test_batches_spread.py b/tests/skilllab/test_batches_spread.py
+index ea3b1c32..a1a1ce57 100644
+--- a/tests/skilllab/test_batches_spread.py
++++ b/tests/skilllab/test_batches_spread.py
+@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
+ 
+ from scripts.skilllab import batches  # noqa: E402
+ from scripts.skilllab.contract import CellResult, FightResult, ScanResult  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, faked, stub_summary_write  # noqa: E402,F401
+ 
+ 
+ def _f(margin):
+@@ -28,8 +28,7 @@ def _scan(beats):
+     """Cells 14, 15, 16; beats names the last won cell. Each cell has a different spread."""
+     spec = {14: [0.1, 0.1, 0.1, 0.1], 15: [0.1, -0.3, 0.3, 0.5], 16: [-0.4, 0.2, -0.2, 0.6]}
+     cells = [_cell(h, m, beats is not None and h <= beats) for h, m in spec.items()]
+-    return ScanResult(size=16, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1,
+-                      win_margin=0.05)
++    return ScanResult(size=16, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1)
+ 
+ 
+ def _cd():
+diff --git a/tests/skilllab/test_batches_workers.py b/tests/skilllab/test_batches_workers.py
+index 7122fd6f..41c876b5 100644
+--- a/tests/skilllab/test_batches_workers.py
++++ b/tests/skilllab/test_batches_workers.py
+@@ -10,7 +10,7 @@ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+ from scripts.skilllab import batches, pool  # noqa: E402
+-from tests.skilllab.fakes_batches import FakeScan, faked  # noqa: E402
++from tests.skilllab.fakes_batches import FakeScan, faked, stub_summary_write  # noqa: E402,F401
+ 
+ 
+ class RecPool:
+diff --git a/tests/skilllab/test_breakeven.py b/tests/skilllab/test_breakeven.py
+index 1b3c6005..fa84a29c 100644
+--- a/tests/skilllab/test_breakeven.py
++++ b/tests/skilllab/test_breakeven.py
+@@ -1,5 +1,10 @@
+-# spec: break-even by scan with refinement, and the side-swap control (skill lab harness, item 3)
+-"""Break-even flips, refinement fights near a flip, and swap_control, driven through scripted fight_fn fakes."""
++# spec: break-even by scan with refinement, and the side-swap control (skill lab harness, item 3); LAB-REV2-L4
++"""Break-even flips, refinement fights near a flip, and swap_control, driven through scripted fight_fn fakes.
++
++LAB-REV2-L4: a cell is won when every fight is side0 (the fakes derive the outcome from the margin's sign: margin > 0 is side0),
++there is no win margin, and find_break_even stays a LINEAR scan (it needs the neighbours of every flip, so it scans with
++full_scan=True whatever scan()'s default is). A scan won all the way is a ceiling hit: BreakEven.ceiling_hit, beats = the top
++headcount, no flips."""
+ import dataclasses
+ import importlib
+ import sys
+@@ -11,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
+ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+-from scripts.skilllab.contract import FightResult, Group, ScanResult, Setup, WIN_MARGIN  # noqa: E402
++from scripts.skilllab.contract import FightResult, Group, ScanResult, Setup  # noqa: E402
+ from scripts.skilllab.scan import scan  # noqa: E402
+ from scripts.skilllab.breakeven import (  # noqa: E402
+     BreakEven, Flip, SwapControl, find_break_even, flip_sides, swap_control)
+@@ -20,8 +25,8 @@ SIZE = 16
+ PLANTED_BIAS = 0.1   # placeholder planted by the biased fake; not a tolerance
+ 
+ 
+-def _result(margin, outcome="side0"):
+-    return FightResult(outcome=outcome, margin=margin, strength_left=(1.0, 0.0), survivors=(1, 0),
++def _result(margin, outcome=None):
++    return FightResult(outcome=outcome or ("side0" if margin > 0 else "side1"), margin=margin, strength_left=(1.0, 0.0), survivors=(1, 0),
+                        heads=(1, 1), ticks=10, first_contact_tick=0, firing=[(0, 1, 1)],
+                        firing_unit_seconds=(0.25, 0.25))
+ 
+@@ -35,7 +40,7 @@ class Recorder:
+ 
+     def __init__(self, margin_of, outcome_of=None):
+         self.margin_of = margin_of
+-        self.outcome_of = outcome_of or (lambda e, s, w: "side0")
++        self.outcome_of = outcome_of or (lambda e, s, w: "side0" if self.margin_of(e, s, w) > 0 else "side1")
+         self.calls = []
+ 
+     def __call__(self, setup, seed, swap):
+@@ -74,8 +79,8 @@ def test_single_win_to_loss_flip():
+ 
+ 
+ def test_single_flip_agrees_with_plain_scan():
+-    """beats/loses_to equal scan.scan's for a one-flip curve."""
+-    plain = scan(_build, SIZE, 8, 13, replicates=2, fight_fn=Recorder(_curve({8, 9, 10})))
++    """beats/loses_to equal scan.scan's (full_scan) for a one-flip curve."""
++    plain = scan(_build, SIZE, 8, 13, replicates=2, fight_fn=Recorder(_curve({8, 9, 10})), full_scan=True)
+     res, _ = _find({8, 9, 10})
+     assert (res.beats, res.loses_to) == (plain.beats, plain.loses_to) == (10, 11)
+ 
+@@ -103,12 +108,13 @@ def test_beats_ignores_an_earlier_loss_to_win_flip():
+     assert (res.beats, res.loses_to) == (10, 11)
+ 
+ 
+-@pytest.mark.parametrize("won", [{8, 9, 10, 11, 12, 13}, set()])
+-def test_all_won_and_all_lost_have_no_flips(won):
+-    """No flip: empty flips, no beats, no refinement, rounds 0, and only the scan's fights ran."""
++@pytest.mark.parametrize("won,ceiling", [({8, 9, 10, 11, 12, 13}, True), (set(), False)])
++def test_all_won_and_all_lost_have_no_flips(won, ceiling):
++    """No flip: empty flips, no refinement, rounds 0, and only the scan's fights ran. Won everywhere is a ceiling hit (beats = the
++    top headcount, never 'no break-even'); lost everywhere is beats None."""
+     res, rec = _find(won)
+     assert res.flips == [] and res.multi_flip is False
+-    assert res.beats is None and res.loses_to is None
++    assert res.ceiling_hit is ceiling and (res.beats, res.loses_to) == ((13, None) if ceiling else (None, None))
+     assert res.refined == [] and res.rounds == 0
+     assert len(rec.calls) == 6 * 2 * 2
+ 
+@@ -137,7 +143,7 @@ def test_refinement_extra_fights_use_swap_outer_seed_inner_after_the_scan():
+ def test_refined_cells_keep_old_fights_and_recompute_mean():
+     """Refined cells hold old + new fights (old objects kept); mean_margin is the mean over all of them."""
+     first = Recorder(_curve({8, 9, 10}))
+-    scanned = scan(_build, SIZE, 8, 13, replicates=2, fight_fn=first)
++    scanned = scan(_build, SIZE, 8, 13, replicates=2, fight_fn=first, full_scan=True)
+     margins = lambda e, s, w: 0.5 if e in (8, 9, 10) else -0.5
+     rec = Recorder(lambda e, s, w: margins(e, s, w) + (0.1 if (e, s) == (10, 3) and w else 0.0))
+     res, _ = _find({8, 9, 10}, rec=rec)
+@@ -216,23 +222,18 @@ def test_multi_flip_refines_every_adjacent_cell_once():
+     assert set(rec.calls) == _grid(range(8, 14), range(2)) | _grid((9, 10, 11, 12), (2, 3))
+ 
+ 
+-def test_refinement_recomputes_won_with_the_decided_rule():
+-    """An extra fight ending in a cap makes the refined cell not won even with a high mean."""
+-    outcome = lambda e, s, w: "cap" if (e, s, w) == (10, 3, True) else "side0"
++def test_refinement_recomputes_won_with_the_every_fight_side0_rule():
++    """An extra fight ending in a cap makes the refined cell a defect and not won even with a high mean margin."""
++    outcome = lambda e, s, w: "cap" if (e, s, w) == (10, 3, True) else ("side0" if e <= 10 else "side1")
+     res, _ = _find(None, rec=Recorder(_curve({8, 9, 10}), outcome), rounds=1)
+     cells = {c.enemy_heads: c for c in res.scan.cells}
+-    assert cells[10].won is False and cells[10].mean_margin == pytest.approx(0.5)
++    assert cells[10].won is False and cells[10].defect is True and cells[10].mean_margin == pytest.approx(0.5)
+     assert res.beats == 9
+ 
+ 
+-def test_win_margin_is_used_by_scan_and_refinement():
+-    """Refinement uses the given win_margin: mean 0.4 is won at margin 0.3, lost at 0.5."""
+-    rec = Recorder(lambda e, s, w: 0.4 if e <= 10 else -0.5)
+-    res, _ = _find(None, rec=rec, win_margin=0.3)
+-    assert (res.beats, res.loses_to) == (10, 11)
+-    rec = Recorder(lambda e, s, w: 0.4 if e <= 10 else -0.5)
+-    res, _ = _find(None, rec=rec, win_margin=0.5)
+-    assert res.flips == [] and res.beats is None
++def test_find_break_even_takes_no_win_margin():
++    import inspect
++    assert "win_margin" not in inspect.signature(find_break_even).parameters
+ 
+ 
+ def test_deterministic_same_inputs_same_output():
+@@ -289,7 +290,7 @@ def _two_groups():
+                 Group(side=1, unit="Raider", count=12, formation="line", x=50.0, y=-1.0,
+                       facing_deg=180.0, layer=1, order="attack_move", goal=None, params={"spacing": 30})),
+         unit_types={"X": {"base": "Vanguard", "scale": {}, "set": {}}}, abilities=True, max_ticks=100,
+-        stalemate_ticks=50, sample_every=2, trace=True, settings={"OM_TP_A": 1.5})
++        sample_every=2, trace=True, settings={"OM_TP_A": 1.5})
+ 
+ 
+ def test_flip_sides_swaps_only_sides():
+diff --git a/tests/skilllab/test_depth.py b/tests/skilllab/test_depth.py
+index 96da9d0f..b18e69d1 100644
+--- a/tests/skilllab/test_depth.py
++++ b/tests/skilllab/test_depth.py
+@@ -1,6 +1,13 @@
+-# spec: docs/northstar/plans/2026-10-06-layout-search-spec.md rev 2, piece P4 (LAB-SEARCH); sections 1 to 4
++# spec: docs/northstar/plans/2026-10-06-layout-search-spec.md rev 2, piece P4 (LAB-SEARCH); sections 1 to 4; LAB-REV2-L4
+ """scripts/skilllab/depth.py and batches.layout_search: the Latin-hypercube draw, the depth score, the csv, summary and pages.
+ 
++LAB-REV2-L4 changes to this file: the scan range is 8 to 48 (ruling 4); a scan that beats the top of the range is a CEILING HIT
++and scores as one (its break-even is ENEMY_TO and it is listed in `ceiling_hits`, never in `no_gain`), including a fake or
++legacy ScanResult that says `ceiling_hit=True` with `beats=None`; BOTH naive baselines (the blob and the spread line) are
++reported for every layout (`gains` and `gains_naive_line`, `score` and `score_naive_line`); depth no longer reads
++`labels["placement_shift"]` and nothing in the Setup it builds names a retired field (decided_by_survivors, hold_anchor,
++defender_side).
++
+ Seam under test: depth.run_layout(values, seed, replicates, scan_fn) calls scan_fn(label, build, replicates) once per
+ play and returns a ScanResult (break-even = result.beats). Labels are the plays_space.PLAYS names for the seven skilled
+ plays and the three counters, and "naive" and "naive_line" for the two naive baselines (Rev 4: 12 scans, placed scenes). Fakes return chosen break-evens; no engine.
+@@ -43,11 +50,17 @@ def counters_s1_s2_s4(monkeypatch):
+     monkeypatch.setattr(skills, "has_counter", lambda s: s in HAS_COUNTER)
+ 
+ 
++CEILING = "ceiling"      # a table value: the scan beats the top of the range
++
++
+ def fake_scan(table, calls=None):
+-    """table: label -> break-even or None; every label must be present."""
++    """table: label -> break-even, None (lost everywhere) or CEILING (won everywhere, beats = depth.ENEMY_TO);
++    every label must be present."""
+     def scan_fn(label, build, replicates):
+         if calls is not None:
+             calls.append((label, build, replicates))
++        if table[label] == CEILING:
++            return scan_of(16, depth.ENEMY_TO, [cell(8, [fight(), fight()])], ceiling_hit=True)
+         return scan_of(16, table[label], [cell(8, [fight(), fight()])])
+     return scan_fn
+ 
+@@ -174,7 +187,7 @@ def test_run_layout_builds_the_map_from_features_and_passes_it_to_every_build(mo
+     for label in ("naive", "naive_line", "s1_hold_choke"):
+         want = real(WALLED, label, 2800, f)(16, False).terrain       # the layout moved as a whole into the canvas
+         assert by[label](16, False).terrain == want
+-        assert by[label](16, False).decided_by_survivors is True
++        assert by[label](16, False).point is not None       # ruling 6: the shared point, set by the placed scene
+ 
+ 
+ def test_run_layout_scores_from_the_scans(monkeypatch):
+@@ -198,6 +211,68 @@ def test_run_layout_flags_none_break_even_as_no_gain_in_the_row(monkeypatch):
+     assert all(not x.get("no_gain") for x in other)
+ 
+ 
++def test_run_layout_scores_a_ceiling_hit_as_the_top_of_the_range_not_as_no_gain(monkeypatch):
++    """Spec L4: a None break-even from a won-everywhere scan scores as a ceiling hit. The fake says ceiling_hit with beats None
++    (what a legacy or hand-built ScanResult looks like) and with beats = ENEMY_TO; both give gain ENEMY_TO - naive."""
++    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
++    top = depth.ENEMY_TO
++    t = table_all()
++    t["s5_vulnerable_away"] = CEILING
++    r = depth.run_layout(values_of(), 5, 3, fake_scan(t))
++    assert r["gains"]["S5"] == top - 7 and "S5" not in r["no_gain"] and r["ceiling_hits"] == ["S5"]
++    rows = [x for x in r["rows"] if x["play"] == "s5_vulnerable_away"]
++    assert rows and all(x["break_even"] == top and x["ceiling_hit"] == 1 and not x.get("no_gain") for x in rows)
++    legacy = lambda label, build, replicates: scan_of(16, None, [cell(8, [fight(), fight()])], ceiling_hit=True)
++    scans = fake_scan(table_all())
++    r2 = depth.run_layout(values_of(), 5, 3, lambda label, b, n: legacy(label, b, n) if label == "s5_vulnerable_away" else scans(label, b, n))
++    assert r2["gains"]["S5"] == top - 7 and r2["ceiling_hits"] == ["S5"] and "S5" not in r2["no_gain"]
++
++
++def test_run_layout_positive_control_a_lost_everywhere_scan_is_still_no_gain_and_no_ceiling(monkeypatch):
++    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
++    t = table_all()
++    t["s5_vulnerable_away"] = None
++    r = depth.run_layout(values_of(), 5, 3, fake_scan(t))
++    assert "S5" in r["no_gain"] and r["ceiling_hits"] == [] and all(
++        x["ceiling_hit"] == 0 for x in r["rows"] if x["play"] == "s5_vulnerable_away")
++
++
++def test_a_ceiling_hit_counts_toward_the_score_when_the_gain_reaches_g(monkeypatch):
++    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
++    t = table_all(skilled=CEILING, naive=7, counter=8)
++    r = depth.run_layout(values_of(), 5, 3, fake_scan(t))
++    assert r["score"] == 5 and r["ceiling_hits"] == sorted(SKILLS)
++
++
++def test_both_naive_baselines_are_reported_per_layout(monkeypatch):
++    """gains/score against the naive blob and gains_naive_line/score_naive_line against the spread line, side by side."""
++    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
++    t = table_all(skilled=12, naive=7, counter=8)
++    t["naive_line"] = 11
++    r = depth.run_layout(values_of(), 5, 3, fake_scan(t))
++    assert r["gains"] == {s: 5 for s in SKILLS} and r["gains_naive_line"] == {s: 1 for s in SKILLS}
++    assert r["score"] == 5 and r["score_naive_line"] == 0
++
++
++def test_depth_scan_range_is_eight_to_forty_eight():
++    """Ruling 4: enemy headcount 8 to 48 against 16."""
++    assert (depth.UNITS, depth.ENEMY_FROM, depth.ENEMY_TO) == (16, 8, 48)
++
++
++def test_real_scan_runs_the_ruled_range_with_the_default_bisection(monkeypatch):
++    from scripts.skilllab import scan as scan_module
++    seen = []
++    monkeypatch.setattr(scan_module, "scan", lambda build, size, lo, hi, **kw: seen.append((size, lo, hi, kw)) or scan_of(16, 10, []))
++    depth._real_scan(None)("naive", lambda e, sw: None, 3)
++    assert seen[0][:3] == (16, 8, 48) and seen[0][3]["replicates"] == 3 and not seen[0][3].get("full_scan")
++
++
++def test_depth_reads_no_retired_field():
++    src = (ROOT / "scripts/skilllab/depth.py").read_text()
++    for name in ("placement_shift", "decided_by_survivors", "hold_anchor", "defender_side", "stalemate", "WIN_MARGIN"):
++        assert name not in src, name
++
++
+ def test_run_layout_rows_one_per_fight_with_feat_columns_play_variant_break_even(monkeypatch):
+     monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
+     r = depth.run_layout(values_of(), 5, 3, fake_scan(table_all()))
+@@ -233,7 +308,9 @@ def test_run_writes_csv_with_one_row_per_fight(run_small):
+     with open(csv_path, newline="") as fh:
+         rows = list(csv.DictReader(fh))
+     assert len(rows) == 18 * 12 * 2
+-    assert {"play", "variant", "break_even", "feat_choke_width_bodies", "feat_start_distance"} <= set(rows[0])
++    assert {"play", "variant", "break_even", "feat_choke_width_bodies", "feat_start_distance", "ceiling_hit",
++            "baseline", "prefight"} <= set(rows[0])
++    assert "placement_shift" not in rows[0]
+ 
+ 
+ def test_depth_summary_json_shape(run_small):
+@@ -241,7 +318,8 @@ def test_depth_summary_json_shape(run_small):
+     s = json.loads((out / "depth_summary.json").read_text())
+     assert s["G"] == 2 and len(s["layouts"]) == 18
+     lay = s["layouts"][0]
+-    assert set(lay) >= {"features", "gains", "score", "no_gain"} and set(lay["features"]) == set(KEYS)
++    assert set(lay) >= {"features", "gains", "score", "no_gain", "ceiling_hits", "gains_naive_line", "score_naive_line"}
++    assert set(lay["features"]) == set(KEYS)
+     assert set(lay["gains"]) == set(SKILLS) and isinstance(lay["score"], int) and 0 <= lay["score"] <= 5
+     means = s["feature_means"]
+     assert set(means) == set(KEYS)
+@@ -344,8 +422,8 @@ def test_run_layout_naive_build_is_a_placed_scene_inside_the_canvas(monkeypatch,
+     setup = {c[0]: c[1] for c in calls}[label](16, False)
+     cw, ch = FLAT.canvas
+     g0, g1 = [next(g for g in setup.groups if g.side == s) for s in (0, 1)]
+-    for x, y in [(g.x, g.y) for g in setup.groups] + [setup.hold_anchor]:
++    for x, y in [(g.x, g.y) for g in setup.groups] + [setup.point]:
+         assert 0 <= x <= cw and 0 <= y <= ch, (x, y)
+     assert g1.x - g0.x == pytest.approx(2800) and g0.y == g1.y       # the naive defender is side 1, at the choke
+-    assert setup.decided_by_survivors is True and setup.defender_side == 1
+-    assert setup.hold_anchor == pytest.approx((g1.x, g1.y), abs=200.0)
++    assert g1.order == "guard"                                      # it holds; the shared point is its centre of mass
++    assert setup.point == pytest.approx((g1.x, g1.y), abs=200.0)
+diff --git a/tests/skilllab/test_main.py b/tests/skilllab/test_main.py
+index 79d7d104..bdfc25ab 100644
+--- a/tests/skilllab/test_main.py
++++ b/tests/skilllab/test_main.py
+@@ -32,7 +32,7 @@ def _fight(tag):
+ def _scan_result(base):
+     cells = [CellResult(enemy_heads=n, fights=[_fight(base + 2 * n), _fight(base + 2 * n + 1)],
+                         mean_margin=0.1, won=True) for n in range(ENEMY_FROM, ENEMY_TO + 1)]
+-    return ScanResult(size=16, cells=cells, beats=None, loses_to=None, win_margin=0.05)
++    return ScanResult(size=16, cells=cells, beats=None, loses_to=None)
+ 
+ 
+ class World:
+@@ -59,9 +59,9 @@ class World:
+             self.reach_args.append((args, kwargs))
+             return self.reach_build
+ 
+-        def fake_scan(build, size, enemy_from, enemy_to, replicates=10, win_margin=0.05, fight_fn=None):
++        def fake_scan(build, size, enemy_from, enemy_to, replicates=10, fight_fn=None, map_fn=None, full_scan=False, **kw):
+             self.scan_calls.append(dict(build=build, size=size, enemy_from=enemy_from, enemy_to=enemy_to,
+-                                        replicates=replicates))
++                                        replicates=replicates, full_scan=full_scan))
+             return self.results["identical"] if build is self.blob_build else self.results["damage"]
+ 
+         def fake_fight_row(result, **labels):
+@@ -205,3 +205,10 @@ def test_unknown_command_returns_two_and_runs_nothing(world, tmp_path):
+         code = exc.code
+     assert code == 2
+     assert world.scan_calls == [] and world.write_calls == [] and world.report_calls == []
++
++
++def test_controls_scan_every_headcount_not_the_bisection(world, tmp_path):
++    """LAB-REV2-L4: scan() now bisects by default. The controls chart a dot per fight at every headcount 8 to 24 and the golden
++    planted hash covers every fight of both scans, so the `controls` command asks for the linear sweep."""
++    main(["controls", "--out", str(tmp_path)])
++    assert [c["full_scan"] for c in world.scan_calls] == [True, True]
+diff --git a/tests/skilllab/test_main_batch.py b/tests/skilllab/test_main_batch.py
+index 9d4c3738..d6ea78d9 100644
+--- a/tests/skilllab/test_main_batch.py
++++ b/tests/skilllab/test_main_batch.py
+@@ -47,7 +47,7 @@ def run_main(argv):
+         return exc.code
+ 
+ 
+-@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers"])
++@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations"])
+ def test_valid_name_runs_once_and_prints_three_paths(world, tmp_path, capsys, name):
+     assert main(["batch", name, "--out", str(tmp_path / "o")]) == 0
+     assert world.get_calls == [name]
+@@ -64,7 +64,7 @@ def test_unknown_or_missing_name_returns_two_and_prints_names(world, capsys, arg
+     assert run_main(argv) == 2
+     assert world.run_calls == []
+     out = capsys.readouterr().out
+-    assert all(n in out for n in ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers"))
++    assert all(n in out for n in ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations"))
+ 
+ 
+ def test_other_commands_do_not_reach_batches(world, tmp_path):
+diff --git a/tests/skilllab/test_main_reach.py b/tests/skilllab/test_main_reach.py
+index ec17938a..01e6675a 100644
+--- a/tests/skilllab/test_main_reach.py
++++ b/tests/skilllab/test_main_reach.py
+@@ -27,7 +27,7 @@ def _fight(tag):
+ def _scan_result():
+     cells = [CellResult(enemy_heads=n, fights=[_fight(2 * n), _fight(2 * n + 1)], mean_margin=0.1, won=True)
+              for n in range(8, 25)]
+-    return ScanResult(size=16, cells=cells, beats=None, loses_to=None, win_margin=0.05)
++    return ScanResult(size=16, cells=cells, beats=None, loses_to=None)
+ 
+ 
+ class World:
+@@ -49,9 +49,9 @@ class World:
+             self.damage_args.append((args, kwargs))
+             return lambda enemy_heads, swap: "damage-setup"
+ 
+-        def fake_scan(build, size, enemy_from, enemy_to, replicates=10, win_margin=0.05, fight_fn=None):
++        def fake_scan(build, size, enemy_from, enemy_to, replicates=10, fight_fn=None, map_fn=None, full_scan=False, **kw):
+             self.scan_calls.append(dict(build=build, size=size, enemy_from=enemy_from, enemy_to=enemy_to,
+-                                        replicates=replicates))
++                                        replicates=replicates, full_scan=full_scan))
+             return self.result
+ 
+         def fake_fight_row(result, **labels):
+@@ -146,3 +146,8 @@ def test_unknown_command_still_returns_two(world, tmp_path):
+     code = run_main(["frobnicate", "--out", str(tmp_path)])
+     assert code == 2
+     assert world.scan_calls == []
++
++
++def test_reach_command_scans_every_headcount_not_the_bisection(world, tmp_path):
++    main(["reach", "--out", str(tmp_path)])
++    assert [c["full_scan"] for c in world.scan_calls] == [True]
+diff --git a/tests/skilllab/test_pool.py b/tests/skilllab/test_pool.py
+index 6fd1b2ac..f091d997 100644
+--- a/tests/skilllab/test_pool.py
++++ b/tests/skilllab/test_pool.py
+@@ -232,17 +232,30 @@ def test_cell_map_fn_jobs_match_serial_order_and_result():
+     assert got == expected
+ 
+ 
+-def test_scan_map_fn_is_one_call_with_all_cells_in_serial_order():
+-    """Scan hands the map_fn ONE batch of every cell's jobs, in the serial order; same ScanResult."""
++def test_full_scan_map_fn_is_one_call_with_all_cells_in_serial_order():
++    """The linear sweep hands the map_fn ONE batch of every cell's jobs, in the serial order; same ScanResult."""
+     ser, bat = Serial(), Batched()
+-    expected = scan(_build, 4, 2, 5, replicates=2, fight_fn=ser)
+-    got = scan(_build, 4, 2, 5, replicates=2, map_fn=bat)
++    expected = scan(_build, 4, 2, 5, replicates=2, fight_fn=ser, full_scan=True)
++    got = scan(_build, 4, 2, 5, replicates=2, map_fn=bat, full_scan=True)
+     assert len(bat.batches) == 1
+     assert bat.jobs == ser.jobs
+     assert len(bat.batches[0]) == 4 * 2 * 2
+     assert got == expected
+ 
+ 
++def test_bisection_map_fn_batches_the_coarse_pass_then_one_call_per_step_in_the_serial_order():
++    """LAB-REV2-L4: the default scan bisects. Through map_fn the first call carries the coarse cells together (that is what
++    keeps 12 workers busy), each later call is one bisection step, and the jobs and the ScanResult equal the serial run's."""
++    ser, bat = Serial(), Batched()
++    expected = scan(_build, 4, 2, 5, replicates=2, fight_fn=ser)
++    got = scan(_build, 4, 2, 5, replicates=2, map_fn=bat)
++    assert got == expected and (got.beats, got.loses_to) == (3, 4)
++    assert bat.jobs == ser.jobs
++    assert len(bat.batches) >= 2 and all(bat.batches)
++    first_heads = {job[0].unit_types["enemy"] for job in bat.batches[0]}
++    assert {2, 5} <= first_heads and len(bat.batches[0]) >= 2 * 2 * 2
++
++
+ def test_find_break_even_map_fn_one_call_for_scan_then_one_per_refinement_round():
+     """Initial scan is one call; the one round that adds fights is one call; same job order and BreakEven."""
+     ser, bat = Serial(), Batched()
+diff --git a/tests/skilllab/test_scan.py b/tests/skilllab/test_scan.py
+index 096873ef..6e619c48 100644
+--- a/tests/skilllab/test_scan.py
++++ b/tests/skilllab/test_scan.py
+@@ -1,5 +1,20 @@
+-# spec: docs/northstar/plans/skilllab-harness-spec.md::Acceptance criteria::AC-14
+-"""Leaf-04: cell and scan, driven through fight_fn with scripted margins."""
++# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Contract::Cell and scan; rulings 1 and 4; row L4 (bracketed bisection default, --full-scan linear)
++"""LAB-REV2-L4: cell and scan, driven through fight_fn with scripted outcomes. No engine.
++
++Rules under test (spec "Cell and scan", decisions 12):
++- a cell is WON when every fight in it is `side0`; margins decide nothing. `WIN_MARGIN` and `DRAW_BAND` are deleted.
++- a `draw` or `cap` fight marks the cell `defect` (CellResult.defect); the scan carries on past it.
++- break-even is read over the scanned headcounts as before (the first won-to-lost change); a scan that is won all the way to
++  `enemy_to` with no loss is `ceiling_hit = True`, with beats = enemy_to and loses_to = None (ruling 4: never "no gain").
++- ScanResult.multi_flip is True when the won/lost sequence over the scanned cells changes more than once.
++- scan() default is a bracketed bisection: a coarse pass over the range, then halving of the first won-to-lost bracket down to
++  adjacent headcounts. full_scan=True is the linear sweep, one cell per headcount.
++Contract fields these tests need (contract.py, which L4's builder must edit; see the report): CellResult.defect (default False),
++ScanResult.ceiling_hit and ScanResult.multi_flip (default False), no ScanResult.win_margin.
++"""
++import ast
++import dataclasses
++import inspect
+ import random
+ import sys
+ from pathlib import Path
+@@ -10,13 +25,16 @@ ROOT = Path(__file__).resolve().parents[2]
+ if str(ROOT) not in sys.path:
+     sys.path.insert(0, str(ROOT))
+ 
+-from scripts.skilllab.contract import CellResult, FightResult, ScanResult, Setup, WIN_MARGIN  # noqa: E402
++from scripts.skilllab import scan as scan_module  # noqa: E402
++from scripts.skilllab.contract import CellResult, FightResult, ScanResult, Setup  # noqa: E402
+ from scripts.skilllab.scan import cell, scan  # noqa: E402
+ 
++MARGIN = {"side0": 0.5, "side1": -0.5, "draw": 0.0, "cap": 0.0}
+ 
+-def _result(margin, outcome="side0"):
+-    return FightResult(outcome=outcome, margin=margin, strength_left=(1.0, 0.0), survivors=(1, 0),
+-                       heads=(1, 1), ticks=10, first_contact_tick=0, firing=[(0, 1, 1)],
++
++def _result(outcome, margin=None):
++    return FightResult(outcome=outcome, margin=MARGIN[outcome] if margin is None else margin, strength_left=(1.0, 0.0),
++                       survivors=(1, 0), heads=(1, 1), ticks=10, first_contact_tick=0, firing=[(0, 1, 1)],
+                        firing_unit_seconds=(0.25, 0.25))
+ 
+ 
+@@ -26,11 +44,11 @@ def _build(enemy_heads, swap):
+ 
+ 
+ class Recorder:
+-    """fight_fn that logs (enemy, seed, swap) and answers margin_of(enemy, seed, swap)."""
++    """fight_fn that logs (enemy, seed, swap) and answers outcome_of(enemy, seed, swap); margin_of overrides the margin."""
+ 
+-    def __init__(self, margin_of, outcome_of=None):
++    def __init__(self, outcome_of, margin_of=None):
++        self.outcome_of = outcome_of
+         self.margin_of = margin_of
+-        self.outcome_of = outcome_of or (lambda e, s, w: "side0")
+         self.calls = []
+         self.setups = []
+         self.results = []
+@@ -40,33 +58,44 @@ class Recorder:
+         assert setup.unit_types["swap"] == swap  # cell passes build(enemy, swap)'s own swap
+         self.calls.append((enemy, seed, swap))
+         self.setups.append(setup)
+-        r = _result(self.margin_of(enemy, seed, swap), self.outcome_of(enemy, seed, swap))
++        outcome = self.outcome_of(enemy, seed, swap)
++        r = _result(outcome, None if self.margin_of is None else self.margin_of(enemy, seed, swap))
+         self.results.append(r)
+         return r
+ 
++    @property
++    def heads(self):
++        return sorted({c[0] for c in self.calls})
++
++
++def won_up_to(edge):
++    """side0 wins every fight at or below `edge` enemy heads, side1 above."""
++    return lambda e, s, w: "side0" if e <= edge else "side1"
++
++
++def won_set(heads):
++    heads = set(heads)
++    return lambda e, s, w: "side0" if e in heads else "side1"
++
++
++# ---- cell -------------------------------------------------------------------------------------------------------------
+ 
+ def test_cell_call_order_is_swap_outer_seed_inner():
+-    """AC-13: swap False then True outer, seeds 0..replicates-1 inner, exactly 2*replicates calls."""
+-    rec = Recorder(lambda e, s, w: 0.5)
++    rec = Recorder(won_up_to(99))
+     cell(_build, 12, 3, fight_fn=rec)
+-    assert rec.calls == [(12, 0, False), (12, 1, False), (12, 2, False),
+-                         (12, 0, True), (12, 1, True), (12, 2, True)]
++    assert rec.calls == [(12, 0, False), (12, 1, False), (12, 2, False), (12, 0, True), (12, 1, True), (12, 2, True)]
+ 
+ 
+-def test_cell_returns_every_fight_in_call_order_and_plain_mean():
+-    """AC-13: fights holds every FightResult in call order; mean_margin is the plain mean."""
++def test_cell_returns_every_fight_in_call_order_and_plain_mean_margin():
+     margins = {(0, False): 0.5, (1, False): 0.25, (0, True): -0.25, (1, True): 0.75}
+-    rec = Recorder(lambda e, s, w: margins[(s, w)])
++    rec = Recorder(won_up_to(99), margin_of=lambda e, s, w: margins[(s, w)])
+     res = cell(_build, 9, 2, fight_fn=rec)
+-    assert isinstance(res, CellResult)
+-    assert res.enemy_heads == 9
+-    assert len(res.fights) == 4
++    assert isinstance(res, CellResult) and res.enemy_heads == 9 and len(res.fights) == 4
+     assert all(a is b for a, b in zip(res.fights, rec.results))
+     assert res.mean_margin == pytest.approx(0.3125, abs=1e-12)
+ 
+ 
+ def test_cell_passes_the_built_setup_to_fight_fn():
+-    """AC-13/14: fight_fn(setup, seed, swap) gets the setup that build(enemy_heads, swap) returned."""
+     built = []
+ 
+     def build(enemy_heads, swap):
+@@ -74,280 +103,321 @@ def test_cell_passes_the_built_setup_to_fight_fn():
+         built.append(s)
+         return s
+ 
+-    rec = Recorder(lambda e, s, w: 0.0)
++    rec = Recorder(won_up_to(99))
+     cell(build, 7, 2, fight_fn=rec)
+-    assert len(built) == 4
+-    assert all(any(b is s for b in built) for s in rec.setups)
++    assert len(built) == 4 and all(any(b is s for b in built) for s in rec.setups)
+ 
+ 
+-def test_cell_won_is_strictly_greater_than_win_margin():
+-    """AC-13 (L32 'greater than'): mean exactly at the win margin is lost; just above is won."""
+-    at = cell(_build, 8, 2, win_margin=0.5, fight_fn=Recorder(lambda e, s, w: 0.5))
+-    above = cell(_build, 8, 2, win_margin=0.5, fight_fn=Recorder(lambda e, s, w: 0.5 + 2 ** -10))
+-    assert at.mean_margin == 0.5 and at.won is False
+-    assert above.won is True
++def test_cell_is_won_when_every_fight_is_side0_whatever_the_margins():
++    """Ruling 1: who was left standing decides. A margin of 0.001 on every fight is still won (no win margin)."""
++    res = cell(_build, 8, 2, fight_fn=Recorder(won_up_to(99), margin_of=lambda e, s, w: 0.001))
++    assert res.won is True and res.defect is False
+ 
+ 
+-def test_cell_win_margin_default_and_parameter():
+-    """AC-13: default win margin is WIN_MARGIN (0.05); the parameter replaces it."""
+-    assert WIN_MARGIN == 0.05
+-    assert cell(_build, 8, 2, fight_fn=Recorder(lambda e, s, w: 0.06)).won is True
+-    assert cell(_build, 8, 2, fight_fn=Recorder(lambda e, s, w: 0.04)).won is False
+-    assert cell(_build, 8, 2, win_margin=0.2, fight_fn=Recorder(lambda e, s, w: 0.1)).won is False
+-    assert cell(_build, 8, 2, win_margin=0.01, fight_fn=Recorder(lambda e, s, w: 0.1)).won is True
++def test_cell_with_one_side1_fight_is_not_won_despite_a_high_mean_margin():
++    outcome = lambda e, s, w: "side1" if (s, w) == (1, True) else "side0"
++    res = cell(_build, 8, 2, fight_fn=Recorder(outcome, margin_of=lambda e, s, w: 0.9))
++    assert res.mean_margin == pytest.approx(0.9, abs=1e-12)
++    assert res.won is False and res.defect is False        # a plain loss is not a defect
+ 
+ 
+-def test_cell_won_follows_the_mean_not_the_majority():
+-    """AC-13: one big win among three small losses still averages above the win margin."""
+-    rec = Recorder(lambda e, s, w: 0.9 if (s, w) == (0, False) else -0.1)
+-    res = cell(_build, 8, 2, fight_fn=rec)
+-    assert res.mean_margin == pytest.approx(0.15, abs=1e-12)
+-    assert res.won is True
++def test_cell_of_only_side1_fights_is_lost_and_not_a_defect():
++    res = cell(_build, 8, 2, fight_fn=Recorder(won_up_to(0)))
++    assert res.won is False and res.defect is False
+ 
+ 
+-def test_cell_averages_over_both_spawn_orders():
+-    """AC-13: a first-mover edge (+0.5 unswapped, -0.5 swapped) cancels to a lost cell."""
+-    res = cell(_build, 8, 3, fight_fn=Recorder(lambda e, s, w: -0.5 if w else 0.5))
+-    assert res.mean_margin == pytest.approx(0.0, abs=1e-12)
+-    assert res.won is False
++@pytest.mark.parametrize("bad", ["draw", "cap"])
++def test_a_draw_or_cap_fight_marks_the_cell_defect_and_not_won(bad):
++    outcome = lambda e, s, w: bad if (s, w) == (0, True) else "side0"
++    res = cell(_build, 8, 2, fight_fn=Recorder(outcome))
++    assert res.defect is True and res.won is False
++    assert [f.outcome for f in res.fights] == ["side0", "side0", bad, "side0"]
+ 
+ 
+-def test_cell_stalemate_and_cap_margins_are_averaged():
+-    """AC-15: a stalemate or cap fight adds its margin to the mean like any other fight."""
+-    outcomes = {(0, False): "side0", (1, False): "stalemate", (0, True): "side0", (1, True): "cap"}
+-    margins = {(0, False): 0.8, (1, False): 0.2, (0, True): 0.6, (1, True): -0.2}
+-    rec = Recorder(lambda e, s, w: margins[(s, w)], lambda e, s, w: outcomes[(s, w)])
+-    res = cell(_build, 8, 2, fight_fn=rec)
+-    assert [f.outcome for f in res.fights] == ["side0", "stalemate", "side0", "cap"]
+-    assert res.mean_margin == pytest.approx(0.35, abs=1e-12)
+-    assert res.won is False  # AC-15: stalemate/cap present, so not won even though the mean is above 0.05
++@pytest.mark.parametrize("bad", ["draw", "cap"])
++def test_positive_control_the_same_cell_without_the_bad_fight_is_won_and_clean(bad):
++    clean = cell(_build, 8, 2, fight_fn=Recorder(won_up_to(99)))
++    dirty = cell(_build, 8, 2, fight_fn=Recorder(lambda e, s, w: bad if (s, w) == (0, True) else "side0"))
++    assert (clean.won, clean.defect) == (True, False) and (dirty.won, dirty.defect) == (False, True)
+ 
+ 
+ def test_cell_one_replicate_makes_two_calls():
+-    """AC-13 (Cardinality one): replicates=1 is one seed (0) per spawn order."""
+-    rec = Recorder(lambda e, s, w: 0.3)
++    rec = Recorder(won_up_to(99))
+     cell(_build, 8, 1, fight_fn=rec)
+     assert rec.calls == [(8, 0, False), (8, 0, True)]
+ 
+ 
+ def test_cell_default_fight_fn_is_fight_module_fight(monkeypatch):
+-    """AC-14: with no fight_fn the cell calls scripts.skilllab.fight.fight(setup, seed, swap)."""
+     import scripts.skilllab.fight as fight_module
+     seen = []
+ 
+     def fake(setup, seed, swap):
+         seen.append((setup.unit_types["enemy"], seed, swap))
+-        return _result(0.4)
++        return _result("side0")
+ 
+     monkeypatch.setattr(fight_module, "fight", fake)
+     res = cell(_build, 10, 2)
+-    assert seen == [(10, 0, False), (10, 1, False), (10, 0, True), (10, 1, True)]
+-    assert res.mean_margin == pytest.approx(0.4, abs=1e-12)
++    assert seen == [(10, 0, False), (10, 1, False), (10, 0, True), (10, 1, True)] and res.won is True
++
++
++@pytest.mark.parametrize("bad", [0, -1, -10])
++def test_cell_replicates_below_one_raises_value_error(bad):
++    rec = Recorder(won_up_to(99))
++    with pytest.raises(ValueError):
++        cell(_build, 8, bad, fight_fn=rec)
++    assert rec.calls == []
+ 
+ 
+ def test_cell_calls_scale_linearly_in_replicates():
+-    """AC-13 scale: the fight_fn call count of a cell is exactly 2 * replicates (fresh input per size)."""
+-    rng = random.Random(41)
+-    counts = {}
+     for reps in (5, 10, 20):
+-        table = {}
+-        rec = Recorder(lambda e, s, w, t=table: t.setdefault((s, w), rng.uniform(-1, 1)))
++        rec = Recorder(won_up_to(99))
+         cell(_build, 13, reps, fight_fn=rec)
+-        counts[reps] = len(rec.calls)
+         assert sorted(set(rec.calls)) == sorted((13, s, w) for s in range(reps) for w in (False, True))
+-    assert counts == {5: 10, 10: 20, 20: 40}
+-    assert counts[20] / counts[10] == 2.0
++        assert len(rec.calls) == 2 * reps
+ 
+ 
+-def _series(won_up_to):
+-    """Margin series: won (+0.5) for enemy <= won_up_to, lost (-0.5) above it."""
+-    return lambda e, s, w: 0.5 if e <= won_up_to else -0.5
++# ---- retired names and contract fields ------------------------------------------------------------------------------
+ 
++def _identifiers(path):
++    """Every name a module uses or binds, by AST (comments and strings do not count)."""
++    found = set()
++    for node in ast.walk(ast.parse(path.read_text())):
++        if isinstance(node, ast.Name):
++            found.add(node.id)
++        elif isinstance(node, ast.Attribute):
++            found.add(node.attr)
++        elif isinstance(node, ast.arg):
++            found.add(node.arg)
++        elif isinstance(node, ast.keyword) and node.arg:
++            found.add(node.arg)
++        elif isinstance(node, (ast.ImportFrom, ast.Import)):
++            found.update(a.name for a in node.names)
++        elif isinstance(node, (ast.FunctionDef, ast.ClassDef)):
++            found.add(node.name)
++    return found
+ 
+-@pytest.mark.parametrize("won_up_to", [8, 9, 12, 23])
+-def test_scan_beats_is_last_won_before_the_change(won_up_to):
+-    """AC-14/27: a known won-to-lost change gives beats = last won, loses_to = beats + 1."""
+-    res = scan(_build, 16, 8, 24, replicates=2, fight_fn=Recorder(_series(won_up_to)))
+-    assert isinstance(res, ScanResult)
+-    assert res.beats == won_up_to
+-    assert res.loses_to == won_up_to + 1
+ 
++@pytest.mark.parametrize("name", ["WIN_MARGIN", "DRAW_BAND", "win_margin"])
++@pytest.mark.parametrize("mod", ["scan", "breakeven", "batches", "depth", "sweep", "__main__"])
++def test_win_margin_and_draw_band_are_gone_from_the_l4_modules(mod, name):
++    """Spec: WIN_MARGIN and DRAW_BAND deleted. (contract.py's own copy goes in the same piece; the report says so.)
++    The sweep module is new and must not bring them back."""
++    path = ROOT / "scripts" / "skilllab" / (mod + ".py")
++    assert path.exists() or mod == "sweep"
++    if path.exists():
++        assert name not in _identifiers(path), "%s still uses %s" % (mod, name)
+ 
+-def test_scan_change_at_last_cell_still_found():
+-    """AC-14 boundary: only the final cell lost -> beats is the second-to-last headcount."""
+-    res = scan(_build, 16, 8, 12, replicates=1, fight_fn=Recorder(_series(11)))
+-    assert (res.beats, res.loses_to) == (11, 12)
+ 
++@pytest.mark.parametrize("fn", [cell, scan])
++def test_cell_and_scan_take_no_win_margin_argument(fn):
++    assert "win_margin" not in inspect.signature(fn).parameters
+ 
+-@pytest.mark.parametrize("name,margin_of", [
+-    ("all_won", lambda e, s, w: 0.5),
+-    ("all_lost", lambda e, s, w: -0.5),
+-    ("flat_zero", lambda e, s, w: 0.0),
+-    ("flat_small_positive_under_margin", lambda e, s, w: 0.04),
+-])
+-def test_scan_flat_series_gives_none_none(name, margin_of):
+-    """AC-14/27: no won-to-lost change (all won, all lost, flat) -> beats and loses_to are None."""
+-    res = scan(_build, 16, 8, 24, replicates=2, fight_fn=Recorder(margin_of))
+-    assert res.beats is None and res.loses_to is None
+ 
++def test_contract_carries_defect_ceiling_hit_and_multi_flip_and_no_win_margin():
++    cell_fields = {f.name: f for f in dataclasses.fields(CellResult)}
++    scan_fields = {f.name: f for f in dataclasses.fields(ScanResult)}
++    assert cell_fields["defect"].default is False
++    assert scan_fields["ceiling_hit"].default is False and scan_fields["multi_flip"].default is False
++    assert "win_margin" not in scan_fields
+ 
+-def test_scan_single_cell_has_no_change():
+-    """AC-14 (Cardinality one): one cell cannot change from won to lost."""
+-    for margin in (0.5, -0.5):
+-        res = scan(_build, 16, 10, 10, replicates=2, fight_fn=Recorder(lambda e, s, w, m=margin: m))
+-        assert len(res.cells) == 1
+-        assert res.beats is None and res.loses_to is None
+ 
++def test_scan_signature_defaults_to_bisection_and_full_scan_is_off():
++    params = inspect.signature(scan).parameters
++    assert params["full_scan"].default is False and params["replicates"].default == 10
+ 
+-def test_scan_uses_first_won_to_lost_change_scanning_upward():
+-    """AC-14 (L33 'first won-to-lost change'): won 8-10, lost 11, won 12, lost 13+ -> beats 10."""
+-    won = {8, 9, 10, 12}
+-    res = scan(_build, 16, 8, 16, replicates=2, fight_fn=Recorder(lambda e, s, w: 0.5 if e in won else -0.5))
+-    assert (res.beats, res.loses_to) == (10, 11)
+ 
++# ---- scan: full (linear) -----------------------------------------------------------------------------------------------
+ 
+-def test_scan_lost_to_won_change_is_not_a_break_even():
+-    """AC-14: starting lost, turning won, then lost: beats is the last won before the first won-to-lost."""
+-    won = {10, 11}
+-    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Recorder(lambda e, s, w: 0.5 if e in won else -0.5))
+-    assert (res.beats, res.loses_to) == (11, 12)
++@pytest.mark.parametrize("edge", [8, 9, 12, 23, 24])
++def test_full_scan_beats_is_last_won_before_the_change(edge):
++    res = scan(_build, 16, 8, 25, replicates=2, fight_fn=Recorder(won_up_to(edge)), full_scan=True)
++    assert isinstance(res, ScanResult)
++    assert (res.beats, res.loses_to, res.ceiling_hit, res.multi_flip) == (edge, edge + 1, False, False)
+ 
+ 
+-def test_scan_lost_then_won_only_has_no_break_even():
+-    """AC-14: a lost-to-won change alone leaves beats and loses_to None."""
+-    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Recorder(lambda e, s, w: 0.5 if e >= 11 else -0.5))
+-    assert res.beats is None and res.loses_to is None
++def test_full_scan_runs_one_cell_per_headcount_in_increasing_order_inclusive():
++    rec = Recorder(won_up_to(14))
++    res = scan(_build, 16, 12, 17, replicates=1, fight_fn=rec, full_scan=True)
++    assert res.size == 16 and [c.enemy_heads for c in res.cells] == [12, 13, 14, 15, 16, 17]
++    assert [c[0] for c in rec.calls] == [e for e in range(12, 18) for _ in range(2)]
+ 
+ 
+-def test_scan_win_margin_boundary_decides_the_change():
+-    """AC-14/13: a cell whose mean margin equals the win margin counts as lost."""
+-    res = scan(_build, 16, 8, 14, replicates=2, win_margin=0.5,
+-               fight_fn=Recorder(lambda e, s, w: 1.0 if e <= 10 else 0.5))
+-    assert res.win_margin == 0.5
+-    assert [c.won for c in res.cells] == [True, True, True, False, False, False, False]
+-    assert (res.beats, res.loses_to) == (10, 11)
++def test_full_scan_cells_hold_the_recorded_fights():
++    rec = Recorder(won_up_to(9), margin_of=lambda e, s, w: e / 100.0)
++    res = scan(_build, 16, 8, 10, replicates=2, fight_fn=rec, full_scan=True)
++    for c in res.cells:
++        assert len(c.fights) == 4 and c.mean_margin == pytest.approx(c.enemy_heads / 100.0, abs=1e-12)
++    assert [f for c in res.cells for f in c.fights] == rec.results
+ 
+ 
+-def test_scan_default_win_margin_recorded():
+-    """AC-14: ScanResult.win_margin is WIN_MARGIN when not given."""
+-    res = scan(_build, 16, 8, 9, replicates=1, fight_fn=Recorder(lambda e, s, w: 0.0))
+-    assert res.win_margin == WIN_MARGIN
++def test_all_won_to_the_end_is_a_ceiling_hit_not_none():
++    """Ruling 4 / spec: beats = enemy_to with no loss is ceiling_hit; it is never reported as 'no break-even'."""
++    res = scan(_build, 16, 8, 48, replicates=1, fight_fn=Recorder(won_up_to(99)), full_scan=True)
++    assert (res.beats, res.loses_to, res.ceiling_hit, res.multi_flip) == (48, None, True, False)
+ 
+ 
+-def test_scan_cells_in_increasing_order_inclusive_of_both_ends():
+-    """AC-14: one cell per headcount enemy_from..enemy_to inclusive, increasing; size recorded."""
+-    res = scan(_build, 16, 12, 17, replicates=1, fight_fn=Recorder(lambda e, s, w: 0.0))
+-    assert res.size == 16
+-    assert [c.enemy_heads for c in res.cells] == [12, 13, 14, 15, 16, 17]
+-    assert all(isinstance(c, CellResult) for c in res.cells)
++@pytest.mark.parametrize("name,outcome_of", [
++    ("all_lost", won_up_to(0)),
++    ("all_draws", lambda e, s, w: "draw"),
++    ("all_caps", lambda e, s, w: "cap"),
++])
++def test_lost_everywhere_gives_none_and_no_ceiling_hit(name, outcome_of):
++    res = scan(_build, 16, 8, 24, replicates=2, fight_fn=Recorder(outcome_of), full_scan=True)
++    assert (res.beats, res.loses_to, res.ceiling_hit, res.multi_flip) == (None, None, False, False)
+ 
+ 
+-def test_scan_runs_cells_in_order_with_cells_times_two_times_replicates_calls():
+-    """AC-14: a plain loop of cells, exactly cells * 2 * replicates fight_fn calls."""
+-    rec = Recorder(lambda e, s, w: 0.0)
+-    scan(_build, 16, 10, 13, replicates=3, fight_fn=rec)
+-    assert len(rec.calls) == 4 * 2 * 3
+-    assert [c[0] for c in rec.calls] == [e for e in (10, 11, 12, 13) for _ in range(6)]
+-    assert rec.calls[:6] == [(10, 0, False), (10, 1, False), (10, 2, False),
+-                             (10, 0, True), (10, 1, True), (10, 2, True)]
++def test_single_cell_scan_won_is_a_ceiling_hit_and_lost_is_none():
++    won = scan(_build, 16, 10, 10, replicates=2, fight_fn=Recorder(won_up_to(99)), full_scan=True)
++    lost = scan(_build, 16, 10, 10, replicates=2, fight_fn=Recorder(won_up_to(0)), full_scan=True)
++    assert len(won.cells) == 1 and (won.beats, won.loses_to, won.ceiling_hit) == (10, None, True)
++    assert (lost.beats, lost.loses_to, lost.ceiling_hit) == (None, None, False)
+ 
+ 
+-def test_scan_default_replicates_is_ten():
+-    """AC-14: replicates defaults to 10 (20 calls per cell)."""
+-    rec = Recorder(lambda e, s, w: 0.0)
+-    scan(_build, 16, 8, 9, fight_fn=rec)
+-    assert len(rec.calls) == 2 * 2 * 10
++def test_scan_uses_first_won_to_lost_change_and_reports_multi_flip():
++    """Won 8-10, lost 11, won 12, lost 13+: three changes, beats from the first won-to-lost."""
++    res = scan(_build, 16, 8, 16, replicates=2, fight_fn=Recorder(won_set({8, 9, 10, 12})), full_scan=True)
++    assert (res.beats, res.loses_to, res.multi_flip, res.ceiling_hit) == (10, 11, True, False)
+ 
+ 
+-def test_scan_cells_hold_the_recorded_fights():
+-    """AC-14 composition scan->cell: each ScanResult cell carries that cell's own fights and mean."""
+-    rec = Recorder(lambda e, s, w: e / 100.0)
+-    res = scan(_build, 16, 8, 10, replicates=2, fight_fn=rec)
+-    for c in res.cells:
+-        assert len(c.fights) == 4
+-        assert c.mean_margin == pytest.approx(c.enemy_heads / 100.0, abs=1e-12)
+-    assert [f for c in res.cells for f in c.fights] == rec.results
++def test_lost_then_won_then_lost_reads_the_win_to_loss_and_is_multi_flip():
++    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Recorder(won_set({10, 11})), full_scan=True)
++    assert (res.beats, res.loses_to, res.multi_flip) == (11, 12, True)
+ 
+ 
+-def test_scan_fight_calls_scale_with_the_number_of_cells():
+-    """AC-14 scale: fight_fn calls grow exactly by the cell ratio (5 cells vs 10 cells, fresh content)."""
+-    rng = random.Random(7)
++def test_lost_then_won_only_is_one_change_so_not_multi_flip():
++    """A loss-to-win change alone is no win-to-loss, so no break-even is read from it; it is one change, not two."""
++    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Recorder(lambda e, s, w: "side0" if e >= 11 else "side1"), full_scan=True)
++    assert res.multi_flip is False and res.loses_to is None
+ 
+-    def calls_for(enemy_from, enemy_to):
+-        series = {}
+-        rec = Recorder(lambda e, s, w: series.setdefault((e, s, w), rng.uniform(-1, 1)))
+-        scan(_build, 16, enemy_from, enemy_to, replicates=4, fight_fn=rec)
+-        return len(rec.calls)
+ 
+-    five = calls_for(10, 14)
+-    ten = calls_for(20, 29)
+-    assert five == 5 * 2 * 4
+-    assert ten == 10 * 2 * 4
+-    assert ten / five == 2.0
+-    twenty = calls_for(30, 49)
+-    assert twenty / ten == 2.0
++def test_a_defect_cell_is_lost_and_the_scan_carries_on_past_it():
++    """Won 8-10, cell 11 has a cap fight, won 12-14: the scan still fights 12-14; beats 10; two changes."""
++    outcome = lambda e, s, w: "cap" if (e, s, w) == (11, 0, True) else "side0"
++    rec = Recorder(outcome)
++    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=rec, full_scan=True)
++    assert [c.won for c in res.cells] == [True, True, True, False, True, True, True]
++    assert [c.defect for c in res.cells] == [False, False, False, True, False, False, False]
++    assert (res.beats, res.loses_to, res.multi_flip) == (10, 11, True)
++    assert rec.heads == list(range(8, 15))
+ 
+ 
+-def test_scan_does_not_call_fight_fn_twice_for_one_cell_fight():
+-    """AC-14 scale (anti-gaming): no fight is repeated; every (enemy, seed, swap) occurs exactly once."""
+-    rec = Recorder(lambda e, s, w: 0.1)
+-    scan(_build, 16, 8, 14, replicates=3, fight_fn=rec)
+-    assert len(rec.calls) == len(set(rec.calls)) == 7 * 2 * 3
++def test_draw_cells_are_defects_too():
++    outcome = lambda e, s, w: "draw" if e == 9 else "side0"
++    res = scan(_build, 16, 8, 10, replicates=1, fight_fn=Recorder(outcome), full_scan=True)
++    assert [(c.won, c.defect) for c in res.cells] == [(True, False), (False, True), (True, False)]
+ 
+ 
+-@pytest.mark.parametrize("bad", [0, -1, -10])
+-def test_cell_replicates_below_one_raises_value_error(bad):
+-    """AC-13 Reading: replicates < 1 raises ValueError and runs no fight."""
+-    rec = Recorder(lambda e, s, w: 0.5)
+-    with pytest.raises(ValueError):
+-        cell(_build, 8, bad, fight_fn=rec)
+-    assert rec.calls == []
++def test_full_scan_fight_calls_scale_with_the_number_of_cells_and_never_repeat():
++    rng = random.Random(7)
++    series = {}
++    counts = []
++    for lo, hi in ((10, 14), (20, 29), (30, 49)):
++        rec = Recorder(lambda e, s, w: series.setdefault((e, s, w), rng.choice(["side0", "side1"])))
++        scan(_build, 16, lo, hi, replicates=4, fight_fn=rec, full_scan=True)
++        assert len(rec.calls) == len(set(rec.calls)) == (hi - lo + 1) * 2 * 4
++        counts.append(len(rec.calls))
++    assert counts[1] / counts[0] == 2.0 and counts[2] / counts[1] == 2.0
+ 
+ 
+ @pytest.mark.parametrize("bad", [0, -3])
+ def test_scan_replicates_below_one_raises_value_error(bad):
+-    """AC-13 Reading through scan: replicates < 1 raises ValueError."""
+     with pytest.raises(ValueError):
+-        scan(_build, 16, 8, 10, replicates=bad, fight_fn=Recorder(lambda e, s, w: 0.5))
++        scan(_build, 16, 8, 10, replicates=bad, fight_fn=Recorder(won_up_to(99)))
+ 
+ 
+ @pytest.mark.parametrize("lo,hi", [(9, 8), (24, 8), (1, 0)])
+-def test_scan_enemy_from_above_enemy_to_raises_value_error(lo, hi):
+-    """AC-15 Reading: enemy_from > enemy_to raises ValueError and runs no fight."""
+-    rec = Recorder(lambda e, s, w: 0.5)
++@pytest.mark.parametrize("full", [False, True])
++def test_scan_enemy_from_above_enemy_to_raises_value_error(lo, hi, full):
++    rec = Recorder(won_up_to(99))
+     with pytest.raises(ValueError):
+-        scan(_build, 16, lo, hi, replicates=2, fight_fn=rec)
++        scan(_build, 16, lo, hi, replicates=2, fight_fn=rec, full_scan=full)
+     assert rec.calls == []
+ 
+ 
+-@pytest.mark.parametrize("bad_outcome", ["stalemate", "cap"])
+-def test_cell_with_a_stalemate_or_cap_fight_is_not_won_despite_a_high_mean(bad_outcome):
+-    """AC-15 Reading: mean margin 0.5 > 0.05 but one fight ended stalemate/cap -> won False; margin still averaged."""
+-    rec = Recorder(lambda e, s, w: 0.5, lambda e, s, w: bad_outcome if (s, w) == (1, True) else "side0")
+-    res = cell(_build, 8, 2, fight_fn=rec)
+-    assert res.mean_margin == pytest.approx(0.5, abs=1e-12)
+-    assert res.mean_margin > WIN_MARGIN
+-    assert res.won is False
++# ---- scan: bracketed bisection (the default) -------------------------------------------------------------------------
+ 
++def _probes(res):
++    return [c.enemy_heads for c in res.cells]
+ 
+-@pytest.mark.parametrize("bad_outcome", ["stalemate", "cap"])
+-def test_cell_of_only_stalemate_or_cap_fights_is_not_won(bad_outcome):
+-    """AC-15 Reading: every fight stalemate/cap with a high mean margin -> not won, margin averaged."""
+-    res = cell(_build, 8, 3, fight_fn=Recorder(lambda e, s, w: 0.9, lambda e, s, w: bad_outcome))
+-    assert res.mean_margin == pytest.approx(0.9, abs=1e-12)
+-    assert res.won is False
+ 
++@pytest.mark.parametrize("edge", list(range(8, 48)))
++def test_bisection_finds_the_same_break_even_as_the_linear_sweep_on_one_flip(edge):
++    """Spec test: on a fake with one flip, bisection and the linear sweep agree on beats, loses_to, ceiling_hit, multi_flip."""
++    bis = scan(_build, 16, 8, 48, replicates=1, fight_fn=Recorder(won_up_to(edge)))
++    lin = scan(_build, 16, 8, 48, replicates=1, fight_fn=Recorder(won_up_to(edge)), full_scan=True)
++    assert (bis.beats, bis.loses_to, bis.ceiling_hit, bis.multi_flip) == (lin.beats, lin.loses_to, lin.ceiling_hit, lin.multi_flip)
++    assert (bis.beats, bis.loses_to) == (edge, edge + 1)
+ 
+-def test_cell_without_stalemate_or_cap_and_high_mean_is_still_won():
+-    """AC-15 Reading (control): the same margins with all fights decided are won."""
+-    res = cell(_build, 8, 2, fight_fn=Recorder(lambda e, s, w: 0.5, lambda e, s, w: "side0"))
+-    assert res.won is True
+ 
++@pytest.mark.parametrize("edge", [8, 15, 16, 27, 47])
++def test_bisection_fights_far_fewer_cells_than_the_linear_sweep(edge):
++    """The 90 s scan mark rests on this: at most 14 of the 41 headcounts, in increasing order, with both bracket cells present."""
++    rec = Recorder(won_up_to(edge))
++    res = scan(_build, 16, 8, 48, replicates=3, fight_fn=rec)
++    heads = _probes(res)
++    assert heads == sorted(set(heads)) and len(heads) <= 14
++    assert edge in heads and edge + 1 in heads
++    assert rec.heads == heads and len(rec.calls) == len(heads) * 2 * 3 == len(set(rec.calls))
++    lin = Recorder(won_up_to(edge))
++    scan(_build, 16, 8, 48, replicates=3, fight_fn=lin, full_scan=True)
++    assert len(lin.calls) == 41 * 2 * 3 > 2 * len(rec.calls)
+ 
+-def test_scan_treats_a_stalemate_cell_as_lost_when_finding_the_break_even():
+-    """AC-15/14 composition: cell 11 has one cap fight; its mean is high but it is lost, so beats is 10."""
+-    outcome = lambda e, s, w: "cap" if (e, s, w) == (11, 0, True) else "side0"
+-    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Recorder(lambda e, s, w: 0.5, outcome))
+-    assert [c.won for c in res.cells] == [True, True, True, False, True, True, True]
+-    assert res.cells[3].mean_margin == pytest.approx(0.5, abs=1e-12)
+-    assert (res.beats, res.loses_to) == (10, 11)
++
++def test_bisection_ceiling_hit_when_won_everywhere():
++    rec = Recorder(won_up_to(99))
++    res = scan(_build, 16, 8, 48, replicates=1, fight_fn=rec)
++    assert (res.beats, res.loses_to, res.ceiling_hit, res.multi_flip) == (48, None, True, False)
++    assert len(_probes(res)) <= 14 and 48 in _probes(res)
++
++
++def test_bisection_lost_everywhere_is_none_and_cheap():
++    rec = Recorder(won_up_to(0))
++    res = scan(_build, 16, 8, 48, replicates=1, fight_fn=rec)
++    assert (res.beats, res.loses_to, res.ceiling_hit, res.multi_flip) == (None, None, False, False)
++    assert len(_probes(res)) <= 14
++
++
++def test_bisection_reports_multi_flip_on_two_wide_flips_and_reads_the_first_win_to_loss():
++    """Won 8-20, lost 21-36, won 37-48: two changes, far enough apart that the coarse pass shows both. The linear sweep reads the
++    same beats and the same flag. Not a ceiling hit: there is a loss in the range."""
++    fn = won_set(set(range(8, 21)) | set(range(37, 49)))
++    bis = scan(_build, 16, 8, 48, replicates=1, fight_fn=Recorder(fn))
++    lin = scan(_build, 16, 8, 48, replicates=1, fight_fn=Recorder(fn), full_scan=True)
++    for res in (bis, lin):
++        assert (res.beats, res.loses_to, res.multi_flip, res.ceiling_hit) == (20, 21, True, False)
++
++
++def test_bisection_one_flip_is_not_multi_flip_even_with_a_defect_cell_inside_the_lost_run():
++    """Defect cells are lost cells; a clean win-to-loss with a capped cell in the lost run is still one change."""
++    outcome = lambda e, s, w: "side0" if e <= 20 else ("cap" if e == 30 else "side1")
++    res = scan(_build, 16, 8, 48, replicates=1, fight_fn=Recorder(outcome))
++    assert (res.beats, res.loses_to, res.multi_flip) == (20, 21, False)
++
++
++@pytest.mark.parametrize("lo,hi", [(8, 9), (8, 8), (10, 12)])
++def test_bisection_handles_tiny_ranges(lo, hi):
++    res = scan(_build, 16, lo, hi, replicates=1, fight_fn=Recorder(won_up_to(lo)))
++    lin = scan(_build, 16, lo, hi, replicates=1, fight_fn=Recorder(won_up_to(lo)), full_scan=True)
++    assert (res.beats, res.loses_to, res.ceiling_hit) == (lin.beats, lin.loses_to, lin.ceiling_hit)
++    assert [c.enemy_heads for c in res.cells] == sorted({c.enemy_heads for c in res.cells})
++
++
++def test_bisection_is_deterministic():
++    a, b = Recorder(won_up_to(31)), Recorder(won_up_to(31))
++    scan(_build, 16, 8, 48, replicates=2, fight_fn=a)
++    scan(_build, 16, 8, 48, replicates=2, fight_fn=b)
++    assert a.calls == b.calls
++
++
++def test_map_fn_gets_the_jobs_and_fight_fn_together_is_refused():
++    rec = Recorder(won_up_to(20))
++    calls = []
++
++    def map_fn(jobs):
++        calls.append(len(jobs))
++        return [rec(*job) for job in jobs]
++
++    res = scan(_build, 16, 8, 48, replicates=1, map_fn=map_fn)
++    assert (res.beats, res.loses_to) == (20, 21) and sum(calls) == len(rec.calls) and calls
++    with pytest.raises(ValueError):
++        scan(_build, 16, 8, 48, replicates=1, fight_fn=rec, map_fn=map_fn)
+diff --git a/tests/skilllab/test_scan_draw.py b/tests/skilllab/test_scan_draw.py
+index dee69bcd..ec302dc7 100644
+--- a/tests/skilllab/test_scan_draw.py
++++ b/tests/skilllab/test_scan_draw.py
+@@ -1,5 +1,7 @@
+-# spec: ruling A201: a draw is decided, margin 0.0; stalemate and cap are undecided
+-"""scan.cell_result / scan.cell / scan.scan with draws among the fights."""
++# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Contract::Cell and scan (supersedes ruling A201: draw and cap are defects now)
++"""scan.cell_result with draws and caps among the fights (LAB-REV2-L4). Ruling 1 / Q-LAB-03: a draw is the one tie the engine
++can produce (both sides die on one tick); a cap is a bug detector. Neither is a result: the cell is `defect`, not won, and the scan
++goes on. A200-era 'decided', 'undecided', 'stalemate' and the win margin no longer exist."""
+ import dataclasses
+ import sys
+ from pathlib import Path
+@@ -12,7 +14,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
+         sys.path.insert(0, str(_p))
+ 
+ from fakes_batches import fight  # noqa: E402
+-from scripts.skilllab.contract import WIN_MARGIN, Setup  # noqa: E402
++from scripts.skilllab.contract import Setup  # noqa: E402
+ from scripts.skilllab.scan import cell, cell_result, scan  # noqa: E402
+ 
+ 
+@@ -20,38 +22,39 @@ def F(outcome, margin):
+     return dataclasses.replace(fight(outcome=outcome), margin=margin)
+ 
+ 
+-def test_cell_of_only_draws_is_decided_mean_zero_and_not_won():
+-    res = cell_result(8, [F("draw", 0.0)] * 4, WIN_MARGIN)
+-    assert res.mean_margin == 0.0 and res.won is False
++def test_cell_of_only_draws_is_a_defect_mean_zero_and_not_won():
++    res = cell_result(8, [F("draw", 0.0)] * 4)
++    assert res.mean_margin == 0.0 and res.won is False and res.defect is True
+ 
+ 
+-def test_a_draw_does_not_make_a_winning_cell_undecided():
+-    """Margins 0.9, 0.9, 0.9, draw 0.0 -> mean 0.675 > 0.05 and decided, so won."""
+-    res = cell_result(8, [F("side0", 0.9)] * 3 + [F("draw", 0.0)], WIN_MARGIN)
+-    assert res.mean_margin == pytest.approx(0.675) and res.won is True
++def test_one_draw_among_wins_makes_the_cell_a_defect_and_not_won():
++    """Margins 0.9, 0.9, 0.9, draw 0.0: the mean is 0.675, but a cell is won only when every fight is side0."""
++    res = cell_result(8, [F("side0", 0.9)] * 3 + [F("draw", 0.0)])
++    assert res.mean_margin == pytest.approx(0.675) and res.won is False and res.defect is True
+ 
+ 
+-def test_a_draw_adds_nothing_to_the_mean():
+-    with_draw = cell_result(8, [F("side0", 0.4), F("side0", 0.4), F("draw", 0.0), F("draw", 0.0)], WIN_MARGIN)
+-    assert with_draw.mean_margin == pytest.approx(0.2)
++def test_a_draw_adds_its_zero_margin_to_the_mean():
++    res = cell_result(8, [F("side0", 0.4), F("side0", 0.4), F("draw", 0.0), F("draw", 0.0)])
++    assert res.mean_margin == pytest.approx(0.2)
+ 
+ 
+-def test_draws_pulling_the_mean_under_the_margin_lose_the_cell():
+-    res = cell_result(8, [F("side0", 0.1)] + [F("draw", 0.0)] * 3, WIN_MARGIN)
+-    assert res.mean_margin == pytest.approx(0.025) and res.won is False
++@pytest.mark.parametrize("bad", ["draw", "cap"])
++def test_positive_control_the_same_cell_with_a_clean_win_in_that_place_is_won(bad):
++    assert cell_result(8, [F("side0", 0.9)] * 3 + [F("side0", 0.9)]) == dataclasses.replace(
++        cell_result(8, [F("side0", 0.9)] * 4))
++    clean = cell_result(8, [F("side0", 0.9)] * 4)
++    dirty = cell_result(8, [F("side0", 0.9)] * 3 + [F(bad, 0.9)])
++    assert (clean.won, clean.defect) == (True, False) and (dirty.won, dirty.defect) == (False, True)
+ 
+ 
+-@pytest.mark.parametrize("bad", ["stalemate", "cap"])
+-def test_stalemate_and_cap_still_make_a_cell_not_won(bad):
+-    res = cell_result(8, [F("side0", 0.9)] * 3 + [F(bad, 0.9)], WIN_MARGIN)
+-    assert res.mean_margin == pytest.approx(0.9) and res.won is False
++def test_side1_wins_are_lost_but_not_defects():
++    res = cell_result(8, [F("side0", 0.9)] * 3 + [F("side1", -0.9)])
++    assert (res.won, res.defect) == (False, False)
+ 
+ 
+-@pytest.mark.parametrize("bad", ["stalemate", "cap"])
+-def test_positive_control_a_draw_in_the_same_place_is_won(bad):
+-    """Same cell as above with the bad fight turned into a margin-0.9 draw would be won: only the label differs."""
+-    assert cell_result(8, [F("side0", 0.9)] * 3 + [F("draw", 0.9)], WIN_MARGIN).won is True
+-    assert cell_result(8, [F("side0", 0.9)] * 3 + [F(bad, 0.9)], WIN_MARGIN).won is False
++def test_cell_result_takes_no_win_margin():
++    with pytest.raises(TypeError):
++        cell_result(8, [F("side0", 0.9)], 0.05)
+ 
+ 
+ def _build(enemy, swap):
+@@ -59,31 +62,38 @@ def _build(enemy, swap):
+ 
+ 
+ class Scripted:
+-    def __init__(self, outcome_of, margin_of):
+-        self.outcome_of, self.margin_of = outcome_of, margin_of
++    def __init__(self, outcome_of):
++        self.outcome_of = outcome_of
+ 
+     def __call__(self, setup, seed, swap):
+         e = setup.unit_types["enemy"]
+-        return F(self.outcome_of(e, seed, swap), self.margin_of(e, seed, swap))
++        o = self.outcome_of(e, seed, swap)
++        return F(o, {"side0": 0.5, "side1": -0.5}.get(o, 0.0))
+ 
+ 
+-def test_cell_runs_fights_through_the_draw_rule():
+-    fn = Scripted(lambda e, s, w: "draw" if (s, w) == (0, False) else "side0", lambda e, s, w: 0.0 if (s, w) == (0, False) else 0.5)
++def test_cell_runs_fights_through_the_defect_rule():
++    fn = Scripted(lambda e, s, w: "draw" if (s, w) == (0, False) else "side0")
+     res = cell(_build, 8, 2, fight_fn=fn)
+-    assert res.mean_margin == pytest.approx(0.375) and res.won is True
++    assert res.mean_margin == pytest.approx(0.375) and res.won is False and res.defect is True
+ 
+ 
+-def test_break_even_unchanged_by_draws_that_do_not_move_the_mean_below_the_margin():
+-    """Cells up to 10 win with one draw per cell (mean 0.375); from 11 every fight is a draw (mean 0.0): beats 10."""
+-    def outcome(e, s, w):
+-        return "draw" if e >= 11 or (s, w) == (0, False) else "side0"
+-    margin = lambda e, s, w: 0.0 if outcome(e, s, w) == "draw" else 0.5
+-    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Scripted(outcome, margin))
++def test_a_draw_cell_inside_the_won_run_ends_the_run_there_for_the_break_even():
++    """Cells up to 10 are clean wins; from 11 every fight is a draw: beats 10, loses_to 11, and those cells are defects."""
++    outcome = lambda e, s, w: "draw" if e >= 11 else "side0"
++    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Scripted(outcome), full_scan=True)
+     assert [c.won for c in res.cells] == [True, True, True, False, False, False, False]
++    assert [c.defect for c in res.cells] == [False] * 3 + [True] * 4
+     assert (res.beats, res.loses_to) == (10, 11)
+ 
+ 
+-def test_break_even_still_treats_a_cap_cell_as_lost():
++def test_a_cap_in_one_cell_does_not_stop_the_scan():
+     outcome = lambda e, s, w: "cap" if (e, s, w) == (11, 0, True) else "side0"
+-    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Scripted(outcome, lambda e, s, w: 0.5))
++    rec = []
++
++    def fn(setup, seed, swap):
++        rec.append(setup.unit_types["enemy"])
++        return Scripted(outcome)(setup, seed, swap)
++
++    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=fn, full_scan=True)
++    assert sorted(set(rec)) == list(range(8, 15)) and res.cells[3].defect is True
+     assert (res.beats, res.loses_to) == (10, 11)
+diff --git a/tests/skilllab/test_scan_refine.py b/tests/skilllab/test_scan_refine.py
+index 533af05e..32b739d3 100644
+--- a/tests/skilllab/test_scan_refine.py
++++ b/tests/skilllab/test_scan_refine.py
+@@ -1,4 +1,4 @@
+-# spec: Architect ruling A187 item 2 (more fights near a break-even) - scripts/skilllab/scan.py scan(refine_factor, refine_band)
++# spec: Architect ruling A187 item 2 (more fights near a break-even) - scripts/skilllab/scan.py scan(refine_factor, refine_band); LAB-REV2-L4: linear cases pass full_scan=True, bisection cases at the end
+ """Refinement: cells near the crossing are fought again with more seeds. Scripted fight functions; no engine."""
+ import sys
+ from pathlib import Path
+@@ -14,8 +14,9 @@ from scripts.skilllab.scan import scan  # noqa: E402
+ 
+ 
+ def _result(margin, seed, swap):
+-    # ticks encodes (seed, swap) so a test can read which fight sits where in a cell
+-    return FightResult(outcome="side0", margin=margin, strength_left=(1.0, 0.0), survivors=(1, 0), heads=(1, 1),
++    # ticks encodes (seed, swap) so a test can read which fight sits where in a cell; margin > 0 is a side0 win (LAB-REV2-L4:
++    # a cell is won when every fight is side0)
++    return FightResult(outcome="side0" if margin > 0 else "side1", margin=margin, strength_left=(1.0, 0.0), survivors=(1, 0), heads=(1, 1),
+                        ticks=seed * 10 + int(swap), first_contact_tick=0, firing=[(0, 1, 1)],
+                        firing_unit_seconds=(0.25, 0.25))
+ 
+@@ -40,6 +41,7 @@ def _step(edge):
+ 
+ 
+ def _scan(fn, lo=5, hi=15, replicates=2, **kw):
++    kw.setdefault("full_scan", True)      # these cases read the neighbours of the crossing, which only the linear sweep fights
+     return scan(_build, 10, lo, hi, replicates=replicates, fight_fn=fn, **kw)
+ 
+ 
+@@ -96,11 +98,13 @@ def test_refined_cell_result_is_recomputed():
+     assert len(cell.fights) == 12
+ 
+ 
+-@pytest.mark.parametrize("margin_of", [lambda e, s, w: 0.5, lambda e, s, w: -0.5])
+-def test_no_crossing_refines_nothing(margin_of):
++@pytest.mark.parametrize("margin_of,ceiling", [(lambda e, s, w: 0.5, True), (lambda e, s, w: -0.5, False)])
++def test_no_crossing_refines_nothing(margin_of, ceiling):
++    """Won everywhere is a ceiling hit (beats = the top headcount), lost everywhere is None; neither has a crossing to refine."""
+     fn = Fn(margin_of)
+     r = _scan(fn, refine_factor=3)
+-    assert r.beats is None and len(fn.calls) == 11 * 2 * 2
++    assert r.ceiling_hit is ceiling and r.loses_to is None and len(fn.calls) == 11 * 2 * 2
++    assert r.beats == (15 if ceiling else None)
+     assert all(len(c.fights) == 4 for c in r.cells)
+ 
+ 
+@@ -112,17 +116,38 @@ def test_refine_factor_one_equals_todays_result():
+ 
+ 
+ def test_crossing_can_move_after_refinement():
+-    # cell 10 loses on seeds 0,1 but wins on later seeds; the first pass sees a break-even at 9
+-    margin = lambda e, s, w: (-0.5 if s < 2 else 0.9) if e == 10 else (0.5 if e <= 9 else -0.5)
++    # cell 10 wins on seeds 0 and 1 but loses on later seeds; the first pass sees a break-even at 10, the refined cell is lost
++    margin = lambda e, s, w: (0.9 if s < 2 else -0.5) if e == 10 else (0.5 if e <= 9 else -0.5)
+     first = _scan(Fn(margin))
+-    assert (first.beats, first.loses_to) == (9, 10)
++    assert (first.beats, first.loses_to) == (10, 11)
+     r = _scan(Fn(margin), refine_factor=3)
+-    assert (r.beats, r.loses_to) == (10, 11)
++    assert (r.beats, r.loses_to) == (9, 10)
+     cell = next(c for c in r.cells if c.enemy_heads == 10)
+-    assert cell.won and cell.mean_margin == pytest.approx((2 * 2 * -0.5 + 2 * 4 * 0.9) / 12)
++    assert not cell.won and len(cell.fights) == 12 and cell.mean_margin == pytest.approx((2 * 2 * 0.9 + 2 * 4 * -0.5) / 12)
+ 
+ 
+ @pytest.mark.parametrize("bad", [0, -1])
+ def test_refine_factor_below_one_raises(bad):
+     with pytest.raises(ValueError):
+         _scan(Fn(_step(9)), refine_factor=bad)
++
++
++# ---- LAB-REV2-L4: refinement over the bisection (default) scan -------------------------------------------------------------
++
++def test_bisection_refines_the_cells_it_fought_within_the_band_and_nothing_else():
++    """Bisection fights only some headcounts; the ones within refine_band of the crossing get the extra seeds, the rest keep
++    their first pass. The two bracket cells are always among them."""
++    fn = Fn(_step(31))
++    r = scan(_build, 10, 8, 48, replicates=2, fight_fn=fn, refine_factor=3)
++    assert (r.beats, r.loses_to) == (31, 32)
++    by = {c.enemy_heads: c for c in r.cells}
++    assert len(by[31].fights) == len(by[32].fights) == 12
++    for e, c in by.items():
++        assert len(c.fights) == (12 if 29 <= e <= 34 else 4), e
++    assert sorted(set(c[1:] for c in fn.calls if c[0] == 31)) == sorted([(s, False) for s in range(6)] + [(s, True) for s in range(6)])
++
++
++def test_bisection_without_refinement_matches_refine_factor_one():
++    margin = lambda e, s, w: 0.5 if e <= 20 else -0.5
++    assert scan(_build, 10, 8, 48, replicates=2, fight_fn=Fn(margin)) == scan(_build, 10, 8, 48, replicates=2, fight_fn=Fn(margin),
++                                                                             refine_factor=1)

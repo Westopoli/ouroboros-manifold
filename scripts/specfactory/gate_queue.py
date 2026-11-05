@@ -252,6 +252,7 @@ def drain(ch):
         stage_s = int(time.time() - began)
         res = os.path.join(d, t["id"] + ".result")
         write_atomic(res, "\n".join(lines) + f"\nQUEUE verdict {'OK' if ok else 'REJECT'} {t['id']} queue {wait_s}s stage {stage_s}s\n")
+        # Dead since 2026-11-05: mail detached (DEC-mail-detached-2026-11-05); failure is logged and ignored.
         send_mail(t, ok, wait_s, stage_s, res)
         if nxt:
             nxt[1].thread.join()

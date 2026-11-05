@@ -6,7 +6,7 @@ Claude designs and tests; agents build. The simulation is C with the stochastic 
 
 ## Method
 
-`docs/method/README.md`. Each role reads its own card there and the story it is given. Where another document disagrees, `docs/method/` wins. Decisions: Westley answers looks and rule meaning where he has no recorded words; everything else the Architect decides, records in `docs/northstar/story_reviews/westley/decisions.md`, and Westley may veto.
+`docs/method/README.md`. Westley's plan prompt names the steps file (`docs/method/story_loop.md`) and says what the plan must do; the cards hold only what every plan shares. Where another document disagrees, `docs/method/` wins. Decisions: Westley answers looks and rule meaning where he has no recorded words; everything else the Architect decides, records in `docs/northstar/story_reviews/westley/decisions.md`, and Westley may veto.
 
 ## The Bible
 
@@ -20,14 +20,14 @@ Claude designs and tests; agents build. The simulation is C with the stochastic 
 - **Contracts are frozen and minimal.** The contracts are `csrc/ouroboros_sim.h` (with `signatures.toml`) and the pipe frames in `docs/architecture.md`. A change to either lands first as its own contract story, documented before implementation, and consumers build after it lands.
 - **New code in new files; wiring is its own commit.** A new system is built in its own files behind a frozen header; the wiring commit on the shared file comes last.
 - **Wired, not just tested.** Behaviour a rule says happens in play must be reachable from the tick, the jump, or a pipe handler, not only from tests.
-- **Played, not just green.** Every landing opens the merged game and reaches the story's scene before the push counts, and the scripted end-to-end playthrough runs in every sweep of main.
+- **Played, not just green.** A landing opens the merged game and plays it end to end before the push; the scripted playthrough runs in the nightly sweep of main.
 - **Determinism is a contract.** Same seed and command stream give a byte-identical trace on every platform: no fast-math, no platform transcendentals, no hash-order or wall-clock input.
 - **No runtime API calls.** The game never calls a model; missing library content falls back to a placeholder.
 - **No IP exposure.** No names, places or plot from existing fiction.
 
 ## Tests are the spec
 
-Every story exists as failing tests before any code, in fenced paths builders cannot edit, each naming the `S-###`/`R-###-##` it proves. Every detector ships with a positive control. Every system has an isolation test and an integration test. Builders never edit tests; a test changes only under `docs/method/rulebook.md`, with a `Test-defect:` trailer. Westley owns every threshold and tolerance: narrowing an invariant's scope is allowed; widening a threshold, extending a window or loosening a tolerance needs him; a real finding is never reclassified as a skip. No deletion without parity.
+Every story exists as failing tests before any code, each naming the `S-###`/`R-###-##` it proves. Builders never edit tests; a test changes only in a commit with a `Test-defect:` trailer naming why. Westley owns every threshold and tolerance.
 
 ## Code quality
 
@@ -39,11 +39,11 @@ Every story exists as failing tests before any code, in fenced paths builders ca
 
 ## Git
 
-One story, one branch `s/<id>-<slug>`, one `--no-ff` merge on main (`docs/method/story_loop.md`). Never touch `~/Projects/ouroboros-manifold` as a working tree. Worktrees live under `~/Projects/om-push/wt/<name>` and are made and finished only through `scripts/specfactory/wt.py new` and `wt.py done <path> <pushed sha>`; `wt.py reap` removes finished trees (dry run first, literal paths); `wt.py status` is the inventory. Never stage files you did not change, and never touch Westley's uncommitted work. Godot's `.uid` sidecar beside a script is committed with the script. Guardrails (`.claude/hooks/git-guard.sh`) deny rebase, force and other destructive operations; if a legitimate one is blocked, ask. A records-only push takes `~/Projects/om-push/records.lock`; a landing takes its channel's `gate-lab.lock` or `gate-beta.lock` (one landing in flight per channel), the push goes through `scripts/specfactory/land_push.sh` under `push.lock`, and a real-display play takes `play.lock`. Commit trailers are the record: `Story:`, `Tests:`, `Play:`, `Played:`, `Gate:`, `Flag:`, `Base:`, `Test-defect:`, `Decision:`, `Finding:`, `Verdict:`.
+One story (or one cascade), one branch `s/<id>-<slug>`, one `--no-ff` merge on main (`docs/method/story_loop.md`). `~/Projects/ouroboros-manifold` is the repository: worktrees are cut from it under `~/Projects/om-wt/<name>` and merged back into it; an agent never edits the repository checkout itself. Never stage files you did not change, and never touch Westley's uncommitted work. Godot's `.uid` sidecar beside a script is committed with the script. Guardrails (`.claude/hooks/git-guard.sh`) deny rebase, force and other destructive operations; if a legitimate one is blocked, ask. Commit trailers: `Story:`, `Tests:`, `Test-defect:`, `Decision:`.
 
 ## Usage
 
-Every tool call re-reads the caller's whole context, so waiting is the expensive part. A builder pushes and stops; a fresh clerk lands. Agents report once, at the end. Waits are `flock -w`, never a polling chat. Small context per call: one card and one story per agent, briefs by file path, a mixed-role task split into one brief per role. Every spawn names its model; sub-agents never spawn; nothing is spawned in plan mode; engineers and doers are never Fable. Chats compact at 400k; there is no hard stop. Build plus tests is at least half of weekly model spend.
+Every tool call re-reads the caller's whole context, so waiting is the expensive part. Agents report once, at the end; no chat polls. Small context per call: one card and one story per agent, briefs by file path, a mixed-role task split into one brief per role. Every spawn names its model; sub-agents never spawn; nothing is spawned in plan mode; engineers and doers are never Fable. Chats compact at 400k; there is no hard stop. Build plus tests is at least half of weekly model spend.
 
 ## Tone
 

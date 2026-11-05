@@ -10,7 +10,7 @@ After the stage 2 pictures, 2026-11-02: "only testing *all* the variables might 
 
 - `docs/northstar/plans/2026-10-27-lab-plan-of-record.md` section 1: the lab is finished when the crossings are documented for every knob family and every skill (landscape, formation, layers, enemy position, unit-type matchup): the regions where the skilled smaller force wins, the crossing points as headcount ratio against the knob. Every run in that plan is a whole fight: all five skills' plays are variations of one full fight with everything on; a skill is measured against its matched control arm, not against the other skills taken alone.
 - `docs/northstar/research/layer_dynamics/README.md` section 2 (principle: number of units firing decides; "with everything identical the larger force wins" is the control), section 3 (five skills), section 4 (the measure: break-even headcount, margin, units firing, and two predictions per fight, count-only and type-weighted, both read from the opening window of a fight that ran whole), section 5 (how results are read: one page, a diagram per notable).
-- `docs/northstar/plans/2026-10-31-lab-staircase.md` (the staircase): adds one factor per stage. This is incremental, and each stage's fights run with all factors added so far. Nothing keeps the earlier stage's result as a column beside the later one, and nothing tests a role interaction on its own: stage 2 puts all six roles on one field in mixed layouts. Stage 6 (the scan) scales headcounts of complete layouts only.
+- `docs/northstar/story_reviews/westley/lab-staircase.md` (the staircase): adds one factor per stage. This is incremental, and each stage's fights run with all factors added so far. Nothing keeps the earlier stage's result as a column beside the later one, and nothing tests a role interaction on its own: stage 2 puts all six roles on one field in mixed layouts. Stage 6 (the scan) scales headcounts of complete layouts only.
 - `docs/northstar/research/layer_dynamics/heuristics.md` and `docs/northstar/story_reviews/westley/crossings.md`: his percentages per layout kind and his per-picture reasoning (new today).
 
 ## 3. The gap
@@ -42,7 +42,7 @@ Recorded, in documents only:
 
 1. `docs/northstar/research/layer_dynamics/decomposition.md` (new): the idea in his words, the seven strategic-depth preconditions it keeps, the arms (R as crossing curves, F provisional, P, W), what is decided and what is not, and when.
 2. `docs/northstar/research/layer_dynamics/README.md`: a "Parts and whole" bullet in section 2, a pointer in section 8 step 7, and three open items in section 12.
-3. The plan of record and the staircase: section 6 of `docs/northstar/plans/2026-10-27-lab-plan-of-record.md` ("After the lab") and one paragraph after the stage 7 section of `docs/northstar/plans/2026-10-31-lab-staircase.md`. Neither adds a step, a stage or a done-when.
+3. The plan of record and the staircase: section 6 of `docs/northstar/plans/2026-10-27-lab-plan-of-record.md` ("After the lab") and one paragraph after the stage 7 section of `docs/northstar/story_reviews/westley/lab-staircase.md`. Neither adds a step, a stage or a done-when.
 4. `docs/northstar/ROADMAP.md` section 1: one lab row, no story yet.
 5. `docs/northstar/story_reviews/westley/decisions.md`: DEC-piecemeal-then-whole-2026-11-02 now Decided as a plan, and DEC-piecemeal-answers-2026-11-02.
 

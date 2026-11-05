@@ -1,0 +1,758 @@
+diff --git a/scenes/space3d/shaders/sheet_tube.gdshader b/scenes/space3d/shaders/sheet_tube.gdshader
+deleted file mode 100644
+index edd16750..00000000
+--- a/scenes/space3d/shaders/sheet_tube.gdshader
++++ /dev/null
+@@ -1,50 +0,0 @@
+-shader_type spatial;
+-// VG-D-VIEW unit 1: the one material of every asteroid slab and cell square of SpaceSheets (d-view spec "Vision tube").
+-// A sheet above the focus sheet is see-through inside the tube (world x/z cylinder test) and shows a rim line at the tube edge in
+-// its layer colour. Vertex COLOR.r < 0.5 marks a mass slab (kit "mass" colour); anything else is a sheet slab or cell square.
+-// depth_prepass_alpha: the opaque parts of a sheet still write depth while the faded parts blend.
+-render_mode cull_disabled, depth_prepass_alpha;
+-
+-uniform bool tube_on = false;
+-uniform vec2 tube_center = vec2(0.0);   // world x, z
+-uniform float tube_radius = 1500.0;     // DRAFT-tube-radius, set by SpaceSheets.set_tube
+-uniform float focus_y = 0.0;            // world y of the focus sheet, set by SpaceSheets.set_tube
+-uniform float tube_alpha = 0.15;        // DRAFT-tube-alpha
+-uniform float rim_wu = 10.0;            // DRAFT-tube-rim
+-uniform float rim_min_px = 3.0;         // DRAFT-ring-px: the rim reads at least this many pixels at any camera height
+-uniform float rim_period_s = 1.5;       // spec: the rim alpha pulses 0.6 to 1.0 over 1.5 s
+-uniform float layer_gap = 1000.0;       // DRAFT-space-layer-gap, set by SpaceSheets
+-uniform vec4 layer_colours[5];          // LayerView.LAYER_COLOURS: the rim colour of each sheet
+-uniform vec4 sheet_colours[5];          // kit "layers", dimmed on the non-focus sheets (DRAFT-sheet-dim), set by SpaceSheets
+-uniform vec4 mass_colours[5];           // kit "mass", dimmed the same way
+-
+-varying vec3 world_pos;
+-
+-vec3 to_linear(vec3 c) {
+-	return mix(c / 12.92, pow((c + vec3(0.055)) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
+-}
+-
+-void vertex() {
+-	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+-}
+-
+-void fragment() {
+-	int layer = clamp(int(floor(world_pos.y / layer_gap + 0.5)), 0, 4);
+-	vec3 base = COLOR.r < 0.5 ? mass_colours[layer].rgb : sheet_colours[layer].rgb;
+-	ALBEDO = to_linear(base);
+-	ROUGHNESS = 1.0;
+-	bool faded_sheet = tube_on && float(layer) * layer_gap > focus_y + 0.5 * layer_gap;
+-	if (faded_sheet) {
+-		float px_wu = -VERTEX.z * 2.0 / (PROJECTION_MATRIX[1][1] * VIEWPORT_SIZE.y);
+-		float rim_w = max(rim_wu, rim_min_px * px_wu);
+-		float d = distance(world_pos.xz, tube_center);
+-		if (abs(d - tube_radius) < 0.5 * rim_w) {
+-			vec3 rim = to_linear(layer_colours[layer].rgb);
+-			ALBEDO = rim;
+-			EMISSION = rim;
+-			ALPHA = 0.8 + 0.2 * sin(TIME * TAU / rim_period_s);  // 0.8 +- 0.2 = the spec's 0.6 to 1.0
+-		} else if (d < tube_radius) {
+-			ALPHA = tube_alpha;
+-		}
+-	}
+-}
+diff --git a/scenes/space3d/space_rings.gd b/scenes/space3d/space_rings.gd
+deleted file mode 100644
+index 0d2d0926..00000000
+--- a/scenes/space3d/space_rings.gd
++++ /dev/null
+@@ -1,149 +0,0 @@
+-extends Node3D
+-class_name SpaceRings
+-
+-## VG-D-VIEW unit 2 (R-246-04, Q-S3-02): a flat ring under every drawn unit on its sheet, coloured by the unit's layer; a unit in
+-## transit also gets a dashed ring on its destination sheet. Rings are never faded by the tube (they draw through it, like their units).
+-## See also: docs/northstar/plans/2026-10-13-d-view-spec.md "Layer indicators"; tests/test_vg_d_view.gd _test_rings_*.
+-
+-const LayerViewScript := preload("res://scenes/tactical_c/layer_view.gd")
+-
+-# DRAFT-space-layer-gap, Q-246-01 (a). See also: space_view.gd LAYER_GAP_WU (same value, pinned there by a parity test).
+-const LAYER_GAP_WU := 1000.0
+-# DRAFT-sheet-thickness plate 60 (scenes/mockups/landscape/kits/space.json "plate"); sheet top = layer * gap + thickness.
+-const PLATE_THICKNESS_WU := 60.0
+-# d-view spec rev 1, gap 10 null action, Architect may veto on the shot: ring y = sheet top + 2.0.
+-const RING_LIFT_WU := 2.0
+-# DRAFT-ring-radius 1.2 x Units3D.BODY_RADIUS_WU.
+-const RING_RADIUS_FACTOR := 1.2
+-# DRAFT-ring-width 6 wu (d-view spec INTERFACE RING_WIDTH_WU).
+-const RING_WIDTH_WU := 6.0
+-# 24 segments as the strip's draw_arc ring (scenes/tactical_c/layer_view.gd:147); the dashed ring keeps every other segment.
+-const RING_SEGMENTS := 24
+-
+-var _solid_mesh: ArrayMesh
+-var _dashed_mesh: ArrayMesh
+-var _materials: Array = []
+-# id -> MeshInstance3D
+-var _rings: Dictionary = {}
+-var _dest_rings: Dictionary = {}
+-
+-
+-func _ready() -> void:
+-	_ensure_assets()
+-
+-
+-func update(items: Array) -> void:
+-	_ensure_assets()
+-	var seen := {}
+-	for it in items:
+-		var id := int(it.get("id", -1))
+-		seen[id] = true
+-		var x := float(it.get("x", 0.0))
+-		var z := float(it.get("y", 0.0))
+-		var layer := _clamp_layer(int(it.get("layer", 0)))
+-		var dest := int(it.get("dest_layer", -1))
+-		var ring: MeshInstance3D = _rings.get(id)
+-		if ring == null:
+-			ring = _make_ring(false)
+-			_rings[id] = ring
+-		_place(ring, x, z, layer)
+-		if dest >= 0:
+-			var dring: MeshInstance3D = _dest_rings.get(id)
+-			if dring == null:
+-				dring = _make_ring(true)
+-				_dest_rings[id] = dring
+-			_place(dring, x, z, _clamp_layer(dest))
+-		elif _dest_rings.has(id):
+-			_dest_rings[id].queue_free()
+-			_dest_rings.erase(id)
+-	for id in _rings.keys():
+-		if not seen.has(id):
+-			_rings[id].queue_free()
+-			_rings.erase(id)
+-			if _dest_rings.has(id):
+-				_dest_rings[id].queue_free()
+-				_dest_rings.erase(id)
+-
+-
+-func ring_of(id: int) -> Variant:
+-	return _readout(_rings.get(id), false)
+-
+-
+-func dest_ring_of(id: int) -> Variant:
+-	return _readout(_dest_rings.get(id), true)
+-
+-
+-func ring_count() -> int:
+-	return _rings.size()
+-
+-
+-func dest_ring_count() -> int:
+-	return _dest_rings.size()
+-
+-
+-func _readout(ring: MeshInstance3D, dashed: bool) -> Variant:
+-	if ring == null:
+-		return null
+-	var layer: int = ring.get_meta("layer")
+-	return {
+-		"layer": layer,
+-		"y": ring.position.y,
+-		"colour": LayerViewScript.LAYER_COLOURS[layer],
+-		"radius": RING_RADIUS_FACTOR * Units3D.BODY_RADIUS_WU,
+-		"dashed": dashed,
+-	}
+-
+-
+-func _clamp_layer(layer: int) -> int:
+-	return clampi(layer, 0, LayerViewScript.LAYER_COUNT - 1)
+-
+-
+-func _make_ring(dashed: bool) -> MeshInstance3D:
+-	var mi := MeshInstance3D.new()
+-	mi.mesh = _dashed_mesh if dashed else _solid_mesh
+-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+-	add_child(mi)
+-	return mi
+-
+-
+-func _place(ring: MeshInstance3D, x: float, z: float, layer: int) -> void:
+-	ring.position = Vector3(x, layer * LAYER_GAP_WU + PLATE_THICKNESS_WU + RING_LIFT_WU, z)
+-	ring.material_override = _materials[layer]
+-	ring.set_meta("layer", layer)
+-
+-
+-func _ensure_assets() -> void:
+-	if _solid_mesh != null:
+-		return
+-	# liberty 2026-10-12: an annulus ArrayMesh (the spec allows torus or annulus), unshaded, one material per layer, no transparency.
+-	_solid_mesh = _annulus(false)
+-	_dashed_mesh = _annulus(true)
+-	for c in LayerViewScript.LAYER_COLOURS:
+-		var mat := StandardMaterial3D.new()
+-		mat.albedo_color = c
+-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+-		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+-		_materials.append(mat)
+-
+-
+-static func _annulus(dashed: bool) -> ArrayMesh:
+-	var mid := RING_RADIUS_FACTOR * Units3D.BODY_RADIUS_WU
+-	var r_in := mid - RING_WIDTH_WU * 0.5
+-	var r_out := mid + RING_WIDTH_WU * 0.5
+-	var verts := PackedVector3Array()
+-	for i in range(RING_SEGMENTS):
+-		if dashed and i % 2 == 1:
+-			continue
+-		var a0 := TAU * float(i) / float(RING_SEGMENTS)
+-		var a1 := TAU * float(i + 1) / float(RING_SEGMENTS)
+-		var i0 := Vector3(cos(a0) * r_in, 0.0, sin(a0) * r_in)
+-		var o0 := Vector3(cos(a0) * r_out, 0.0, sin(a0) * r_out)
+-		var i1 := Vector3(cos(a1) * r_in, 0.0, sin(a1) * r_in)
+-		var o1 := Vector3(cos(a1) * r_out, 0.0, sin(a1) * r_out)
+-		verts.append_array(PackedVector3Array([i0, o0, o1, i0, o1, i1]))
+-	var arr := []
+-	arr.resize(Mesh.ARRAY_MAX)
+-	arr[Mesh.ARRAY_VERTEX] = verts
+-	var mesh := ArrayMesh.new()
+-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+-	return mesh
+diff --git a/scenes/space3d/space_sheets.gd b/scenes/space3d/space_sheets.gd
+deleted file mode 100644
+index b6da0432..00000000
+--- a/scenes/space3d/space_sheets.gd
++++ /dev/null
+@@ -1,244 +0,0 @@
+-class_name SpaceSheets
+-extends Node3D
+-
+-# VG-D-VIEW unit 1 (docs/northstar/plans/2026-10-13-d-view-spec.md "Field", "Vision tube"): the five stacked sheets of a space mission, drawn from
+-# the field the sim sends (SimSession.bridge().space_field(): masks and plate polys). Engine layer L (0-based) sits at y = L * LAYER_GAP_WU. The
+-# slab shape is scenes/mockups/landscape/placer.gd _add_slab :424-443 re-written here (a fan from the centroid at the thickness, a skirt down to
+-# the sheet), per poly as _place_sheets :238-336 does; that file and FieldMap are not loaded. Every slab and cell square shares ONE
+-# ShaderMaterial (shaders/sheet_tube.gdshader), so the tube costs one set of uniform updates per set_tube call.
+-
+-const SHADER := preload("res://scenes/space3d/shaders/sheet_tube.gdshader")
+-const LAYER_VIEW := preload("res://scenes/tactical_c/layer_view.gd")
+-const KIT_PATH := "res://scenes/mockups/landscape/kits/space.json"
+-const LAYERS := LAYER_VIEW.LAYER_COUNT  # five engine layers 0..4
+-# DRAFT-space-layer-gap, Q-246-01 (a); the same 1,000 as SpaceView.LAYER_GAP_WU and field_map_space.gd:22.
+-const LAYER_GAP_WU := 1000.0
+-# DRAFT-sheet-dim: kit-mode spec section 4, "darkened by 55 percent" on every sheet but the focus sheet.
+-const SHEET_DIM := 0.55
+-# DRAFT-cell-thickness (d-view spec "Layer indicators" bullet and Numbers). d-view spec rev 1, gap 10 null action said 60 (the plate
+-# thickness); the spec paragraph says 30 and is taken. Architect may veto on the shot.
+-const CELL_THICKNESS_WU := 30.0
+-# Cells follow the sim: 240 x 240 cells of 100 wu, mask index cy * 240 + cx, centre ((cx + 0.5) * 100, (cy + 0.5) * 100) (csrc/space_raster.c).
+-const SIDE := 240
+-const CELL_WU := 100.0
+-const KIND_MASS := 1
+-const KIND_RUBBLE := 2
+-# Fade cut-off between sheets: a sheet is above the focus sheet when its y is greater than focus_y + 0.5 * gap
+-# (d-view spec rev 1, gap 10 null action, Architect may veto on the shot).
+-const FADE_HALF_GAP := 0.5
+-
+-var _mat := ShaderMaterial.new()
+-var _plate_h := 0.0
+-var _rubble_h := 0.0
+-var _kit_sheet := PackedColorArray()
+-var _kit_mass := Color.BLACK
+-var _focus := 0
+-var _counts: Array = []
+-var _tube_on := false
+-var _tube_focus_y := 0.0
+-
+-
+-func _init() -> void:
+-	_mat.shader = SHADER
+-	_mat.set_shader_parameter("layer_gap", LAYER_GAP_WU)
+-	_mat.set_shader_parameter("layer_colours", PackedColorArray(LAYER_VIEW.LAYER_COLOURS))
+-	var f := FileAccess.open(KIT_PATH, FileAccess.READ)
+-	var kit = JSON.parse_string(f.get_as_text()) if f != null else null
+-	if not kit is Dictionary:
+-		push_error("SpaceSheets: cannot read %s" % KIT_PATH)
+-		return
+-	_plate_h = float(kit["plate"]["thickness"])
+-	_rubble_h = float(kit["rubble"]["thickness"])
+-	for hex in kit["layers"]:
+-		_kit_sheet.append(Color.html(str(hex)))
+-	_kit_mass = Color.html(str(kit["mass"]))
+-	_push_colours()
+-
+-
+-func sheet_y(layer: int) -> float:
+-	return layer * LAYER_GAP_WU
+-
+-
+-# The colour in use: the kit colour on the focus sheet, darkened SHEET_DIM on every other.
+-func sheet_colour(layer: int) -> Color:
+-	return _kit_sheet[layer] if layer == _focus else _kit_sheet[layer].darkened(SHEET_DIM)
+-
+-
+-func set_focus_layer(n: int) -> void:
+-	_focus = n
+-	_push_colours()
+-
+-
+-func _push_colours() -> void:
+-	var sheet := PackedColorArray()
+-	var mass := PackedColorArray()
+-	for k in range(LAYERS):
+-		sheet.append(sheet_colour(k))
+-		mass.append(_kit_mass if k == _focus else _kit_mass.darkened(SHEET_DIM))
+-	_mat.set_shader_parameter("sheet_colours", sheet)
+-	_mat.set_shader_parameter("mass_colours", mass)
+-
+-
+-func set_tube(active: bool, center: Vector2, radius: float, focus_y: float) -> void:
+-	_tube_on = active
+-	_tube_focus_y = focus_y
+-	_mat.set_shader_parameter("tube_on", active)
+-	_mat.set_shader_parameter("tube_center", center)
+-	_mat.set_shader_parameter("tube_radius", radius)
+-	_mat.set_shader_parameter("focus_y", focus_y)
+-
+-
+-# The sheets above the focus layer while the tube is active; empty when it is not.
+-func faded_layers() -> Array:
+-	var out := []
+-	if _tube_on:
+-		for k in range(LAYERS):
+-			if sheet_y(k) > _tube_focus_y + FADE_HALF_GAP * LAYER_GAP_WU:
+-				out.append(k)
+-	return out
+-
+-
+-# Array of 5 {layer, y, blocked_cells, slabs, cell_squares}: blocked_cells is the mask popcount (covered or not), slabs the poly count of the
+-# layer, cell_squares the blocked cells no poly covers.
+-func counts() -> Array:
+-	return _counts.duplicate(true)
+-
+-
+-func build(field: Dictionary) -> void:
+-	for c in get_children():
+-		remove_child(c)
+-		c.queue_free()
+-	_counts = []
+-	var box := BoxMesh.new()
+-	box.size = Vector3(CELL_WU, CELL_THICKNESS_WU, CELL_WU)
+-	for k in range(LAYERS):
+-		var mask: PackedByteArray = field["masks"][k]
+-		var covered := PackedByteArray()
+-		covered.resize(SIDE * SIDE)
+-		var sheet := {"verts": PackedVector3Array(), "norms": PackedVector3Array()}
+-		var mass := {"verts": PackedVector3Array(), "norms": PackedVector3Array()}
+-		var slabs := 0
+-		for poly in field["polys"]:
+-			if int(poly["layer"]) != k:
+-				continue
+-			var pts: PackedVector2Array = poly["points"]
+-			var kind := int(poly["kind"])
+-			_add_slab(mass if kind == KIND_MASS else sheet, pts, _rubble_h if kind == KIND_RUBBLE else _plate_h)
+-			_cover(covered, pts)
+-			slabs += 1
+-		var blocked := 0
+-		var open_at := PackedInt32Array()
+-		for i in range(SIDE * SIDE):
+-			if (int(mask[i >> 3]) >> (i & 7)) & 1 == 1:
+-				blocked += 1
+-				if covered[i] == 0:
+-					open_at.append(i)
+-		_counts.append({"layer": k, "y": sheet_y(k), "blocked_cells": blocked, "slabs": slabs, "cell_squares": open_at.size()})
+-		_add_mesh_node("Sheet_L%d" % k, sheet, false, k)
+-		_add_mesh_node("Mass_L%d" % k, mass, true, k)
+-		_add_cells("Cells_L%d" % k, open_at, box, k)
+-
+-
+-func _add_mesh_node(node_name: String, data: Dictionary, is_mass: bool, layer: int) -> void:
+-	if (data["verts"] as PackedVector3Array).is_empty():
+-		return
+-	var arrays := []
+-	arrays.resize(Mesh.ARRAY_MAX)
+-	arrays[Mesh.ARRAY_VERTEX] = data["verts"]
+-	arrays[Mesh.ARRAY_NORMAL] = data["norms"]
+-	if is_mass:
+-		# The shader reads COLOR.r < 0.5 as a mass slab; a mesh without a COLOR array reads white.
+-		var cols := PackedColorArray()
+-		cols.resize((data["verts"] as PackedVector3Array).size())
+-		cols.fill(Color(0.0, 0.0, 0.0, 1.0))
+-		arrays[Mesh.ARRAY_COLOR] = cols
+-	var mesh := ArrayMesh.new()
+-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+-	var mi := MeshInstance3D.new()
+-	mi.name = node_name
+-	mi.mesh = mesh
+-	mi.material_override = _mat
+-	mi.position = Vector3(0.0, sheet_y(layer), 0.0)
+-	add_child(mi)
+-
+-
+-# One 100 x 100 prism per blocked cell no poly covers, centred on the cell centre and standing on the sheet (instance y = half the thickness);
+-# the instance buffer is the 3 x 4 transform, row by row.
+-func _add_cells(node_name: String, cells: PackedInt32Array, box: Mesh, layer: int) -> void:
+-	if cells.is_empty():
+-		return
+-	var buf := PackedFloat32Array()
+-	buf.resize(cells.size() * 12)
+-	for n in range(cells.size()):
+-		var gy := cells[n] / SIDE
+-		var gx := cells[n] - gy * SIDE
+-		var o := n * 12
+-		buf[o] = 1.0
+-		buf[o + 3] = (gx + 0.5) * CELL_WU
+-		buf[o + 5] = 1.0
+-		buf[o + 7] = CELL_THICKNESS_WU * 0.5
+-		buf[o + 10] = 1.0
+-		buf[o + 11] = (gy + 0.5) * CELL_WU
+-	var mm := MultiMesh.new()
+-	mm.transform_format = MultiMesh.TRANSFORM_3D
+-	mm.mesh = box
+-	mm.instance_count = cells.size()
+-	mm.buffer = buf
+-	var mmi := MultiMeshInstance3D.new()
+-	mmi.name = node_name
+-	mmi.multimesh = mm
+-	mmi.material_override = _mat
+-	mmi.position = Vector3(0.0, sheet_y(layer), 0.0)
+-	add_child(mmi)
+-
+-
+-# placer.gd _add_slab :424-443: the top face at `height` as a fan from the centroid, and a skirt down to y = 0 (the sheet) on every edge.
+-func _add_slab(into: Dictionary, points: PackedVector2Array, height: float) -> void:
+-	var verts: PackedVector3Array = into["verts"]
+-	var norms: PackedVector3Array = into["norms"]
+-	var centroid := Vector2.ZERO
+-	for p in points:
+-		centroid += p
+-	centroid /= points.size()
+-	var centre_top := Vector3(centroid.x, height, centroid.y)
+-	for i in range(points.size()):
+-		var a := points[i]
+-		var b := points[(i + 1) % points.size()]
+-		var a_top := Vector3(a.x, height, a.y)
+-		var b_top := Vector3(b.x, height, b.y)
+-		verts.append_array(PackedVector3Array([centre_top, a_top, b_top]))
+-		norms.append_array(PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP]))
+-		var outward := Vector3(b.y - a.y, 0.0, a.x - b.x).normalized()
+-		verts.append_array(PackedVector3Array([a_top, Vector3(b.x, 0.0, b.y), b_top, a_top, Vector3(a.x, 0.0, a.y), Vector3(b.x, 0.0, b.y)]))
+-		norms.append_array(PackedVector3Array([outward, outward, outward, outward, outward, outward]))
+-	into["verts"] = verts
+-	into["norms"] = norms
+-
+-
+-# Marks every cell whose centre a poly covers, by the sim's rule (csrc/space_raster.c:44-76 sr_fill_polygon, "even-odd scanline at each cell row
+-# centre"): the cell centre is ((gx + 0.5) * 100, (gy + 0.5) * 100); an edge crosses the row when (ay <= y && by > y) || (by <= y && ay > y); a
+-# cell is inside when xs[p] <= x <= xs[p + 1] (inclusive).
+-func _cover(covered: PackedByteArray, pts: PackedVector2Array) -> void:
+-	var low_y := INF
+-	var high_y := -INF
+-	for p in pts:
+-		low_y = minf(low_y, p.y)
+-		high_y = maxf(high_y, p.y)
+-	var n := pts.size()
+-	for gy in range(maxi(int(low_y / CELL_WU) - 1, 0), mini(int(high_y / CELL_WU) + 1, SIDE - 1) + 1):
+-		var y := (gy + 0.5) * CELL_WU
+-		var xs: Array = []
+-		for e in range(n):
+-			var a := pts[e]
+-			var b := pts[(e + 1) % n]
+-			if (a.y <= y and b.y > y) or (b.y <= y and a.y > y):
+-				xs.append(a.x + (y - a.y) / (b.y - a.y) * (b.x - a.x))
+-		xs.sort()
+-		var p := 0
+-		while p + 1 < xs.size():
+-			# The direct inclusive test decides; the margin of one cell only bounds the scan.
+-			for gx in range(maxi(int(floor(float(xs[p]) / CELL_WU - 0.5)) - 1, 0), mini(int(ceil(float(xs[p + 1]) / CELL_WU - 0.5)) + 1, SIDE - 1) + 1):
+-				var x := (gx + 0.5) * CELL_WU
+-				if x >= float(xs[p]) and x <= float(xs[p + 1]):
+-					covered[gy * SIDE + gx] = 1
+-			p += 2
+diff --git a/scenes/space3d/space_view.gd b/scenes/space3d/space_view.gd
+deleted file mode 100644
+index a3559bc4..00000000
+--- a/scenes/space3d/space_view.gd
++++ /dev/null
+@@ -1,279 +0,0 @@
+-extends Node
+-class_name SpaceView
+-
+-## VG-D-VIEW unit 3 (docs/northstar/plans/2026-10-13-d-view-spec.md, S-246 R-246-01 to R-246-04): the space era's 3D look. Five stacked
+-## sheets (SpaceSheets), the units on them as flyers, a layer ring under every unit (SpaceRings) and the vision tube, in a SubViewport shell
+-## copied in shape from scenes/ground3d/ground3d.gd:33-66. Hosted by tactical_view.gd only with OM_SPACE_VIEW=1 (the opt-in of the first look).
+-## The host assigns this node to its _ground3d member (duck-typed: set_frame, qa_state, camera_rig, to_screen, to_world, add_layer).
+-## See also: tests/test_vg_d_view.gd, tests/qa/desktop/plays/D/S-246.py.
+-
+-const GroundHost := preload("res://scenes/ground3d/ground3d.gd")
+-const CameraRig := preload("res://scenes/ground3d/camera_rig_3d.gd")
+-const GroundUnits := preload("res://scenes/ground3d/ground_units.gd")
+-const LayerViewScript := preload("res://scenes/tactical_c/layer_view.gd")
+-const SpaceSheetsScript := preload("res://scenes/space3d/space_sheets.gd")
+-const SpaceRingsScript := preload("res://scenes/space3d/space_rings.gd")
+-
+-# DRAFT-space-layer-gap, Q-246-01 (a): engine layer L (0-based) sits at y = L * LAYER_GAP_WU. Parity-tested against
+-# scenes/mockups/landscape/field_map_space.gd:22 (tests/test_vg_d_view.gd).
+-const LAYER_GAP_WU := 1000.0
+-# DRAFT-sheet-thickness plate 60 (kits/space.json plate.thickness): the sheet top a unit stands over is L * gap + 60 on every sheet.
+-const PLATE_THICKNESS_WU := 60.0
+-# A unit hovers 150 wu over its sheet top: Units3D.FLYER_CLEARANCE_WU (ground_units.gd:11), read live (d-view spec rev 3, Units bullet).
+-const UNIT_LIFT_WU := GroundUnits.FLYER_CLEARANCE_WU
+-# DRAFT-tube-radius, Q-S3-01 (a).
+-const TUBE_RADIUS_WU := 1500.0
+-# The next five mirror values that live in the shader or the other units and are pinned here for tests/test_vg_d_view.gd and the play:
+-# DRAFT-tube-alpha (sheet_tube.gdshader tube_alpha), DRAFT-tube-rim (rim_wu), DRAFT-sheet-dim (SpaceSheets.SHEET_DIM), DRAFT-ring-radius and
+-# the ring width (SpaceRings.RING_RADIUS_FACTOR, RING_WIDTH_WU).
+-const TUBE_ALPHA := 0.15
+-const TUBE_RIM_WU := 10.0
+-const SHEET_DIM := 0.55
+-const RING_RADIUS_FACTOR := 1.2
+-const RING_WIDTH_WU := 6.0
+-# DRAFT-space-cam-height, gap g2 ruling: the PLAY zooms out through the rig API until the rig reports at least this (the rig has no setter).
+-const CAM_HEIGHT_WU := 5400.0
+-# DRAFT-space-frame-budget: Westley's, never widened; measured in the Forward+ play and reported, not asserted here.
+-const FRAME_BUDGET_MS := 16.0
+-# d-view spec rev 1, gap 9 null action, Architect may veto on the shot: frame_ms is the mean of 1000 / Engine.get_frames_per_second() over the last 120 frames.
+-const FRAME_SAMPLES := 120
+-# State bit 4 = in transit (docs/architecture.md:392); the spawn anchor is the map node of kind 7 (tactical_view.gd SPAWN_NODE_KIND).
+-const STATE_TRANSIT_BIT := 4
+-const SPAWN_NODE_KIND := 7
+-
+-# QA/test seam: false stops _process from reading the window's mouse, cursor_px is then set by the caller.
+-var follow_mouse := true
+-var cursor_px := Vector2.ZERO
+-
+-var _container: SubViewportContainer
+-var _viewport: SubViewport
+-var _rig: Node3D
+-var _units3d: Node3D
+-var _sheets: Node3D
+-var _rings: Node3D
+-var _frame: Dictionary = {}
+-var _field_set := false
+-var _panned := false
+-var _focus := 0
+-var _tube := {"active": false, "cx": 0.0, "cy": 0.0, "radius_wu": TUBE_RADIUS_WU}
+-var _unit_info: Dictionary = {}
+-# id -> tick of the first frame the unit was seen in transit (d-view spec rev 1, gap 6 null action, Architect may veto on the shot)
+-var _transit_t0: Dictionary = {}
+-var _frame_ms: Array = []
+-
+-
+-func _ready() -> void:
+-	_container = SubViewportContainer.new()
+-	_container.stretch = true
+-	_container.size = GroundHost.SCREEN_SIZE
+-	_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+-	_container.z_index = -1
+-	add_child(_container)
+-	_viewport = SubViewport.new()
+-	_viewport.size = GroundHost.SCREEN_SIZE
+-	_viewport.own_world_3d = true
+-	_container.add_child(_viewport)
+-	var env := Environment.new()
+-	env.background_mode = Environment.BG_COLOR
+-	env.background_color = _sky_colour()
+-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+-	# ground3d.gd:51, the same ambient colour as the ground shell.
+-	env.ambient_light_color = Color(0.6, 0.6, 0.65)
+-	var we := WorldEnvironment.new()
+-	we.environment = env
+-	_viewport.add_child(we)
+-	var sun := DirectionalLight3D.new()
+-	sun.rotation_degrees = GroundHost.SUN_ROTATION_DEG
+-	_viewport.add_child(sun)
+-	_rig = CameraRig.new()
+-	_rig.process_mode = Node.PROCESS_MODE_DISABLED
+-	_viewport.add_child(_rig)
+-	_sheets = SpaceSheetsScript.new()
+-	_viewport.add_child(_sheets)
+-	_units3d = GroundUnits.new()
+-	_viewport.add_child(_units3d)
+-	_rings = SpaceRingsScript.new()
+-	_viewport.add_child(_rings)
+-
+-
+-# The kit's own sky ("palette.sky" of kits/space.json, the pass 6 look); the ground shell's sky when the kit cannot be read.
+-func _sky_colour() -> Color:
+-	var f := FileAccess.open(SpaceSheetsScript.KIT_PATH, FileAccess.READ)
+-	var kit = JSON.parse_string(f.get_as_text()) if f != null else null
+-	if kit is Dictionary and kit.has("palette"):
+-		return Color.html(str(kit["palette"]["sky"]))
+-	return GroundHost.SKY_COLOUR
+-
+-
+-func _process(_delta: float) -> void:
+-	_frame_ms.append(1000.0 / maxf(float(Engine.get_frames_per_second()), 1.0))
+-	if _frame_ms.size() > FRAME_SAMPLES:
+-		_frame_ms.pop_front()
+-	if follow_mouse:
+-		cursor_px = get_viewport().get_mouse_position()
+-	_update_tube()
+-
+-
+-# Once per frame: the tube centre is the cursor ray's hit on the focus sheet plane; the sheets above the focus sheet fade inside it.
+-func _update_tube() -> void:
+-	if not _field_set:
+-		return
+-	var hit = to_world(cursor_px)
+-	var active: bool = hit != null
+-	var centre: Vector2 = hit if active else Vector2.ZERO
+-	_sheets.set_tube(active, centre, TUBE_RADIUS_WU, _focus * LAYER_GAP_WU)
+-	_tube = {"active": active, "cx": centre.x, "cy": centre.y, "radius_wu": TUBE_RADIUS_WU}
+-
+-
+-# Once after mission_begin: the host passes SimSession.bridge().space_field().
+-func set_field(field: Dictionary) -> void:
+-	_sheets.build(field)
+-	_field_set = true
+-
+-
+-func set_focus_layer(n: int) -> void:
+-	if n == _focus:
+-		return
+-	_focus = n
+-	_sheets.set_focus_layer(n)
+-
+-
+-func camera_rig() -> Node3D:
+-	return _rig
+-
+-
+-func add_layer(node: Node3D) -> void:
+-	_viewport.add_child(node)
+-
+-
+-func _sheet_top(layer: int) -> float:
+-	return layer * LAYER_GAP_WU + PLATE_THICKNESS_WU
+-
+-
+-# Own units always, enemies only when in frame.visible[str(player_faction)] (as Ground3D.set_frame filters).
+-func set_frame(frame: Dictionary, _mission: Dictionary) -> void:
+-	_frame = frame
+-	var local := int(frame.get("player_faction", 0))
+-	_units3d.local_faction = local
+-	var seen := {}
+-	for v in frame.get("visible", {}).get(str(local), []):
+-		seen[int(v)] = true
+-	var drawn: Array = []
+-	var own: Array = []
+-	for u in frame.get("units", []):
+-		if int(u.get("faction", 0)) == local:
+-			own.append(u)
+-		if int(u.get("faction", 0)) == local or seen.has(int(u.get("id"))):
+-			drawn.append(u)
+-	if not _panned and _pan_to_spawn(frame, own):
+-		_panned = true
+-	var floors: Array = []
+-	for k in range(LayerViewScript.LAYER_COUNT):
+-		floors.append(_sheet_top(k))
+-	var flyers: Array = []  # every type is one flyer body for now (d-view spec, Units bullet)
+-	for u in drawn:
+-		if not flyers.has(int(u.get("type", 0))):
+-			flyers.append(int(u.get("type", 0)))
+-	_units3d.set_units(drawn, {}, floors, flyers)
+-	var tick := int(frame.get("tick", 0))
+-	var items: Array = []
+-	var info := {}
+-	var in_transit := {}
+-	for u in drawn:
+-		var id := int(u.get("id"))
+-		var layer := clampi(int(u.get("layer", 0)), 0, LayerViewScript.LAYER_COUNT - 1)
+-		var dest := -1
+-		var y := _sheet_top(layer) + UNIT_LIFT_WU
+-		if (int(u.get("state", 0)) & STATE_TRANSIT_BIT) != 0 and u.has("tl"):
+-			dest = clampi(int(u["tl"]), 0, LayerViewScript.LAYER_COUNT - 1)
+-			in_transit[id] = true
+-			if not _transit_t0.has(id):
+-				_transit_t0[id] = tick
+-			var t0 := int(_transit_t0[id])
+-			var ld := int(u.get("ld", t0))
+-			var frac := 0.0 if ld == t0 else clampf(float(tick - t0) / float(ld - t0), 0.0, 1.0)
+-			y = lerpf(y, _sheet_top(dest) + UNIT_LIFT_WU, frac)
+-		var node: Node3D = _units3d.unit_node(id)
+-		if node != null:
+-			node.position.y = y
+-		var shadow: Node3D = _units3d.shadow_of(id)
+-		if shadow != null:
+-			shadow.position.y = _sheet_top(layer) + GroundUnits.SHADOW_LIFT_WU  # on its own sheet top, never under sheet 0
+-		items.append({"id": id, "x": float(u.get("x", 0.0)), "y": float(u.get("y", 0.0)), "layer": layer, "dest_layer": dest})
+-		info[str(id)] = {"layer": layer, "y": y, "ring_layer": layer, "dest_ring_layer": dest}
+-	for id in _transit_t0.keys():
+-		if not in_transit.has(id):
+-			_transit_t0.erase(id)
+-	_unit_info = info
+-	_rings.update(items)
+-
+-
+-# Architect ruling 2026-10-14: the pan target is the centroid of the own units at ground height (the rig has no terrain here, so
+-# height 0), which puts the army at screen centre over sheet 0. A frame with no own unit falls back to the first kind-7 spawn
+-# anchor (tactical_view.gd SPAWN_NODE_KIND); no such node leaves the rig where it is. Only once per field, so the player's own
+-# panning is never undone.
+-func _pan_to_spawn(frame: Dictionary, own: Array) -> bool:
+-	if not own.is_empty():
+-		var c := Vector2.ZERO
+-		for u in own:
+-			c += Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+-		_rig.pan_to(c / own.size())
+-		return true
+-	for n in frame.get("map", {}).get("nodes", []):
+-		if int(n.get("kind", -1)) == SPAWN_NODE_KIND:
+-			_rig.pan_to(Vector2(float(n.get("x", 0.0)), float(n.get("y", 0.0))))
+-			return true
+-	return false
+-
+-
+-# The camera projection of the world point (wx, wy) on the sheet of `layer` (y = layer * gap); a negative layer is the FOCUS sheet
+-# (d-view spec rev 3, Hosting "Planes": markers, fog, shots, clicks and the daemon project verb use the focus sheet).
+-func to_screen(wx: float, wy: float, layer: int = -1) -> Vector2:
+-	var l := _focus if layer < 0 else layer
+-	return _rig.get_camera().unproject_position(Vector3(wx, l * LAYER_GAP_WU, wy))
+-
+-
+-# The camera ray through `screen` meets the FOCUS sheet plane y = focus * gap: the view's own ray test, not physics. Null when the
+-# ray does not reach the plane (the camera is below it or the ray points up).
+-func to_world(screen: Vector2) -> Variant:
+-	var cam: Camera3D = _rig.get_camera()
+-	var o := cam.project_ray_origin(screen)
+-	var d := cam.project_ray_normal(screen)
+-	if d.y >= 0.0:
+-		return null
+-	var t := (_focus * LAYER_GAP_WU - o.y) / d.y
+-	if t < 0.0:
+-		return null
+-	return Vector2(o.x + d.x * t, o.z + d.z * t)
+-
+-
+-func qa_state() -> Dictionary:
+-	var out := {"ground3d": {"present": false}, "space3d": {"present": false}, "units_px": {}}
+-	if not _field_set:
+-		return out
+-	var sheets: Array = []
+-	for c in _sheets.counts():
+-		sheets.append({"layer": c["layer"], "y": c["y"], "blocked_cells": c["blocked_cells"], "slabs": c["slabs"]})
+-	var q: Dictionary = _rig.qa_camera()
+-	var cam: Camera3D = _rig.get_camera()
+-	var ms := 0.0
+-	for m in _frame_ms:
+-		ms += float(m)
+-	var tube := _tube.duplicate()
+-	tube["faded_layers"] = _sheets.faded_layers()
+-	out["space3d"] = {
+-		"present": true,
+-		"gap_wu": LAYER_GAP_WU,
+-		"focus_layer": _focus,
+-		"sheets": sheets,
+-		"units": _unit_info.duplicate(true),
+-		"tube": tube,
+-		"camera": {"x": q["x"], "y": q["y"], "height": _rig.camera_height(), "pitch": -rad_to_deg(cam.rotation.x)},
+-		"frame_ms": ms / _frame_ms.size() if _frame_ms.size() > 0 else 0.0,
+-	}
+-	var upx := {}
+-	for u in _frame.get("units", []):
+-		var p := to_screen(float(u.get("x", 0.0)), float(u.get("y", 0.0)), clampi(int(u.get("layer", 0)), 0, LayerViewScript.LAYER_COUNT - 1))
+-		upx[str(int(u.get("id")))] = [p.x, p.y]
+-	out["units_px"] = upx
+-	return out
+diff --git a/scenes/space3d/space_view.tscn b/scenes/space3d/space_view.tscn
+deleted file mode 100644
+index 94f35b25..00000000
+--- a/scenes/space3d/space_view.tscn
++++ /dev/null
+@@ -1,6 +0,0 @@
+-[gd_scene load_steps=2 format=3]
+-
+-[ext_resource type="Script" path="res://scenes/space3d/space_view.gd" id="1"]
+-
+-[node name="SpaceView" type="Node"]
+-script = ExtResource("1")

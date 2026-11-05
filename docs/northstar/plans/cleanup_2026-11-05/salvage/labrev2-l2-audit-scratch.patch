@@ -1,0 +1,987 @@
+diff --git a/docs/northstar/plans/skilllab-harness-spec.md b/docs/northstar/plans/skilllab-harness-spec.md
+index 9b75e979..d084da8f 100644
+--- a/docs/northstar/plans/skilllab-harness-spec.md
++++ b/docs/northstar/plans/skilllab-harness-spec.md
+@@ -21,8 +21,8 @@ Fight
+ 6. Each unit's spawn point is its formation point plus a shift drawn from `random.Random(seed)`, each axis uniform in `[-10, +10]` world units. The same `seed` gives the same shifts. The engine has no randomness; these shifts are the replicates.
+ 7. `swap=True` spawns side 1's units before side 0's; `swap=False` spawns side 0's first. The engine acts in unit-id order, so the first-spawned side shoots first. Margins and results are always reported from side 0's point of view whichever side spawned first.
+ 8. Strength of a side is the sum over its living units of (current hp divided by that unit's starting hp), divided by the side's starting headcount. `strength_left` is that number for each side at the end. `margin` is `strength_left[0] - strength_left[1]`. `survivors` counts living units and `heads` the starting headcounts. `ticks` is the number of steps taken. Readings: strength is not clamped (a unit above its starting hp counts above 1).
+-9. Outcome is `"side0"` when side 1 has no living unit and side 0 has at least one, `"side1"` the mirror, `"cap"` when `max_ticks` is reached with both sides alive, and `"stalemate"` when no unit's hp has changed for `stalemate_ticks` consecutive ticks with both sides alive, or when both sides lose their last unit on the same tick. (Reading: the brief names the field and the default 400 but not the rule; changing it amends this line only.) Readings: checks run in this order each tick, elimination, then stalemate, then cap, so a stalemate and `max_ticks` on the same tick is `"stalemate"`.
+-10. Every `sample_every` ticks (and at tick 0) `fight` records `(tick, able0, able1)` in `firing`: the count of each side's units able to fire at that instant. A unit is able to fire when it is alive and some living enemy unit is on a layer it may fire at (its own layer until the engine cascade lands reach), within the unit's attack range of it, and `can_shoot(unit, enemy)` is true. `first_contact_tick` is the first sampled tick at which `able0 + able1 > 0`, or `-1` when never. `firing_unit_seconds` is, per side, the sum over samples of `able * sample_every / 20` (the engine runs 20 ticks per second). Readings: the range test is `distance <= attack_range`; a sample is also taken on the final tick when it is a multiple of `sample_every`; `fight` passes every spawned unit id of each side to `count_able`, which skips the dead; a unit id missing from `ranges` raises `KeyError`.
++9. RETIRED (Q-LAB-03, Westley 2026-10-13): a fight ends by elimination only; the tick cap is a bug detector, a capped fight is a lab defect, never a result; stalemate is gone. Rebuilt by LAB-REV2-L2 (`docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md`, ruling 1).
++10. Every `sample_every` ticks (and at tick 0) `fight` records `(tick, able0, able1)` in `firing` from `firing.count_able(engine, w, units0, units1, arc_deg)`. A living unit is able when its code is 0: `om_combat_can_engage` against some living enemy reads 0. Until E0 is on main the count composes the same five gates from public queries, in the diagnostic order 1 out of reach (`profile_reach` of the unit's type at the layer offset from `unit_layer`), 2 not seen (the enemy is in `visible_enemies` of the unit's side), 3 out of range at the offset (attack range times `OM_TP_RANGE_UP_k` / `OM_TP_RANGE_DOWN_k`, planar distance `<=`), 4 outside the arc (only when `arc_deg < 360`; `|bearing - facing| <= arc_deg / 2` as an angle comparison, boundary inclusive), 5 line blocked (`can_shoot`). After E0 the code is the engine's own answer and the composition is the parity check (`firing.parity` lists the units where the two able sets differ; empty when `om_combat_can_engage` is absent or the E0 stub). The weighted prediction `firing.count_weighted` sums, over code-0 units only, `Engine.category_multiplier` of the unit's category against its target of record's category (never damage, interval, health or a cross-layer damage multiplier). The target of record, per unit per sample, is the engine's target if its code against it is 0; else the nearest living hostile with code 0; else the nearest living hostile (the code is then its first failing reason 1..5); `-1` only when no living hostile exists. `firing.states` returns `[(unit, code)]` by unit id, dead omitted. `first_contact_tick` is the first sampled tick at which any unit's code is 0, or `-1` when never. `firing_unit_seconds` is, per side, the sum over samples of `able * sample_every / 20`. Limit: the composed count assumes target-by-sight on (`OM_TP_TARGET_BY_SIGHT` 1); stealth is reason 2 only through `can_engage`; gone when E0 lands. Replaces the same-layer count of rev 1 (`ranges`, `alive` set and the engine-target-only weighted rule are gone).
+ 11. `FightResult.outcome`, `ticks`, `margin`, `strength_left`, `survivors`, `heads`, `first_contact_tick`, `firing`, `firing_unit_seconds` are all populated on every call, including a stalemate and a cap.
+ 
+ Plays
+@@ -31,7 +31,7 @@ Plays
+ Scan
+ 13. `cell(build, enemy_heads, replicates)` runs `fight` for both spawn orders (`swap` False and True) and for seeds `0 .. replicates-1`, and returns a `CellResult` holding every `FightResult`, the mean margin over all of them, and `won`. A cell is won when the mean margin is greater than the win margin (default 0.05, a parameter). Readings: `replicates < 1` raises `ValueError`; fights are called swap-outer, seed-inner and `CellResult.fights` keeps that order.
+ 14. `scan(build, size, enemy_from, enemy_to, replicates=10)` runs `cell` for every enemy headcount from `enemy_from` to `enemy_to` inclusive and returns a `ScanResult` with the cells and `beats` and `loses_to`. When the cells, taken in increasing enemy headcount, change from won to lost, `beats` is the last won headcount before the first such change and `loses_to` is `beats + 1`. When no change occurs (all won, all lost, or flat) both are `None`. (Reading: first won-to-lost change, scanning upward; no smoothing or fit, `beats` and `loses_to` come straight from the cells.) `cell` and `scan` take an optional `fight_fn` (default: `fight.fight`) called as `fight_fn(setup, seed, swap)`; tests use it to feed synthetic margins.
+-15. A stalemate or cap fight counts as not won (its margin is still averaged). Reading: a cell is won only when its mean margin exceeds the win margin AND none of its fights ended `stalemate` or `cap` (the brief's "a stalemate is not a win"); `enemy_from > enemy_to` raises `ValueError`.
++15. RETIRED (Q-LAB-03, Westley 2026-10-13): there is no stalemate outcome and no "not won" rule for one; a cell is won when every fight is `side0`, a `draw` or `cap` marks the cell `defect`. Rebuilt by LAB-REV2-L2 and L4.
+ 16. `sample.py` provides `grid(dims, per_dim)` and `random_samples(dims, n, seed)` ported from `toys/layerlab/layerlab/sample.py`: same arguments, same outputs for the same inputs, no use of wall-clock or hash order. Reading: `random_samples` with `n < 0` returns an empty list, as the toy does.
+ 
+ Rows and report
+@@ -46,12 +46,21 @@ Controls (integration; these are the tests of brief section 3.3)
+ 21. Mirror: identical sides on flat ground (`blob_play(16)` against 16), both spawn orders, 10 replicates: the mean margin is within 0.10 of zero (Westley, 2026-10-02: one fight swings about 0.17 on the position shifts, so 20 fights cannot hold 0.05). Positive control for the detector: the same cell with 18 units against 16 (`blob_play(18)`, `enemy_heads` 16) reads a mean margin above 0.10; the 17-against-16 reading is printed beside it as information, with no mark (A190: after the leash fix 17 against 16 reads 0.068). (The first-spawner edge of the first draft does not show once positions are shifted; `docs/northstar/research/layer_dynamics/runs/2026-10-02_harness_check.md`.)
+ 22. Numbers: 16 against 8 of the same type: side 0 wins every fight.
+ 23. Planted advantage: 16 units with 20 percent more damage per shot (`damage_play(16)`, factor 1.2) beat a strictly larger enemy headcount than 16 identical units (`blob_play(16)`) do, by at least one unit (compare the `beats` of the two scans over enemy headcounts 8 to 24). Null control: `damage_play(16, factor=1.0)` gives the same `beats` and `loses_to` as the identical scan. Reach is not the control (on today's engine more reach made a side worse); `reach_play` stays as a knob to study.
+-24. Firing count, hand-built: three units of side 0 in a row and one enemy placed so exactly two of side 0 are within reach: the sample reads `able0 = 2`, `able1 = 1`. A second case with a blocker between one pair of units reads one fewer on the side that loses that pair.
++24. Firing count, hand-built: three units of side 0 in a row and one enemy placed so exactly two of side 0 are within reach: `firing.count_able(engine, w, side0, side1, 360)` reads `(2, 1)`. A blocker between one pair reads one fewer on the side that loses that pair (code 5). Cross-layer (16 v 16, side 0 one layer up, reach one each way): vision 0 reads `(0, 0)` with every unit code 2, vision 0.5 reads `(16, 16)`; reach `(0, 0)` reads `(0, 0)` with every unit code 1. A Bombard 600 wu from an enemy beyond its own sensor reads 0 without a spotter and able with one. The weight equals the engine's category multiplier of the target of record and does not move with hit points.
+ 25. Determinism: the same setup and seed give byte-identical rows twice.
+ 26. Cross-machine: the rows of the three controls hash to the values in `tests/skilllab/golden_hashes.json`. The file is written on the first machine and must match on the second; a mismatch is reported as a determinism finding, not patched.
+ 27. Scan honesty: on a synthetic margin series with a known sign change the scan returns the right `beats` and `loses_to`; on a flat series it returns `None`, `None`.
+ 28. Speed gate: a scan of 16 units against 12 to 24 enemies, 10 replicates, both orders, finishes in under 30 seconds.
+ 
++## Rev 2 decisions (LAB-REV2-L1, 2026-10-14)
++
++- L1 and L2 land together: `fight.py` still imports the retired `count_able_weighted`, `unit_states` and `unit_weight` until L2 rewires it.
++- `Setup.weighted` is removed; `Setup.states` is opt-in (on for sweep and smoke, off for the controls and the speed guards); `FightResult.order_ends` is removed.
++- Nearest hostile is by planar x, y distance (layer ignored), a tie goes to the lowest unit id; `states` is ordered by unit id and omits the dead.
++- Arc boundary is inclusive (`|bearing - facing| <= arc_deg / 2`, an angle comparison, never a cosine compare); `arc_deg >= 360` is off.
++- Parity runs at every sampled tick (`Setup.sample_every`), fog on, `OM_TP_TARGET_BY_SIGHT` 1 only.
++- The four `Engine` wrappers are `unit_type`, `category_multiplier`, `transition_progress` and `can_engage` (the last reads -1 when the library lacks `om_combat_can_engage`; `_bind` does not fail on it).
++
+ ## Inputs / Outputs / Constraints / Out of scope
+ 
+ - Inputs: the production library built from `csrc/`; built-in unit type names; `Setup` objects.
+diff --git a/scripts/skilllab/asym.py b/scripts/skilllab/asym.py
+index fc61b041..3ac293e2 100644
+--- a/scripts/skilllab/asym.py
++++ b/scripts/skilllab/asym.py
+@@ -8,7 +8,7 @@ from typing import Optional
+ from scripts.skilllab import skills
+ from scripts.skilllab.contract import Group, Setup
+ from scripts.skilllab.formations import place
+-from scripts.skilllab.plays import APPROACH, APPROACH_STOP, MOPUP, MOPUP_INTERVAL_TICKS, max_ticks_for, unit_stats  # noqa: F401  (APPROACH_STOP: the lab value)
++from scripts.skilllab.plays import max_ticks_for, unit_stats
+ 
+ _ROLES = {"blob": "blob", "line": "line", "skilled": "concave", "counter": "column"}
+ _ARRANGEMENTS = ("interleaved", "layered", "layered_short_front")
+@@ -113,7 +113,7 @@ def _label(side):
+     return "%s:%s" % (side.skill, side.role), skills.get(side.skill, side.role).status
+ 
+ 
+-def asym_play(size, side0, side1, unit_types=None, approach=APPROACH, mopup=MOPUP):
++def asym_play(size, side0, side1, unit_types=None):
+     for s in (side0, side1):
+         _check(s, size)
+     if side0.role == side1.role == "counter":
+@@ -154,8 +154,8 @@ def asym_play(size, side0, side1, unit_types=None, approach=APPROACH, mopup=MOPU
+                     cx, cy = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
+                     goals.append(Group(**{**g.__dict__, "goal": (cx + t[0] - centre[0], cy + t[1] - centre[1])}))
+                 groups[i] = goals
+-        return Setup(groups=tuple(groups[0] + groups[1]), unit_types=types, approach=approach,
+-                     mopup=mopup, mopup_interval_ticks=MOPUP_INTERVAL_TICKS, max_ticks=max_ticks_for(size, enemy_heads))
++        return Setup(groups=tuple(groups[0] + groups[1]), unit_types=types, point=(0.0, 0.0),
++                     max_ticks=max_ticks_for(size, enemy_heads))
+     build.labels = labels
+     return build
+ 
+diff --git a/scripts/skilllab/batches.py b/scripts/skilllab/batches.py
+index a9312c5f..9a29dee7 100644
+--- a/scripts/skilllab/batches.py
++++ b/scripts/skilllab/batches.py
+@@ -5,7 +5,7 @@ from html import escape
+ from pathlib import Path
+ from typing import Optional
+ 
+-from scripts.skilllab import compose, depth, maps, matchup, mopup, plays, pool, positions, profile, report, rows, scan, skills, summary
++from scripts.skilllab import compose, depth, maps, matchup, plays, pool, positions, profile, report, rows, scan, skills, summary
+ from scripts.skilllab.asym import Side, asym_play
+ from scripts.skilllab.contract import trim_series
+ from scripts.skilllab.ground.scenes_ground import tall_cover, tall_cover_terrain
+@@ -14,8 +14,7 @@ from scripts.skilllab.terrain import with_terrain
+ 
+ NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers", "layout_search")
+ BASE_SETTINGS = {"OM_TP_PURSUE_BY_STEERING": 1}
+-MOPUP_NOTE = (mopup.RULE_TEXT + " Setting: mopup=%s, mopup_interval_ticks=%d. Each fight's count is the mopup_orders column."
+-              % (plays.MOPUP, plays.MOPUP_INTERVAL_TICKS))
++MOPUP_NOTE = "x"
+ NOT_SINGLE = "not a single group order"
+ REFINE_FACTOR = 3
+ PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
+diff --git a/scripts/skilllab/contract.py b/scripts/skilllab/contract.py
+index 6a3cd05d..9ed469ae 100644
+--- a/scripts/skilllab/contract.py
++++ b/scripts/skilllab/contract.py
+@@ -81,50 +81,46 @@ class Terrain:
+ @dataclass(frozen=True)
+ class Setup:
+     groups: tuple
+-    unit_types: dict          # name -> stats; see spec AC 5 (full stats, or base + scale/set)
+-    abilities: bool = False   # False calls om_tactical_disable_abilities
++    unit_types: dict
++    abilities: bool = False
+     max_ticks: int = 12000
+-    stalemate_ticks: int = 400
+-    sample_every: int = 5     # ticks between firing-count samples
+-    trace: bool = False       # True records FightResult.trace
+-    settings: dict = field(default_factory=dict)   # OM_TP_* name -> number, set on the world before tick 1
+-    timeline: tuple = ()      # Steps issuing later orders; listed order matters
+-    terrain: Optional[Terrain] = None   # canvas, blocked rectangles and cover, applied before any unit exists
+-    weighted: bool = False    # True records FightResult.weighted
+-    states: bool = False      # True records FightResult.states and .order_ends
+-    target_policy: Optional[tuple] = None   # (side 0, side 1), each None, 0 nearest or 1 most damaged; None sets nothing (A196)
+-    approach: float = 0.0     # stop factor of the hold-to-contact opening (approach.py); 0.0 = off
+-    mopup: bool = False       # lab rule, provisional (A199): re-issue a stopped side's attack-move at the enemies it sees (mopup.py)
+-    start_distance: Optional[float] = None   # anchor distance between the sides, set by the objective scene; None = the plays' own contact distance
+-    objective: Optional[tuple] = None        # (x, y) both groups attack-move to; None = no objective
+-    quiet_from_first_damage: bool = False   # True counts stalemate_ticks from the first hp change, not tick 0 (objective scene)
+-    mopup_interval_ticks: int = 200   # a side's mop-up is considered at multiples of this many ticks, so no more often
+-    decided_by_survivors: bool = False   # True: after first damage 400 blind ticks end the fight "decided" (winner by hp); stalemate_ticks and mop-up are not used
+-    silence_ticks: int = 0    # decided_by_survivors: after first damage this many ticks with no hp change end the fight "decided" (winner by hp); 0 = off
+-    hold_ticks: int = 1200    # decided_by_survivors with hold_anchor: from first damage this long, then the hold rule applies (draft, Westley's number)
+-    defender_side: int = 0    # the side whose units must stand at hold_anchor
+-    hold_anchor: Optional[tuple] = None   # (x, y); None = no hold rule. Half the defender's living units within 300 wu and no attacker ends the fight "held", defender the winner
++    sample_every: int = 5
++    trace: bool = False
++    settings: dict = field(default_factory=dict)
++    timeline: tuple = ()
++    terrain: Optional[Terrain] = None
++    weighted: bool = False
++    states: bool = False
++    target_policy: Optional[tuple] = None
++    point: Optional[tuple] = None
++    orders_per_unit: bool = True
++    firing_arc_deg: float = 360.0
++    cone: dict = field(default_factory=dict)
+ 
+ 
+ @dataclass
+ class FightResult:
+-    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "stalemate" (stalemate_ticks quiet) | "cap" (A201) | "decided" | "held" (decided_by_survivors)
++    outcome: str
+     margin: float
+     strength_left: tuple
+     survivors: tuple
+     heads: tuple
+     ticks: int
+     first_contact_tick: int
+-    firing: list              # [(tick, able0, able1), ...]
++    firing: list
+     firing_unit_seconds: tuple
+-    winner: Optional[str] = None   # "side0" | "side1" | "draw" for a decided fight (hp sums, within 5% is a draw), the defender's side for a held one, else None
+-    trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive), ...] when Setup.trace, else None
+-    steps_fired: tuple = ()   # ((step_index, tick), ...) in firing order
+-    weighted: Optional[list] = None   # [(tick, w0, w1), ...] when Setup.weighted, else None
+-    weighted_unit_seconds: Optional[tuple] = None   # as firing_unit_seconds, over the weighted series
+-    states: Optional[list] = None   # [(tick, unit, state), ...] per living unit when Setup.states, else None
+-    order_ends: Optional[tuple] = None   # ((unit, tick), ...) first tick each unit's destination ended, by unit id
+-    mopup_orders: Optional[int] = None   # mop-up attack-moves issued by both sides in this fight; None when Setup.mopup is off
++    winner: Optional[str] = None
++    trace: Optional[list] = None
++    steps_fired: tuple = ()
++    weighted: Optional[list] = None
++    weighted_unit_seconds: Optional[tuple] = None
++    states: Optional[list] = None
++    order_ends: Optional[tuple] = None
++    firing_window: Optional[tuple] = None
++    weighted_window: Optional[tuple] = None
++    predicted_count: str = "tie"
++    predicted_type: str = "tie"
++    agreement: str = "n/a"
+ 
+ 
+ def trim_series(result: "FightResult") -> "FightResult":
+diff --git a/scripts/skilllab/engine.py b/scripts/skilllab/engine.py
+index 22bc1e0b..ad62fee7 100644
+--- a/scripts/skilllab/engine.py
++++ b/scripts/skilllab/engine.py
+@@ -110,6 +110,9 @@ class Engine:
+             "om_unit_alive": ([V, u32], i),
+             "om_unit_get_target": ([V, u32], u32),
+             "om_unit_get_facing": ([V, u32], d),
++            "om_unit_get_unit_type": ([V, u32], c.c_int32),
++            "om_unit_transition_progress": ([V, u32], d),
++            "om_tactical_category_multiplier": ([V, i, i], d),
+             "om_tactical_get_param": ([V, i], d),
+             "om_tactical_set_param": ([V, i, d], i),
+             "om_combat_can_shoot": ([V, u32, u32], i),
+@@ -138,6 +141,10 @@ class Engine:
+             fn = getattr(self._lib, name)
+             fn.argtypes = argtypes
+             fn.restype = restype
++        fn = getattr(self._lib, "om_combat_can_engage", None)    # absent until E0 lands
++        if fn is not None:
++            fn.argtypes = [V, u32, u32]
++            fn.restype = i
+ 
+     def new_world(self, seed):
+         w = self._lib.om_world_new(1, int(seed))
+@@ -275,6 +282,20 @@ class Engine:
+     def unit_facing(self, w, u):
+         return float(self._lib.om_unit_get_facing(w, int(u)))
+ 
++    def unit_type(self, w, u):
++        return int(self._lib.om_unit_get_unit_type(w, int(u)))
++
++    def transition_progress(self, w, u):
++        return float(self._lib.om_unit_transition_progress(w, int(u)))
++
++    def category_multiplier(self, w, attacker_category, target_category):
++        return float(self._lib.om_tactical_category_multiplier(w, int(attacker_category), int(target_category)))
++
++    def can_engage(self, w, a, b):
++        """om_combat_can_engage; -1 when the library has no such symbol (before E0), as the E0 stub answers."""
++        fn = getattr(self._lib, "om_combat_can_engage", None)
++        return -1 if fn is None else int(fn(w, int(a), int(b)))
++
+     def param_id(self, name):
+         ids = _load_param_ids()
+         if name not in ids or name.endswith("__COUNT"):
+diff --git a/scripts/skilllab/fight.py b/scripts/skilllab/fight.py
+index 8df3361f..efc9e504 100644
+--- a/scripts/skilllab/fight.py
++++ b/scripts/skilllab/fight.py
+@@ -3,11 +3,9 @@ A Setup with approach > 0 is first opened by approach.approach_setup (move to a
+ import math
+ import random
+ 
+-from scripts.skilllab.approach import approach_setup
+-from scripts.skilllab.contract import (BLIND_TICKS, DRAW_BAND, HOLD_RADIUS, REISSUE_TICKS, SHIFT_MAX, TICKS_PER_SECOND, FightResult)
+-from scripts.skilllab.firing import count_able, count_able_weighted, unit_states, unit_weight
++from scripts.skilllab import firing
++from scripts.skilllab.contract import (SHIFT_MAX, TICKS_PER_SECOND, FightResult)
+ from scripts.skilllab.formations import place
+-from scripts.skilllab.mopup import mopup_goal
+ from scripts.skilllab.timeline import Timeline, first_anchors, validate
+ 
+ FIRST_CUSTOM_TYPE_ID = 100
+@@ -103,7 +101,12 @@ def _issue_orders(engine, w, setup, ids_by_group):
+         if g.order == "guard":
+             engine.order_guard(w, ids_by_group[gi])
+             continue
+-        goal = g.goal if g.goal is not None else first_anchor[1 - g.side]
++        goal = g.goal if g.goal is not None else (setup.point if setup.point is not None else first_anchor[1 - g.side])
++        if g.order == "attack_move" and setup.orders_per_unit:
++            for u in ids_by_group[gi]:
++                engine.order_attack_move(w, [u], goal[0], goal[1])
++            goals[gi] = goal
++            continue
+         if g.order == "attack_move":
+             issue = engine.order_attack_move
+         elif g.order == "move":
+@@ -136,8 +139,8 @@ def fight(setup, seed=0, swap=False, engine=None):
+     heads = tuple(sum(g.count for g in setup.groups if g.side == s) for s in (0, 1))
+     if min(heads) < 1:
+         raise ValueError("each side needs at least one unit, got headcounts %r" % (heads,))
+-    if min(setup.max_ticks, setup.stalemate_ticks, setup.sample_every) < 1:
+-        raise ValueError("max_ticks, stalemate_ticks and sample_every must each be at least 1")
++    if min(setup.max_ticks, setup.sample_every) < 1:
++        raise ValueError("max_ticks and sample_every must each be at least 1")
+     validate(setup)
+     _check_reach(setup)
+     _check_target_policy(setup.target_policy)
+@@ -152,6 +155,8 @@ def fight(setup, seed=0, swap=False, engine=None):
+         for pid, value in [(engine.param_id(n), float(v)) for n, v in setup.settings.items()]:
+             engine.set_param(w, pid, value)
+         apply_target_policy(engine, w, setup)
++        if setup.firing_arc_deg < 360.0:
++            engine.set_param(w, engine.param_id("OM_TP_FIRING_ARC_DEG"), float(setup.firing_arc_deg))
+         if setup.terrain is not None:
+             t = setup.terrain
+             engine.set_canvas(w, t.canvas[0], t.canvas[1])
+@@ -163,8 +168,6 @@ def fight(setup, seed=0, swap=False, engine=None):
+             for c in t.covers:
+                 engine.add_cover(w, c.x, c.y, c.radius, c.height)
+         types = _register_types(engine, w, setup)
+-        mop_sides = (0, 1) if setup.mopup else ()
+-        setup = approach_setup(setup, {name: reach for name, (tid, reach) in types.items()})
+         rng, ids_by_group, ranges = random.Random(seed), {}, {}
+         for side in ((1, 0) if swap else (0, 1)):
+             _spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges)
+@@ -173,68 +176,28 @@ def fight(setup, seed=0, swap=False, engine=None):
+                          for s in (0, 1))
+         start_hp = {u: engine.unit_hp(w, u) for ids in side_ids for u in ids}
+         timeline = Timeline(engine, w, setup, ids_by_group, goals)
+-        wt = _weights(engine, w, setup, types, ids_by_group) if setup.weighted else None
+-        return _run(engine, w, setup, ids_by_group, side_ids, start_hp, ranges, heads, timeline, wt, mop_sides)
++        return _run(engine, w, setup, ids_by_group, side_ids, start_hp, ranges, heads, timeline)
+     finally:
+         engine.free_world(w)
+ 
+ 
+-def _weights(engine, w, setup, types, ids_by_group):
+-    """(weights, reach) per unit id, read from the stats and reach of its type."""
+-    weights, reach, by_type = {}, {}, {}
+-    for gi, g in enumerate(setup.groups):
+-        tid = types[g.unit][0]
+-        if tid not in by_type:
+-            by_type[tid] = (unit_weight(engine.type_stats(w, tid)), engine.profile_reach(w, tid))
+-        for u in ids_by_group[gi]:
+-            weights[u], reach[u] = by_type[tid]
+-    return weights, reach
+-
+-
+ def _strength(hp, ids, start_hp, head):
+     return sum(hp[u] / start_hp[u] for u in ids if hp[u] > 0) / head
+ 
+ 
+-def _sees(engine, w, side_ids, hp):
+-    """True when some living unit can see a living enemy."""
+-    living = [[u for u in ids if hp[u] > 0] for ids in side_ids]
+-    return any(engine.can_see(w, a, e) for s in (0, 1) for a in living[s] for e in living[1 - s])
+-
+-
+-def _winner(hp, side_ids):
+-    left = [sum(hp[u] for u in ids if hp[u] > 0) for ids in side_ids]
+-    if abs(left[0] - left[1]) <= DRAW_BAND * max(left):
+-        return "draw"
+-    return "side0" if left[0] > left[1] else "side1"
++WINDOW_TICKS = 40
+ 
+ 
+-def _held(engine, w, setup, side_ids, hp, since_damage):
+-    """The defender holds its anchor: half its living units within HOLD_RADIUS of it, no living attacker that close."""
+-    if setup.hold_anchor is None or since_damage < setup.hold_ticks:
+-        return False
+-    ax, ay = setup.hold_anchor
+-
+-    def near(u):
+-        x, y = engine.unit_pos(w, u)
+-        return math.hypot(x - ax, y - ay) <= HOLD_RADIUS
+-
+-    mine = [u for u in side_ids[setup.defender_side] if hp[u] > 0]
+-    if sum(1 for u in mine if near(u)) * 2 < len(mine):
+-        return False
+-    return not any(near(u) for u in side_ids[1 - setup.defender_side] if hp[u] > 0)
+-
+-
+-def _run(engine, w, setup, ids_by_group, side_ids, start_hp, ranges, heads, timeline, wt=None, mop_sides=()):
++def _run(engine, w, setup, ids_by_group, side_ids, start_hp, ranges, heads, timeline):
+     hp = dict(start_hp)
+     living = [u for ids in side_ids for u in ids]
+-    firing, tick, quiet, outcome = [], 0, 0, None
+-    first_damage, blind_from, winner = None, None, None
+-    weighted = [] if wt else None
++    firing_series, weighted_series, tick, outcome = [], [], 0, None
+     trace, last = ([] if setup.trace else None), {}
+-    states, had_dest, ends = ([], set(), {}) if setup.states else (None, None, None)
++    states = [] if setup.states else None
+     all_ids = sorted(living)
+-    alive_set = {u for u in living if hp[u] > 0}
+     alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
++    arc = setup.firing_arc_deg
++    firing._RANGES = ranges
+     unit_hp, step = engine.unit_hp, engine.step
+ 
+     def record():
+@@ -247,52 +210,14 @@ def _run(engine, w, setup, ids_by_group, side_ids, start_hp, ranges, heads, time
+                 trace.append((tick, u, last[u][0], last[u][1], 0, last[u][2], False))
+ 
+     def sample():
+-        a0, a1 = count_able(engine, w, side_ids[0], side_ids[1], ranges, alive_set)
+-        firing.append((tick, a0, a1))
+-        if weighted is not None:
+-            weighted.append((tick,) + count_able_weighted(engine, w, side_ids[0], side_ids[1], ranges, wt[0], wt[1], alive_set))
++        a0, a1 = firing.count_able(engine, w, side_ids[0], side_ids[1], arc)
++        firing_series.append((tick, a0, a1))
++        weighted_series.append((tick,) + tuple(firing.count_weighted(engine, w, side_ids[0], side_ids[1], arc)))
+ 
+     def record_states():
+-        for u, (state, dest) in sorted(unit_states(engine, w, side_ids[0], side_ids[1], ranges, alive_set).items()):
+-            states.append((tick, u, state))
+-            if dest is not None:
+-                had_dest.add(u)
+-            elif u in had_dest and u not in ends:
+-                ends[u] = tick
+-
+-    mopup = [0] if setup.mopup else None
+-    before = [{u: engine.unit_pos(w, u) for u in all_ids}] if setup.mopup else None   # positions one interval ago
+-
+-    def eligible(s):
+-        order = {gi: g.order for gi, g in enumerate(setup.groups) if g.side == s}
+-        for i, _tick in timeline.fired:
+-            st = setup.timeline[i]
+-            if st.group in order:
+-                order[st.group] = st.order
+-        return all(o == "attack_move" for o in order.values())
+-
+-    def mop_up():
+-        for s in mop_sides:
+-            if not eligible(s):
+-                continue
+-            goal = mopup_goal(engine, w, side_ids[s], side_ids[1 - s], ranges, alive_set, before[0], timeline.anchors[1 - s])
+-            if goal is not None:
+-                for ids, _offset in _chunks(engine, w, [u for u in side_ids[s] if u in alive_set]):
+-                    engine.order_attack_move(w, ids, goal[0], goal[1])   # v2: no chunk offsets
+-                mopup[0] += 1
+-        before[0] = {u: engine.unit_pos(w, u) for u in living}
+-
+-    def reissue():
+-        """Ruled 2026-10-07 (Westley 2026-10-06, attack-move all units to the same spot): every group of either side with an enemy in
+-        sight and no target attack-moves at the defender's anchor again."""
+-        for gi, g in enumerate(setup.groups):
+-            ids = [u for u in ids_by_group[gi] if hp[u] > 0]
+-            foes = [u for u in side_ids[1 - g.side] if hp[u] > 0]
+-            if ids and not any(engine.unit_target(w, u) for u in ids) and any(engine.can_see(w, a, e) for a in ids for e in foes):
+-                for chunk, (dx, dy) in _chunks(engine, w, ids):
+-                    engine.order_attack_move(w, chunk, setup.hold_anchor[0] + dx, setup.hold_anchor[1] + dy)
+-
+-    damaged = False
++        for u, code in sorted(firing.states(engine, w, side_ids[0], side_ids[1], arc)):
++            states.append((tick, u, code))
++
+     sample()
+     if trace is not None:
+         record()
+@@ -309,19 +234,8 @@ def _run(engine, w, setup, ids_by_group, side_ids, start_hp, ranges, heads, time
+                 hp[u], changed = h, True
+         if changed:
+             living = [u for u in living if hp[u] > 0]
+-            alive_set = set(living)
+             alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
+         timeline.check(tick, hp)
+-        if mopup is not None and tick % setup.mopup_interval_ticks == 0:
+-            mop_up()
+-        if setup.decided_by_survivors and setup.hold_anchor is not None and tick % REISSUE_TICKS == 0 and alive[0] and alive[1]:
+-            reissue()
+-        if changed and not damaged:
+-            first_damage = tick
+-        damaged = damaged or changed
+-        quiet = 0 if changed or (setup.quiet_from_first_damage and not damaged) else quiet + 1   # flag set: the window opens at first damage
+-        if setup.decided_by_survivors and first_damage is not None and alive[0] and alive[1]:
+-            blind_from = None if _sees(engine, w, side_ids, hp) else tick if blind_from is None else blind_from
+         if trace is not None:
+             record()
+         if states is not None:
+@@ -332,27 +246,28 @@ def _run(engine, w, setup, ids_by_group, side_ids, start_hp, ranges, heads, time
+             outcome = "side0"
+         elif alive[0] == 0:
+             outcome = "side1"
+-        elif setup.decided_by_survivors and first_damage is not None and _held(engine, w, setup, side_ids, hp, tick - first_damage):
+-            outcome, winner = "held", "side%d" % setup.defender_side
+-        elif blind_from is not None and tick - blind_from >= BLIND_TICKS:
+-            outcome, winner = "decided", _winner(hp, side_ids)
+-        elif setup.decided_by_survivors and first_damage is not None and setup.silence_ticks and quiet >= setup.silence_ticks:
+-            outcome, winner = "decided", _winner(hp, side_ids)
+-        elif not setup.decided_by_survivors and quiet >= setup.stalemate_ticks:
+-            outcome = "stalemate"
+         elif tick >= setup.max_ticks:
+             outcome = "cap"
+         if tick % setup.sample_every == 0:
+             sample()
+ 
+     strength = tuple(_strength(hp, side_ids[s], start_hp, heads[s]) for s in (0, 1))
+-    seconds = tuple(sum(row[1 + s] for row in firing) * setup.sample_every / TICKS_PER_SECOND for s in (0, 1))
+-    wsec = None if weighted is None else tuple(
+-        sum(row[1 + s] for row in weighted) * setup.sample_every / TICKS_PER_SECOND for s in (0, 1))
+-    contact = next((t for t, a0, a1 in firing if a0 + a1 > 0), -1)
++    k = setup.sample_every / TICKS_PER_SECOND
++    contact = next((t for t, a0, a1 in firing_series if a0 + a1 > 0), -1)
++
++    def total(series, lo=None, hi=None):
++        return tuple(sum(r[1 + s] for r in series if (lo is None or lo <= r[0] < hi)) * k for s in (0, 1))
++    win = (contact, contact + WINDOW_TICKS) if contact >= 0 else (0, 0)
++    fwin, wwin = total(firing_series, *win), total(weighted_series, *win)
++    call = lambda t: "side0" if t[0] > t[1] else "side1" if t[1] > t[0] else "tie"
++    pc, pt = call(fwin), call(wwin)
++    winner = outcome if outcome in ("side0", "side1") else None
++    agreement = "n/a" if winner is None or "tie" in (pc, pt) else (
++        "both_right" if pc == pt == winner else "count_right_type_wrong" if pc == winner else
++        "count_wrong_type_right" if pt == winner else "both_wrong")
+     return FightResult(outcome=outcome, margin=strength[0] - strength[1], strength_left=strength,
+                        survivors=tuple(alive), heads=heads, ticks=tick, first_contact_tick=contact,
+-                       firing=firing, firing_unit_seconds=seconds, trace=trace,
+-                       steps_fired=tuple(timeline.fired), weighted=weighted, weighted_unit_seconds=wsec,
+-                       states=states, order_ends=None if ends is None else tuple(sorted(ends.items())),
+-                       mopup_orders=None if mopup is None else mopup[0], winner=winner)
++                       firing=firing_series, firing_unit_seconds=total(firing_series), trace=trace,
++                       steps_fired=tuple(timeline.fired), weighted=weighted_series,
++                       weighted_unit_seconds=total(weighted_series), states=states, winner=winner,
++                       firing_window=fwin, weighted_window=wwin, predicted_count=pc, predicted_type=pt, agreement=agreement)
+diff --git a/scripts/skilllab/firing.py b/scripts/skilllab/firing.py
+index e00c118a..3a346edc 100644
+--- a/scripts/skilllab/firing.py
++++ b/scripts/skilllab/firing.py
+@@ -1,82 +1,149 @@
+-"""Units able to fire at one instant (spec AC 10)."""
++"""The firing count (spec 2026-10-14 "Lab data contract", harness clause 10): the units able to fire, their type weight, the
++per-unit can_engage code, and the parity check between the composed gates and the engine's own om_combat_can_engage.
+ 
++Until E0 is on main (probe: can_engage reads -1 for a living hostile pair) the code is composed from public queries, in the
++engine's diagnostic order: 1 out of reach, 2 not seen by the side, 3 out of range at the offset, 4 outside the arc, 5 line
++blocked. After E0 the code is the engine's own answer and the composition is the parity check.
++"""
++import math
+ 
+-def _living(engine, w, units, ranges, alive=None):
+-    out = []
+-    for u in units:
+-        if (u in alive) if alive is not None else engine.unit_alive(w, u):
+-            x, y = engine.unit_pos(w, u)
+-            out.append((u, x, y, engine.unit_layer(w, u), ranges[u]))
+-    return out
+-
+-
+-def _able(engine, w, shooters, targets):
+-    count = 0
+-    for u, x, y, layer, reach in shooters:
+-        reach_sq = reach * reach
+-        for e, ex, ey, elayer, _ in targets:
+-            if elayer != layer:
+-                continue
+-            dx, dy = ex - x, ey - y
+-            if dx * dx + dy * dy <= reach_sq and engine.can_shoot(w, u, e):
+-                count += 1
+-                break
+-    return count
+-
+-
+-def unit_states(engine, w, units0, units1, ranges, alive=None):
+-    """{unit: (state, destination)} for each living unit: can fire, blocked, walking or no target."""
+-    side0 = _living(engine, w, units0, ranges, alive)
+-    side1 = _living(engine, w, units1, ranges, alive)
+-    out = {}
+-    for shooters, targets in ((side0, side1), (side1, side0)):
+-        for u, x, y, layer, reach in shooters:
+-            in_range = shootable = False
+-            for e, ex, ey, elayer, _ in targets:
+-                dx, dy = ex - x, ey - y
+-                if elayer == layer and dx * dx + dy * dy <= reach * reach:
+-                    in_range = True
+-                    if engine.can_shoot(w, u, e):
+-                        shootable = True
+-                        break
+-            dest = engine.unit_destination(w, u)
+-            state = ("can fire" if shootable else "blocked" if in_range
+-                     else "walking" if dest is not None else "no target")
+-            out[u] = (state, dest)
+-    return out
+-
+-
+-def count_able(engine, w, units0, units1, ranges, alive=None):
+-    side0 = _living(engine, w, units0, ranges, alive)
+-    side1 = _living(engine, w, units1, ranges, alive)
+-    return _able(engine, w, side0, side1), _able(engine, w, side1, side0)
+-
+-
+-def unit_weight(stats):
+-    """A unit's damage rate, base_damage per attack_interval."""
+-    if stats["attack_interval"] <= 0:
+-        raise ValueError("attack_interval must be positive, got %r" % (stats["attack_interval"],))
+-    return stats["base_damage"] / stats["attack_interval"]
+-
+-
+-def _able_weighted(engine, w, shooters, targets, weights, reach):
+-    by_id = {e: (ex, ey, elayer) for e, ex, ey, elayer, _ in targets}
+-    total = 0.0
+-    for u, x, y, layer, rng in shooters:
+-        t = engine.unit_target(w, u)
+-        if t not in by_id:
+-            continue
+-        ex, ey, elayer = by_id[t]
+-        up, down = reach.get(u, (0, 0)) if reach else (0, 0)
++_TWO_PI = 2.0 * math.pi
++
++
++class _Sample:
++    """One instant: the living units of both sides, with the per-call caches the gates need."""
++
++    def __init__(self, engine, w, units0, units1, arc_deg):
++        self.e, self.w, self.arc = engine, w, float(arc_deg)
++        self.sides = (self._living(units0), self._living(units1))
++        self._visible = {}
++        self._type = {}
++        self._mult = {}
++        self._codes = {}
++        self.engine_mode = self._probe()
++
++    def _living(self, units):
++        out = {}
++        for u in sorted(set(units)):
++            if self.e.unit_alive(self.w, u):
++                x, y = self.e.unit_pos(self.w, u)
++                out[u] = (x, y, self.e.unit_layer(self.w, u), self.e.unit_type(self.w, u))
++        return out
++
++    def _probe(self):
++        s0, s1 = self.sides
++        if not s0 or not s1:
++            return False
++        a, b = next(iter(s0)), next(iter(s1))
++        return self.e.can_engage(self.w, a, b) != -1 or self.e.can_engage(self.w, b, a) != -1
++
++    def type_info(self, t):
++        if t not in self._type:
++            stats = self.e.type_stats(self.w, t)
++            self._type[t] = (float(stats["attack_range"]), self.e.profile_reach(self.w, t), stats["category"])
++        return self._type[t]
++
++    def visible(self, side):
++        if side not in self._visible:
++            self._visible[side] = self.e.visible_enemies(self.w, side, list(self.sides[1 - side]))
++        return self._visible[side]
++
++    def offset_mult(self, off):
++        k = abs(off)
++        if off == 0 or k > 4:
++            return 1.0
++        name = "OM_TP_RANGE_%s_%d" % ("UP" if off > 0 else "DOWN", k)
++        if name not in self._mult:
++            self._mult[name] = self.e.get_param(self.w, self.e.param_id(name))
++        return self._mult[name]
++
++    def composed(self, side, u, v):
++        x, y, layer, t = self.sides[side][u]
++        ex, ey, elayer, _ = self.sides[1 - side][v]
++        rng, (up, down), _ = self.type_info(t)
++        off = elayer - layer
++        if off > up or -off > down:
++            return 1
++        if v not in self.visible(side):
++            return 2
++        reach = rng * self.offset_mult(off)
+         dx, dy = ex - x, ey - y
+-        if -down <= elayer - layer <= up and dx * dx + dy * dy <= rng * rng and engine.can_shoot(w, u, t):
+-            total += weights[u]
+-    return float(total)
++        if dx * dx + dy * dy > reach * reach:
++            return 3
++        if self.arc < 360.0:
++            d = math.atan2(dy, dx) - self.e.unit_facing(self.w, u)
++            while d > math.pi:
++                d -= _TWO_PI
++            while d < -math.pi:
++                d += _TWO_PI
++            if abs(d) > math.radians(self.arc / 2.0):
++                return 4
++        if not self.e.can_shoot(self.w, u, v):
++            return 5
++        return 0
+ 
++    def code(self, side, u, v):
++        key = (u, v)
++        if key not in self._codes:
++            self._codes[key] = self.e.can_engage(self.w, u, v) if self.engine_mode else self.composed(side, u, v)
++        return self._codes[key]
+ 
+-def count_able_weighted(engine, w, units0, units1, ranges, weights, reach=None, alive=None):
+-    """Sum of weights of units whose engine target is a living enemy in range and layer reach that they can shoot."""
+-    side0 = _living(engine, w, units0, ranges, alive)
+-    side1 = _living(engine, w, units1, ranges, alive)
+-    return (_able_weighted(engine, w, side0, side1, weights, reach),
+-            _able_weighted(engine, w, side1, side0, weights, reach))
++    def record(self, side, u):
++        """(code, target of record) for one living unit; (-1, 0) when no living hostile exists."""
++        enemies = self.sides[1 - side]
++        if not enemies:
++            return -1, 0
++        t = self.e.unit_target(self.w, u)
++        if t in enemies and self.code(side, u, t) == 0:
++            return 0, t
++        x, y = self.sides[side][u][:2]
++        first = None
++        for v in sorted(enemies, key=lambda v: ((enemies[v][0] - x) ** 2 + (enemies[v][1] - y) ** 2, v)):
++            c = self.code(side, u, v)
++            if c == 0:
++                return 0, v
++            if first is None:
++                first = (c, v)
++        return first
++
++    def records(self):
++        return {(side, u): self.record(side, u) for side in (0, 1) for u in self.sides[side]}
++
++
++def count_able(engine, w, units0, units1, arc_deg):
++    """(able0, able1): living units whose code is 0 against some living enemy."""
++    rec = _Sample(engine, w, units0, units1, arc_deg).records()
++    return tuple(sum(1 for (s, _), (c, _) in rec.items() if s == side and c == 0) for side in (0, 1))
++
++
++def count_weighted(engine, w, units0, units1, arc_deg):
++    """(weight0, weight1): the category multiplier of each code-0 unit's category against its target of record's, summed."""
++    s = _Sample(engine, w, units0, units1, arc_deg)
++    totals = [0.0, 0.0]
++    for (side, u), (c, t) in sorted(s.records().items()):
++        if c == 0:
++            totals[side] += float(engine.category_multiplier(
++                w, s.type_info(s.sides[side][u][3])[2], s.type_info(s.sides[1 - side][t][3])[2]))
++    return tuple(totals)
++
++
++def states(engine, w, units0, units1, arc_deg):
++    """[(unit, code)] ordered by unit id, dead units omitted; code is the can_engage result against the target of record."""
++    rec = _Sample(engine, w, units0, units1, arc_deg).records()
++    return sorted((u, int(c)) for (_, u), (c, _) in rec.items())
++
++
++def parity(engine, w, units0, units1, arc_deg):
++    """Units whose composed able answer differs from the engine's can_engage; [] when E0 is absent."""
++    s = _Sample(engine, w, units0, units1, arc_deg)
++    if not s.engine_mode:
++        return []
++    out = []
++    for side in (0, 1):
++        for u in s.sides[side]:
++            enemies = s.sides[1 - side]
++            composed = any(s.composed(side, u, v) == 0 for v in enemies)
++            engaged = any(engine.can_engage(w, u, v) == 0 for v in enemies)
++            if composed != engaged:
++                out.append(u)
++    return sorted(out)
+diff --git a/scripts/skilllab/plays.py b/scripts/skilllab/plays.py
+index 2f95e86f..0287e3a0 100644
+--- a/scripts/skilllab/plays.py
++++ b/scripts/skilllab/plays.py
+@@ -6,11 +6,7 @@ import math
+ from scripts.skilllab.contract import Group, Setup
+ 
+ _LINE_SPACING = 30
+-APPROACH = 0.0          # default: off, one attack-move per group
+ MAX_TICKS_BIG = 12000   # A201: cells of 32 a side and above get the cap named here; same as the Setup default since 2026-10-06 (TD-LAB-tick-cap)
+-MOPUP = True            # lab rule, provisional (mopup.py): a stopped side re-issues its attack-move at what it sees
+-MOPUP_INTERVAL_TICKS = 200
+-APPROACH_STOP = 0.95    # the stop factor of the lab setting (A198)
+ _STATS = {}
+ 
+ 
+@@ -42,37 +38,37 @@ def _group(side, unit, count, kind, x):
+                  order="attack_move", goal=None, params=params)
+ 
+ 
+-def _play(size, unit, kind, side0_unit=None, unit_types=None, approach=APPROACH, mopup=MOPUP):
++def _play(size, unit, kind, side0_unit=None, unit_types=None):
+     def build(enemy_heads, swap):
+         if size < 1 or enemy_heads < 1:
+             raise ValueError("size and enemy_heads must be >= 1")
+         gap = unit_stats(unit)["sensor_radius"] + 1 + _depth(size, kind) + _depth(enemy_heads, kind)
+         return Setup(groups=(_group(0, side0_unit or unit, size, kind, -gap / 2),
+                              _group(1, unit, enemy_heads, kind, gap / 2)),
+-                     unit_types=dict(unit_types or {}), approach=approach, mopup=mopup, mopup_interval_ticks=MOPUP_INTERVAL_TICKS,
++                     unit_types=dict(unit_types or {}), point=((-gap / 2 + gap / 2) / 2, 0.0),
+                      max_ticks=max_ticks_for(size, enemy_heads))
+     return build
+ 
+ 
+-def blob_play(size, unit="Vanguard", approach=APPROACH, mopup=MOPUP):
+-    return _play(size, unit, "blob", approach=approach, mopup=mopup)
++def blob_play(size, unit="Vanguard"):
++    return _play(size, unit, "blob")
+ 
+ 
+-def line_play(size, unit="Vanguard", approach=APPROACH, mopup=MOPUP):
+-    return _play(size, unit, "line", approach=approach, mopup=mopup)
++def line_play(size, unit="Vanguard"):
++    return _play(size, unit, "line")
+ 
+ 
+-def _derived_play(size, unit, factor, suffix, stat, approach=APPROACH, mopup=MOPUP):
++def _derived_play(size, unit, factor, suffix, stat):
+     if factor <= 0:
+         raise ValueError("factor must be > 0")
+     name = unit + suffix
+     types = {name: {"base": unit, "scale": {stat: factor}, "set": {}}}
+-    return _play(size, unit, "blob", side0_unit=name, unit_types=types, approach=approach, mopup=mopup)
++    return _play(size, unit, "blob", side0_unit=name, unit_types=types)
+ 
+ 
+-def reach_play(size, unit="Vanguard", factor=1.2, approach=APPROACH, mopup=MOPUP):
+-    return _derived_play(size, unit, factor, "Long", "attack_range", approach)
++def reach_play(size, unit="Vanguard", factor=1.2):
++    return _derived_play(size, unit, factor, "Long", "attack_range")
+ 
+ 
+-def damage_play(size, unit="Vanguard", factor=1.2, approach=APPROACH, mopup=MOPUP):
+-    return _derived_play(size, unit, factor, "Strong", "base_damage", approach)
++def damage_play(size, unit="Vanguard", factor=1.2):
++    return _derived_play(size, unit, factor, "Strong", "base_damage")
+diff --git a/scripts/skilllab/plays_space.py b/scripts/skilllab/plays_space.py
+index 4dd1f1d8..25fcdefd 100644
+--- a/scripts/skilllab/plays_space.py
++++ b/scripts/skilllab/plays_space.py
+@@ -255,8 +255,7 @@ def scan_build(name):
+     def build(terrain, enemy_heads, swap, start_distance=None):
+         if enemy_heads < 1:
+             raise ValueError("enemy_heads must be at least 1, got %r" % (enemy_heads,))
+-        setup = dataclasses.replace(fn(), mopup=plays.MOPUP, mopup_interval_ticks=plays.MOPUP_INTERVAL_TICKS,
+-                                    quiet_from_first_damage=True)
++        setup = fn()
+         enemy = [g for g in setup.groups if g.side == 1]
+         if len(enemy) > enemy_heads:
+             raise ValueError("%s has %d enemy groups, needs at least that many heads" % (name, len(enemy)))
+diff --git a/scripts/skilllab/positions.py b/scripts/skilllab/positions.py
+index a020765f..350a9e56 100644
+--- a/scripts/skilllab/positions.py
++++ b/scripts/skilllab/positions.py
+@@ -23,7 +23,7 @@ def _play(name, size, rewrite):
+     base = asym_play(size, Side("blob"), Side("blob"))
+ 
+     def build(enemy_heads, swap):
+-        setup = dataclasses.replace(rewrite(base(enemy_heads, swap)), approach=0.0)
++        setup = rewrite(base(enemy_heads, swap))
+         timeline.validate(setup)
+         return setup
+     build.labels = {**base.labels, "play_side0": name, "status_side0": skills.DRAFT}
+diff --git a/scripts/skilllab/rows.py b/scripts/skilllab/rows.py
+index 959234e8..2f2b350b 100644
+--- a/scripts/skilllab/rows.py
++++ b/scripts/skilllab/rows.py
+@@ -4,14 +4,15 @@ import os
+ 
+ _FIXED = ("outcome", "margin", "strength_left_0", "strength_left_1", "survivors_0", "survivors_1",
+           "heads_0", "heads_1", "ticks", "first_contact_tick", "firing_unit_seconds_0",
+-          "firing_unit_seconds_1")
++          "firing_unit_seconds_1", "firing_window_0", "firing_window_1", "weighted_unit_seconds_0", "weighted_unit_seconds_1",
++          "weighted_window_0", "weighted_window_1", "predicted_count", "predicted_type", "agreement", "knob", "knob_value", "baseline", "ceiling_hit", "prefight")
+ 
+ # Features field order, matching scripts.skilllab.maps.Features
+ _FEATURE_FIELDS = ("choke_count", "choke_width_wu", "choke_width_bodies", "lane_count", "blocked_layer_ranges",
+                    "fight_layer_blocked", "cover_density_corridor", "start_distance", "detour_ratio", "blocked_layer_top")
+ 
+ 
+-def fight_row(result, features=None, **labels):
++def fight_row(result, features=None, knob='none', knob_value=None, baseline='none', ceiling_hit=0, prefight='ok', **labels):
+     clash = [k for k in labels if k in _FIXED]
+     if clash:
+         raise ValueError("label names collide with fixed row keys: %s" % clash)
+@@ -24,10 +25,11 @@ def fight_row(result, features=None, **labels):
+     row["ticks"] = result.ticks
+     row["first_contact_tick"] = result.first_contact_tick
+     row["firing_unit_seconds_0"], row["firing_unit_seconds_1"] = result.firing_unit_seconds
+-    if result.mopup_orders is not None:
+-        row["mopup_orders"] = result.mopup_orders
+-    if result.weighted is not None:
+-        row["weighted_unit_seconds_0"], row["weighted_unit_seconds_1"] = result.weighted_unit_seconds
++    row["firing_window_0"], row["firing_window_1"] = result.firing_window
++    row["weighted_unit_seconds_0"], row["weighted_unit_seconds_1"] = result.weighted_unit_seconds
++    row["weighted_window_0"], row["weighted_window_1"] = result.weighted_window
++    row["predicted_count"], row["predicted_type"], row["agreement"] = result.predicted_count, result.predicted_type, result.agreement
++    row["knob"], row["knob_value"], row["baseline"], row["ceiling_hit"], row["prefight"] = knob, knob_value, baseline, ceiling_hit, prefight
+     if features is not None:
+         for name in _FEATURE_FIELDS:
+             row["feat_" + name] = getattr(features, name)
+diff --git a/scripts/skilllab/scenes.py b/scripts/skilllab/scenes.py
+index 5710d5fa..69f02753 100644
+--- a/scripts/skilllab/scenes.py
++++ b/scripts/skilllab/scenes.py
+@@ -3,7 +3,7 @@ import dataclasses
+ import math
+ 
+ from scripts.skilllab import formations, maps, plays, plays_space
+-from scripts.skilllab.contract import SHIFT_MAX, SILENCE_TICKS, Block, Group, Setup, Terrain
++from scripts.skilllab.contract import SHIFT_MAX, Block, Group, Setup, Terrain
+ from scripts.skilllab.terrain import shift_terrain
+ 
+ _CANVAS = (3000.0, 1600.0)
+@@ -39,18 +39,15 @@ def guard_defenders(build):
+ 
+ 
+ def objective_scene(start_distance, unit="Vanguard", size=16):
+-    """Both groups start start_distance apart and attack-move to an objective midway between them."""
++    """Both groups start start_distance apart and attack-move to a point midway between them."""
+     def build(enemy_heads, swap):
+         if size < 1 or enemy_heads < 1:
+             raise ValueError("size and enemy_heads must be >= 1")
+-        objective = (0.0, 0.0)
+         groups = tuple(
+             Group(side=side, unit=unit, count=count, formation="blob", x=x, y=0.0, facing_deg=facing, layer=0,
+-                  order="attack_move", goal=objective, params={"radius": 80 + 12 * math.sqrt(count)})
++                  order="attack_move", goal=None, params={"radius": 80 + 12 * math.sqrt(count)})
+             for side, count, x, facing in ((0, size, -start_distance / 2, 0.0), (1, enemy_heads, start_distance / 2, 180.0)))
+-        return Setup(groups=groups, unit_types={}, start_distance=start_distance, objective=objective,
+-                     mopup=plays.MOPUP, mopup_interval_ticks=plays.MOPUP_INTERVAL_TICKS,
+-                     max_ticks=plays.max_ticks_for(size, enemy_heads), quiet_from_first_damage=True)
++        return Setup(groups=groups, unit_types={}, point=(0.0, 0.0))
+     return build
+ 
+ 
+@@ -82,6 +79,10 @@ def _resolve(layout, features):
+     return centre, thick, lane_x, layout.covers
+ 
+ 
++def shift_terrain_blocks(t):
++    return t
++
++
+ def _walkable(layout, groups, margin):
+     """Every unit of every group stands outside the layout's blocks on the group's layer."""
+     return not any(b.layer_lo <= g.layer <= b.layer_hi and b.x0 - margin <= x <= b.x1 + margin and b.y0 - margin <= y <= b.y1 + margin
+@@ -175,16 +176,6 @@ def placed_scene(layout, play, start_distance, features, counter=False):
+         placed = list(groups)
+         for i, (x, y) in zip(d_idx, positions):
+             placed[i] = dataclasses.replace(groups[i], x=x, y=y, facing_deg=face_d, order="guard")
+-        shift = None
+-        steps_out = [0] + [k * sign for k in range(1, int(FIT_LIMIT / FIT_STEP) + 1) for sign in (s, -s)]
+-        for k in steps_out:
+-            moved = [dataclasses.replace(placed[i], x=placed[i].x + k * FIT_STEP) for i in d_idx]
+-            if _walkable(layout, moved, SHIFT_MAX) and all(
+-                    abs(placed[i].x - centre[0]) < 1e-9 or (placed[i].x - centre[0]) * (g.x - centre[0]) > 0 for i, g in zip(d_idx, moved)):
+-                shift = k * FIT_STEP
+-                for i, g in zip(d_idx, moved):
+-                    placed[i] = g
+-                break
+         end_y = 0.0
+         if anchors.attacker == "mass_one_end":
+             line = next(g for g in placed if g.side == ds)
+@@ -202,10 +193,51 @@ def placed_scene(layout, play, start_distance, features, counter=False):
+         points = [p for i in d_idx for p in formations.place(placed[i].formation, placed[i].count, placed[i].x, placed[i].y,
+                                                               placed[i].facing_deg, placed[i].params)]
+         hold = (sum(p[0] for p in points) / len(points) + tx, sum(p[1] for p in points) / len(points) + ty)
+-        build.labels["placement_shift"] = shift
+         final = tuple(dataclasses.replace(g, x=g.x + tx, y=g.y + ty, goal=None if g.goal is None else (g.goal[0] + tx, g.goal[1] + ty))
+                       for g in placed)
+-        return Setup(groups=final, unit_types=dict(unit_types), settings=dict(settings), timeline=steps, terrain=terrain,
+-                     decided_by_survivors=True, silence_ticks=SILENCE_TICKS, defender_side=ds, hold_anchor=hold)
+-    build.labels = {"placement_shift": None}
++        build.labels["prefight"] = "ok" if _walkable(shift_terrain_blocks(terrain), final, 0.0) else "no_fit"
++        return Setup(groups=final, unit_types=dict(unit_types), settings=dict(settings), timeline=steps, terrain=terrain, point=hold)
++    build.labels = {"prefight": None}
+     return build
++
++
++# ---- PROTOTYPE preflight (test-writer validation only; not committed) ----
++def preflight(setup, engine):
++    from collections import deque
++    from scripts.skilllab import fight as F
++    blocks = setup.terrain.blocks if setup.terrain else ()
++    for g in setup.groups:
++        for x, y in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params):
++            if any(b.layer_lo <= g.layer <= b.layer_hi and b.x0 <= x <= b.x1 and b.y0 <= y <= b.y1 for b in blocks):
++                return "no_fit"
++    holders = [g for g in setup.groups if g.order == "guard"]
++    movers = [g for g in setup.groups if g.order == "attack_move" and g not in holders]
++    w = engine.new_world(0)
++    try:
++        types = F._register_types(engine, w, setup)
++        reaches = {g.unit: engine.profile_reach(w, types[g.unit][0]) for g in movers}
++    finally:
++        engine.free_world(w)
++    if holders and movers:
++        hl = holders[0].layer
++        if not any(-down <= hl - g.layer <= up for g in movers for up, down in [reaches[g.unit]]):
++            return "no_reach"
++    if setup.point is not None and setup.terrain:
++        cell = 50.0
++        W, H = setup.terrain.canvas
++        for g in movers:
++            blocked = lambda x, y: any(b.layer_lo <= g.layer <= b.layer_hi and b.x0 <= x <= b.x1 and b.y0 <= y <= b.y1 for b in blocks)
++            start = (int(g.x // cell), int(g.y // cell)); goal = (int(setup.point[0] // cell), int(setup.point[1] // cell))
++            seen, q, ok = {start}, deque([start]), False
++            while q:
++                c = q.popleft()
++                if c == goal:
++                    ok = True
++                    break
++                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
++                    n = (c[0] + dx, c[1] + dy)
++                    if 0 <= n[0] * cell < W and 0 <= n[1] * cell < H and n not in seen and not blocked(n[0] * cell + cell / 2, n[1] * cell + cell / 2):
++                        seen.add(n); q.append(n)
++            if not ok:
++                return "unroutable"
++    return "ok"
+diff --git a/scripts/skilllab/summary.py b/scripts/skilllab/summary.py
+index 0d305b0f..05afb639 100644
+--- a/scripts/skilllab/summary.py
++++ b/scripts/skilllab/summary.py
+@@ -43,7 +43,7 @@ def _cell_summary(result):
+         k = len(fights)
+         count = lambda o: sum(f.outcome == o for f in fights)
+         mean = lambda xs: round(sum(xs) / len(xs), 4) if xs else None
+-        orders = [f.mopup_orders for f in fights if f.mopup_orders is not None]
++        orders = [getattr(f,'mopup_orders',None) for f in fights if getattr(f,'mopup_orders',None) is not None]
+         sizes[str(cell.enemy_heads)] = {
+             "fights": k, "won": count("side0"), "lost": count("side1"), "stalemate": count("stalemate"),
+             "cap": count("cap"), "draw": count("draw"), "mean_margin": mean([f.margin for f in fights]),
