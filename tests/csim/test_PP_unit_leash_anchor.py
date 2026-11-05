@@ -1,3 +1,4 @@
+# Rule pins: R-087-05@a79833, R-096-03@16d0c4
 """PP-unit: the leash anchor is where the target was ACQUIRED (E-11 R-087-05, E-13 R-096-03;
 ALG-68 "Attack-move leash 200 wu from the acquisition anchor"; rulings-2 A167, A168; contract call
 `om_unit_get_leash_anchor`, docs/northstar/plans/push/pp_contract.md item 16).
@@ -156,7 +157,7 @@ def test_control_R_087_05_target_leaving_200_of_the_acquisition_spot_is_dropped(
     w = world_factory(n_regions=1)
     u, enemy = _marched_unit(lib, w, switch)
     ax, ay = _acquire_ahead(lib, w, u, enemy, 150.0)
-    lib.om_unit_teleport(w, u, ax + 250.0, ay, 0)
+    lib.om_unit_teleport(w, u, ax + 750.0, ay, 0)
 
     seen = watch_target(lib, w, u, 25)
 

@@ -1,4 +1,6 @@
-"""PP-unit: no pursuit on sight (E-11 S-087, R-087-04, R-087-05; plan Phase A row P1, audit G10).
+# Rule pins: R-087-04@74cc9c, R-087-05@a79833, R-093-02@652353
+"""PP-unit (A199 "no pursuit on sight": the tests that pinned it are retired, H-057 engage on sight replaced it; see
+tests/csim/test_E11_S087_engage_on_sight.py): no pursuit on sight (E-11 S-087, R-087-04, R-087-05; plan Phase A row P1, audit G10).
 
 R-087-04 as rewritten by ruling A199 (2026-10-03): an attack-moving unit with no target within its attack range
 keeps marching on its slot and route and does not walk toward an enemy it merely sees in sensor range; it halts
@@ -50,49 +52,8 @@ def _assert_goal(lib, w, uid, x, y, why):
     assert (gx, gy) == pytest.approx((x, y), abs=1e-6), f"{why}: goal is ({gx}, {gy}), want ({x}, {y})"
 
 
-def test_R_087_04_move_goal_becomes_the_nearest_visible_enemy(lib, world_factory):
-    """Attack-moving Raider marching to (0, -3000); two enemies in sensor range, none in attack range. A full
-    cohort cycle on and for 40 ticks after, its move goal is still the march point and it is farther from both
-    (R-087-04: no walking toward an enemy merely seen). Brought into attack range, the nearest is acquired and
-    fired at."""
-    w = world_factory(n_regions=1)
-    u = spawn(lib, w, RAIDER, 0, 0.0, 0.0)
-    near = spawn(lib, w, SUPPLY, 1, 500.0, 0.0)
-    far = spawn(lib, w, SUPPLY, 1, 700.0, 300.0)      # 761 wu away: also in sensor range, not nearest
-    attack_move(lib, w, [u], 0.0, -3000.0)
-    start = (_dist(pos(lib, w, u), pos(lib, w, near)), _dist(pos(lib, w, u), pos(lib, w, far)))
-
-    step(lib, w, 40)
-
-    _assert_goal(lib, w, u, 0.0, -3000.0, "R-087-04 a seen enemy is not walked toward")
-    assert _dist(pos(lib, w, u), pos(lib, w, near)) > start[0] and _dist(pos(lib, w, u), pos(lib, w, far)) > start[1]
-    assert target(lib, w, u) == -1
-
-    here = pos(lib, w, u)
-    lib.om_unit_teleport(w, near, here[0] + 150.0, here[1], 0)   # inside attack range 200
-    hp0 = hp(lib, w, near)
-    step(lib, w, CYCLE)
-    assert target(lib, w, u) == near, "the enemy in attack range is acquired (nearest)"
-    assert hp(lib, w, near) < hp0, "and fired at"
 
 
-def test_R_087_04_pursuit_is_ordinary_movement(lib, world_factory):
-    """With a seen enemy out of range the unit walks its march by the movement layer, at its own speed, and its
-    distance to the enemy grows every tick (it does not close on it)."""
-    w = world_factory(n_regions=1)
-    u = spawn(lib, w, RAIDER, 0, 0.0, 0.0)
-    enemy = spawn(lib, w, SUPPLY, 1, 600.0, 0.0)
-    attack_move(lib, w, [u], 0.0, -3000.0)
-    step(lib, w, CYCLE)
-
-    prev = _dist(pos(lib, w, u), pos(lib, w, enemy))   # before the getter: it syncs movement early
-    assert lib.om_unit_get_current_speed(w, u) == pytest.approx(lib.om_unit_effective_speed(w, u), abs=1e-9), (
-        "marching unit is not walking at its own speed through the movement layer")
-    for _ in range(6):
-        step(lib, w)
-        now = _dist(pos(lib, w, u), pos(lib, w, enemy))
-        assert now > prev, "the unit closed on a seen enemy it has no reason to chase"
-        prev = now
 
 
 def test_R_087_04_holds_only_while_its_own_target_is_in_range(lib, world_factory):
@@ -112,7 +73,7 @@ def test_R_087_04_holds_only_while_its_own_target_is_in_range(lib, world_factory
 
     lib.om_unit_teleport(w, enemy, 350.0, 0.0, 0)      # out of range 200, inside sensor 800
     step(lib, w, 4)
-    _assert_goal(lib, w, u, 3000.0, 0.0, "the goal stays the march point")
+    _assert_goal(lib, w, u, 350.0, 0.0, "the goal stays the march point")
     before = _dist(pos(lib, w, u), (350.0, 0.0))
     step(lib, w, 4)
     assert _dist(pos(lib, w, u), (350.0, 0.0)) < before, "the march did not close on its target"
@@ -124,27 +85,6 @@ def test_R_087_04_holds_only_while_its_own_target_is_in_range(lib, world_factory
     assert pos(lib, w, u) == halted and target(lib, w, u) == enemy, "it holds and keeps the target"
 
 
-def test_R_087_04_chase_persists_after_arrival(lib, world_factory):
-    """A Raider attack-moves to (300, 0) and arrives with nothing around; an enemy then appears 600 wu on,
-    inside sensor range. The arrived unit does not go after it (R-087-04); once the enemy is brought into attack
-    range it acquires it and fires."""
-    w = world_factory(n_regions=1)
-    u = spawn(lib, w, RAIDER, 0, 0.0, 0.0)
-    attack_move(lib, w, [u], 300.0, 0.0)
-    step(lib, w, 60)                                    # 300 wu at 7.5 per tick = 40 ticks
-    # Arrived means within the arrival radius (R-099-04: 1.5 x collision radius 15 = 22.5 wu), not on the point.
-    assert pos(lib, w, u) == pytest.approx((300.0, 0.0), abs=22.5), "fixture: unit should have arrived"
-
-    enemy = spawn(lib, w, SUPPLY, 1, 900.0, 0.0)        # 600 wu from the arrived unit
-    here = pos(lib, w, u)
-    step(lib, w, CYCLE * 4)
-    assert pos(lib, w, u) == here, "arrived unit walked after a seen enemy"
-    assert target(lib, w, u) == -1
-
-    lib.om_unit_teleport(w, enemy, here[0] + 150.0, here[1], 0)
-    hp0 = hp(lib, w, enemy)
-    step(lib, w, CYCLE)
-    assert target(lib, w, u) == enemy and hp(lib, w, enemy) < hp0, "an enemy in attack range is acquired and fired at"
 
 
 def test_R_087_04_out_of_range_target_survives_between_cohort_turns(lib, world_factory):
@@ -182,7 +122,7 @@ def test_control_R_087_04_dead_target_is_released(lib, world_factory):
 
 def test_R_087_04_only_a_visible_enemy_is_pursued(lib, world_factory):
     """A stealthed enemy inside attack range is not acquired (the unit goes on to its march point); the same
-    enemy, no longer stealthed, is. A seen enemy outside attack range is walked toward in neither case."""
+    enemy, no longer stealthed, is. """
     w = world_factory(n_regions=1)
     u = spawn(lib, w, RAIDER, 0, 0.0, 0.0)
     enemy = spawn(lib, w, SUPPLY, 1, 150.0, 0.0)
@@ -200,8 +140,8 @@ def test_R_087_04_only_a_visible_enemy_is_pursued(lib, world_factory):
 def test_R_087_04_visible_means_the_sides_set(lib, world_factory):
     """R-087-04 / R-093-02 (Phase C, A185): "visible" is the unit's SIDE's set. A friendly Interceptor
     (sensor 1000) sees an enemy 600 wu from a Raider whose own sensing is blanked by an interference zone
-    on it. Preconditions are asserted (the friend sees the enemy, the Raider does not). The Raider does not
-    walk toward the enemy its friend sees (A199); with the enemy brought into its attack range, the side's
+    on it. Preconditions are asserted (the friend sees the enemy, the Raider does not). The Raider walks toward
+    the enemy its friend sees (R-087-04, H-057); with the enemy brought into its attack range, the side's
     sight is enough to acquire it.
     TD-PP-C-r08704-sideset (A185) and TD-PP-A199-repin: the pursuit half is superseded."""
     w = world_factory(n_regions=1)
@@ -215,8 +155,9 @@ def test_R_087_04_visible_means_the_sides_set(lib, world_factory):
 
     step(lib, w, CYCLE + 4)
 
-    _assert_goal(lib, w, u, -3000.0, 0.0, "R-087-04 the march goes on")
-    assert pos(lib, w, u)[0] < 0.0, "Raider walked toward an enemy its friend sees"
+    # Test-defect, H-057 (R-087-04 rev 2026-11-01): "an enemy its side can see" is engaged: the blind Raider walks toward the
+    # enemy its friend sees (east), where A199 had it march on west.
+    assert pos(lib, w, u)[0] > 0.0, "Raider did not walk toward an enemy its friend sees"
 
     here = pos(lib, w, u)
     lib.om_unit_teleport(w, enemy, here[0] + 150.0, here[1], 0)

@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@74cc9c
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::S (speed); Architect ruling 2026-10-21 for LAB-REV2-SPEED (Westley may veto)
 """LAB-REV2-SPEED stage one: the rev 2 lab gets faster without changing a byte of what it says.
 
@@ -154,7 +155,11 @@ def _setup_cases():
          0, False, lambda r: {1, 3} <= _codes(r)),
         ("states with trace", dataclasses.replace(plays.blob_play(16)(10, False), trace=True), 2, False,
          lambda r: bool(r.trace) and bool(r.states)),
-        ("attack-move group, re-engage trigger", dataclasses.replace(plays.blob_play(16)(16, True), orders_per_unit=False), 0, True,
+        # Re-pinned for H-057 (R-087-04): on the mirror, engage on sight leaves no silent idle unit, so the trigger fired 0 times (reengage (0, 0)).
+        # Now: 16 v 16, the enemy one layer up with no reach (reengage (12, 11) at seed 0 swap True). A same-reach enemy one layer up cannot be hit, so the attack-movers idle in silence.
+        ("attack-move group, re-engage trigger",
+         dataclasses.replace(Setup(groups=(blob(0, "Vanguard", 16, -400, 0, 0), blob(1, "Vanguard", 16, 400, 0, 180, layer=1)),
+                                   unit_types={}, point=(0.0, 0.0), max_ticks=1500), orders_per_unit=False), 0, True,
          lambda r: sum(r.reengage) >= 1),
     ]
     return [(n, dataclasses.replace(s, states=True), seed, swap, ev) for n, s, seed, swap, ev in cases]

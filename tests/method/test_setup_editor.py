@@ -22,6 +22,7 @@ code of a failed setup, the format of the `--check` listing beyond naming the th
 `scripts/setup_editor.sh` does not exist.
 """
 import os
+import pytest
 import re
 import shutil
 import stat
@@ -279,3 +280,322 @@ def test_missing_cache_falls_back_to_the_fetch_script():
         assert f"EDITOR READY {r.tree}" in p.lines, p.lines
     finally:
         r.close()
+
+
+# ================================================================ H-087: the beta runs on the Mac (red today)
+# spec: docs/stories/H-087.md (R-087-01 to R-087-04), contract: docs/northstar/plans/cascades/b1-approved-screens/contract.md
+# Nothing runs on a Mac: `uname` is a stub on PATH that answers Darwin and the architecture the case names, `clang` and `shasum` are stubs, and
+# the macOS Godot is a stub file reached through OM_GODOT_APP (a test seam only, default /Applications/Godot.app/Contents/MacOS/Godot; the real
+# path cannot be planted on this box). PATH is the stub bin plus a directory of symlinks to the ordinary tools the scripts use, so a case can
+# leave `godot.real`, `clang` or `sha256sum` out. The rig and the Linux cases above are untouched; test names carry `darwin` for the umbrella (-k darwin).
+APP_STUB_NAME = "app-godot"
+BUILT_MAC = "BUILT-BY-MACOS-STUB\n"
+TOOLS = ("bash", "env", "dirname", "find", "cp", "mv", "mkdir", "rm", "ls", "head", "cat", "cut", "tr", "sed", "grep", "awk", "mktemp",
+         "unzip", "chmod", "touch", "sort", "wc", "basename", "readlink", "pwd", "sleep")
+MAC_CHECK_PIPE = "step pipe: scripts/build_pipe_macos.sh (ARCH={arch}), then copy dist/macos/ouroboros_pipe to pipe/ouroboros_pipe"
+
+
+def tools_dir(base, extra=()):
+    d = base / "tools"
+    d.mkdir(exist_ok=True)
+    for name in (*TOOLS, *extra):
+        src = shutil.which(name)
+        if src and not (d / name).exists():
+            (d / name).symlink_to(src)
+    return d
+
+
+class DarwinRig(Rig):
+    """A Rig answering Darwin. godot: 'path' (godot.real on PATH), 'app' (only the OM_GODOT_APP stub exists), 'both', 'none'."""
+
+    def __init__(self, arch="arm64", godot="path", clang=True, **kw):
+        super().__init__(cache=kw.pop("cache", True), **kw)
+        self.arch = arch
+        self.app = self.base / "apps" / "Godot.app" / "Contents" / "MacOS" / "Godot"
+        write_exec(self.bin / "uname", f'case "$1" in -m) echo {arch};; *) echo Darwin;; esac\n')
+        write_exec(self.tree / "scripts" / "build_pipe_macos.sh",
+                   f'echo "build-macos ARCH=$ARCH" >> {self.log}\ncd "$(dirname "$0")/.."; mkdir -p dist/macos; '
+                   f'echo {BUILT_MAC.strip()} > dist/macos/ouroboros_pipe\necho dist/macos/ouroboros_pipe\n')
+        if clang:
+            write_exec(self.bin / "clang", "exit 0\n")
+        if godot in ("app", "both"):
+            write_exec(self.app, f'echo "{APP_STUB_NAME} $*" >> {self.log}\n')
+        if godot in ("app", "none"):
+            (self.bin / "godot.real").unlink()
+        self.tools = tools_dir(self.base)
+        # BSD find (macOS) has no `-quit`: a `find` that rejects it stands in for the symlinked GNU one (contract: staleness test runs under BSD find)
+        (self.tools / "find").unlink()
+        write_exec(self.bin / "find", f'for a; do [ "$a" = -quit ] && {{ echo "find: unknown primary or operator: -quit" >&2; exit 1; }}; done\n'
+                   f'exec {shutil.which("find")} "$@"\n')
+
+    def run(self, *args):
+        env = {"HOME": str(self.home), "PATH": f"{self.bin}:{self.tools}", "OM_GODOT_APP": str(self.app)}
+        assert SCRIPT.is_file(), f"{SCRIPT} does not exist"
+        r = subprocess.run(["bash", str(self.tree / "scripts" / "setup_editor.sh"), *args], cwd=str(self.tree), env=env,
+                           capture_output=True, text=True, timeout=60)
+        r.lines = (r.stdout + r.stderr).splitlines()
+        return r
+
+
+def test_control_darwin_rig_answers_darwin_and_hides_what_it_leaves_out():
+    """Positive control for every darwin case: the stubs answer as the cases assume. `uname -s` prints Darwin and `uname -m` the architecture; the
+    macOS build stub logs the ARCH it was given and writes dist/macos/ouroboros_pipe; 'app' leaves no godot.real on the case PATH and plants the
+    app stub; a rig without clang has no clang on PATH. A red darwin case below is the missing feature, not a broken rig."""
+    r = DarwinRig(arch="x86_64", godot="app", clang=False)
+    try:
+        env = {"PATH": f"{r.bin}:{r.tools}", "ARCH": "x86_64"}
+        out = lambda *a: subprocess.run(list(a), env=env, capture_output=True, text=True)
+        assert out("uname", "-s").stdout.strip() == "Darwin" and out("uname", "-m").stdout.strip() == "x86_64"
+        assert out("bash", "-c", "command -v clang").returncode != 0
+        assert out("bash", "-c", "command -v godot.real").returncode != 0
+        assert subprocess.run([str(r.tree / "scripts" / "build_pipe_macos.sh")], env=env, capture_output=True).returncode == 0
+        assert (r.tree / "dist" / "macos" / "ouroboros_pipe").read_text() == BUILT_MAC
+        assert subprocess.run([str(r.app), "--x"], capture_output=True).returncode == 0
+        assert r.calls() == ["build-macos ARCH=x86_64", f"{APP_STUB_NAME} --x"], r.calls()
+    finally:
+        r.close()
+    c = DarwinRig(godot="path", clang=True)
+    try:
+        env = {"PATH": f"{c.bin}:{c.tools}"}
+        assert subprocess.run(["bash", "-c", "command -v clang && command -v godot.real"], env=env, capture_output=True).returncode == 0
+    finally:
+        c.close()
+
+
+def test_darwin_check_prints_the_mac_build_line_the_godot_and_clang_and_changes_nothing():
+    """H-087 R-087-04: `--check` on Darwin prints the Darwin build line, the Godot it would use, and clang present or missing; it changes nothing.
+    The three lines are the contract's: the pipe step names scripts/build_pipe_macos.sh and the ARCH from `uname -m`; the import step names the
+    Godot found on PATH; `clang: present`. Exit 0, no stub run, the scratch tree and HOME exactly as they were; the step names of H-067 remain."""
+    r = DarwinRig(arch="arm64", pipe="stale")
+    try:
+        before = r.snapshot()
+        p = r.run("--check")
+        assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
+        assert any(l.startswith(MAC_CHECK_PIPE.format(arch="arm64")) for l in p.lines), p.lines
+        assert any(l.startswith("step import:") and "godot.real" in l and "--headless --import --path ." in l for l in p.lines), p.lines
+        assert "clang: present" in p.lines, p.lines
+        assert not any("build_pipe_linux" in l for l in p.lines), p.lines
+        for step in STEPS:
+            assert any(re.search(rf"\b{step}\b", l) for l in p.lines), p.lines
+        assert r.calls() == [], r.calls()
+        assert r.snapshot() == before and r.pipe() == OLD
+    finally:
+        r.close()
+
+
+def test_darwin_check_names_the_intel_architecture_when_uname_says_x86_64():
+    """H-087 R-087-01/R-087-04: ARCH comes from `uname -m` and is not fixed: x86_64 appears in the pipe line; control: not arm64."""
+    r = DarwinRig(arch="x86_64")
+    try:
+        p = r.run("--check")
+        assert any(l.startswith(MAC_CHECK_PIPE.format(arch="x86_64")) for l in p.lines), p.lines
+        assert not any("ARCH=arm64" in l for l in p.lines), p.lines
+    finally:
+        r.close()
+
+
+def test_darwin_check_reports_clang_missing_and_still_exits_zero():
+    """H-087 R-087-04: `clang: missing` when no clang is on PATH (positive control for 'present' above); `--check` still exits 0 and runs nothing."""
+    r = DarwinRig(clang=False)
+    try:
+        p = r.run("--check")
+        assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
+        assert "clang: missing" in p.lines and "clang: present" not in p.lines, p.lines
+        assert r.calls() == [], r.calls()
+    finally:
+        r.close()
+
+
+def test_darwin_check_names_the_app_godot_when_godot_real_is_not_on_path():
+    """H-087 R-087-02/R-087-04: with only the app binary present the import step names it; with neither, the line says none was found and names
+    both places (godot.real on PATH and the app path). `--check` exits 0 in both."""
+    a = DarwinRig(godot="app")
+    n = DarwinRig(godot="none")
+    try:
+        pa = a.run("--check")
+        assert pa.returncode == 0 and any(l.startswith("step import:") and str(a.app) in l for l in pa.lines), pa.lines
+        pn = n.run("--check")
+        imp = [l for l in pn.lines if l.startswith("step import:")]
+        assert pn.returncode == 0 and len(imp) == 1 and "godot.real" in imp[0] and str(n.app) in imp[0], pn.lines
+    finally:
+        a.close()
+        n.close()
+
+
+@pytest.mark.parametrize("arch", ["arm64", "x86_64"])
+def test_darwin_run_builds_through_the_macos_script_with_the_uname_arch(arch):
+    """H-087 R-087-01: on Darwin with no pipe copy, the run calls scripts/build_pipe_macos.sh with ARCH=<uname -m> (never build_pipe_linux.sh),
+    copies dist/macos/ouroboros_pipe to pipe/ouroboros_pipe, leaves no temporary name behind, and ends `EDITOR READY <tree>`."""
+    r = DarwinRig(arch=arch)
+    try:
+        p = r.run()
+        assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
+        assert r.calls().count(f"build-macos ARCH={arch}") == 1 and "build" not in r.calls(), r.calls()
+        assert r.pipe() == BUILT_MAC
+        assert [x.name for x in (r.tree / "pipe").iterdir()] == ["ouroboros_pipe"]
+        assert f"EDITOR READY {r.tree}" in p.lines, p.lines
+    finally:
+        r.close()
+
+
+def test_darwin_stale_pipe_is_rebuilt_and_a_fresh_one_is_not():
+    """H-087 R-087-01 ("no pipe or a pipe older than csrc/"): stale copy rebuilt through the macOS script; fresh copy kept with its mtime and the run
+    still ends `EDITOR READY`. The staleness test must work with the BSD find of macOS (no `-quit`): the case only checks behaviour here."""
+    s = DarwinRig(pipe="stale")
+    f = DarwinRig(pipe="fresh")
+    try:
+        ps = s.run()
+        assert ps.returncode == 0 and s.calls().count("build-macos ARCH=arm64") == 1 and s.pipe() == BUILT_MAC, (ps.lines, s.calls())
+        mtime = (f.tree / "pipe" / "ouroboros_pipe").stat().st_mtime_ns
+        pf = f.run()
+        assert pf.returncode == 0 and "build-macos ARCH=arm64" not in f.calls() and f.pipe() == OLD, (pf.lines, f.calls())
+        assert (f.tree / "pipe" / "ouroboros_pipe").stat().st_mtime_ns == mtime
+        assert f"EDITOR READY {f.tree}" in pf.lines
+    finally:
+        s.close()
+        f.close()
+
+
+def test_darwin_failing_macos_build_prints_editor_setup_failed_pipe():
+    """H-087 R-087-01: a failing build_pipe_macos.sh gives `EDITOR SETUP FAILED pipe`, no `EDITOR READY`, no pipe copy (control: the Linux twin above)."""
+    r = DarwinRig()
+    try:
+        write_exec(r.tree / "scripts" / "build_pipe_macos.sh", "exit 1\n")
+        p = r.run()
+        assert "EDITOR SETUP FAILED pipe" in p.lines, p.lines
+        assert not any(l.startswith("EDITOR READY") for l in p.lines) and r.pipe() is None
+    finally:
+        r.close()
+
+
+def test_darwin_import_uses_the_app_godot_when_godot_real_is_absent():
+    """H-087 R-087-02: no godot.real on PATH, the app binary present: the import step runs it with `--headless --import --path .` once and the
+    run ends `EDITOR READY <tree>`."""
+    r = DarwinRig(godot="app")
+    try:
+        p = r.run()
+        assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
+        assert r.calls().count(f"{APP_STUB_NAME} --headless --import --path .") == 1, r.calls()
+        assert f"EDITOR READY {r.tree}" in p.lines, p.lines
+    finally:
+        r.close()
+
+
+def test_darwin_godot_real_on_path_beats_the_app():
+    """H-087 R-087-02 (order of scripts/run_godot_tests.sh): both present, godot.real runs and the app binary does not."""
+    r = DarwinRig(godot="both")
+    try:
+        p = r.run()
+        assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
+        assert "godot.real --headless --import --path ." in r.calls() and not any(c.startswith(APP_STUB_NAME) for c in r.calls()), r.calls()
+    finally:
+        r.close()
+
+
+def test_darwin_no_godot_prints_setup_failed_import_and_names_both_places():
+    """H-087 R-087-02: neither godot.real on PATH nor the app binary: `EDITOR SETUP FAILED import` is printed, a line names `godot.real` and the
+    app path it looked at, and there is no `EDITOR READY`."""
+    r = DarwinRig(godot="none")
+    try:
+        p = r.run()
+        assert "EDITOR SETUP FAILED import" in p.lines, p.lines
+        assert any("godot.real" in l and str(r.app) in l for l in p.lines), p.lines
+        assert not any(l.startswith("EDITOR READY") for l in p.lines)
+    finally:
+        r.close()
+
+
+def test_linux_is_unchanged_by_the_darwin_route():
+    """H-087 R-087-01/R-087-02 "on Linux nothing changes" (control for the darwin cases): with `uname` answering Linux the Linux build script runs,
+    the macOS one does not, and an app binary planted at OM_GODOT_APP is not consulted: with no godot.real the run fails at `import`."""
+    r = DarwinRig(godot="app")
+    try:
+        write_exec(r.bin / "uname", 'case "$1" in -m) echo x86_64;; *) echo Linux;; esac\n')
+        p = r.run()
+        assert r.calls().count("build") == 1 and not any(c.startswith("build-macos") for c in r.calls()), r.calls()
+        assert "EDITOR SETUP FAILED import" in p.lines and not any(c.startswith(APP_STUB_NAME) for c in r.calls()), (p.lines, r.calls())
+    finally:
+        r.close()
+
+
+# ---------------------------------------------------------------- scripts/fetch_godotsteam.sh (R-087-03)
+
+FETCH = ROOT / "scripts" / "fetch_godotsteam.sh"
+
+
+class FetchRig:
+    """A scratch tree with the real fetch_godotsteam.sh and a tiny zip holding addons/godotsteam/x.gdextension; the checksum tools are stubs."""
+
+    def __init__(self, sha256sum, shasum, shasum_prints=None):
+        import zipfile
+        self.base = tmp("h087-fetch-").resolve()
+        (self.base / "tree" / "scripts").mkdir(parents=True)
+        shutil.copy2(FETCH, self.base / "tree" / "scripts" / "fetch_godotsteam.sh")
+        self.pinned = re.search(r'SHA256="([0-9a-f]{64})"', FETCH.read_text()).group(1)
+        self.zip = self.base / "g.zip"
+        with zipfile.ZipFile(self.zip, "w") as z:
+            z.writestr("addons/godotsteam/x.gdextension", "ext\n")
+        self.log = self.base / "calls.log"
+        self.log.write_text("")
+        self.bin = self.base / "bin"
+        shown = shasum_prints or self.pinned
+        if shasum:  # BSD/macOS: only `shasum -a 256 <file>` is accepted
+            write_exec(self.bin / "shasum", f'echo "shasum $*" >> {self.log}\n[ "$1 $2" = "-a 256" ] || exit 1\necho "{shown}  $3"\n')
+        if sha256sum:
+            write_exec(self.bin / "sha256sum", f'echo "sha256sum $*" >> {self.log}\necho "{shown}  $1"\n')
+        self.tools = tools_dir(self.base)
+
+    def run(self):
+        env = {"PATH": f"{self.bin}:{self.tools}", "HOME": str(self.base)}
+        return subprocess.run(["bash", str(self.base / "tree" / "scripts" / "fetch_godotsteam.sh"), str(self.zip)], env=env,
+                              capture_output=True, text=True, timeout=60)
+
+    def unpacked(self):
+        return (self.base / "tree" / "addons" / "godotsteam" / "x.gdextension").is_file()
+
+    def calls(self):
+        return self.log.read_text().splitlines()
+
+    def close(self):
+        shutil.rmtree(self.base, ignore_errors=True)
+
+
+def test_darwin_fetch_uses_shasum_when_sha256sum_is_absent_and_the_pinned_sha_gates_the_unpack():
+    """H-087 R-087-03: no sha256sum on PATH, shasum present: the script calls `shasum -a 256 <zip>` and, the sum equal to the pinned one, unpacks.
+    Control (the gate): the same rig with shasum printing another sum exits 1, says `sha256 mismatch` and unpacks nothing."""
+    ok = FetchRig(sha256sum=False, shasum=True)
+    bad = FetchRig(sha256sum=False, shasum=True, shasum_prints="0" * 64)
+    try:
+        p = ok.run()
+        assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
+        assert any(c.startswith("shasum -a 256 ") for c in ok.calls()) and ok.unpacked(), ok.calls()
+        q = bad.run()
+        assert q.returncode == 1 and "sha256 mismatch" in q.stderr and not bad.unpacked(), (q.returncode, q.stderr)
+    finally:
+        ok.close()
+        bad.close()
+
+
+def test_darwin_fetch_keeps_sha256sum_when_it_is_present():
+    """H-087 R-087-03 "the Linux route is unchanged": both tools present, sha256sum is the one called and shasum is not; the unpack happens."""
+    r = FetchRig(sha256sum=True, shasum=True)
+    try:
+        p = r.run()
+        assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
+        assert any(c.startswith("sha256sum ") for c in r.calls()) and not any(c.startswith("shasum") for c in r.calls()), r.calls()
+        assert r.unpacked()
+    finally:
+        r.close()
+
+
+def test_darwin_readme_open_in_the_editor_says_what_a_mac_needs():
+    """H-087 R-087-05: the README "Open in the editor" section names Godot 4.6.3 in /Applications and the Xcode command line tools (clang), and
+    still names the one command `scripts/setup_editor.sh`. Control: the section exists and already names the command today (so the red part is
+    the Mac sentence only)."""
+    text = (ROOT / "README.md").read_text()
+    m = re.search(r"### Open in the editor\n(.*?)(?=\n## |\n### )", text, re.S)
+    assert m, "README has no 'Open in the editor' section"
+    sec = m.group(1)
+    assert "scripts/setup_editor.sh" in sec
+    assert "/Applications" in sec and "4.6.3" in sec and re.search(r"command line tools", sec, re.I) and "clang" in sec, sec
+    assert "godotengine.org" in sec and "xcode-select --install" in sec, sec  # AC-5

@@ -1,6 +1,7 @@
 extends Control
 
 const SimSession := preload("res://autoload/sim_session.gd")
+const BetaMode := preload("res://autoload/beta_mode.gd")
 
 # C transport v1 rebind (piece C4, leaf-01; A4-client). load_frame()/qa_state()/
 # qa_plant() consume a mission frame (docs/architecture.md "chronicle frame,
@@ -21,6 +22,7 @@ var _plant_marker_from_frame: bool = false
 var _frame_loaded: bool = false
 var _deploy_btn: BaseButton = null
 var _deploy_error_label: Label = null
+var _variant_picker: OptionButton = null  # H-060: beta only, B2 fills it
 var _plant_begin_refused: bool = false
 var _error_panel: Control
 
@@ -698,7 +700,7 @@ func _build_footer(parent: Control) -> void:
 	_deploy_btn = deploy_btn
 	deploy_btn.pressed.connect(func():
 		if begin_mission():
-			SceneRouter.go_to("tactical_c")
+			SceneRouter.go_to("beta_field" if BetaMode.active() else "tactical_c")
 	)
 	footer.add_child(deploy_btn)
 
@@ -719,6 +721,15 @@ func _build_footer(parent: Control) -> void:
 	back_btn.style = 1
 	back_btn.pressed.connect(func(): SceneRouter.go_back())
 	footer.add_child(back_btn)
+
+	if BetaMode.active():  # H-060 dev picker placeholder: one entry, B2 fills it
+		var variant_label := Label.new()
+		variant_label.text = "variant"
+		footer.add_child(variant_label)
+		_variant_picker = OptionButton.new()
+		_variant_picker.name = "VariantPicker"
+		_variant_picker.add_item("default")
+		footer.add_child(_variant_picker)
 
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -865,7 +876,7 @@ func qa_state() -> Dictionary:
 			"primary": bool(o.get("primary", false)),
 			"marker_name": _marker_name_for_node(node),
 		})
-	return {
+	var state := {
 		"scene": "mission_briefing",
 		"tick": -1,
 		"plants": ["marker-from-frame"],
@@ -876,6 +887,9 @@ func qa_state() -> Dictionary:
 		"deploy_error": _deploy_error_label.text if _deploy_error_label != null else "",
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
+	if _variant_picker != null:  # H-060 ruling 3: present only in beta mode
+		state["variant_picker"] = {"count": _variant_picker.item_count, "selected": _variant_picker.selected}
+	return state
 
 
 func qa_plant(id: String) -> bool:

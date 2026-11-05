@@ -2345,7 +2345,7 @@ static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, 
 }
 
 /* Ground-era spawn layout, no bible number: reach flood neighbours, and a side x side block of slots per 100 wu cell
- * at 2 * OM_UNIT_COLLISION_RADIUS spacing (3 x 3 fits inside a cell). */
+ * at 2 * the roster's largest collision radius spacing (3 x 3 fits inside a cell at the default 15). */
 #define OM_MISSION_REACH_NEIGHBOURS 8
 #define OM_MISSION_SLOT_SIDE 3u
 #define OM_MISSION_SLOTS_PER_CELL (OM_MISSION_SLOT_SIDE * OM_MISSION_SLOT_SIDE)
@@ -2433,7 +2433,7 @@ static int om_mission_slot_in_reach(const om_world *w, const uint8_t *reach, uin
 /* B9-6 fixed MVP layout (the E-17 generator is out of scope): a square canvas of the archetype's base dimension,
  * one objective node at its centre, one spawn point per side on opposite
  * edges (inset by one unit collision radius), and each force in a square-ish
- * grid at 2 * OM_UNIT_COLLISION_RADIUS spacing running inward from its spawn
+ * grid at 2 * the roster's largest collision radius spacing running inward from its spawn
  * point. The player is faction 0 when no player faction is configured
  * (csrc/fog.c OM_FOG_PLAYER_FACTION). See also: csrc/tactical_mapgen.c for
  * the node storage these calls fill. */
@@ -2467,7 +2467,7 @@ static int om_mission_spawn_force(om_world *w, om_mission_state *st, const uint3
     for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) total += counts[t];
     uint32_t cols = 1;
     while (cols * cols < total) cols++;
-    double spacing = 2.0 * OM_UNIT_COLLISION_RADIUS;
+    double spacing = 2.0 * om_move_largest_radius(w);
     uint32_t k = 0, n_order = 0;
     int short_pocket = 0;
     om_mission_reach_cell *order = NULL;
@@ -2740,7 +2740,7 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     int32_t player = om_mission_player_faction(w);
     if (player < 0) player = 0;
     int32_t enemy = om_mission_enemy_faction(w, st->mission_region, player);
-    double edge = OM_UNIT_COLLISION_RADIUS;
+    double edge = om_move_largest_radius(w);
     /* Every mission lays its own battle: the previous one's units, map and
      * pushed objective centres are cleared first. */
     om_tactical_reset(w);
@@ -3137,8 +3137,8 @@ void om_mission_reinforce_note_spawn(om_world *w) {
 int om_mission_production_slot(const om_world *w, uint32_t structure, double *out_x, double *out_y) {
     /* read-only use through non-const accessors; the pattern of om_mission_reinforce_cap, mission.c:3127 */
     om_world *wm = (om_world *)w;
-    const double spacing = (double)OM_PRODSLOT_SPACING_WU;
-    const int ring_max = OM_PRODSLOT_RING_MAX;
+    const double spacing = 2.0 * om_move_largest_radius(w);
+    const int ring_max = (int)((double)(OM_REINFORCEMENT_CAPTURE_RADIUS / 2) / spacing);
     const int unit_type = (int)om_structure_get_unit_type(wm, structure);
     const int walker = om_terrain_present(w) && om_unit_profile_movement_kind(w, unit_type) == OM_MOVE_WALKING;
     uint32_t n = om_unit_count(w);

@@ -17,7 +17,12 @@ else
     curl -fsSL -o "$zip" "$URL"
 fi
 
-actual="$(sha256sum "$zip" | cut -d' ' -f1)"
+# macOS has shasum, not sha256sum; both print "<hex>  <file>".
+if command -v sha256sum >/dev/null 2>&1; then
+    actual="$(sha256sum "$zip" | cut -d' ' -f1)"
+else
+    actual="$(shasum -a 256 "$zip" | cut -d' ' -f1)"
+fi
 if [ "$actual" != "$SHA256" ]; then
     echo "sha256 mismatch: expected $SHA256, got $actual" >&2
     exit 1
