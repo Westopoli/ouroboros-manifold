@@ -29,12 +29,12 @@ One file at the repo root, rewritten by a records commit at each cascade's start
 spec_dir            = "docs/northstar/plans/cascades/"
 type_contract_path  = "<the cascade's contract header, e.g. csrc/field_noise.h>"
 umbrella_test_cmd   = "python3 -m pytest <the cascade's umbrella file> -q -p no:cacheprovider"
-apex_test_cmd       = "scripts/specfactory/pre_gate.sh"
+apex_test_cmd       = "make && godot.real --headless --import --path . && python3 -m pytest tests/qa/test_beta_b1_chain.py tests/method/test_beta_build_sha.py tests/method/test_setup_editor.py -q -p no:cacheprovider"
 briefs_dir          = "docs/northstar/plans/cascades/<slug>/briefs/"
 parent_owned = [
   "csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml",
   "docs/bible/**", "docs/northstar/**", "tests/**",
-  "scripts/specfactory/**", "Makefile", "autoload/**", "scenes/**",
+  "scripts/specfactory/**", "Makefile",
   "tests/csim/data/**", "tests/skilllab/golden_hashes.json",
 ]
 [invariants]
@@ -42,7 +42,7 @@ max_impl_lines      = 100
 max_test_assertions = 40
 ```
 
-`tests/**` is parent-owned because leaves never write tests (CLAUDE.md "Tests are the spec"); the shard-test-writer writes the cascade's tests in the wave base commit, which is the overlord's, not a leaf's. `max_impl_lines` 100 is the build-unit rule. The spec, the contract and the umbrella for a cascade live under `docs/northstar/plans/cascades/<slug>/` with the briefs, `GATES.md`, sweeps and audits, and are committed with the cascade's branch so the record survives (the 2026-10-02 cascade's records did not).
+`autoload/**` and `scenes/**` are not parent-owned (the beta staircase is client-side; DEC-client-cascade-parent-owned-2026-11-05), and `apex_test_cmd` is the running cascade's verify line, rewritten with the config at each cascade's start. `tests/**` is parent-owned because leaves never write tests (CLAUDE.md "Tests are the spec"); the shard-test-writer writes the cascade's tests in the wave base commit, which is the overlord's, not a leaf's. `max_impl_lines` 100 is the build-unit rule. The spec, the contract and the umbrella for a cascade live under `docs/northstar/plans/cascades/<slug>/` with the briefs, `GATES.md`, sweeps and audits, and are committed with the cascade's branch so the record survives (the 2026-10-02 cascade's records did not).
 
 ## 4. Landing
 
