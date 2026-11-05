@@ -334,11 +334,13 @@ def test_H_041_production_slot_spacing_follows_the_largest_when_every_radius_is_
 # ---- the save keeps the radii (Architect conditions for the contract) -----------------------------------------------------
 # om_save_state_size / om_save_state_write / om_load_state_read as tests/csim/test_VG_E_prodslot.py T4 uses them.
 
-# sha256 of the save of _save_scene_bytes(), made on the origin/main a1b64e8c lib (the unmodified csrc: no om_roster_set_collision_radius,
-# so no radius table, ABI 9), the reference "today's save format" the contract must leave byte-identical when no radius is set.
+# sha256 of the save of _save_scene_bytes(), made on the H-057 lib without H-041 (origin/push/c-H057land4: engage-on-sight, no
+# om_roster_set_collision_radius, so no radius table), the reference "today's save format" the contract must leave byte-identical when no
+# radius is set. Re-pinned 2026-11-05 from 44dfea2d..., recorded on origin/main a1b64e8c before H-057 landed: H-057 engage-on-sight changes
+# the 100-tick scene's unit state (same size), and H-041 with no radius set reproduces the H-057-alone bytes (checked on both libs).
 # How it was recorded: a lib built from `git archive origin/main csrc` (commit recorded in the commit body), _save_scene_bytes run through
 # conftest's own binding functions against it. Not recorded from a modified tree: if it ever changes, a landing changed the save format.
-SAVE_NO_RADIUS_SHA256 = "44dfea2d9e5a0f8537bae9062af34b273335cbb94b9010d3c2a2f8f2af6aa957"
+SAVE_NO_RADIUS_SHA256 = "bd3b8f1b25769d06e8e565319477f8183ff232729dc65197cf67e09598121bcd"
 SAVE_NO_RADIUS_SIZE = 1154363
 SAVE_SERIAL_AT = 40   # the 8-byte world serial (csrc/save.c header): a per-process counter of worlds created, so a second save in one process differs there only; zeroed before hashing
 
