@@ -12,6 +12,6 @@ Architect, rewritten 2026-11-05 at landing. The earlier version of this file pla
 
 The Darwin cases run on the Linux box with stubs (`uname`, `clang`, `shasum`, a stub Godot app). The saboteur confirmed every spec-pinned target fails a test when broken. Nothing was run on a Mac; the BSD `find` and bash 3.2 rules are carried by constraints in the spec and a `find` that rejects `-quit` in the test rig. The play check reached `res://scenes/beta/stage_field.tscn`; its proof capture was rejected only because a virtual display draws nothing (no real display in the session).
 
-## What waits on Westley
+## Verdict
 
-His F5 walk on the Linux box and on the Mac (`README.md`, Waiting on you, item 1). A reject on either machine is the next plan's first item. Decisions he may veto: `decisions.md`, rows dated 2026-11-05 (reuse, clone, parent-owned, Seen by F5, Mac is editor F5, ruling 8, the `OM_GODOT_APP` seam, the boundary rulings).
+Seen 2026-11-05 on both machines ("B1 approved", `ruled.md`). His Mac walk found no pan or zoom in the galaxy view and on the field: bug W8 in `ROADMAP.md`, investigated and fixed before B2 is judged. Decisions he may veto: `decisions.md`, rows dated 2026-11-05 (reuse, clone, parent-owned, Seen by F5, Mac is editor F5, ruling 8, the `OM_GODOT_APP` seam, the boundary rulings).
