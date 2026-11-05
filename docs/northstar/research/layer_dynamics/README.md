@@ -177,6 +177,10 @@ The real engine is deterministic and runs the game's own unit rules. What it sti
 
 The pursuit through ordinary movement, routing around terrain, attack-move groups, return fire on the march and the other Python behaviours the C port had lost (P1 to P9) are in the engine (the `PP-*` pieces of `pieces.toml`); the requirements are `docs/northstar/plans/2026-10-02-tactical-port-parity-requirements.md` and the audit `port_gap_audit_2026-10-02.md`.
 
+### Stage 3, the ground pushes back (H-063, finished 2026-11-05)
+
+The arena runner (`scripts/skilllab/arena/run.py`) gives a layout's features to the engine (`features.py`: planar blocks, the slope band) and REJECTs (rule R8) a layout whose moving units cannot reach the orders point, routing on the engine's 50 wu cells and walk mask. `--control-dir` runs the same fight with `features` emptied and the units still walking, writing a twin layout beside it so the replay draws no walls; the fight file carries `landscape`, `movement_kind` and a per-frame `blocked` list. The page (`page.py --stage 3 --sentences arena/stage3/sentences.md`) shows each fight against its control with the words for what to approve or deny. Fights live in `arena/stage3/`; watch them with `scripts/replay.sh <fight.json>` (Mac and Linux) or `scripts/play.sh` (Linux).
+
 ## 8. The plan
 
 1. This record. Done.

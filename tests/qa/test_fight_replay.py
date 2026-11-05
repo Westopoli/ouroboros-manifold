@@ -251,14 +251,14 @@ def test_hud_line_names_the_tick_and_the_alive_counts(fight3, monkeypatch):
     try:
         g.wait_for_port(timeout=90.0)
         first = doc["frames"][0]
-        line0 = r"tick %d  A %d  B %d  frame \d+/3" % (first["tick"], first["alive"][0], first["alive"][1])
+        line0 = r"tick %d  A %d  B %d  blocked \d+  frame \d+/3" % (first["tick"], first["alive"][0], first["alive"][1])
         st = _state(g)
         assert any(re.fullmatch(line0, t) for t in _hud_lines(st)), "no HUD line like %r among Label texts %s" % (line0, _hud_lines(st))
         _key(g, "Space")
         _key(g, "Space")
         last = doc["frames"][2]
         st = _state(g, lambda q: q["frame"] == 2, timeout=15.0, label="frame 2")
-        line2 = r"tick %d  A %d  B %d  frame \d+/3" % (last["tick"], last["alive"][0], last["alive"][1])
+        line2 = r"tick %d  A %d  B %d  blocked \d+  frame \d+/3" % (last["tick"], last["alive"][0], last["alive"][1])
         assert any(re.fullmatch(line2, t) for t in _hud_lines(st)), "no HUD line like %r among Label texts %s" % (line2, _hud_lines(st))
         res = doc["result"]
         verdict = "agree" if res["agree"] else "disagree"

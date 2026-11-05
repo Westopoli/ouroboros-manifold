@@ -98,6 +98,16 @@ def _arc_units(row, index):
     return units, {"centre": [cx, cy], "radius": radius, "start_deg": start, "end_deg": end, "count": n}
 
 
+def _slope_feature(row):
+    """The H-025 round-two slope for a `slope` table row, `size` = `<length> x <width>`; the bands and heading are the only ones features.py builds.
+    # See also: scripts/skilllab/arena/features.py (_slope_heights), scripts/skilllab/catalogue/produce.py (_b2_slope)."""
+    m = re.fullmatch(r"(\d+(?:\.\d+)?) x (\d+(?:\.\d+)?)", row["size"])
+    if not m:
+        raise Reject("slope size %r is not <length> x <width>" % row["size"])
+    return {"kind": "slope", "x": _number(row["x"], "feature x"), "y": _number(row["y"], "feature y"), "length": _number(m.group(1), "slope length"),
+            "width": _number(m.group(2), "slope width"), "heading": 0.0, "from_band": 0, "to_band": 1}
+
+
 def _layout(text):
     """The layout dict (no id yet) for one situation file; Reject on a missing field."""
     stage, kind, field, predict, why = (_head(text, k) for k in ("Stage", "Kind", "Field", "Predict", "Why"))
@@ -150,7 +160,9 @@ def _layout(text):
             raise Reject("missing side %s" % letter)
     features = []
     for row in _rows(_section(text, "Features"), FEATURE_COLUMNS, "features"):
-        if row["kind"]:
+        if row["kind"] == "slope":
+            features.append(_slope_feature(row))
+        elif row["kind"]:
             features.append({"kind": row["kind"], "x": _number(row["x"], "feature x"), "y": _number(row["y"], "feature y"),
                              "size": row["size"], "notes": row["notes"]})
     defender = next((ln.split()[0] for ln in _section(text, "Defender") if ln.strip()), "none")  # an absent section is "none", as the template's

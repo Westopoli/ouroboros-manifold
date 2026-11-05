@@ -10556,8 +10556,10 @@
       ]
     }
   ],
+  "landscape": "small_flat",
   "layout_id": "L-0055",
   "layout_path": "docs/northstar/research/layer_dynamics/catalogue/L-0055.toml",
+  "movement_kind": 1,
   "orders": {
     "attacker": "B",
     "mode": "hold_and_attack",

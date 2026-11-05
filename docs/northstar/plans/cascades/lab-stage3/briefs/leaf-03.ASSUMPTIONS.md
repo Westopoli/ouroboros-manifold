@@ -1,0 +1,4 @@
+- **rated block blocked line counts the median seed's fight only**: the strip shown is the median seed's; spec line 39 does not say which seeds - source: no source (test uses one seed). unanswered: true
+- **header with no `--stage`**: a rated page shows `<h2>Arena stage</h2>`; an unrated page without `--stage` shows no header; with `--stage` the header shows for either - source: spec line 38 (test: unrated + stage shows the words)
+- **header second line keeps "facing not simulated, abilities off"** (still true at stage 3; features.py leaves sight/abilities off) - source: no source
+- **sentences row replaces per key when its cell is non-empty, else falls back to the layout key, else `-`** - source: spec line 38

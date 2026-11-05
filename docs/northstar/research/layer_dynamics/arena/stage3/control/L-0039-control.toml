@@ -1,0 +1,144 @@
+id = "L-0039"
+situation = "cover"
+landscape = "small_flat"
+seed = 1020833
+predict = "B"
+predict_why = "Westley 2026-11-01 on this layout as drawn: \"this position is technically worse for blue because they have less space to spread out units to get firing angles on red. Without being changed red is expected to win 75% of the time depending on where units stop.\" Predict B, red 75%, so side A (blue) 0.25."
+verdict = ""
+feedback = ""
+defender = "A"
+predict_rate = 0.25
+
+[side_a]
+headcount = 8
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2210.0
+y = 2040.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2210.0
+y = 2000.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2210.0
+y = 1960.0
+facing = 3.1416
+layer = 0
+range = 300.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2250.0
+y = 2040.0
+facing = 3.1416
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2250.0
+y = 2000.0
+facing = 3.1416
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2250.0
+y = 1960.0
+facing = 3.1416
+layer = 0
+range = 250.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2290.0
+y = 2040.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2290.0
+y = 2000.0
+facing = 3.1416
+layer = 0
+range = 1200.0
+
+[side_b]
+headcount = 8
+
+[[side_b.units]]
+role = "Bastion"
+x = 1040.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 1040.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Bastion"
+x = 1040.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 800.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1000.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1000.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Warden"
+x = 1000.0
+y = 2040.0
+facing = 0.0
+layer = 0
+range = 350.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 960.0
+y = 1960.0
+facing = 0.0
+layer = 0
+range = 1200.0
+
+[[side_b.units]]
+role = "Bombard"
+x = 960.0
+y = 2000.0
+facing = 0.0
+layer = 0
+range = 1200.0

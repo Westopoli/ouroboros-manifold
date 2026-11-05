@@ -1,0 +1,2 @@
+- **slope size grammar**: `<number> x <number>`, unsigned decimals (`\d+(\.\d+)?`), single spaces around a lowercase `x`; anything else is a Reject - source: brief Task, test_a_slope_size_that_is_not_length_x_width_is_rejected
+- **slope x, y**: parsed as floats like other features (2000.0, equal to 2000 in the tests) - source: no source

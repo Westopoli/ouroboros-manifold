@@ -1,0 +1,2 @@
+- **floors for the replay terrain**: one floor per preset layer (k * BAND_HEIGHT_WU), as the layout shot builds it, replacing the fixed [0.0]; identical for small_flat if it has one layer - source: scenes/proto/layout_shot/layout_shot.gd:71-76
+- **hud_tick**: the text of the `_hud` Label after `_show` - source: spec line 35

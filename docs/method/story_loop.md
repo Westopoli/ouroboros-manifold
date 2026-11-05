@@ -11,6 +11,8 @@ One story (or one cascade of stories), one branch, one `--no-ff` merge on main. 
 
 ## Scenes, not screenshots
 
+No agent looks at pictures, frames or scenes before Westley does (DEC-no-look-pass-2026-11-05); there is no `LOOK OK` line. Anything a script can check exactly on the files (a position against a rectangle, a count) is a test, not a viewing.
+
 The review artifact of a player-facing story is a scene Westley runs, never a picture: the story names its scene path and launch arguments, and `scripts/play.sh --story <id>` opens it (the `OS.get_cmdline_user_args()` readers in `autoload/c_bridge.gd`, `autoload/era_config.gd` and `autoload/qa_daemon.gd` are the pattern). The 30B plays main nightly with the same script and files what it finds as `H-` rows.
 
 ## Trailers

@@ -7,8 +7,8 @@ REJECTs a layout whose attackers cannot reach the defenders, with a line naming 
 positive control)." Tests line: "`test_run.py` (the unreachable-layout REJECT with the unit named; control: a reachable layout runs)". This file sits beside
 test_run.py (new file, test_run.py untouched).
 
-Fixture: `city` on small_flat, orders hold:A, so side B is the attacker. B's units 2 and 5 each stand in a one-unit pen of four 40 wu building strips (80 wu inside,
-60 wu from every strip centre, so R6's 15 wu standoff holds); the pens are closed. The control opens the top strip of both pens. Premises dumped on base aac0cd41:
+Fixture: `city` on small_flat, orders hold:A, so side B is the attacker. B's units 2 and 5 each stand in a one-unit pen of four 40 wu building strips (160 wu inside,
+100 wu from every strip centre, so R6's 15 wu standoff holds; widened from 80 and 60 for the 50 wu route cells of lab-stage3 criterion 1); the pens are closed. The control opens the top strip of both pens. Premises dumped on base aac0cd41:
 the stage 2 runner ignores features, so both layouts run to a result today (exit 0): the control is green today and the closed pens are red.
 
 Rulings (H-063 "Rulings for the build", 1 to 3): the rule is the next free id above R7 (R8 once H-053 has landed); the tests read `rules.toml` for exactly one new id.
@@ -22,9 +22,9 @@ PENS = {2: (3000.0, 2800.0), 5: (3000.0, 3300.0)}
 
 
 def _pen(cx, cy, open_top):
-    strips = [fx.rect(cx, cy + 60, 200, 40), fx.rect(cx - 60, cy, 40, 200), fx.rect(cx + 60, cy, 40, 200)]
+    strips = [fx.rect(cx, cy + 100, 280, 40), fx.rect(cx - 100, cy, 40, 280), fx.rect(cx + 100, cy, 40, 280)]
     if not open_top:
-        strips.append(fx.rect(cx, cy - 60, 200, 40))
+        strips.append(fx.rect(cx, cy - 100, 280, 40))
     return strips
 
 

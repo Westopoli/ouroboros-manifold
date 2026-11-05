@@ -334,7 +334,7 @@ def test_run_appends_one_results_row_per_fight(main_run):
     rows = _rows(main_run["out"], "L-9001")
     assert len(rows) == 1
     cells = rows[0]
-    assert len(cells) == 7, "row shape is | id | a:b | predict | winner | survivors | ticks | agree |, got %r" % cells
+    assert len(cells) == 8, "row shape is | id | a:b | predict | winner | survivors | ticks | agree | blocked | (spec lab-stage3 criterion 6), got %r" % cells
     assert cells[0] == "L-9001" and cells[1] == "8:12" and cells[2] == "B" and cells[3] == res["winner"] and cells[5] == str(res["ticks"])
     assert [int(n) for n in "".join(ch if ch.isdigit() else " " for ch in cells[4]).split()] == res["survivors"]
     assert cells[6].lower() in (("yes", "true") if res["agree"] else ("no", "false"))

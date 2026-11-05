@@ -3233,8 +3233,10 @@
       ]
     }
   ],
+  "landscape": "small_flat",
   "layout_id": "L-0039",
   "layout_path": "docs/northstar/research/layer_dynamics/catalogue/L-0039.toml",
+  "movement_kind": 1,
   "orders": {
     "attacker": null,
     "mode": "both_same_point",
@@ -3254,7 +3256,7 @@
     "agree": false,
     "capped": true,
     "end": "cap",
-    "predict": "A",
+    "predict": "B",
     "stall": false,
     "survivors": [
       8,
