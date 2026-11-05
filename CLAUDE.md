@@ -51,4 +51,4 @@ Playful, occasionally absurd, never cringe; dry wit and easter eggs welcome. Chr
 
 ## Where things are
 
-C sim and pipe `csrc/`; client `autoload/`, `scenes/`; tests `tests/csim/`, `tests/transport/`, `tests/qa/`, `tests/method/`; harness `scripts/specfactory/`, `scripts/method/`, `scripts/play.sh`; skill lab `scripts/skilllab/`; legacy Python reference sim `simulation/` (tooling only, not in the game loop).
+C sim and pipe `csrc/`; client `autoload/`, `scenes/`; tests `tests/csim/`, `tests/transport/`, `tests/qa/`, `tests/method/`; harness `scripts/specfactory/`, `scripts/method/`, `scripts/play.sh`; skill lab `scripts/skilllab/`; legacy Python reference sim `simulation/` (tooling only, not in the game loop). Investigations, triage and assessment reports: `docs/reports/YYYY-MM-DD-<slug>.md`, never under `story_reviews/westley/` (that is for what Westley must look at) and never loose under `docs/northstar/`; the chat carries the summary (Westley, 2026-11-05).
