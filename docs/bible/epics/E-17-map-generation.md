@@ -21,49 +21,49 @@ Cities and bases are on the same field map. Population density is a growing fiel
 
 This is also where the layer system gets its terrain (E-01 S-001), where fog gets its interference (E-12 S-090), and where the economy gets its sites (E-22).
 
-Everything from the landscape decisions of 2026-10-01 and 2026-10-02 (S-166 and S-186 to S-197) is design decided, not scheduled for building. Stories S-112 to S-119 describe the layout generator that is built and tested today. It stays, and terrain-first generation is added to it. These rules are for land maps. The space-era landscape is a sister system with its own story, S-246.
+Everything from the landscape decisions of 2026-10-01 and 2026-10-02 (S-166 and S-186 to S-197) is design decided, not scheduled for building. Stories S-112 and S-113 describe the layout kit (rewritten 2026-11-05); S-114 to S-119 describe the older generator that is built and tested today, and terrain-first generation is added to it. These rules are for land maps. The space-era landscape is a sister system with its own story, S-246.
 
 ## Obviously working in 60 seconds
 
-Generate a land map for a medium canvas from seed 11. The terrain has height and water, and the five height bands are stretched between the map's lowest and highest ground, so the map has ground on all five layers and every layer step is a real height difference. Some ground is too steep to walk, and walking units change layer only on slopes. Each side has a base of operations, there is an objective, economic locations are spread through the map, and the significant resources lie opposite the objective. Strongpoints stand at slopes between bands, and every choke is where a pass, a bridge or a gate must be. Regenerate from seed 11: identical terrain and identical places. Generate seed 12: a visibly different landmass, not the same map with different dressing. Raise stability from 20 to 90: the same terrain with thinner interference and cover. Zoom from the map view down to a single unit: one continuous world, no pop and no loading break, and the camera keeps its height above the ground as it climbs a mountain. Watch a base for a minute: lots start as scaffolds and rise, a wave of building goes up after an event, and placing a building clears the pieces under it and the neighbours refill. Where a map uses a layout, the terrain accounts for it and the layout's moving objective still moves (S-112, S-118; S-191 R-191-10).
+Generate a land map for a medium canvas from seed 11. The terrain has height and water, and the five height bands are stretched between the map's lowest and highest ground, so the map has ground on all five layers and every layer step is a real height difference. Some ground is too steep to walk, and walking units change layer only on slopes. Each side has a base of operations, there is an objective, economic locations are spread through the map, and the significant resources lie opposite the objective. Strongpoints stand at slopes between bands, and every choke is where a pass, a bridge or a gate must be. Regenerate from seed 11: identical terrain and identical places. Generate seed 12: a visibly different landmass, not the same map with different dressing. Raise stability from 20 to 90: the same terrain with thinner interference and cover. Zoom from the map view down to a single unit: one continuous world, no pop and no loading break, and the camera keeps its height above the ground as it climbs a mountain. Watch a base for a minute: lots start as scaffolds and rise, a wave of building goes up after an event, and placing a building clears the pieces under it and the neighbours refill. Where a map uses a layout, the terrain accounts for it and the layout's moving objective still moves (S-112, S-118; S-191 R-191-10). Make the layout for an Assault from seed 1: a picture that reads as a map he would fight on, with a forward camp, a keep beside the defender, one choke with a way round, one height and a pair of resources at equal walking distance (S-247).
 
 ## Stories
 
-### S-112 — Bones from the library
-Flag closed, rule text pending: Q-113-01, fairness is a logger only until the generator is tuned in the P2 landscape design phase. The rule below is what the tests read today.
-Flag closed, rule text pending: Q-112-01, the launch ships 8 layouts and grows after testing. The rule below is what the tests read today.
+### S-112 — A layout from the kit
 
-Direction changed 2026-10-02, rewrite pending: the layout library stays and terrain-first generation is added to it, so the terrain engine accounts for the layouts: the layout calls for places and the landscape engine is required to produce them (S-191 R-191-10, decided 2026-10-03). The library is audited and double checked before it is implemented, because the game has changed since the layouts were authored, and archetypes are probably paired with layouts (Westley, 2026-10-03). The rules below are what the game does today.
+As a commander, I want every map to have a layout made from a kit of situation pieces, arranged differently each time, so that each map has its own chokepoint, its own high ground and its own reason to fight there, and I learn the vocabulary over time.
 
-As a commander, I want maps built on hand-authored strategic layouts so that every map has a chokepoint, a flank, and a reason, and I learn the vocabulary over time.
+Rewritten 2026-11-05 (Westley's plan: one definition of a layout, the kit of pieces with numbers, ruled 2026-10-04; the C function `om_lk_generate` produces it). Every figure below is a named draft (`DRAFT_` macros in `csrc/layout_drafts.h`) Westley sees in a picture and rules on, round after round; none is final until the lab reports (his 2026-10-15 ruling). The first mission kind built is Assault (S-247); the other nine are S-248.
 
 Rules
-- R-112-01  Given an archetype, When candidates are gathered, Then every layout satisfying at least one of the archetype's compatibility filters (structural checklists, 2 to 3 per archetype) enters the pool.
-- R-112-02  Given the pool, When one is chosen, Then it is drawn uniformly at random [Q-113-01: hints as bias, fairness as gate].
-- R-112-03  Given a layout, When instantiated, Then its zone positions (percentages of canvas) scale to the canvas dimensions with jitter of up to 3 percent of canvas per zone, spatial ratios preserved.
-- R-112-04  Given the instantiated nodes, When edges are laid, Then the layout's connectivity is honored, there are at least 2 distinct routes from staging to every objective, at most the layout's allowed dead ends, and every flank route connects to at least 2 non-flank nodes.
-- R-112-05  Given the library at launch, When loaded, Then it holds between 10 and 20 layouts and each archetype has at least 4 compatible layouts [Q-112-01: current count].
-- R-112-06  Given a layout file, When loaded, Then it contains only zone positions, relationships, chokepoint specs, node placement, and connectivity; never gradient values, era visuals, absolute coordinates, enemy behavior, or difficulty.
+- R-112-01  Given a seed, a mission kind, a canvas size and a sides mode (mirror, rotate or separate), When a layout is made, Then the same four always give a byte-identical layout on every platform: no fast-math, no platform transcendental, no hash order, no wall clock.
+- R-112-02  Given a layout, When it is made, Then it is districts (home, near ground, contested ground, objective ground) on an 8 by 8 grid, each filled from kit pieces, and each piece is one choice with numbers.
+- R-112-03  Given round A of the kit, When a layout is made, Then its pieces are home ground, gate, crossing, heights, prize and objective ground (commons and the hidden approach come with S-248).
+- R-112-04  Given any piece, When it is placed, Then it carries its requests for the landscape engine: keep open with a width, keep closed, height in bands, room, a number, or a named landform (coast, canyon, mesa, ridge, hill, plateau, basin, bend, ford, pass, gate); the layout is never bent to suit the landscape (S-191 R-191-10).
+- R-112-05  Given a layout, When it is checked, Then all of these hold: every place is connected by a route; each side's walking distance along the layout's own routes to each significant resource differs by no more than DRAFT_EQUAL_TOL 0.10 of the longer, and to the objective too on a kind with no slant (Assault deliberately slants the objective to the defender, Q-191-11; Q-191-15, closed); every choke has a way round at least DRAFT_BYPASS_MIN 1.5 times as long as the way through; the objective has at least two approaches; every choke width lies inside DRAFT_CHOKE_W 300 to 700 wu; nothing lies off the canvas.
+- R-112-06  Given the eight hand-drawn layouts in `simulation/layout_library/`, When the kit is built, Then they are reference only and are never read as input.
+- R-112-07  Given the Assault kind, When a layout is made, Then the canvas is DRAFT_CANVAS_ASSAULT 24,000 wu, side A is a forward camp and side B holds the objective beside it (Q-191-11), and the budget is DRAFT_ASSAULT_CROSSINGS 1 crossing (a choke with a way round), DRAFT_ASSAULT_HEIGHTS 1 vantage of DRAFT_VANTAGE_BANDS 1 to 3 bands overlooking a lane with two ways up, DRAFT_ASSAULT_PRIZES 1 pair of significant resources at equal route distance either side of the road, and one expansion site per side.
+- R-112-08  Given a sides mode, When a layout is made, Then mirror gives side B the mirror image of side A's ground, rotate a rotated copy, and separate grows each side apart with equal numbers (meander from 1.0 to DRAFT_MEANDER_MAX 1.6 tuned until route distances match); DRAFT_CANDIDATES 5 are made from the seed and the one passing the most checks is kept (Q-191-13 (d): Westley rules on the sheet which mode a map uses).
 
-Inputs: archetype; layout library; seed.
-Outputs: instantiated spine (nodes, edges) in the map seed.
+Inputs: seed; mission kind; canvas size; sides mode.
+Outputs: a layout (districts, places, lanes, chokes, vantages, requests for the landscape, route distances, checks), identical for identical inputs.
 Open flags: none.
 
-### S-113 — Nine kinds of place
+### S-113 — The places a layout names
 
-Direction changed 2026-10-02, rewrite pending: the nine kinds of place stay, and terrain-first generation adds places found on the terrain by rule: bases, economic locations, significant resources, expansion sites, neutral settlements and strongpoints, with chokes and vantages that may also come from the land. A layout's typed node is a requirement the landscape engine must produce at its zone (S-191 R-191-10, S-192). The rules below are what the game does today.
+As a commander, I want every place on the map to be one of a few things, so that I can read a map I have never seen.
 
-As a commander, I want every place on the map to be one of nine things, so that I can read a map I have never seen.
+Rewritten 2026-11-05 with S-112. The nine old node types are retired.
 
 Rules
-- R-113-01  Given any spine node, When typed, Then it is exactly one of objective, staging, transit, chokepoint, flank_route, vantage, hazard_anchor, spawn_point, extraction.
-- R-113-02  Given any map, When checked, Then it has at least one objective and at least one staging node.
-- R-113-03  Given a chokepoint, When checked, Then at least one flank route bypasses it.
-- R-113-04  Given a vantage node, When checked, Then it is reachable from both staging and every spawn point and pre-owned by nobody.
-- R-113-05  Given a chokepoint spec of width ratio w, When instantiated, Then the passable width is w × 200 wu (standard formation width).
+- R-113-01  Given a layout, When its places are listed, Then each is exactly one of objective, base (home or forward camp per the mission kind, E-10 S-210), significant resource, expansion site, choke or vantage, and its routes are lanes.
+- R-113-02  Given a layout, When checked, Then it has exactly one objective and one base for each side.
+- R-113-03  Given a choke, When checked, Then it has a width, a length, an axis in steps of 15 degrees, and a way round (R-112-05).
+- R-113-04  Given a vantage, When checked, Then it overlooks one lane and is reached by two climb lanes, and it is owned by nobody at the start.
+- R-113-05  Given the old node types staging, spawn point, transit, hazard anchor and reinforcement structure, When a layout is made, Then staging and spawn become bases, reinforcement structure becomes a strongpoint (E-15), and transit and hazard anchor are dropped.
 
-Inputs: layout node placement.
-Outputs: typed nodes in the map seed; recon render.
+Inputs: the layout's pieces.
+Outputs: typed places in the layout.
 Open flags: none.
 
 ### S-114 — Texture from gradients
@@ -401,6 +401,22 @@ Rules
 Inputs: the seed; the mission archetype; the era kit (kits/space.json).
 Outputs: per layer the cell masks and plate polygons; blocked cells in the simulation's layer bits.
 Open flags: none.
+
+### S-247 — A layout from the kit: Assault
+
+As Westley, I want to see a layout the engine made for an Assault, round after round, until I say approve, so that the engine is right before anything is built on it.
+
+Direction ruled 2026-11-05. The rules are R-112-01 to R-112-08 and R-113-01 to R-113-05, Assault only. Judged by his rounds on flat pictures of the engine's output (`docs/northstar/story_reviews/westley/layout_engine/`); no Godot scene (his words: "screenshots is fine, it's just static data being fed to the landscape engine, nothing the user will see literally, no need for a godot scene").
+
+Inputs: the seed; Assault; sides mode.
+Outputs: a layout and a flat picture of it.
+Open flags: none.
+
+### S-248 — Every mission kind has a layout
+
+As a commander, I want a layout for every kind of mission, so that no kind falls back to a centre line.
+
+Spec'd, written Ready when S-247 is approved. The other nine kinds (`csrc/mission.c:161-170`), moving objectives on Interception, Rear Guard and Containment (Q-191-07), compact play areas for Suppression and Counterinsurgency (R-188-06), 4 to 6 sides at 64,000 wu (R-195-01), a slant per kind, plays declared per layout (R-192-04), the commons and hidden approach pieces, and a signature distinct from recent maps.
 
 ## Inputs
 
