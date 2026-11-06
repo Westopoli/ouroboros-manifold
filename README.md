@@ -108,7 +108,7 @@ Each of these is a scar, and the fix is in the repo. The incident records, with 
 - [`story_reviews/westley/decisions.md`](docs/northstar/story_reviews/westley/decisions.md): every decision with its rule and context.
 - [`ambiguity_register.md`](docs/northstar/ambiguity_register.md): about five hundred open or answered questions, each with candidates.
 - [`push_ledger_2026-09-22.md`](docs/northstar/plans/push_ledger_2026-09-22.md): what landed, why, and every test-defect ruling.
-- The three retros: [2026-10-10](docs/northstar/plans/retro_2026-10-10/README.md) (the three-day programme and method rev 2), [2026-10-21](docs/northstar/plans/retro_2026-10-21/workflows_vs_manager_mode.md) (tools), [2026-10-24](docs/northstar/story_reviews/westley/method_retro_2026-10-24.md) (is the method the bottleneck).
+- The three retros: [2026-10-10](docs/northstar/plans/retro_2026-10-10/README.md) (the three-day programme and method rev 2), [2026-10-21](docs/northstar/plans/retro_2026-10-21/workflows_vs_manager_mode.md) (tools), [2026-10-24](docs/legacy/westley_hand_overs/method_retro_2026-10-24.md) (is the method the bottleneck).
 - [`PLAN.md`](docs/northstar/PLAN.md) "The Factory": the failure modes the harness guards against, written after the first harness defect investigation ([`research/harness_defects_2026-09-17/`](docs/northstar/research/harness_defects_2026-09-17/)).
 - [`2026-10-07-visible-game-programme.md`](docs/northstar/plans/2026-10-07-visible-game-programme.md): the seven guards and the lane table.
 - [`docs/northstar/lessons.md`](docs/northstar/lessons.md): the incidents behind every rule, with evidence.
