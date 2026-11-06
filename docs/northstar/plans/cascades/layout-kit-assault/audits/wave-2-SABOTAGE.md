@@ -1,0 +1,3 @@
+# Wave 2 bug injection (leaf-02, C CLI)
+
+sabotage_run.py and degenerate_sweep.py are pytest-over-Python tools; leaf-02's impl is C (`unsupported language, skipped`). Equivalent evidence, recorded by the overlord: the test-writer and test-fixer ran the tests against a throwaway CLI (green, 671 passed) and 28 injected-bug variants (wrong key order, %g numbers, wrong exit codes, break not applied, drafts out of order, --check regenerating from seed, edit without re-running checks, banned libc call, ...): each caught by at least one test; extra mutants (canvas printed unquantised) caught. No repo CLI exists, so all tests are red at the base (671 red, 0 passed). Verdict: pass (substitute evidence).

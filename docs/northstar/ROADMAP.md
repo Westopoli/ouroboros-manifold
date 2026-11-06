@@ -101,7 +101,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Movement and layers | Instrument, skill lab | Phase D pages; pass marks open (M1) |
 | Economy and bases, rules | Instrument, needed | None exists; the number flags are asked piece by piece in lane E |
 | Economy and bases, look | In the game, not a mockup | Lane E (E1k, the economy screens); Westley judges shots per piece |
-| Layout engine | Built as game code in C, iterated on flat pictures in his directory, no throwaway mockup (Westley 2026-11-05) | S-247 (Assault) then S-248 (the other nine kinds); `push/proto-layout` is reference; the lab supplies numbers as it can |
+| Layout engine | Built as game code in C, iterated on flat pictures in his directory, no throwaway mockup (Westley 2026-11-05) | S-247 (Assault): engine, CLI and renderer built on `s/S-247-layout-kit-assault`, round A1 pictures await his word (`story_reviews/westley/layout_engine/round-A1/`); then S-248 (the other nine kinds), the contract story S-249, then H-061 (B2 drawing); `push/proto-layout` is reference; the lab supplies numbers as it can |
 | Mission-to-galaxy transition (S-108) | Mockup `scenes/mockups/transition/` on `push/proto-transition` | Needed (Westley, 2026-10-15); spec `plans/2026-10-15-transition-mockup-spec.md`; a Doer builds it on the Mac |
 | Multiplayer lobby | Mockup needed for the lobby screens | Lane F's skeleton lobby (S-141 shot) stands in; Westley's verdict pending |
 | Simulation | The sim viewer (`plans/2026-10-12-simviewer-plan.md`) | Specced 2026-10-12, not built |

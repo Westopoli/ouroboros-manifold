@@ -40,7 +40,7 @@ LANE_COLOUR = {"route": (92, 78, 60), "objective_route": (58, 48, 40), "way_roun
 # district role (0 none, 1 home A, 2 home B, 3 near A, 4 near B, 5 contested, 6 objective) -> (tint colour, how much of it)
 ROLE_TINT = {1: (SIDE_COLOUR["A"], 0.20), 2: (SIDE_COLOUR["B"], 0.20), 3: (SIDE_COLOUR["A"], 0.09),
              4: (SIDE_COLOUR["B"], 0.09), 5: ((200, 170, 60), 0.14), 6: ((230, 190, 30), 0.22)}
-LABEL = {"objective": "objective", "base_home": "keep", "base_forward": "forward camp", "resource": "prize", "expansion": "expansion"}
+LABEL = {"objective": "keep", "base_home": "town", "base_forward": "forward camp", "resource": "prize", "expansion": "expansion"}
 
 USAGE = "usage: render.py map <layout.json> <out.png> | render.py sheet <dir> <out.png>"
 

@@ -43,7 +43,7 @@ endif
 CFLAGS_DET := $(OPT) $(CFLAGS_DET_BASE)
 CFLAGS     := $(CFLAGS_COMMON) $(CFLAGS_DET)
 
-.PHONY: all clean test
+.PHONY: all clean test layout_dump
 all: libouroboros.so libouroboros_dbg.so
 
 libouroboros.so: $(SRC) $(HDR)
@@ -94,6 +94,22 @@ pipe/obj_dbg/%.o: csrc/pipe/%.c csrc/pipe/pipe_internal.h $(HDR)
 pipe/ouroboros_pipe_dbg: $(PIPE_DBG_OBJ) libouroboros_dbg.so
 	mkdir -p pipe
 	$(CC) $(CFLAGS) -o $@ $(PIPE_DBG_OBJ) -L. -louroboros_dbg -lm -Wl,-rpath,'$$ORIGIN/..'
+
+# Layout kit CLI (S-247): prints a layout as JSON; csrc/tools is outside the csrc/*.c wildcard.
+# O0 and O2 variants feed the byte-for-byte determinism check (tests/csim/test_layout_kit_determinism.py).
+LAYOUT_DUMP_SRC := csrc/tools/layout_dump.c $(wildcard csrc/layout_kit*.c) csrc/terrain_noise.c
+
+layout_dump: $(LAYOUT_DUMP_SRC) $(wildcard csrc/layout_*.h)
+	mkdir -p build
+	$(CC) $(CFLAGS_COMMON) $(CFLAGS_DET) -o build/layout_dump $(LAYOUT_DUMP_SRC) -lm
+
+build/O0/layout_dump: $(LAYOUT_DUMP_SRC) $(wildcard csrc/layout_*.h)
+	mkdir -p build/O0
+	$(CC) $(CFLAGS_COMMON) -O0 $(CFLAGS_DET_BASE) -o $@ $(LAYOUT_DUMP_SRC) -lm
+
+build/O2/layout_dump: $(LAYOUT_DUMP_SRC) $(wildcard csrc/layout_*.h)
+	mkdir -p build/O2
+	$(CC) $(CFLAGS_COMMON) -O2 $(CFLAGS_DET_BASE) -o $@ $(LAYOUT_DUMP_SRC) -lm
 
 # Convenience: build then run the fenced C-sim test suite.
 test: all
