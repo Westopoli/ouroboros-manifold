@@ -120,7 +120,7 @@ def unreachable(layout, sight="off"):
     engine, w, preset = _ground_world(layout, sight)
     try:
         if layout.get("orders") != "groups":
-            return features.first_unreachable(engine, w, layout, preset, point, movers, sight != "off")
+            return features.first_unreachable(engine, w, layout, preset, point, movers, **({"exact": True} if sight != "off" else {}))   # --sight off: the stage 3 call, unchanged
         for r in layout["order_groups"]:
             if isinstance(r["to"], list):
                 side = groups.SIDES[r["side"]][1]
