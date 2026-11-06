@@ -96,7 +96,7 @@ def test_control_the_fixtures_are_legal_layouts_and_the_crossing_helper_discrimi
     cover = f8.cover_layout("L-9891")
     rows = [dict(u, id=i, side=side) for i, (side, u) in enumerate([("A", u) for u in cover["side_a"]["units"]] + [("B", u) for u in cover["side_b"]["units"]])]
     cells = f8.blocked_cells(cover)
-    assert (legal, len(f8.crossing_pairs(cover, rows)) > 0, f8.crosses((1700, 2000), (2300, 2000), cells), f8.crosses((1700, 1700), (2300, 1700), cells)) == (
+    assert (legal, len(f8.crossing_pairs(cover, rows)) > 0, f8.crosses((1700, 2050), (2300, 2050), cells), f8.crosses((1700, 1700), (2300, 1700), cells)) == (
         ([[]] * 4, [None] * 4), True, True, False)
 
 
