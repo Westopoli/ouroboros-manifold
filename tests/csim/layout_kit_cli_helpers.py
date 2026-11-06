@@ -11,8 +11,11 @@ What is here, and why none of it is the CLI's own code:
   * py_checks: the six checks of the spec's "Checks" section written again in Python over a parsed JSON (an
     independent oracle, a Dijkstra of my own), so "the named check is false after --break" is judged by two
     implementations and not by the CLI's own `checks` object alone.
-  * apply_break / edit_problems: the deterministic edit of criterion 6 written again in Python from the spec's words.
+  * apply_break / edit_problems: the deterministic edit of criterion 6 written again in Python from the spec's words
+    (fairness: the amended edit, one straight route lane appended from side A's base node to resource 0's node).
   * number_problems / order_problems / text_problems / name_problems: the JSON section's format rules.
+  * cli_source: LAYOUT_DUMP_SRC is a test-only redirect (it is not in the spec and the umbrella does not honour it);
+    unset, the build is csrc/tools/layout_dump.c.
   * probe_*: the wave 1 probe (tests/csim/layout_kit_probe.c, which calls the engine directly, no JSON) as the
     reference for "the CLI prints what the engine produced".
 All JSON numbers are loaded as Decimal so the quantised text compares exactly.
@@ -46,7 +49,6 @@ EQUAL_TOL = 0.10                   # DRAFT_EQUAL_TOL
 APPROACHES_MIN = 2
 SLACK = 1.0                        # wu: the JSON prints hundredths, sums over a few lanes stay far under this
 EDGE_SLACK = 0.01                  # wu: one printed hundredth
-MOVE_TOL = 0.02                    # wu: two roundings of a moved point
 
 # strings of the JSON section, per om_lk_name domain
 NAMES = {
@@ -134,9 +136,20 @@ def dump(exe, seed, sides="separate", canvas=None, brk=None):
     return r.stdout
 
 
+# Counts and indices: the spec types only seed, candidate, route_count and district as integers, so these may print
+# whole or quantised (number_problems accepts both); load() turns them into ints so the tests can index with them.
+INDEX_FIELDS = {"places": ["node"], "nodes": ["place"], "lanes": ["a", "b"], "chokes": ["axis_k", "lane"],
+                "vantages": ["height_bands", "overlooks", "climb"], "requests": ["axis_k", "side"]}
+
+
 def load(text):
-    """JSON text -> dict, every non-integer number a Decimal (exact)."""
-    return json.loads(text, parse_float=Decimal)
+    """JSON text -> dict, every non-integer number a Decimal (exact), the index fields of INDEX_FIELDS ints."""
+    lay = json.loads(text, parse_float=Decimal)
+    for arr, fields in INDEX_FIELDS.items():
+        for el in lay.get(arr, []):
+            for f in fields:
+                el[f] = [int(v) for v in el[f]] if isinstance(el[f], list) else int(el[f])
+    return lay
 
 
 class Raw(str):
@@ -262,8 +275,7 @@ def first_choke_way_round(lay):
 
 
 def apply_break(lay, name):
-    """The layout after `--break name`, as the spec words it. Fields that must move by arithmetic (fairness) carry
-    the unrounded value in a Decimal; edit_problems compares those with MOVE_TOL."""
+    """The layout after `--break name`, as the spec words it (criterion 6, amended 2026-11-05 for fairness)."""
     lay = copy.deepcopy(lay)
     if name in ("connected", "approaches"):
         obj, touching = objective_lanes(lay)
@@ -277,19 +289,13 @@ def apply_break(lay, name):
         edge = lay["canvas"] + 100
         lay["places"][0]["x"] = edge
         lay["nodes"][lay["places"][0]["node"]]["x"] = edge
-    elif name == "fairness":
+    elif name == "fairness":      # one straight route lane, side A's base node to resource 0's node, first route lane's width
         r = next(p for p in lay["places"] if p["kind"] == "resource")
         a = next(p for p in lay["places"] if p["kind"] == "base_forward")
-        nx = r["x"] + Decimal("0.4") * (a["x"] - r["x"])
-        ny = r["y"] + Decimal("0.4") * (a["y"] - r["y"])
-        node = r["node"]
-        r["x"], r["y"] = nx, ny
-        lay["nodes"][node]["x"], lay["nodes"][node]["y"] = nx, ny
-        for ln in lay["lanes"]:
-            if ln["a"] == node:
-                ln["pts"][0] = [nx, ny]
-            if ln["b"] == node:
-                ln["pts"][-1] = [nx, ny]
+        w = next(ln["width"] for ln in lay["lanes"] if ln["kind"] == "route")
+        na, nr = lay["nodes"][a["node"]], lay["nodes"][r["node"]]
+        lay["lanes"].append({"kind": "route", "a": a["node"], "b": r["node"], "width": w,
+                             "pts": [[na["x"], na["y"]], [nr["x"], nr["y"]]]})
     return lay
 
 
@@ -301,29 +307,11 @@ def _strip(lay, drop_refs):
     return d
 
 
-def _near(a, b):
-    return abs(wu(a) - wu(b)) <= MOVE_TOL
-
-
 def edit_problems(base, broken, name):
     """Differences between the CLI's broken layout and the edit the spec words; [] when it is exactly that edit."""
     want = apply_break(base, name)
-    refs = name in ("connected", "bypass", "approaches")
+    refs = name in ("connected", "bypass", "approaches")     # lanes removed: the spec leaves the held lane indices open
     out = []
-    if name == "fairness":      # moved points: close, not exact; then take the CLI's values so the rest compares exactly
-        w_r = next(p for p in want["places"] if p["kind"] == "resource")
-        g_r = next(p for p in broken["places"] if p["kind"] == "resource")
-        spots = [(w_r, g_r, "x"), (w_r, g_r, "y"),
-                 (want["nodes"][w_r["node"]], broken["nodes"][g_r["node"]], "x"),
-                 (want["nodes"][w_r["node"]], broken["nodes"][g_r["node"]], "y")]
-        for wl, gl in zip(want["lanes"], broken["lanes"]):
-            for end, node_key in ((0, "a"), (-1, "b")):
-                if wl[node_key] == w_r["node"]:
-                    spots += [(wl["pts"][end], gl["pts"][end], 0), (wl["pts"][end], gl["pts"][end], 1)]
-        for w, g, k in spots:
-            if not _near(w[k], g[k]):
-                out.append(f"moved point {k}: want {w[k]} got {g[k]}")
-            w[k] = g[k]
     a, b = _strip(want, refs), _strip(broken, refs)
     out += [f"{k} differs" for k in a if a[k] != b.get(k)]
     out += [f"{k} unexpected" for k in b if k not in a]
@@ -333,7 +321,7 @@ def edit_problems(base, broken, name):
 # ---- the JSON section's text rules ------------------------------------------------------------------------------------
 QUANT = re.compile(r"^-?\d+\.\d\d$")
 INTEGER = re.compile(r"^-?\d+$")
-EITHER = re.compile(r"^-?\d+(\.\d\d)?$")      # a number the spec does not say is whole or quantised (canvas, frac, drafts)
+EITHER = re.compile(r"^-?\d+(\.\d\d)?$")      # a count or index the spec does not type as whole or quantised
 
 
 def order_problems(text):
@@ -356,8 +344,9 @@ def order_problems(text):
 
 
 def number_problems(text):
-    """Every printed number: quantised `[-]int.dd` where the spec quantises it, a bare integer where the field is a
-    count or an index, never an exponent, never `-0.00`."""
+    """Every printed number: quantised `[-]int.dd` (every coordinate, width, radius, distance, canvas, frac, request
+    height_bands and drafts value), a bare integer for seed, candidate, route_count and district, whole or quantised
+    for the other counts and indices; never an exponent, never `-0.00`."""
     raw = load_raw(text)
     out = []
 
@@ -370,19 +359,19 @@ def number_problems(text):
 
     for k in ("seed", "candidate", "route_count"):
         chk(raw[k], INTEGER, k)
-    chk(raw["canvas"], EITHER, "canvas")
+    chk(raw["canvas"], QUANT, "canvas")
     for k, v in raw["drafts"].items():
-        chk(v, EITHER, f"drafts.{k}")
+        chk(v, QUANT, f"drafts.{k}")
     chk(raw["district"], INTEGER, "district")
-    spec = {"places": ({"x": QUANT, "y": QUANT, "pad_r": QUANT, "node": INTEGER}),
-            "nodes": {"x": QUANT, "y": QUANT, "place": INTEGER},
-            "lanes": {"a": INTEGER, "b": INTEGER, "width": QUANT, "pts": QUANT},
-            "chokes": {"x": QUANT, "y": QUANT, "width": QUANT, "length": QUANT, "wall_span": QUANT, "frac": EITHER,
-                       "axis_k": INTEGER, "lane": INTEGER},
-            "vantages": {"x": QUANT, "y": QUANT, "radius": QUANT, "height_bands": INTEGER, "overlooks": INTEGER,
-                         "climb": INTEGER},
-            "requests": {"x": QUANT, "y": QUANT, "r": QUANT, "w": QUANT, "len": QUANT, "span": QUANT, "frac": EITHER,
-                         "height_bands": EITHER, "axis_k": INTEGER, "side": INTEGER}}
+    spec = {"places": {"x": QUANT, "y": QUANT, "pad_r": QUANT, "node": EITHER},
+            "nodes": {"x": QUANT, "y": QUANT, "place": EITHER},
+            "lanes": {"a": EITHER, "b": EITHER, "width": QUANT, "pts": QUANT},
+            "chokes": {"x": QUANT, "y": QUANT, "width": QUANT, "length": QUANT, "wall_span": QUANT, "frac": QUANT,
+                       "axis_k": EITHER, "lane": EITHER},
+            "vantages": {"x": QUANT, "y": QUANT, "radius": QUANT, "height_bands": EITHER, "overlooks": EITHER,
+                         "climb": EITHER},
+            "requests": {"x": QUANT, "y": QUANT, "r": QUANT, "w": QUANT, "len": QUANT, "span": QUANT, "frac": QUANT,
+                         "height_bands": QUANT, "axis_k": EITHER, "side": EITHER}}
     for arr, fields in spec.items():
         for i, el in enumerate(raw[arr]):
             for f, rx in fields.items():
@@ -560,7 +549,9 @@ def probe_problems(lay, pr, tol=1):
 
 # ---- text edits of a written JSON (the file format is fixed, so a line edit keeps it a file this tool wrote) ----------
 def delete_lane_line(text, lane_index):
-    """The JSON with the lines of lane `lane_index` removed (a comma moved if it was the last element)."""
+    """The JSON with the lines of lane `lane_index` removed (a comma moved if it was the last element) and the lane
+    indices held by chokes and vantages above it lowered by one, so no index points past the end. One that pointed at
+    the removed lane now points at the lane that took its place."""
     lines = text.split("\n")
     start = lines.index('  "lanes": [') + 1
     i = start + lane_index
@@ -568,4 +559,14 @@ def delete_lane_line(text, lane_index):
     del lines[i]
     if last:
         lines[i - 1] = lines[i - 1].rstrip(",")
+    low = lambda n: n - 1 if n > lane_index else n      # noqa: E731
+    subs = {"chokes": [(r'("lane": )(\d+)', lambda m: m.group(1) + str(low(int(m.group(2)))))],
+            "vantages": [(r'("overlooks": )(\d+)', lambda m: m.group(1) + str(low(int(m.group(2))))),
+                         (r'("climb": \[\s*)(\d+)(\s*,\s*)(\d+)', lambda m: f"{m.group(1)}{low(int(m.group(2)))}{m.group(3)}{low(int(m.group(4)))}")]}
+    for blk, rules in subs.items():
+        j = lines.index(f'  "{blk}": [') + 1
+        while not lines[j].startswith("  ]"):
+            for pat, fn in rules:
+                lines[j] = re.sub(pat, fn, lines[j])
+            j += 1
     return "\n".join(lines)

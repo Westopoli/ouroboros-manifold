@@ -57,7 +57,7 @@ def test_S_247_O0_and_O2_binaries_agree_on_every_break(cli_o0, cli_o2, name):
 
 
 def test_S_247_libm_lint_is_clean_with_the_cli_present():
-    """S-247 R-112-06: the CLI source exists and scripts/specfactory/libm_lint.py exits 0 over csrc/ (so no pow, sin,
+    """S-247 R-112-01 (criterion 4): the CLI source exists and scripts/specfactory/libm_lint.py exits 0 over csrc/ (so no pow, sin,
     cos, rand, time, qsort ... in csrc/tools/ either). When LAYOUT_DUMP_SRC points elsewhere the directory holding
     that file is linted instead."""
     src = H.cli_source()

@@ -95,17 +95,19 @@ def test_S_247_the_json_is_what_the_engine_produced(cli, probe, seed, sides):
 
 def test_S_247_drafts_block_names_every_draft_in_table_order(cli, probe):
     """S-247 R-112-04: `drafts` lists every entry of om_lk_draft_name/value, in the order of the X-macro table of
-    csrc/layout_drafts.h and of the probe, with the engine's values (DRAFT_INF is only checked to be positive: 1e30
-    does not fit an integer count of hundredths, see questions/test-writer2-Q4.md)."""
-    pairs = dict(json.loads(H.dump(cli, 3), parse_float=Decimal, object_pairs_hook=lambda p: p))["drafts"]
+    csrc/layout_drafts.h and of the probe, with the engine's values to a printed hundredth; DRAFT_INF (1e30) clamps
+    and prints as exactly 9000000000000000.00 (spec "JSON": a magnitude above 9e15 wu clamps to that value)."""
+    text = H.dump(cli, 3)
+    raw_inf = H.load_raw(text)["drafts"].get("DRAFT_INF")
+    pairs = dict(json.loads(text, parse_float=Decimal, object_pairs_hook=lambda p: p))["drafts"]
     want = H.probe_drafts(probe)
     problems = []
     if [k for k, _ in pairs] != [n for n, _ in want] or [n for n, _ in want] != H.header_draft_names():
         problems.append("names or order differ")
     for (k, v), (_, c) in zip(pairs, want):
         if k == "DRAFT_INF":
-            if v <= 0:
-                problems.append(f"{k} not positive: {v}")
+            if raw_inf != "9000000000000000.00":
+                problems.append(f"{k} prints {raw_inf!r}")
         elif abs(H.cents(v) - c) > 1:
             problems.append(f"{k}: {v} vs {c / 100}")
     assert problems == []
@@ -135,18 +137,15 @@ USAGE = [
     ["--seed", "1", "--archetype", "assault", "--bogus"],
     ["--seed", "1", "--archetype", "banana"],
     ["--seed", "1", "--archetype", "assault", "--sides", "sideways"],
-    ["--seed", "1", "--archetype", "assault", "--break", "nonsense"],
-    ["--seed", "one", "--archetype", "assault"],
-    ["--seed", "1", "--archetype", "assault", "--canvas", "wide"],
     ["--seed", "1", "--archetype"],
-    ["--check"],
-]
+]       # criterion 5 names only the unknown archetype; the other malformed-input cases (a non-number, a missing file, an
+        # unknown break name ...) are left to the CLI and not pinned here (audit Y3)
 
 
 @pytest.mark.parametrize("args", USAGE, ids=[" ".join(a)[-40:] for a in USAGE])
 def test_S_247_usage_errors_exit_2_with_a_message(cli, args):
-    """S-247 R-112-01: a usage error (unknown option, unknown archetype, sides or break name, a value that is not a
-    number, a flag without its value) exits 2, names the error on stderr and prints no JSON."""
+    """S-247 R-112-01: a usage error (unknown option, unknown archetype or sides name, a flag without its value)
+    exits 2, names the error on stderr and prints no JSON."""
     r = H.run(cli, *args)
     assert (r.returncode, bool(r.stderr.strip()), r.stdout) == (2, True, "")
 
@@ -155,7 +154,7 @@ def test_S_247_an_archetype_other_than_assault_is_not_built(cli):
     """S-247 R-112-01: a known archetype that round A does not build exits 2 and says "not built" (the names are the
     nine other archetypes of csrc/mission.c:161-170 in snake_case, see questions/test-writer2-Q2.md)."""
     rs = [H.run(cli, "--seed", "1", "--archetype", n) for n in ARCHETYPE_NAMES]
-    assert ([r.returncode for r in rs], [r.stdout for r in rs], any("not built" in r.stderr for r in rs)) == (
+    assert ([r.returncode for r in rs], [r.stdout for r in rs], all("not built" in r.stderr for r in rs)) == (
         [2] * 9, [""] * 9, True)
 
 
