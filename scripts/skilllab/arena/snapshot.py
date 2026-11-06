@@ -25,7 +25,7 @@ _UNIT = {"id": int, "side": str, "role": str, "x": "num", "y": "num", "layer": i
          "alive": bool, "target": "int_or_null"}
 _RESULT = {"winner": str, "survivors": list, "ticks": int, "capped": bool, "predict": str, "agree": bool}
 _ORDERS = {"mode": str, "point": list, "attacker": "side_or_null"}
-_ORDER_MODES = ("both_same_point", "hold_and_attack")
+_ORDER_MODES = ("both_same_point", "hold_and_attack", "groups")   # "groups": the stage 4 fix F3 per-group orders (groups.py)
 _ENDS = ("wipe", "silence", "cap")
 
 
@@ -74,7 +74,7 @@ def validate(doc: dict) -> list[str]:
     if v2 and "ranges" in doc:
         top = dict(top, ranges=dict)   # H-053: optional {role: range wu}, om-fight-2 only
     if v2:
-        top = dict(top, **{k: t for k, t in (("landscape", str), ("movement_kind", int), ("sights", dict)) if k in doc})   # H-063, H-088 (sights): optional, om-fight-2 only
+        top = dict(top, **{k: t for k, t in (("landscape", str), ("movement_kind", int), ("sights", dict), ("built_features", list)) if k in doc})   # H-063, H-088 (sights), stage 4 fix F2 (built_features): optional, om-fight-2 only
     _check_keys(doc, top, "", out)
     if v2 and isinstance(doc.get("ranges"), dict):
         for role, rng in doc["ranges"].items():
@@ -88,9 +88,9 @@ def validate(doc: dict) -> list[str]:
                 out.append(f"bad sights.{role} (want a number at or above 0)")
     if v2 and isinstance(doc.get("orders"), dict):
         orders = doc["orders"]
-        _check_keys(orders, dict(_ORDERS, guard=bool) if "guard" in orders else _ORDERS, "orders", out)
+        _check_keys(orders, dict(_ORDERS, **{k: t for k, t in (("guard", bool), ("groups", list)) if k in orders}), "orders", out)
         if "mode" in orders and orders["mode"] not in _ORDER_MODES:
-            out.append("orders.mode is not both_same_point or hold_and_attack")
+            out.append("orders.mode is not both_same_point, hold_and_attack or groups")
         pt = orders.get("point")
         if isinstance(pt, list) and (len(pt) != 2 or not all(_kind_ok(v, "num") for v in pt)):
             out.append("bad type orders.point (want [x, y] numbers)")

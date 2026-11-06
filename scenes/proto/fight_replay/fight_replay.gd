@@ -130,8 +130,11 @@ func _ready() -> void:
 	_show(0)
 
 
-## The features of the layout the fight file names, from the layout's JSON twin beside its TOML (H-063; the fight file carries no features). [] when the twin is not there.
+## The features the fight file names: its `built_features` when it has them (stage 4 fix F2), else the layout's JSON twin beside its TOML (H-063). [] when the twin is not there.
 func _load_features() -> Array:
+	var built = _fight.get("built_features")  # stage 4 fix F2: the rectangles the engine blocks (snapped to its 100 wu cells), so drawn equals blocked
+	if built is Array:
+		return built
 	var path := String(_fight.get("layout_path", ""))
 	if path == "":
 		return []

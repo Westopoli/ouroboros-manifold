@@ -4,7 +4,7 @@
   "landscape": "small_tiered",
   "seed": 3025,
   "predict": "A",
-  "predict_why": "The trappers have half of the led force (trap-16v32). Westley's number for this layout: blue wins 75% of the time.",
+  "predict_why": "The trappers have half of the force that moves out of the pocket (trap-16v32). Westley's number for this layout: blue wins 75% of the time.",
   "verdict": "",
   "feedback": "",
   "defender": "A",
@@ -50,7 +50,7 @@
       "height_band": 1
     }
   ],
-  "orders": "both_same_point",
+  "orders": "groups",
   "side_a": {
     "headcount": 16,
     "units": [
@@ -60,7 +60,8 @@
         "y": 2730.0,
         "facing": 0.0,
         "layer": 1,
-        "range": 300.0
+        "range": 300.0,
+        "group": "hill_w"
       },
       {
         "role": "Warden",
@@ -68,7 +69,8 @@
         "y": 2770.0,
         "facing": 0.0,
         "layer": 1,
-        "range": 350.0
+        "range": 350.0,
+        "group": "hill_w"
       },
       {
         "role": "Vanguard",
@@ -76,7 +78,8 @@
         "y": 2730.0,
         "facing": 0.0,
         "layer": 1,
-        "range": 300.0
+        "range": 300.0,
+        "group": "hill_w"
       },
       {
         "role": "Warden",
@@ -84,7 +87,8 @@
         "y": 2770.0,
         "facing": 0.0,
         "layer": 1,
-        "range": 350.0
+        "range": 350.0,
+        "group": "hill_w"
       },
       {
         "role": "Vanguard",
@@ -92,7 +96,8 @@
         "y": 2770.0,
         "facing": 3.1416,
         "layer": 1,
-        "range": 300.0
+        "range": 300.0,
+        "group": "hill_e"
       },
       {
         "role": "Warden",
@@ -100,7 +105,8 @@
         "y": 2730.0,
         "facing": 3.1416,
         "layer": 1,
-        "range": 350.0
+        "range": 350.0,
+        "group": "hill_e"
       },
       {
         "role": "Vanguard",
@@ -108,7 +114,8 @@
         "y": 2770.0,
         "facing": 3.1416,
         "layer": 1,
-        "range": 300.0
+        "range": 300.0,
+        "group": "hill_e"
       },
       {
         "role": "Warden",
@@ -116,7 +123,8 @@
         "y": 2730.0,
         "facing": 3.1416,
         "layer": 1,
-        "range": 350.0
+        "range": 350.0,
+        "group": "hill_e"
       },
       {
         "role": "Vanguard",
@@ -125,7 +133,8 @@
         "facing": -1.7458,
         "layer": 0,
         "range": 300.0,
-        "arc": 0
+        "arc": 0,
+        "group": "arc"
       },
       {
         "role": "Warden",
@@ -134,7 +143,8 @@
         "facing": -1.6958,
         "layer": 0,
         "range": 350.0,
-        "arc": 0
+        "arc": 0,
+        "group": "arc"
       },
       {
         "role": "Vanguard",
@@ -143,7 +153,8 @@
         "facing": -1.6458,
         "layer": 0,
         "range": 300.0,
-        "arc": 0
+        "arc": 0,
+        "group": "arc"
       },
       {
         "role": "Warden",
@@ -152,7 +163,8 @@
         "facing": -1.5958,
         "layer": 0,
         "range": 350.0,
-        "arc": 0
+        "arc": 0,
+        "group": "arc"
       },
       {
         "role": "Vanguard",
@@ -161,7 +173,8 @@
         "facing": -1.5458,
         "layer": 0,
         "range": 300.0,
-        "arc": 0
+        "arc": 0,
+        "group": "arc"
       },
       {
         "role": "Warden",
@@ -170,7 +183,8 @@
         "facing": -1.4958,
         "layer": 0,
         "range": 350.0,
-        "arc": 0
+        "arc": 0,
+        "group": "arc"
       },
       {
         "role": "Vanguard",
@@ -179,7 +193,8 @@
         "facing": -1.4458,
         "layer": 0,
         "range": 300.0,
-        "arc": 0
+        "arc": 0,
+        "group": "arc"
       },
       {
         "role": "Warden",
@@ -188,7 +203,8 @@
         "facing": -1.3958,
         "layer": 0,
         "range": 350.0,
-        "arc": 0
+        "arc": 0,
+        "group": "arc"
       }
     ],
     "arcs": [
@@ -209,268 +225,346 @@
     "units": [
       {
         "role": "Vanguard",
-        "x": 1900.0,
-        "y": 2800.0,
-        "facing": -1.5708,
+        "x": 2100.0,
+        "y": 2050.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
-      },
-      {
-        "role": "Raider",
-        "x": 1940.0,
-        "y": 2800.0,
-        "facing": -1.5708,
-        "layer": 0,
-        "range": 200.0
-      },
-      {
-        "role": "Interceptor",
-        "x": 1980.0,
-        "y": 2800.0,
-        "facing": -1.5708,
-        "layer": 0,
-        "range": 250.0
-      },
-      {
-        "role": "Vanguard",
-        "x": 2020.0,
-        "y": 2800.0,
-        "facing": -1.5708,
-        "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 2060.0,
-        "y": 2800.0,
-        "facing": -1.5708,
+        "y": 2050.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
       },
       {
         "role": "Interceptor",
-        "x": 2100.0,
-        "y": 2800.0,
-        "facing": -1.5708,
+        "x": 2020.0,
+        "y": 2050.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 250.0
+        "range": 250.0,
+        "group": "red"
       },
       {
         "role": "Vanguard",
-        "x": 1900.0,
-        "y": 2840.0,
-        "facing": -1.5708,
+        "x": 1980.0,
+        "y": 2050.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 1940.0,
-        "y": 2840.0,
-        "facing": -1.5708,
+        "y": 2050.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
       },
       {
         "role": "Interceptor",
-        "x": 1980.0,
-        "y": 2840.0,
-        "facing": -1.5708,
+        "x": 1900.0,
+        "y": 2050.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 250.0
+        "range": 250.0,
+        "group": "red"
       },
       {
         "role": "Vanguard",
-        "x": 2020.0,
-        "y": 2840.0,
-        "facing": -1.5708,
+        "x": 2100.0,
+        "y": 2010.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 2060.0,
-        "y": 2840.0,
-        "facing": -1.5708,
+        "y": 2010.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
       },
       {
         "role": "Interceptor",
-        "x": 2100.0,
-        "y": 2840.0,
-        "facing": -1.5708,
+        "x": 2020.0,
+        "y": 2010.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 250.0
+        "range": 250.0,
+        "group": "red"
       },
       {
         "role": "Vanguard",
-        "x": 1900.0,
-        "y": 2880.0,
-        "facing": -1.5708,
+        "x": 1980.0,
+        "y": 2010.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 1940.0,
-        "y": 2880.0,
-        "facing": -1.5708,
+        "y": 2010.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
       },
       {
         "role": "Interceptor",
-        "x": 1980.0,
-        "y": 2880.0,
-        "facing": -1.5708,
+        "x": 1900.0,
+        "y": 2010.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 250.0
+        "range": 250.0,
+        "group": "red"
       },
       {
         "role": "Vanguard",
-        "x": 2020.0,
-        "y": 2880.0,
-        "facing": -1.5708,
+        "x": 2100.0,
+        "y": 1970.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 2060.0,
-        "y": 2880.0,
-        "facing": -1.5708,
+        "y": 1970.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
       },
       {
         "role": "Interceptor",
-        "x": 2100.0,
-        "y": 2880.0,
-        "facing": -1.5708,
+        "x": 2020.0,
+        "y": 1970.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 250.0
+        "range": 250.0,
+        "group": "red"
       },
       {
         "role": "Vanguard",
-        "x": 1900.0,
-        "y": 2920.0,
-        "facing": -1.5708,
+        "x": 1980.0,
+        "y": 1970.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 1940.0,
-        "y": 2920.0,
-        "facing": -1.5708,
+        "y": 1970.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
       },
       {
         "role": "Interceptor",
-        "x": 1980.0,
-        "y": 2920.0,
-        "facing": -1.5708,
+        "x": 1900.0,
+        "y": 1970.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 250.0
+        "range": 250.0,
+        "group": "red"
       },
       {
         "role": "Vanguard",
-        "x": 2020.0,
-        "y": 2920.0,
-        "facing": -1.5708,
+        "x": 2100.0,
+        "y": 1930.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 2060.0,
-        "y": 2920.0,
-        "facing": -1.5708,
+        "y": 1930.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
       },
       {
         "role": "Interceptor",
-        "x": 2100.0,
-        "y": 2920.0,
-        "facing": -1.5708,
+        "x": 2020.0,
+        "y": 1930.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 250.0
+        "range": 250.0,
+        "group": "red"
       },
       {
         "role": "Vanguard",
-        "x": 1900.0,
-        "y": 2960.0,
-        "facing": -1.5708,
+        "x": 1980.0,
+        "y": 1930.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 1940.0,
-        "y": 2960.0,
-        "facing": -1.5708,
+        "y": 1930.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
       },
       {
         "role": "Interceptor",
-        "x": 1980.0,
-        "y": 2960.0,
-        "facing": -1.5708,
+        "x": 1900.0,
+        "y": 1930.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 250.0
+        "range": 250.0,
+        "group": "red"
       },
       {
         "role": "Vanguard",
-        "x": 2020.0,
-        "y": 2960.0,
-        "facing": -1.5708,
+        "x": 2100.0,
+        "y": 1890.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 2060.0,
-        "y": 2960.0,
-        "facing": -1.5708,
+        "y": 1890.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
       },
       {
         "role": "Interceptor",
-        "x": 2100.0,
-        "y": 2960.0,
-        "facing": -1.5708,
+        "x": 2020.0,
+        "y": 1890.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 250.0
+        "range": 250.0,
+        "group": "red"
       },
       {
         "role": "Vanguard",
-        "x": 1900.0,
-        "y": 3000.0,
-        "facing": -1.5708,
+        "x": 1980.0,
+        "y": 1890.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 300.0
+        "range": 300.0,
+        "group": "red"
       },
       {
         "role": "Raider",
         "x": 1940.0,
-        "y": 3000.0,
-        "facing": -1.5708,
+        "y": 1890.0,
+        "facing": 1.5708,
         "layer": 0,
-        "range": 200.0
+        "range": 200.0,
+        "group": "red"
+      },
+      {
+        "role": "Interceptor",
+        "x": 1900.0,
+        "y": 1890.0,
+        "facing": 1.5708,
+        "layer": 0,
+        "range": 250.0,
+        "group": "red"
+      },
+      {
+        "role": "Vanguard",
+        "x": 2100.0,
+        "y": 1850.0,
+        "facing": 1.5708,
+        "layer": 0,
+        "range": 300.0,
+        "group": "red"
+      },
+      {
+        "role": "Raider",
+        "x": 2060.0,
+        "y": 1850.0,
+        "facing": 1.5708,
+        "layer": 0,
+        "range": 200.0,
+        "group": "red"
       }
     ]
   },
-  "what_to_expect": "trap-16v32: 16 blue against 32 red, red is led toward the pocket's inside; blue holds hill blocks either side of the mouth and an arc behind red that closes the retreat. Westley's number for this layout: blue wins 75% of the time.",
-  "approve_means": "Approve means: this is a fair trap: red is led in, the mouth is closed from high ground at several points, and the layout may run in the lab; blue's predicted win rate is 75%.",
-  "deny_means": "Deny means: the pocket, the lead-in or the closing force is wrong for a trap; your note says what a trapper has.",
+  "what_to_expect": "trap-16v32: 16 blue against 32 red, red starts inside the pocket and moves out toward its mouth; blue holds hill blocks either side of the mouth and an arc beyond it, unseen on the high ground, and all three attack together when red reaches the centre between them. Westley's number for this layout: blue wins 75% of the time.",
+  "approve_means": "Approve means: this is a fair trap: red moves out into the middle of three blue forces, which spring at the same time, and the layout may run in the lab; blue's predicted win rate is 75%.",
+  "deny_means": "Deny means: the pocket, the start, the moment of the spring or the closing force is wrong for a trap; your note says what a trapper has.",
   "predict_rate": 0.75,
-  "orders_point": [
-    2000.0,
-    1950.0
+  "order_groups": [
+    {
+      "side": "A",
+      "group": "hill_w",
+      "order": "hold",
+      "to": "enemy_centroid",
+      "release": {
+        "point": [
+          2000.0,
+          2898.25
+        ],
+        "radius": 300.0
+      }
+    },
+    {
+      "side": "A",
+      "group": "hill_e",
+      "order": "hold",
+      "to": "enemy_centroid",
+      "release": {
+        "point": [
+          2000.0,
+          2898.25
+        ],
+        "radius": 300.0
+      }
+    },
+    {
+      "side": "A",
+      "group": "arc",
+      "order": "hold",
+      "to": "enemy_centroid",
+      "release": {
+        "point": [
+          2000.0,
+          2898.25
+        ],
+        "radius": 300.0
+      }
+    },
+    {
+      "side": "B",
+      "group": "red",
+      "order": "attack_move",
+      "to": [
+        2000.0,
+        2898.25
+      ]
+    }
   ]
 }

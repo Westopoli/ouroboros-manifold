@@ -3,16 +3,15 @@ situation = "trap"
 landscape = "small_tiered"
 seed = 3028
 predict = "A"
-predict_why = "The trappers have half of the led force, larger (trap-24v48). Westley's number for this layout: blue wins 75% of the time."
+predict_why = "The trappers have half of the force that moves out of the pocket, larger (trap-24v48). Westley's number for this layout: blue wins 75% of the time."
 verdict = ""
 feedback = ""
 defender = "A"
 predict_rate = 0.75
-orders_point = [2000.0, 1950.0]
-what_to_expect = "trap-24v48: 24 blue against 48 red, red is led toward the pocket's inside; blue holds hill blocks either side of the mouth and an arc behind red that closes the retreat. Westley's number for this layout: blue wins 75% of the time."
-approve_means = "Approve means: this is a fair trap: red is led in, the mouth is closed from high ground at several points, and the layout may run in the lab; blue's predicted win rate is 75%."
-deny_means = "Deny means: the pocket, the lead-in or the closing force is wrong for a trap; your note says what a trapper has."
-orders = "both_same_point"
+what_to_expect = "trap-24v48: 24 blue against 48 red, red starts inside the pocket and moves out toward its mouth; blue holds hill blocks either side of the mouth and an arc beyond it, unseen on the high ground, and all three attack together when red reaches the centre between them. Westley's number for this layout: blue wins 75% of the time."
+approve_means = "Approve means: this is a fair trap: red moves out into the middle of three blue forces, which spring at the same time, and the layout may run in the lab; blue's predicted win rate is 75%."
+deny_means = "Deny means: the pocket, the start, the moment of the spring or the closing force is wrong for a trap; your note says what a trapper has."
+orders = "groups"
 
 [side_a]
 headcount = 24
@@ -31,6 +30,7 @@ y = 2710.0
 facing = 0.0
 layer = 1
 range = 300.0
+group = "hill_w"
 
 [[side_a.units]]
 role = "Warden"
@@ -39,6 +39,7 @@ y = 2750.0
 facing = 0.0
 layer = 1
 range = 350.0
+group = "hill_w"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -47,6 +48,7 @@ y = 2790.0
 facing = 0.0
 layer = 1
 range = 300.0
+group = "hill_w"
 
 [[side_a.units]]
 role = "Warden"
@@ -55,6 +57,7 @@ y = 2710.0
 facing = 0.0
 layer = 1
 range = 350.0
+group = "hill_w"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -63,6 +66,7 @@ y = 2750.0
 facing = 0.0
 layer = 1
 range = 300.0
+group = "hill_w"
 
 [[side_a.units]]
 role = "Warden"
@@ -71,6 +75,7 @@ y = 2790.0
 facing = 0.0
 layer = 1
 range = 350.0
+group = "hill_w"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -79,6 +84,7 @@ y = 2710.0
 facing = 0.0
 layer = 1
 range = 300.0
+group = "hill_w"
 
 [[side_a.units]]
 role = "Warden"
@@ -87,6 +93,7 @@ y = 2750.0
 facing = 0.0
 layer = 1
 range = 350.0
+group = "hill_w"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -95,6 +102,7 @@ y = 2790.0
 facing = 3.1416
 layer = 1
 range = 300.0
+group = "hill_e"
 
 [[side_a.units]]
 role = "Warden"
@@ -103,6 +111,7 @@ y = 2750.0
 facing = 3.1416
 layer = 1
 range = 350.0
+group = "hill_e"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -111,6 +120,7 @@ y = 2710.0
 facing = 3.1416
 layer = 1
 range = 300.0
+group = "hill_e"
 
 [[side_a.units]]
 role = "Warden"
@@ -119,6 +129,7 @@ y = 2790.0
 facing = 3.1416
 layer = 1
 range = 350.0
+group = "hill_e"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -127,6 +138,7 @@ y = 2750.0
 facing = 3.1416
 layer = 1
 range = 300.0
+group = "hill_e"
 
 [[side_a.units]]
 role = "Warden"
@@ -135,6 +147,7 @@ y = 2710.0
 facing = 3.1416
 layer = 1
 range = 350.0
+group = "hill_e"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -143,6 +156,7 @@ y = 2790.0
 facing = 3.1416
 layer = 1
 range = 300.0
+group = "hill_e"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -152,6 +166,7 @@ facing = -1.7708
 layer = 0
 range = 300.0
 arc = 0
+group = "arc"
 
 [[side_a.units]]
 role = "Warden"
@@ -161,6 +176,7 @@ facing = -1.7208
 layer = 0
 range = 350.0
 arc = 0
+group = "arc"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -170,6 +186,7 @@ facing = -1.6708
 layer = 0
 range = 300.0
 arc = 0
+group = "arc"
 
 [[side_a.units]]
 role = "Warden"
@@ -179,6 +196,7 @@ facing = -1.6208
 layer = 0
 range = 350.0
 arc = 0
+group = "arc"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -188,6 +206,7 @@ facing = -1.5708
 layer = 0
 range = 300.0
 arc = 0
+group = "arc"
 
 [[side_a.units]]
 role = "Warden"
@@ -197,6 +216,7 @@ facing = -1.5208
 layer = 0
 range = 350.0
 arc = 0
+group = "arc"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -206,6 +226,7 @@ facing = -1.4708
 layer = 0
 range = 300.0
 arc = 0
+group = "arc"
 
 [[side_a.units]]
 role = "Warden"
@@ -215,6 +236,7 @@ facing = -1.4208
 layer = 0
 range = 350.0
 arc = 0
+group = "arc"
 
 [[side_a.units]]
 role = "Vanguard"
@@ -224,393 +246,469 @@ facing = -1.3708
 layer = 0
 range = 300.0
 arc = 0
+group = "arc"
 
 [side_b]
 headcount = 48
 
 [[side_b.units]]
 role = "Vanguard"
-x = 1880.0
-y = 2780.0
-facing = -1.5708
-layer = 0
-range = 300.0
-
-[[side_b.units]]
-role = "Raider"
-x = 1920.0
-y = 2780.0
-facing = -1.5708
-layer = 0
-range = 200.0
-
-[[side_b.units]]
-role = "Interceptor"
-x = 1960.0
-y = 2780.0
-facing = -1.5708
-layer = 0
-range = 250.0
-
-[[side_b.units]]
-role = "Vanguard"
-x = 2000.0
-y = 2780.0
-facing = -1.5708
-layer = 0
-range = 300.0
-
-[[side_b.units]]
-role = "Raider"
-x = 2040.0
-y = 2780.0
-facing = -1.5708
-layer = 0
-range = 200.0
-
-[[side_b.units]]
-role = "Interceptor"
-x = 2080.0
-y = 2780.0
-facing = -1.5708
-layer = 0
-range = 250.0
-
-[[side_b.units]]
-role = "Vanguard"
 x = 2120.0
-y = 2780.0
-facing = -1.5708
+y = 2070.0
+facing = 1.5708
 layer = 0
 range = 300.0
+group = "red"
 
 [[side_b.units]]
 role = "Raider"
-x = 1880.0
-y = 2820.0
-facing = -1.5708
+x = 2080.0
+y = 2070.0
+facing = 1.5708
 layer = 0
 range = 200.0
-
-[[side_b.units]]
-role = "Interceptor"
-x = 1920.0
-y = 2820.0
-facing = -1.5708
-layer = 0
-range = 250.0
-
-[[side_b.units]]
-role = "Vanguard"
-x = 1960.0
-y = 2820.0
-facing = -1.5708
-layer = 0
-range = 300.0
-
-[[side_b.units]]
-role = "Raider"
-x = 2000.0
-y = 2820.0
-facing = -1.5708
-layer = 0
-range = 200.0
+group = "red"
 
 [[side_b.units]]
 role = "Interceptor"
 x = 2040.0
-y = 2820.0
-facing = -1.5708
+y = 2070.0
+facing = 1.5708
 layer = 0
 range = 250.0
+group = "red"
 
 [[side_b.units]]
 role = "Vanguard"
-x = 2080.0
-y = 2820.0
-facing = -1.5708
+x = 2000.0
+y = 2070.0
+facing = 1.5708
 layer = 0
 range = 300.0
+group = "red"
+
+[[side_b.units]]
+role = "Raider"
+x = 1960.0
+y = 2070.0
+facing = 1.5708
+layer = 0
+range = 200.0
+group = "red"
+
+[[side_b.units]]
+role = "Interceptor"
+x = 1920.0
+y = 2070.0
+facing = 1.5708
+layer = 0
+range = 250.0
+group = "red"
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1880.0
+y = 2070.0
+facing = 1.5708
+layer = 0
+range = 300.0
+group = "red"
 
 [[side_b.units]]
 role = "Raider"
 x = 2120.0
-y = 2820.0
-facing = -1.5708
+y = 2030.0
+facing = 1.5708
 layer = 0
 range = 200.0
+group = "red"
 
 [[side_b.units]]
 role = "Interceptor"
-x = 1880.0
-y = 2860.0
-facing = -1.5708
+x = 2080.0
+y = 2030.0
+facing = 1.5708
 layer = 0
 range = 250.0
-
-[[side_b.units]]
-role = "Vanguard"
-x = 1920.0
-y = 2860.0
-facing = -1.5708
-layer = 0
-range = 300.0
-
-[[side_b.units]]
-role = "Raider"
-x = 1960.0
-y = 2860.0
-facing = -1.5708
-layer = 0
-range = 200.0
-
-[[side_b.units]]
-role = "Interceptor"
-x = 2000.0
-y = 2860.0
-facing = -1.5708
-layer = 0
-range = 250.0
+group = "red"
 
 [[side_b.units]]
 role = "Vanguard"
 x = 2040.0
-y = 2860.0
-facing = -1.5708
+y = 2030.0
+facing = 1.5708
 layer = 0
 range = 300.0
+group = "red"
 
 [[side_b.units]]
 role = "Raider"
-x = 2080.0
-y = 2860.0
-facing = -1.5708
+x = 2000.0
+y = 2030.0
+facing = 1.5708
 layer = 0
 range = 200.0
+group = "red"
+
+[[side_b.units]]
+role = "Interceptor"
+x = 1960.0
+y = 2030.0
+facing = 1.5708
+layer = 0
+range = 250.0
+group = "red"
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1920.0
+y = 2030.0
+facing = 1.5708
+layer = 0
+range = 300.0
+group = "red"
+
+[[side_b.units]]
+role = "Raider"
+x = 1880.0
+y = 2030.0
+facing = 1.5708
+layer = 0
+range = 200.0
+group = "red"
 
 [[side_b.units]]
 role = "Interceptor"
 x = 2120.0
-y = 2860.0
-facing = -1.5708
+y = 1990.0
+facing = 1.5708
 layer = 0
 range = 250.0
+group = "red"
 
 [[side_b.units]]
 role = "Vanguard"
-x = 1880.0
-y = 2900.0
-facing = -1.5708
+x = 2080.0
+y = 1990.0
+facing = 1.5708
 layer = 0
 range = 300.0
-
-[[side_b.units]]
-role = "Raider"
-x = 1920.0
-y = 2900.0
-facing = -1.5708
-layer = 0
-range = 200.0
-
-[[side_b.units]]
-role = "Interceptor"
-x = 1960.0
-y = 2900.0
-facing = -1.5708
-layer = 0
-range = 250.0
-
-[[side_b.units]]
-role = "Vanguard"
-x = 2000.0
-y = 2900.0
-facing = -1.5708
-layer = 0
-range = 300.0
+group = "red"
 
 [[side_b.units]]
 role = "Raider"
 x = 2040.0
-y = 2900.0
-facing = -1.5708
+y = 1990.0
+facing = 1.5708
 layer = 0
 range = 200.0
+group = "red"
 
 [[side_b.units]]
 role = "Interceptor"
-x = 2080.0
-y = 2900.0
-facing = -1.5708
+x = 2000.0
+y = 1990.0
+facing = 1.5708
 layer = 0
 range = 250.0
+group = "red"
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1960.0
+y = 1990.0
+facing = 1.5708
+layer = 0
+range = 300.0
+group = "red"
+
+[[side_b.units]]
+role = "Raider"
+x = 1920.0
+y = 1990.0
+facing = 1.5708
+layer = 0
+range = 200.0
+group = "red"
+
+[[side_b.units]]
+role = "Interceptor"
+x = 1880.0
+y = 1990.0
+facing = 1.5708
+layer = 0
+range = 250.0
+group = "red"
 
 [[side_b.units]]
 role = "Vanguard"
 x = 2120.0
-y = 2900.0
-facing = -1.5708
+y = 1950.0
+facing = 1.5708
 layer = 0
 range = 300.0
+group = "red"
 
 [[side_b.units]]
 role = "Raider"
-x = 1880.0
-y = 2940.0
-facing = -1.5708
+x = 2080.0
+y = 1950.0
+facing = 1.5708
 layer = 0
 range = 200.0
-
-[[side_b.units]]
-role = "Interceptor"
-x = 1920.0
-y = 2940.0
-facing = -1.5708
-layer = 0
-range = 250.0
-
-[[side_b.units]]
-role = "Vanguard"
-x = 1960.0
-y = 2940.0
-facing = -1.5708
-layer = 0
-range = 300.0
-
-[[side_b.units]]
-role = "Raider"
-x = 2000.0
-y = 2940.0
-facing = -1.5708
-layer = 0
-range = 200.0
+group = "red"
 
 [[side_b.units]]
 role = "Interceptor"
 x = 2040.0
-y = 2940.0
-facing = -1.5708
+y = 1950.0
+facing = 1.5708
 layer = 0
 range = 250.0
+group = "red"
 
 [[side_b.units]]
 role = "Vanguard"
-x = 2080.0
-y = 2940.0
-facing = -1.5708
+x = 2000.0
+y = 1950.0
+facing = 1.5708
 layer = 0
 range = 300.0
+group = "red"
+
+[[side_b.units]]
+role = "Raider"
+x = 1960.0
+y = 1950.0
+facing = 1.5708
+layer = 0
+range = 200.0
+group = "red"
+
+[[side_b.units]]
+role = "Interceptor"
+x = 1920.0
+y = 1950.0
+facing = 1.5708
+layer = 0
+range = 250.0
+group = "red"
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1880.0
+y = 1950.0
+facing = 1.5708
+layer = 0
+range = 300.0
+group = "red"
 
 [[side_b.units]]
 role = "Raider"
 x = 2120.0
-y = 2940.0
-facing = -1.5708
+y = 1910.0
+facing = 1.5708
 layer = 0
 range = 200.0
+group = "red"
 
 [[side_b.units]]
 role = "Interceptor"
-x = 1880.0
-y = 2980.0
-facing = -1.5708
+x = 2080.0
+y = 1910.0
+facing = 1.5708
 layer = 0
 range = 250.0
-
-[[side_b.units]]
-role = "Vanguard"
-x = 1920.0
-y = 2980.0
-facing = -1.5708
-layer = 0
-range = 300.0
-
-[[side_b.units]]
-role = "Raider"
-x = 1960.0
-y = 2980.0
-facing = -1.5708
-layer = 0
-range = 200.0
-
-[[side_b.units]]
-role = "Interceptor"
-x = 2000.0
-y = 2980.0
-facing = -1.5708
-layer = 0
-range = 250.0
+group = "red"
 
 [[side_b.units]]
 role = "Vanguard"
 x = 2040.0
-y = 2980.0
-facing = -1.5708
+y = 1910.0
+facing = 1.5708
 layer = 0
 range = 300.0
+group = "red"
 
 [[side_b.units]]
 role = "Raider"
-x = 2080.0
-y = 2980.0
-facing = -1.5708
+x = 2000.0
+y = 1910.0
+facing = 1.5708
 layer = 0
 range = 200.0
+group = "red"
+
+[[side_b.units]]
+role = "Interceptor"
+x = 1960.0
+y = 1910.0
+facing = 1.5708
+layer = 0
+range = 250.0
+group = "red"
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1920.0
+y = 1910.0
+facing = 1.5708
+layer = 0
+range = 300.0
+group = "red"
+
+[[side_b.units]]
+role = "Raider"
+x = 1880.0
+y = 1910.0
+facing = 1.5708
+layer = 0
+range = 200.0
+group = "red"
 
 [[side_b.units]]
 role = "Interceptor"
 x = 2120.0
-y = 2980.0
-facing = -1.5708
+y = 1870.0
+facing = 1.5708
 layer = 0
 range = 250.0
+group = "red"
 
 [[side_b.units]]
 role = "Vanguard"
-x = 1880.0
-y = 3020.0
-facing = -1.5708
+x = 2080.0
+y = 1870.0
+facing = 1.5708
 layer = 0
 range = 300.0
-
-[[side_b.units]]
-role = "Raider"
-x = 1920.0
-y = 3020.0
-facing = -1.5708
-layer = 0
-range = 200.0
-
-[[side_b.units]]
-role = "Interceptor"
-x = 1960.0
-y = 3020.0
-facing = -1.5708
-layer = 0
-range = 250.0
-
-[[side_b.units]]
-role = "Vanguard"
-x = 2000.0
-y = 3020.0
-facing = -1.5708
-layer = 0
-range = 300.0
+group = "red"
 
 [[side_b.units]]
 role = "Raider"
 x = 2040.0
-y = 3020.0
-facing = -1.5708
+y = 1870.0
+facing = 1.5708
 layer = 0
 range = 200.0
+group = "red"
 
 [[side_b.units]]
 role = "Interceptor"
-x = 2080.0
-y = 3020.0
-facing = -1.5708
+x = 2000.0
+y = 1870.0
+facing = 1.5708
 layer = 0
 range = 250.0
+group = "red"
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1960.0
+y = 1870.0
+facing = 1.5708
+layer = 0
+range = 300.0
+group = "red"
+
+[[side_b.units]]
+role = "Raider"
+x = 1920.0
+y = 1870.0
+facing = 1.5708
+layer = 0
+range = 200.0
+group = "red"
+
+[[side_b.units]]
+role = "Interceptor"
+x = 1880.0
+y = 1870.0
+facing = 1.5708
+layer = 0
+range = 250.0
+group = "red"
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2120.0
+y = 1830.0
+facing = 1.5708
+layer = 0
+range = 300.0
+group = "red"
+
+[[side_b.units]]
+role = "Raider"
+x = 2080.0
+y = 1830.0
+facing = 1.5708
+layer = 0
+range = 200.0
+group = "red"
+
+[[side_b.units]]
+role = "Interceptor"
+x = 2040.0
+y = 1830.0
+facing = 1.5708
+layer = 0
+range = 250.0
+group = "red"
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2000.0
+y = 1830.0
+facing = 1.5708
+layer = 0
+range = 300.0
+group = "red"
+
+[[side_b.units]]
+role = "Raider"
+x = 1960.0
+y = 1830.0
+facing = 1.5708
+layer = 0
+range = 200.0
+group = "red"
+
+[[side_b.units]]
+role = "Interceptor"
+x = 1920.0
+y = 1830.0
+facing = 1.5708
+layer = 0
+range = 250.0
+group = "red"
+
+[[order_groups]]
+side = "A"
+group = "hill_w"
+order = "hold"
+to = "enemy_centroid"
+release = {point = [1997.86, 2898.02], radius = 300.0}
+
+[[order_groups]]
+side = "A"
+group = "hill_e"
+order = "hold"
+to = "enemy_centroid"
+release = {point = [1997.86, 2898.02], radius = 300.0}
+
+[[order_groups]]
+side = "A"
+group = "arc"
+order = "hold"
+to = "enemy_centroid"
+release = {point = [1997.86, 2898.02], radius = 300.0}
+
+[[order_groups]]
+side = "B"
+group = "red"
+order = "attack_move"
+to = [1997.86, 2898.02]
 
 [[features]]
 kind = "trap"
