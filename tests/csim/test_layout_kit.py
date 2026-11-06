@@ -21,7 +21,7 @@ def dump_bin(tmp_path_factory):
     out = tmp_path_factory.mktemp("lk") / "layout_dump"
     cli = CSRC / "tools" / "layout_dump.c"
     assert cli.exists(), "csrc/tools/layout_dump.c is leaf 2 of the S-247 cascade"
-    srcs = sorted(CSRC.glob("layout_kit*.c"))
+    srcs = sorted(CSRC.glob("layout_kit*.c")) + [CSRC / "terrain_noise.c"]
     r = subprocess.run(["cc", *FLAGS, "-I", str(CSRC), "-o", str(out), str(cli), *map(str, srcs), "-lm"],
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
