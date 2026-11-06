@@ -98,7 +98,7 @@ The live queue is maintained in `docs/legacy/research_lane_queue.md`. That file 
 
 - Any Design Lane work — fork enumeration, fork picks, bible edits.
 - Any Implementer Lane work — code, tests, stage spec drafting, branches, PRs, releases.
-- Edits to `docs/bible/**`, `docs/stage_specs/**`, `docs/launch_*`, `CLAUDE.md` beyond a single pointer line, or any test thresholds.
+- Edits to `docs/bible/**`, `docs/legacy/stage_specs/**`, `docs/launch_*`, `CLAUDE.md` beyond a single pointer line, or any test thresholds.
 - Recommendation language. "I recommend X" is forbidden. "Westley should pick Y" is forbidden. "The data suggests" is acceptable when accompanied by the data.
 
 ## 11. Pointers
@@ -109,7 +109,7 @@ The live queue is maintained in `docs/legacy/research_lane_queue.md`. That file 
 - Topic briefs: `docs/legacy/topics/<topic>.md`.
 - Query artifacts: `docs/research/queries/<question>.md`.
 - Graphify outputs: `docs/research/graphify-out/` (graph.json, GRAPH_REPORT.md, graph.html).
-- Design Lane playbook (consumer): `docs/design_lane.md`.
+- Design Lane playbook (consumer): `docs/legacy/method_era1/design_lane.md`.
 - North star research briefs: `docs/northstar/research/`.
 
 ## 12. Changelog

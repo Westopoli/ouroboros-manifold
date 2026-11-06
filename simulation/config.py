@@ -1086,7 +1086,7 @@ DR_VEL_CHANGE_THRESHOLD    = 20.0  # wu/s of velocity magnitude change before fo
 # DR_RESYNC_THRESHOLD tightened from 3.0 to 1.0 in Stage 8.5 H.5 to shrink
 # per-tick backward snap magnitudes (client DR over-prediction was producing
 # p95 270 wu backward corrections with the old 3.0 threshold).
-# See logs/perf_report.md and docs/stage_specs/stage_8_5_spec.md H.5.
+# See logs/perf_report.md and docs/legacy/stage_specs/stage_8_5_spec.md H.5.
 
 # Camera / input (consumed by Godot client via snapshot metadata)
 CAMERA_ANGLE_DEGREES       = 60.0
@@ -1119,7 +1119,7 @@ KEYFRAME_STREAM_ENABLED = True
 
 # ── Stage 11g: World view inspection (kill-switch flags, default OFF) ─────
 # Each flag, when False, must leave behavior bit-identical to pre-stage-11g.
-# See docs/stage_specs/stage_11g_world_view_inspection_spec.md
+# See docs/legacy/stage_specs/stage_11g_world_view_inspection_spec.md
 ENABLE_FACTION_PALETTE     = True   # deterministic faction hue + vivacity scaling
 ENABLE_INSPECTION_PANELS   = True   # region/faction info panels on click
 ENABLE_INSPECTION_PAUSE    = True   # panels pause world view animation

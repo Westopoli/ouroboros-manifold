@@ -70,10 +70,10 @@ Checkpoints with Westley: after A (research memos), after B.1-B.3 (pipeline and 
 
 Edits to `docs/northstar/PLAN.md` (rewrite, never append), plus pointers:
 - New top-level section "**The Factory: how Agora builds and verifies autonomously**" holding B.1-B.4 and B.7 at high level, with the artifact pipeline diagram, roles table, project boundary, QA architecture, and the failure-mode table.
-- **Prototype ladder** sub-section replacing Track L's round-major ordering as the order of entry into Stage 3; Track L's rounds map onto rungs; `mvp/build_path.md` updated to match.
+- **Prototype ladder** sub-section replacing Track L's round-major ordering as the order of entry into Stage 3; Track L's rounds map onto rungs; `docs/legacy/mvp/build_path.md` updated to match.
 - Stage 5 rewritten: expectation specs as a fenced artifact beside tests; T1/T2 defined as oracle classes; the auditor paragraph removed (closed 2026-09-17); QA harness positive controls as a Done criterion.
 - Stage 4 rewritten: the chain (`RELEASE_CHAIN`, gate cards, QA campaigns triggered by gates) as the living backlog; sizing contract kept; stale Stage 4/5 numbering reconciled with `plans/TODO.md`.
-- Escalation ladder corrected (agy Gemini, not DeepSeek; real path of `research/escalation.md`), with the plateau early-stop as a rung and hand-implementation as a sign-off escalation.
+- Escalation ladder corrected (agy Gemini, not DeepSeek; real path of `docs/legacy/research/escalation.md`), with the plateau early-stop as a rung and hand-implementation as a sign-off escalation.
 - Stage 5 gains the pre-queue execution checks: tick-stage closure, control-coverage lint, diff-scoped mutation, fixture-defect detectors, generated spec cache with drift check.
 - `principles.md`: additions if B.7 yields a new principle (candidates: "the harness is a tenant of the project, not the reverse"; "a QA pass that cannot fail is not a QA pass").
 - `docs/northstar/research/factory/README.md` indexing the memos; `docs/northstar/ambiguity_register.md` rows for every open flag raised.

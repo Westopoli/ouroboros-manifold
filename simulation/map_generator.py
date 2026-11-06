@@ -16,7 +16,7 @@ from archetype_filters import matching_layouts, get_baseline_ownership
 from tactical_map import TacticalMap
 
 
-# See also: docs/stage_specs/stage_11e_fairness_reconciliation_spec.md — interim simple picker;
+# See also: docs/legacy/stage_specs/stage_11e_fairness_reconciliation_spec.md — interim simple picker;
 # bible's two-layer fairness architecture deferred to stage_11f.
 def generate_map(generator_input: GeneratorInput, layout_library: dict) -> MapGenerationResult:
     compatible = matching_layouts(generator_input.archetype, layout_library)

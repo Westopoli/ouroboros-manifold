@@ -184,7 +184,7 @@ def select_keyframes(time_jump_result: dict, start_ownership: dict | None = None
         kf["entry_id"] = new_id
 
     # Stage 11g — additive, gated extensions. Flags off → no changes to payload.
-    # See docs/stage_specs/stage_11g_world_view_inspection_spec.md
+    # See docs/legacy/stage_specs/stage_11g_world_view_inspection_spec.md
     if getattr(config, "ENABLE_INSPECTION_PANELS", False):
         region_metadata = time_jump_result.get("region_metadata", {})
         if region_metadata:

@@ -38,7 +38,7 @@ From 2026-09-22 evening every mockup branch and this ledger land through the M0 
 
 ## Default shape of a workflow brief (2026-10-03)
 
-For a brief the Architect writes and a Sonnet chat runs as a workflow. First used after `plans/2026-10-03-loop-fix-workflow-brief.md`, whose serial steps and one-at-a-time landings made it slow.
+For a brief the Architect writes and a Sonnet chat runs as a workflow. First used after `plans/archive/specs/2026-10-03-loop-fix-workflow-brief.md`, whose serial steps and one-at-a-time landings made it slow.
 
 - Lanes run in parallel, one lane per file or file group, new code in new files.
 - Inside a lane, the diagnoser and the test-writer start at the same time. The builder starts when both have reported. The test-writer works from the rule and the evidence in the brief, never from the diagnosis.

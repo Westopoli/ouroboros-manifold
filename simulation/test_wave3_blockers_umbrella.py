@@ -1,6 +1,6 @@
 """Wave 3 Pre-Zip Wiring umbrella test.
 
-Encodes top-level acceptance criteria from `docs/test_specs/wave_3_pre_zip_wiring.md`.
+Encodes top-level acceptance criteria from `docs/legacy/test_specs/wave_3_pre_zip_wiring.md`.
 Initially RED. Goes GREEN only after all 7 leaves (B5-A, B5-B, B2-A, B3-A, B2-B, B3-B, B5-C) merge.
 
 DO NOT EDIT leaf-by-leaf. Parent-owned end-to-end gate.
@@ -33,20 +33,20 @@ def _read(rel_path):
 def test_umbrella_a_pyinstaller_win_spec_exists():
     path = os.path.join(REPO_ROOT, "build", "pyinstaller_win.spec")
     assert os.path.exists(path), (
-        "B5-A not landed: build/pyinstaller_win.spec missing"
+        "B5-A not landed: legacy/build/pyinstaller_win.spec missing"
     )
 
 
 def test_umbrella_a_pyinstaller_win_spec_structure():
-    src = _read("build/pyinstaller_win.spec")
+    src = _read("legacy/build/pyinstaller_win.spec")
     for token in ("Analysis", "PYZ", "EXE", "COLLECT", "ouroboros_sim"):
         assert token in src, (
-            f"B5-A not landed: build/pyinstaller_win.spec missing token {token!r}"
+            f"B5-A not landed: legacy/build/pyinstaller_win.spec missing token {token!r}"
         )
 
 
 def test_umbrella_a_pyinstaller_win_entry_point():
-    src = _read("build/pyinstaller_win.spec")
+    src = _read("legacy/build/pyinstaller_win.spec")
     assert "pipe_transport" in src, (
         "B5-A not landed: pyinstaller_win.spec must declare pipe_transport entry"
     )

@@ -42,7 +42,7 @@ Who runs it: Gemini via `agy` (day-side or scheduled), mirroring the existing cr
 
 What it may write: a **proposals file**, never live config or live prompts — this is the existing `PROPOSE` move's contract (`prompts/driver-propose.md`: "NEVER applied automatically") generalized from single-file driver-prompt diffs to whatever the refiner is scoped to touch this epic (worker prompts, hint format, card-sizing heuristic, ladder thresholds). One proposals file per epic, diff-formatted against a named file, with the same "claim / rationale / diff" shape `driver-propose.md` already specifies.
 
-Approval: Westley reads the proposals file same as he reads `ESCALATION.md` today (per `docs/northstar/research/escalation.md`, "Flag file plus evidence bundle, read by Westley when he opens a chat. No unattended Claude") — applies by hand, in whole or in part, or rejects with a one-line reason that becomes the next cycle's input.
+Approval: Westley reads the proposals file same as he reads `ESCALATION.md` today (per `docs/legacy/research/escalation.md`, "Flag file plus evidence bundle, read by Westley when he opens a chat. No unattended Claude") — applies by hand, in whole or in part, or rejects with a one-line reason that becomes the next cycle's input.
 
 Rollback: because nothing is live-applied without Westley's hand, "rollback" is just "don't apply" for anything not yet merged; for anything already applied and later found bad, standard git revert on the commit that applied it — no special mechanism needed since these are ordinary file edits under normal commit discipline (CLAUDE.md's "work directly on main, never hand Westley a conflict" already covers this).
 

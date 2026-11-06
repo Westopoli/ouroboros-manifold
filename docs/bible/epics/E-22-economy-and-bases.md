@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | Not yet; see Look and behavior references. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the open flags. Every story below is design decided by Westley on 2026-10-01 and 2026-10-02 (`docs/northstar/research/economy_design/`, his words verbatim in its README, and `docs/northstar/research/epics_audit_2026-10-02/DECISIONS.md`) and is not scheduled for building. An epic with an open flag is not built.
+**Gate verdict: not passed.** Blocked on the open flags. Every story below is design decided by Westley on 2026-10-01 and 2026-10-02 (`docs/northstar/research/economy_design/`, his words verbatim in its README, and `docs/legacy/research/epics_audit_2026-10-02/DECISIONS.md`) and is not scheduled for building. An epic with an open flag is not built.
 
 ## Purpose
 

@@ -39,7 +39,7 @@ This is the failure the plan is built to prevent. Every stage below carries a **
 - No "psychohistory prediction" system exists; CLAUDE.md only permits the concept.
 - Tests: 491 `def test_` across 65 pytest files, plus ~65 print-style `test_*.py` scripts in the same flat `simulation/` dir. `simulation/invariants.py` has ~70 trajectory invariants. 13 Godot scene tests in `tests/`.
 - Transport: `autoload/sim_bridge.gd` spawns `simulation/pipe_transport.py`; sim to Godot over stdout (4-byte BE length prefix + JSON); Godot to sim over a polled temp command file (Godot 4.6 bidirectional pipe bug). Delta shape in `simulation/snapshot_serializer.py`, documented in `docs/architecture.md`.
-- Bible: hub `docs/bible/game_bible.md` (415 lines) + 9 spokes (3,728 lines total). Hub is clean of append markers; drift now lives in spokes and orphaned cross-refs (deleted `bible_monetization.md` still cited in `docs/architecture.md:194` and ~18 research briefs; `docs/design_lane.md` still mandates In Flux sections the hub forbids; price $10–15 in hub vs $25–35 in research; "Roman-era sci-fi" in hub Monetization). 24 historical snapshots in `docs/bible_history/`.
+- Bible: hub `docs/bible/game_bible.md` (415 lines) + 9 spokes (3,728 lines total). Hub is clean of append markers; drift now lives in spokes and orphaned cross-refs (deleted `bible_monetization.md` still cited in `docs/architecture.md:194` and ~18 research briefs; `docs/legacy/method_era1/design_lane.md` still mandates In Flux sections the hub forbids; price $10–15 in hub vs $25–35 in research; "Roman-era sci-fi" in hub Monetization). 24 historical snapshots in `docs/bible_history/`.
 - Stale claims that Stage 1 must catch: CLAUDE.md protected-file list names `templates.py`, `theme_scifi.py`, `event_engine.py`, none of which exist; `autoload/tactical_bridge.gd:2` says "Owns the TCP connection" (socket server deleted); `library_builder.py --mode api` is a stub.
 - Priority queue NEXT is empty. 6 Soon, 24 Backlog, 16 research-only items.
 
@@ -56,7 +56,7 @@ This is the failure the plan is built to prevent. Every stage below carries a **
 
 ## Core principles (persist beyond this chat)
 
-These go into `docs/northstar/principles.md` and get a pointer from CLAUDE.md.
+These go into `docs/legacy/agora_era/principles.md` and get a pointer from CLAUDE.md.
 
 1. **Autonomy is the product.** The system (Agora: local models + DeepSeek) builds and QA-tests the game unattended. Anything a human must do mid-loop is a design defect in the plan, not a task for Westley.
 2. **Claude does judgment, day-side only.** Claude designs the bible, the E2E behavior definitions, the roadmap, the tests, and the escalation rules. Claude never runs in an unattended path by default (Agora D16). Opt-in loop watcher is a documented exception Westley enables by hand.
@@ -87,7 +87,7 @@ Stage 3  E2E definition       Per epic: inputs, outputs, rules, edges, scale, Do
 Stage 4  Roadmap              Product backlog, sprints, escalation ladder          -> docs/northstar/roadmap.md + sprint files
 Stage 5  TDD tests            Claude writes the fenced test suite per story        -> tests/ (C, Python harness, QA scenarios)
 Track R  Research (parallel)  R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS bug catalog -> docs/northstar/research/*.md
-Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; owns Stage 3 order -> docs/northstar/mvp/
+Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; owns Stage 3 order -> docs/legacy/mvp/
 ```
 
 **Global stages vs per-epic pipeline.** Stages 1 and 2 run once, in full, because they produce the source of truth. Track R runs alongside them. Stages 3, 4, 5 are a **per-epic pipeline** that repeats for the life of the project: an epic enters Stage 3 when the roadmap prioritizes it, passes the Definition of Ready, gets its tests in Stage 5, and then Agora builds it while Claude runs the next epic through the pipeline.
@@ -214,7 +214,7 @@ Principle 13 applies to the factory itself. Each load-bearing claim above has a 
 
 **Inputs.**
 - `docs/bible/game_bible.md` + the 9 spokes (4,143 lines).
-- `docs/priority_queue.md` "Research-only" section (16 parked directions) and Soon/Backlog.
+- `docs/legacy/method_era1/priority_queue.md` "Research-only" section (16 parked directions) and Soon/Backlog.
 - `docs/bible/bible_design_vision.md` split (BINDING principles vs ASPIRATIONAL targets).
 - A code-reality summary (embedded in the brief): which bible systems are built, partial, or absent, taken from the survey above.
 - Known stale claims list (above) so the auditor flags them without re-discovering.
@@ -225,14 +225,14 @@ Principle 13 applies to the factory itself. Each load-bearing claim above has a 
 3. Cross-check pass: for every keep, confirm it does not contradict vision_v2 or another keep. Contradictions surface as a short list for Westley to resolve.
 4. Algorithm pass: the retained equations (from `drift.py`, `world.py`, `faction.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `admin_revolt.py`, `region.py` composites) presented as named formulas with constants. Verdict per formula: keep verbatim / keep with retune / drop. This feeds R2 and Stage 3.
 
-**Output.** `docs/northstar/stage1_audit.md`:
+**Output.** `docs/legacy/agora_era/stage1_audit.md`:
 - One row per item: `id` (A-001…), source `file:line`, type (rule / mechanic / story / aspiration / impl-claim), built-status (built / partial / absent / unknown), verdict, note.
-- `docs/northstar/vision_v2.md` (one page).
+- `docs/legacy/agora_era/vision_v2.md` (one page).
 - A "contradictions resolved" list and a "stale claims to delete" list.
 
 **Done when.** Every heading in every bible file has at least one ledger row; no row is `unsure`; vision_v2 confirmed; algorithm pass complete. Estimated 500–700 rows; under protocol v2 the remaining spokes are one batch each.
 
-**Brief for the Sonnet chat.** This chat writes `docs/northstar/stage1_brief.md`: mission, rules (no bible edits, no design decisions, ledger only, caveman off for the ledger table), the input list, the code-reality summary, the batch protocol, the ledger schema, and the vision-interview question list. Westley pastes the brief as the first message.
+**Brief for the Sonnet chat.** This chat writes `docs/legacy/agora_era/stage1_brief.md`: mission, rules (no bible edits, no design decisions, ledger only, caveman off for the ledger table), the input list, the code-reality summary, the batch protocol, the ledger schema, and the vision-interview question list. Westley pastes the brief as the first message.
 
 ---
 
@@ -264,7 +264,7 @@ Principle 13 applies to the factory itself. Each load-bearing claim above has a 
 
 **Worked example: Layer System.** Stage 2 runs the Layer System epic through the gate first, before any other epic, as the proof that the gate works. Expected flags include: what elevation each layer maps to on screen; whether a unit visibly moves when its layer changes and over how long; what a unit on layer 2 can see on layers 1 and 3 and at what range; whether layers change pathing, damage, or cover; what the player sees in the HUD about a unit's layer; what an enemy on another layer looks like under fog. Every one of these becomes a `Q-###-##` until Westley answers, and the answers become rules. If the gate produces fewer than a handful of flags on this epic, the gate is too weak and gets tightened before proceeding.
 
-**Also in this stage.** Rewrite CLAUDE.md for the new development style (Agora is the implementer, Claude is designer/tester; agile method and change protocol stated; protected-file list corrected; workflow section replaced by pointer to `docs/northstar/`). Rewrite `docs/workflow.md`, delete or rewrite `docs/design_lane.md` In Flux mandate, fix orphaned `bible_monetization.md` references, retire `docs/priority_queue.md` in favor of the Stage 4 product backlog (or reduce it to a pointer).
+**Also in this stage.** Rewrite CLAUDE.md for the new development style (Agora is the implementer, Claude is designer/tester; agile method and change protocol stated; protected-file list corrected; workflow section replaced by pointer to `docs/northstar/`). Rewrite `docs/legacy/method_era1/workflow.md`, delete or rewrite `docs/legacy/method_era1/design_lane.md` In Flux mandate, fix orphaned `bible_monetization.md` references, retire `docs/legacy/method_era1/priority_queue.md` in favor of the Stage 4 product backlog (or reduce it to a pointer).
 
 **Done when.** Every keep/rewrite row from Stage 1 maps to exactly one story, rule, or hub paragraph; every kill row's text is gone; every epic has run the completeness gate; the Layer System epic has passed it with all flags answered; `derive_agora_rules.py` runs clean for every flag-free epic; no doc in `docs/` references a deleted file (grep verified); CLAUDE.md describes the new style. Epics may reach Done individually; sim-core epics reach Done first so building can start.
 
@@ -302,7 +302,7 @@ Principle 13 applies to the factory itself. Each load-bearing claim above has a 
 
 **Inputs.** Stage 2 epic files (dependency sections), Stage 3 e2e files as they become Ready, R1–R4, Agora task/campaign formats and budgets.
 
-**Product backlog** (`docs/northstar/backlog.md`): every story, ordered by priority, with status (Spec'd / Ready / Tested / Queued / Building / Built / Revised). Sprints pull only from Tested. Claude's planning work each cycle is to move the next stories from Spec'd to Tested faster than Agora drains Tested; if Tested runs dry, Agora idles (Agora D13: no unattributed work) and the flag notes it.
+**Product backlog** (`docs/legacy/agora_era/backlog.md`): every story, ordered by priority, with status (Spec'd / Ready / Tested / Queued / Building / Built / Revised). Sprints pull only from Tested. Claude's planning work each cycle is to move the next stories from Spec'd to Tested faster than Agora drains Tested; if Tested runs dry, Agora idles (Agora D13: no unattributed work) and the flag notes it.
 
 **Roadmap shape** (`docs/northstar/roadmap.md` + `docs/northstar/sprints/S##.md`):
 - **Sprint 0 — Toolchain.** C build (gcc + make; cmake added if R2 says so), test harness (pytest via ctypes against the C lib, or ctest; R2 decides), Godot 4.6 on forge, Xorg virtual screen on nvidia, xdotool + ffmpeg, Agora `projects/ouroboros/qa.toml`, Agora desktop-QA tool (new `tool:` type beyond Playwright), fences (bible, tests, roadmap), escalation flag writer. Exit: one C unit test green from an Agora task, one T2 screenshot round-trip from an Agora QA session.
@@ -319,7 +319,7 @@ Principle 13 applies to the factory itself. Each load-bearing claim above has a 
 - **Parallel rule.** A sprint may open while later epics are still in Stage 2 or 3, provided every story in the sprint is Tested and its epic's dependencies are Built. The first sprints (toolchain, region fields, drift, world graph) are chosen precisely because they depend on almost nothing and can be Ready early.
 - **Prototype rule.** Early sprints may target throwaway prototypes (e.g. a headless C world that only drifts, a Godot scene that only draws unit dots on layers) when that is the fastest way to validate a story's rules against reality. Prototype stories are marked as such in the backlog and are replaced, not extended, when the real story is Ready.
 
-**Escalation ladder** (`docs/northstar/research/escalation.md`, from R3; the Factory section above holds the gates):
+**Escalation ladder** (`docs/legacy/research/escalation.md`, from R3; the Factory section above holds the gates):
 1. **Runs 1-2, fast local ladder**: the local model alone (qwen3-coder:30b, three attempts). A plateau (three distinct candidates, one identical failing set) forces a diagnosis call from the escalator; only a named cause ends the run.
 2. **Runs 3-9, guided**: the escalator (Gemini via `agy`) reads the failed candidates and writes a terse hint into the next brief; a hint that names an upstream defect aborts the run and becomes a fix task for the escalator under the parent-patch fence; a contradiction in the tests aborts as unsatisfiable and routes the finding (`story-defect` to Westley, `test-defect` to the escalator).
 3. **Run 10, cap**: the card parks, `escalate.py` writes `ESCALATION.md` with evidence, Westley is notified.
@@ -364,11 +364,11 @@ Principle 13 applies to the factory itself. Each load-bearing claim above has a 
 
 **Gates that still apply.** Definition of Ready, fenced tests, Agora-only builds, no runtime model calls, determinism, scale gates set by Claude with Westley. Probe H (GDScript build to fenced Godot tests) and probe I (headless export card) must pass before any client or packaging card opens.
 
-**The lean step: gap review.** After each round, a table with one row per hypothesis: what the bible assumed players value, what testers said and did, the gap, and the action. Every gap row becomes exactly one of: a change-protocol PR (story rewritten, tests revised, card respec'd), a new `Q-` flag, or a kill. Killed ideas are recorded in `mvp/experiments.md` so they do not return silently. Confirmed ideas are recorded too, so the bible's claims accumulate evidence.
+**The lean step: gap review.** After each round, a table with one row per hypothesis: what the bible assumed players value, what testers said and did, the gap, and the action. Every gap row becomes exactly one of: a change-protocol PR (story rewritten, tests revised, card respec'd), a new `Q-` flag, or a kill. Killed ideas are recorded in `docs/legacy/mvp/experiments.md` so they do not return silently. Confirmed ideas are recorded too, so the bible's claims accumulate evidence.
 
 **What Track L may not do.** Weaken a rule or a test to fit a round; loosen a scale gate; build on the legacy slice; call a model at runtime; put a human in the build loop; claim Ready for a story that is outside a round's scope.
 
-**Files.** `mvp/README.md` (method, rounds, metrics, instruments, gap-review template); `mvp/distinctiveness.md` (ranked list of what the game offers, with a falsifiable hypothesis per item); `mvp/feature_mvps.md` (per-epic cut by round); `mvp/build_path.md` (how Agora builds the cut compared with the current backlog ladder, new probes, throughput gate); `mvp/experiments.md` (living hypothesis and result log).
+**Files.** `docs/legacy/mvp/README.md` (method, rounds, metrics, instruments, gap-review template); `docs/legacy/mvp/distinctiveness.md` (ranked list of what the game offers, with a falsifiable hypothesis per item); `docs/legacy/mvp/feature_mvps.md` (per-epic cut by round); `docs/legacy/mvp/build_path.md` (how Agora builds the cut compared with the current backlog ladder, new probes, throughput gate); `docs/legacy/mvp/experiments.md` (living hypothesis and result log).
 
 ---
 
@@ -434,14 +434,14 @@ Each produces `docs/northstar/research/<name>.md` and, where marked, a spike pro
 Branch `wn/docs-northstar-plan` off `main`. Files:
 
 1. `docs/northstar/README.md` — this plan, trimmed to the stage definitions, the requirement hierarchy, the parallel rules, and the layer-system example (persisted north star).
-2. `docs/northstar/principles.md` — the twelve core principles.
+2. `docs/legacy/agora_era/principles.md` — the twelve core principles.
 3. `docs/northstar/agile.md` — epic/story/rule/flag definitions, ID scheme, story template, change protocol, Definition of Ready, definition-completeness checklist.
 4. `docs/northstar/ambiguity_register.md` — empty register with schema, seeded with the Layer System questions listed above as the first `[NEEDS WESTLEY]` flags.
-5. `docs/northstar/stage1_brief.md` — the Sonnet 5 chat briefing (mission, rules, inputs, code-reality summary, batch protocol, ledger schema, vision-interview questions, instruction to raise `[NEEDS WESTLEY]` flags rather than guess).
+5. `docs/legacy/agora_era/stage1_brief.md` — the Sonnet 5 chat briefing (mission, rules, inputs, code-reality summary, batch protocol, ledger schema, vision-interview questions, instruction to raise `[NEEDS WESTLEY]` flags rather than guess).
 6. `docs/northstar/research/` — four stub files with the R1–R4 questions above, ready for the Research Lane chat.
 6b. `docs/northstar/proving_ground/README.md` — the probe structure, the A–G table, scoring rules, and the open choices; individual `P#-*.md` files are written in Stage 0 itself after Westley picks the open choices.
 7. `CLAUDE.md` — add a short "North Star" section at the top pointing at `docs/northstar/README.md` and stating the new development style (Agora builds, Claude designs and tests, agile stories, Definition of Ready gates building). No other CLAUDE.md edits yet (Stage 2 owns the rewrite).
-8. `docs/priority_queue.md` — set NEXT to "Stage 1 — Bible audit (Sonnet chat)".
+8. `docs/legacy/method_era1/priority_queue.md` — set NEXT to "Stage 1 — Bible audit (Sonnet chat)".
 9. Memory: save the north-star decisions (C path, QA tiers, escalation vehicle, agile + parallel build, layer-system lesson) as project memories.
 
 PR with the test deliverable: open the brief, paste into a fresh Sonnet 5 chat, confirm the chat asks the vision-interview questions first and presents batch 1 of the hub as a ledger table.
@@ -451,7 +451,7 @@ PR with the test deliverable: open the brief, paste into a fresh Sonnet 5 chat, 
 - `ls docs/northstar/` shows README, principles, agile, ambiguity_register, stage1_brief, research/{qa_driving,c_rewrite,escalation,rts_bug_catalog}.md, proving_ground/README.md.
 - `ambiguity_register.md` lists the Layer System flags with status open.
 - `grep -n "North Star" CLAUDE.md` hits the new section; CLAUDE.md still passes a read-through with no contradiction to the section it points at.
-- `docs/priority_queue.md` NEXT names Stage 1.
+- `docs/legacy/method_era1/priority_queue.md` NEXT names Stage 1.
 - Westley pastes `stage1_brief.md` into a Sonnet 5 chat; first reply is the vision interview, not a bible edit.
 
 ## Out of scope for this plan's execution

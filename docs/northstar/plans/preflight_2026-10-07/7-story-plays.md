@@ -75,7 +75,7 @@ Statuses are from `docs/bible/stories.md`. The catalog has 239 rows. No story ca
 
 ## 5. The reviewer
 
-- **Agora's QA player:** `~/Projects/agora/scripts/qa_explore.py` (the loop), `qa_desktop.py` (Xvfb and screenshots), `qa_tactical.py` (EndMission gate), `qa_oracle.py` (pure `classify`/`fingerprint` of events into Findings), `qa_backlog.py` (appends rows to `docs/northstar/qa_backlog.md` on a `qa-backlog` branch in `om-push/m3`).
+- **Agora's QA player:** `~/Projects/agora/scripts/qa_explore.py` (the loop), `qa_desktop.py` (Xvfb and screenshots), `qa_tactical.py` (EndMission gate), `qa_oracle.py` (pure `classify`/`fingerprint` of events into Findings), `qa_backlog.py` (appends rows to `docs/legacy/agora_era/qa_backlog.md` on a `qa-backlog` branch in `om-push/m3`).
 - **Model:** `WORKER_MODEL = qwen3-coder:30b` (`ollama_client.py:18`). Installed models are `gpt-oss:20b`, `qwen3:8b` and `qwen3-coder:30b`. None is a vision model, and `ollama_client.chat` has no `images` parameter. Nothing in `qa_explore.py` sends an image. The model sees only `state`, the tree and the trail text. Screenshots are saved but never looked at.
 - **Campaign format:** front-matter markdown, for example `campaigns/todo/007-ouroboros-qa.md` (`tool: qa-fix-loop`, `qa_actions`, `profile`, `mode: record`, `budget_usd`). `projects/ouroboros/qa.toml` is the profile.
 - **Last runs:** about 65 `runs/qa-20261005*` and `-20261006*` directories. The newest, `qa-20261006-0111`, ran 128 turns at about 7.6 s per turn. Its screenshots are about 4.4 KB each, which is near-uniform frames. Findings are in `campaigns/007-ouroboros-qa/findings-ledger.jsonl`, last seen 2026-10-05 23:37.

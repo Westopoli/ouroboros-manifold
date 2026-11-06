@@ -120,7 +120,7 @@ Candidates only; "rec." marks the Architect's recommendation, not an answer.
 
 ## Pass 1: layout prototype, flat diagram (2026-10-04)
 
-Spec: `plans/2026-10-04-layout-prototype-pass1-spec.md`. Code: branch `push/proto-layout`, `scenes/mockups/layout/` (commits `0d7a8c48`, `819d7a75`). Built in one Sonnet 5.5 chat, not by two Doers (a Sonnet chat executes briefs directly). Method M4 as recommended; Q-191-11 (a), Q-191-12 (d), Q-191-13 (d) closed in the register.
+Spec: `plans/archive/specs/2026-10-04-layout-prototype-pass1-spec.md`. Code: branch `push/proto-layout`, `scenes/mockups/layout/` (commits `0d7a8c48`, `819d7a75`). Built in one Sonnet 5.5 chat, not by two Doers (a Sonnet chat executes briefs directly). Method M4 as recommended; Q-191-11 (a), Q-191-12 (d), Q-191-13 (d) closed in the register.
 
 Run: `cd ~/Projects/om-push/wt/proto-layout && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/layout/layout_mockup.tscn`
 

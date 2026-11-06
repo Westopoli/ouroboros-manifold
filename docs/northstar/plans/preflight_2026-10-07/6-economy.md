@@ -175,7 +175,7 @@ All E-22 stories read "Design decided ... not scheduled" in `stories.md`, except
 ## 5. The settlement mockup
 
 - **Size**: 1,111 lines (`settlement_mockup.gd` 466, `settlement_sim.gd` 633, plus a `.tscn`). The brief says 1,099.
-- **Record**: `docs/northstar/research/settlement_mockup/README.md`. Westley's verbatim approval on 2026-10-06 was "Settlements mockup approved". It covers the look of pass 1; "every number is a CANDIDATE".
+- **Record**: `docs/legacy/research/settlement_mockup/README.md`. Westley's verbatim approval on 2026-10-06 was "Settlements mockup approved". It covers the look of pass 1; "every number is a CANDIDATE".
 - **Inputs**
   - A 121×121 window of 100 wu cells cut from `FieldMap` (`scenes/mockups/landscape/field_map.gd`, seed 11, read-only, core = `nodes[0]`). The elevation, slope and water per cell feed `setup()` (`settlement_sim.gd:71`).
   - Four lot stages: marked, scaffold, built, dense, plus rubble.

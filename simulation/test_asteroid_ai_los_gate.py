@@ -1,6 +1,6 @@
 """
 Tests for L11: AI targeting LOS gate via asteroid visibility filter.
-Spec: docs/test_specs/cover_asteroid_movement_spec.md lines 46-52.
+Spec: docs/legacy/test_specs/cover_asteroid_movement_spec.md lines 46-52.
 """
 import sys
 import os

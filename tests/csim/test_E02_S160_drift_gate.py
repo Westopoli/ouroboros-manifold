@@ -1,4 +1,4 @@
-# spec: docs/test_specs/drift-gate-and-green-check.md::Acceptance criteria::AC-1
+# spec: docs/legacy/test_specs/drift-gate-and-green-check.md::Acceptance criteria::AC-1
 """S-160 -- Drift can be switched off, and off means off.
 
 R-160-01 .. R-160-04. sim.c ignored OM_FEAT_DRIFT entirely (card 202b2 /
@@ -114,7 +114,7 @@ def test_R_160_04_drift_off_emits_no_trace_rows(lib, world_factory):
     # checksum-on-cadence write) lives inside the per-region drift loop
     # today (csrc/sim.c, the `if (w->trace_on) { ... }` block right after the
     # clamp, before the loop closes). Spec Constraints
-    # (docs/test_specs/drift-gate-and-green-check.md line 25): "Trace and
+    # (docs/legacy/test_specs/drift-gate-and-green-check.md line 25): "Trace and
     # checksum emission (currently inside the per-region drift loop) move
     # with the loop" -- once the gate fix lands, that whole block sits
     # inside the `if (om_world_feature(w, OM_FEAT_DRIFT))` guard, so a

@@ -213,7 +213,7 @@ Caveats:
 
 This brief feeds the following Design Lane decisions:
 
-- **Ouroboros launch date pick.** The choice among Options A through F is Westley's; this brief provides the calendar substrate. Downstream of pre-Zip gate completion (`docs/priority_queue.md` Pre-Zip Beta Readiness Gate).
+- **Ouroboros launch date pick.** The choice among Options A through F is Westley's; this brief provides the calendar substrate. Downstream of pre-Zip gate completion (`docs/legacy/method_era1/priority_queue.md` Pre-Zip Beta Readiness Gate).
 - **T-F2 festival roster sequencing.** Festival participation timing (Steam Next Fest, Steam Scream Fest, Hooded Horse showcases, Day of the Devs, others) interacts with the launch month pick. The chosen launch month constrains which festivals are accessible in the 2-6 month pre-launch window.
 - **T-D2 Next Fest cohort fit.** The Feb / Jun / Oct cohort cadence interacts directly with the launch month. The brief's "4-8 weeks after a major sale, 1-3 months after Next Fest cohort" pattern points at specific cohort-and-launch pairings: (Feb cohort, April-May launch), (Jun cohort, July-September launch), (Oct cohort, January-February launch).
 - **Steam page draft scheduling.** The pre-Zip gate's "30-day Steam page" requirement implies the page must publish 30+ days before the chosen launch date. Calendar pick sets page-publication deadline.

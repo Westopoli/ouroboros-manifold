@@ -47,4 +47,4 @@ Headless mode cannot prompt for tool permission, so any read/write/command tool 
 
 ## Image prompt kit
 
-Not built this session — depends on the site repo's three.js page existing first (to render the six unit GLBs for reference images), which is Deliverable 3. Tracked as follow-up, `docs/northstar/mvp/site/prompt_kit.md`, once the site scaffold lands.
+Not built this session — depends on the site repo's three.js page existing first (to render the six unit GLBs for reference images), which is Deliverable 3. Tracked as follow-up, `docs/legacy/mvp/site/prompt_kit.md`, once the site scaffold lands.

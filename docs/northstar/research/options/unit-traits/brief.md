@@ -2,7 +2,7 @@
 
 ## 1. Feature and status
 
-E-11 S-083 "Stats, traits, ability" (`docs/bible/epics/E-11-units-and-combat.md:66-76`). Q-083-01 closed 2026-09-16: traits deferred to post-launch balance passes; launch units are base stats plus one active signature ability (`docs/northstar/ambiguity_register.md:86`). The rules R-083-01 and R-083-02 still describe traits. The AI-generated per-civilization variety that would have filled the trait pool is deferred as a cluster (A-278, A-279; E-21 S-157). MVP placement: Round 2 (`docs/northstar/mvp/feature_mvps.md:70`). This brief is about the post-launch version.
+E-11 S-083 "Stats, traits, ability" (`docs/bible/epics/E-11-units-and-combat.md:66-76`). Q-083-01 closed 2026-09-16: traits deferred to post-launch balance passes; launch units are base stats plus one active signature ability (`docs/northstar/ambiguity_register.md:86`). The rules R-083-01 and R-083-02 still describe traits. The AI-generated per-civilization variety that would have filled the trait pool is deferred as a cluster (A-278, A-279; E-21 S-157). MVP placement: Round 2 (`docs/legacy/mvp/feature_mvps.md:70`). This brief is about the post-launch version.
 
 ## 2. Player-facing goal as documented
 
@@ -22,7 +22,7 @@ Q-082-01, 2026-09-12 (`:85`): "(b), author them now, 0.8 and 1.2 sound good. Tie
 
 Q-006-01 (`:28`): "Give the interceptor the pulse, mark it as a 'for now' ability, we'll modify units a lot when we have playtesters."
 
-A-278, Stage 1 (`docs/northstar/stage1_audit.md:438`): "AI-Generated Unit Variety: engine owns fixed mechanics (6 types, abilities, roles); AI tunes numbers per civilization trait (militaristic → higher firepower, expansionist → faster/lighter, declining → degraded stats/improvised traits)... Deferred: not part of initial build... keep as a later epic to add per-civilization stat flavor once the base game is proven."
+A-278, Stage 1 (`docs/legacy/agora_era/stage1_audit.md:438`): "AI-Generated Unit Variety: engine owns fixed mechanics (6 types, abilities, roles); AI tunes numbers per civilization trait (militaristic → higher firepower, expansionist → faster/lighter, declining → degraded stats/improvised traits)... Deferred: not part of initial build... keep as a later epic to add per-civilization stat flavor once the base game is proven."
 
 A-279 (`:444`): "Deferred: Westley conceived this without appreciating implementation complexity — pinned as an idea needing serious testing/tuning, not an implementation goal right now."
 

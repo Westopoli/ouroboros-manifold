@@ -1,6 +1,6 @@
 # Skill lab rev 3: close the coverage gaps found after rev 2 (plan, 2026-10-19)
 
-Plan for a Sonnet 5.5 overseer running in manager mode. Source: the Architect (session ouroboros-manifold-b0), relaying Westley 2026-10-19 after two Opus roster analyses and an Opus positioning audit (`docs/northstar/plans/drift_audits/2026-10-19-positioning-in-code.md`; the mix analyses are copied by the Architect's clerk to `docs/northstar/research/layer_dynamics/audits/mixes_2026-10-19/`). Everything below that the Architect did not state is marked DRAFT. This file is records only; the lab landing (`LAB-REV2`, spec `docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md`) comes first and the rev 3 pieces build on it.
+Plan for a Sonnet 5.5 overseer running in manager mode. Source: the Architect (session ouroboros-manifold-b0), relaying Westley 2026-10-19 after two Opus roster analyses and an Opus positioning audit (`docs/northstar/plans/archive/audits/drift_audits/2026-10-19-positioning-in-code.md`; the mix analyses are copied by the Architect's clerk to `docs/northstar/research/layer_dynamics/audits/mixes_2026-10-19/`). Everything below that the Architect did not state is marked DRAFT. This file is records only; the lab landing (`LAB-REV2`, spec `docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md`) comes first and the rev 3 pieces build on it.
 
 ## Purpose
 

@@ -2,7 +2,7 @@
 
 ## 1. Feature and status
 
-E-14 S-125 "How hard the enemy tries" (`docs/bible/epics/E-14-enemy-macro-behavior.md:91-102`). Q-125-01 closed 2026-09-16 as "Deferred" (`docs/northstar/ambiguity_register.md:116`) while the E-14 gate still lists it as blocking (`E-14:14`). Stage 1 A-149 and A-156 record the interim plan (`docs/northstar/stage1_audit.md:250,257`). The learned opponent is an aspirational target (old bible Target 2). MVP placement: Round 2; the difficulty card is deferred in the test-authoring plan.
+E-14 S-125 "How hard the enemy tries" (`docs/bible/epics/E-14-enemy-macro-behavior.md:91-102`). Q-125-01 closed 2026-09-16 as "Deferred" (`docs/northstar/ambiguity_register.md:116`) while the E-14 gate still lists it as blocking (`E-14:14`). Stage 1 A-149 and A-156 record the interim plan (`docs/legacy/agora_era/stage1_audit.md:250,257`). The learned opponent is an aspirational target (old bible Target 2). MVP placement: Round 2; the difficulty card is deferred in the test-authoring plan.
 
 ## 2. Player-facing goal as documented
 
@@ -10,7 +10,7 @@ E-14 S-125 "How hard the enemy tries" (`docs/bible/epics/E-14-enemy-macro-behavi
 
 E-14 purpose (`:18-20`): "The enemy's units think exactly like the player's. What makes an enemy feel like a plan is the layer above them: each enemy force runs a small state machine authored per mission archetype from a shared vocabulary of five behaviors and three modifiers, with timers that keep the mission moving even if the player sits still, thresholds that react to what the player does, and noise rolled once at mission start so the same script never plays the same twice... The long-term target is an opponent that feels like it reads the player (Stage 1 A-149, A-150); the launch baseline is this scripted system plus a simple difficulty knob (A-156)."
 
-Distinctiveness row 5 (`docs/northstar/mvp/distinctiveness.md:23`): "The tragedy of understanding: mastery is knowing why you lost." Hypothesis H4: after a loss, at least 60 percent of testers name a positional or force cause; no more than 20 percent call the game unfair.
+Distinctiveness row 5 (`docs/legacy/mvp/distinctiveness.md:23`): "The tragedy of understanding: mastery is knowing why you lost." Hypothesis H4: after a loss, at least 60 percent of testers name a positional or force cause; no more than 20 percent call the game unfair.
 
 ## 3. Westley's own words
 
@@ -22,7 +22,7 @@ A-150 (`:251`): "Westley: "perfectly true, a great example of what I want from t
 
 A-136 (`:237`): "knowledge is important to the game, same spirit as SC2. The game should create situations where a player's specific choices change how the opponent should respond, and should explicitly reward scouting and reasoning about the information the player has actually seen (not just theoretical uncertainty)."
 
-Vision v2 Q6 (`docs/northstar/vision_v2.md:65`): "the goal is to construct a situation with enough variables that creates a really high skill ceiling".
+Vision v2 Q6 (`docs/legacy/agora_era/vision_v2.md:65`): "the goal is to construct a situation with enough variables that creates a really high skill ceiling".
 
 Q-120-01, 2026-09-16 (`ambiguity_register.md:112`): "(b), AI postures deferred; enemy macro scripts use baseline movement/targeting speeds." Q-124-01 (`:115`): reinforcement waves ship, p = 0.07, foreshadowed.
 

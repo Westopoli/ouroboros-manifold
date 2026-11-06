@@ -2,7 +2,7 @@
 
 ## 1. Feature and status
 
-E-16 S-103 "The tactical camera", rules R-103-01 to R-103-04 (`docs/bible/epics/E-16-client-camera-hud-and-world-view.md:29-38`). Stage 1 rows A-145 to A-148 and A-155 (`docs/northstar/stage1_audit.md:246-249,256`), A-302 (`:474`). Flag Q-103-01 closed (a) on 2026-09-14 (`docs/northstar/ambiguity_register.md:99`). Research item RL-Q75 (`docs/legacy/research_lane_queue.md:93`) requested 2026-09-14, never run. The E-16 gate calls this "the biggest open design item in the whole bible" (`E-16:14`). A fixed-angle interim camera ships in every playtest round; the full system is committed scope waiting on this design. The map view zoom band (Q-103-02) has its own brief in `../map-view/`.
+E-16 S-103 "The tactical camera", rules R-103-01 to R-103-04 (`docs/bible/epics/E-16-client-camera-hud-and-world-view.md:29-38`). Stage 1 rows A-145 to A-148 and A-155 (`docs/legacy/agora_era/stage1_audit.md:246-249,256`), A-302 (`:474`). Flag Q-103-01 closed (a) on 2026-09-14 (`docs/northstar/ambiguity_register.md:99`). Research item RL-Q75 (`docs/legacy/research_lane_queue.md:93`) requested 2026-09-14, never run. The E-16 gate calls this "the biggest open design item in the whole bible" (`E-16:14`). A fixed-angle interim camera ships in every playtest round; the full system is committed scope waiting on this design. The map view zoom band (Q-103-02) has its own brief in `../map-view/`.
 
 ## 2. Player-facing goal as documented
 

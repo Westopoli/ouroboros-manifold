@@ -14,7 +14,7 @@ R-148-02: "Given the era transition, When the world carries over, Then region fi
 
 ## 3. Westley's own words
 
-Vision v2 Q1, 2026-09-10 (`docs/northstar/vision_v2.md:23`): "The game has many different 'eras' available, so that players can play in many different time periods over time available as expansion packs, and if all the users in the match have the same multiple packs their 'match' can actually traverse through time chronologically."
+Vision v2 Q1, 2026-09-10 (`docs/legacy/agora_era/vision_v2.md:23`): "The game has many different 'eras' available, so that players can play in many different time periods over time available as expansion packs, and if all the users in the match have the same multiple packs their 'match' can actually traverse through time chronologically."
 
 Vision v2 Q5 (`:57`): "the time jump is calculated based on the simulation state, based on variables that is convenient at that time. Whether it's getting to the end of a run for an 'ancestor' and the 'family' needs to change (and whether the 'current' time contains such a family), The time jumps are anywhere between 20 - 100 years if I remember correctly, there's a range. Regardless of the literal jump, the story should and simulation still be noticeably effected by the outcome of the prior mission."
 
@@ -24,7 +24,7 @@ Vision v2 Q8 (`:81`): "Fortnite for it's skin cross-compatability. Any skin, any
 
 Vision v2 Q9 (`:89`): "$10-15 on steam, $3 per expansion, expansions are grindable, some are exclusive but not all." Q10 (`:97`): "3 eras, past/present/future."
 
-A-061, Stage 1 (`docs/northstar/stage1_audit.md:133`): "Westley: unlocks DO exist — unlocking other eras is the one scoped unlock type right now, and he's not opposed to more later."
+A-061, Stage 1 (`docs/legacy/agora_era/stage1_audit.md:133`): "Westley: unlocks DO exist — unlocking other eras is the one scoped unlock type right now, and he's not opposed to more later."
 
 A-071, new from Westley (`:141`): "once the timeline reaches its chronologically last/final era, the game continues indefinitely in that era's state rather than collapsing to extinction and restarting. Technology level oscillates over time — periodic mild regression followed by recovery, sine-wave pattern — instead of a hard collapse/reset."
 

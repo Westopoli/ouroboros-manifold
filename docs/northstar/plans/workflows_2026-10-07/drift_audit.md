@@ -10,7 +10,7 @@ Weekly cleanup: the weekly run invokes merge_gate.sh --prune-evidence, which del
 
 ## Who
 
-A fresh Sonnet engineer (`subagent_type: engineer`), read-only, that has not seen the author's reasoning. It edits nothing and commits nothing. Its report goes to Westley unedited (quoted in full in the chat, then committed under `docs/northstar/plans/drift_audits/<date>.md`); drift found is fixed before new lanes launch, by the Architect or a clerk, as doc edits with the audit named in the commit.
+A fresh Sonnet engineer (`subagent_type: engineer`), read-only, that has not seen the author's reasoning. It edits nothing and commits nothing. Its report goes to Westley unedited (quoted in full in the chat, then committed under `docs/northstar/plans/archive/audits/drift_audits/<date>.md`); drift found is fixed before new lanes launch, by the Architect or a clerk, as doc edits with the audit named in the commit.
 
 ## Scope
 

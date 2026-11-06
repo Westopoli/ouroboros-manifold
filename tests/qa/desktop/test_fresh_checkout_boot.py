@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/2026-10-03-loop-fix-workflow-brief.md, Lane 2 (fresh checkout boots)
+# spec: docs/northstar/plans/archive/specs/2026-10-03-loop-fix-workflow-brief.md, Lane 2 (fresh checkout boots)
 """A fresh checkout (no .venv, no logs/ folder) on a machine whose Python has no
 numpy must boot to the main menu, never to error_screen. Today autoload/sim_bridge.gd
 spawns the legacy Python sim (simulation/pipe_transport.py), which needs numpy and a

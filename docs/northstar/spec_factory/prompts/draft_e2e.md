@@ -6,7 +6,7 @@ Read these files, in this order, before writing anything:
 1. `{{EPIC_FILE}}` — the epic. Its stories and `R-###-##` rules are the authority. Do not restate the rules; reference them by id.
 2. `docs/northstar/e2e/E-02.md` — the finished e2e file for E-02. Reproduce its section structure and register exactly: "Actor and surface", "Input space" (table: input, source, range, rejection or boundary behavior), "Output space" (table: output, where observed, tier), "Rules" (a short paragraph on the dimensions tests must respect beyond rule text, such as order of operations and snapshot-versus-live reads), "Edge cases" (empty, floor, max, tick 1, concurrent, mid-save and load, post-jump, pause), "Scale gates" (copy the epic's confirmed numbers verbatim, marked confirmed by Westley with the date in the epic), "QA watch-fors" (table: watch-for, signature, tier, R4 number or dash; one row per item in the epic's "Ways this could be wrong" plus any applicable row of the R4 catalog), "Failure evidence", "Definition of Ready — status" (the same 8-row table, filled honestly), "Depends on".
 3. `docs/bible/algorithms.md` — the retained equations. For {{EPIC_ID}} the relevant formulas are {{ALG_RANGE}}. Cite them by ALG id; never re-derive or alter a constant.
-4. `docs/northstar/research/rts_bug_catalog.md` — the R4 catalog; cite rows by number.
+4. `docs/legacy/research/rts_bug_catalog.md` — the R4 catalog; cite rows by number.
 5. `docs/northstar/agile.md` — the Definition of Ready and the completeness gate, so the status table uses the real criteria.
 
 Rules for the draft:

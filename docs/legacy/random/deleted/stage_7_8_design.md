@@ -15,7 +15,7 @@
 - Prior session: **S8-1 save scope resolved** — sim state + tactical mid-mission state + onboarding prefs; replays excluded; sim rewind-with-re-seed is in scope
 - Prior session: **S8-1a sim snapshot cadence resolved** — boundary-only (every time jump + every mission start/end); periodic snapshots flagged as "maybe later"
 - Prior session: **S8-1b rewind branching model resolved** — linear default + explicit "fork from here" action; forked slots appear in Stage 9 save-slot browser as sibling slots
-- Prior session: **Stage 7 spec drafted and committed** to `docs/stage_specs/stage_7_spec.md` on main
+- Prior session: **Stage 7 spec drafted and committed** to `docs/legacy/stage_specs/stage_7_spec.md` on main
 - Prior session: **Stage 7 spec audit complete** — 9 items identified (1 formatting, 6 design gaps, 2 minor).
 - This session: **Audit #0 applied** — closed the unclosed code fence in the Stage 7 spec (commit `e1023ca`).
 - This session: **Audit — spec markdown restored** — `##`/`###` section headers, `**file**` label bolding, and missing `python` code fences around the `config.py` and I/O-shape snippets were stripped during original authoring; all restored (commit `b129472`).
@@ -57,7 +57,7 @@ Upload or read these files at session start:
 5. `docs/bible_history/bible_2_00_antagonist.md` (faction archetypes — referenced by behavior scripts)
 6. `docs/design_rules.md` (process rules)
 7. `docs/dev_rules.md` (for reference on how specs are structured)
-8. `docs/stage_specs/stage_5_5_spec.md` and `stage_6_spec.md` (recent spec examples for format reference)
+8. `docs/legacy/stage_specs/stage_5_5_spec.md` and `stage_6_spec.md` (recent spec examples for format reference)
 9. **This file** (`docs/legacy/design_questions/stage_7_8_design.md`)
 
 **Relevant existing code** (read if question touches implementation):

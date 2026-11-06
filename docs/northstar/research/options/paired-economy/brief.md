@@ -20,7 +20,7 @@ Landscape answer 4, 2026-09-21 (`docs/northstar/research/landscape_design/README
 
 D3, 2026-09-19 (`docs/northstar/research/harness_defects_2026-09-17/DECISIONS.md:107`): "I want a hand in designing the biome/landscape generation system (which the economy/buildings/(civilzations cities) system will use as well as like a "sister" system (because they're very similar) before we start building".
 
-Vision v2 Q3 (`docs/northstar/vision_v2.md:39`): "Yes commander not king, given a task force big or small, civ has it's own plans, meant to emulate reality."
+Vision v2 Q3 (`docs/legacy/agora_era/vision_v2.md:39`): "Yes commander not king, given a task force big or small, civ has it's own plans, meant to emulate reality."
 
 ## 4. Fixed constraints any option must honor
 

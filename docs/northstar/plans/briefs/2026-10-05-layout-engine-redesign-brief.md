@@ -53,7 +53,7 @@ Paths are relative to the repo root on origin/main unless a branch is named.
 | `docs/northstar/research/landscape_design/README.md` on branch `push/proto-land-iter` | The record of every land mockup pass with Westley's reviews verbatim. Read Pass 4, the sweep, Pass 5 and Pass 6 |
 | `docs/northstar/research/landscape_design/options_2026-10-03_walkable_land.md` | Why "layout first, terrain obeys" was chosen, with the numbers |
 | `scenes/mockups/landscape/pass5_layout.gd`, `pass5_places.gd`, and on `push/proto-land-iter` `pass6_shape.gd`, `pass6_cliffs.gd` | How the mockup reads a layout, makes terrain react to it, finds places per kind, and checks equal distance |
-| `docs/northstar/plans/2026-10-03-land-mockup-pass5-spec.md`, `docs/northstar/plans/briefs/2026-10-04-land-mockup-iteration-brief.md` | The specs those passes were built to; the second is the model for a prototype brief |
+| `docs/northstar/plans/archive/specs/2026-10-03-land-mockup-pass5-spec.md`, `docs/northstar/plans/briefs/2026-10-04-land-mockup-iteration-brief.md` | The specs those passes were built to; the second is the model for a prototype brief |
 | `docs/northstar/research/space_landscape/README.md` | The space sister system: one open-or-blocked map per layer. A layout must work there too |
 
 Run the land mockup before you design: the command is in `docs/northstar/ROADMAP.md`, section 0.

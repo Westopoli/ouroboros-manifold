@@ -2,7 +2,7 @@
 ## Off by default. Read-only: invariant I10 forbids any effect on sim or
 ## frame timing beyond the Label render cost.
 ##
-## See also: docs/stage_specs/stage_13_spec.md (Checkpoint D, Invariant I10).
+## See also: docs/legacy/stage_specs/stage_13_spec.md (Checkpoint D, Invariant I10).
 ## Gated by FeatureFlags.ENABLE_DEBUG_OVERLAY (default false): F3 does nothing
 ## unless the flag is set. Tick and units come from the live tactical frame.
 extends CanvasLayer

@@ -300,7 +300,7 @@ Wishlist-delta figures should be treated as ±50% for any single title. Page qua
 
 This brief feeds the following Design Lane work:
 
-- **Ouroboros festival schedule** — five options surfaced under `## Ouroboros festival schedule options`. Westley/Design Lane picks. Decision should be captured in `docs/bible/game_bible.md ## In Flux` or `docs/priority_queue.md` Pre-Zip gate section.
+- **Ouroboros festival schedule** — five options surfaced under `## Ouroboros festival schedule options`. Westley/Design Lane picks. Decision should be captured in `docs/bible/game_bible.md ## In Flux` or `docs/legacy/method_era1/priority_queue.md` Pre-Zip gate section.
 - **T-D2 Next Fest cohort pick** — cohort multipliers and once-per-game rule from this brief inform the cohort decision. Cross-ref `docs/legacy/topics/steam_next_fest_timing.md`.
 - **T-F1 launch month** — festival schedule constrains launch month. Festival anchor (typically Next Fest) is approximately 30-90 days before launch; launch month is downstream of cohort pick.
 - **T-W2 wishlist velocity targets** — festival deltas in this brief calibrate the cumulative wishlist target curve. The 80,000-200,000 first-month sales target requires a wishlist floor that festival stacks can plausibly hit.
