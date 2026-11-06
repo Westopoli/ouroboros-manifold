@@ -11,7 +11,7 @@ graphify_cmd        = ""
 worktree_link       = []
 
 parent_owned = [
-  "csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml",
+  "csrc/ouroboros_sim.h", "csrc/layout_kit.h", "docs/northstar/spec_factory/signatures.toml",
   "docs/bible/**", "docs/northstar/**", "tests/**",
   "scripts/specfactory/**", "Makefile",
   "tests/csim/data/**", "tests/skilllab/golden_hashes.json",
