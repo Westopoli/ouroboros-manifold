@@ -32,8 +32,8 @@ def _layout(name):
         return tomllib.load(f)
 
 
-def _blocked_cells(layout, exact):
-    """{(col, row)} of the cells the engine blocks on layer 0 after features.apply(exact=...) on the layout (om_mapgen_cell_blocked, 100 wu cells)."""
+def _blocked_cells(layout, exact, layer=0):
+    """{(col, row)} of the cells the engine blocks on `layer` after features.apply(exact=...) on the layout (om_mapgen_cell_blocked, 100 wu cells)."""
     e = Engine()
     w = e.new_world(1)
     try:
@@ -43,7 +43,7 @@ def _blocked_cells(layout, exact):
         fn.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_int32, ctypes.c_int32]
         fn.restype = ctypes.c_int
         n = int(preset["width"] // CELL)
-        return {(c, r) for r in range(n) for c in range(n) if fn(w, 0, c, r)}
+        return {(c, r) for r in range(n) for c in range(n) if fn(w, layer, c, r)}
     finally:
         e.free_world(w)
 
@@ -100,7 +100,7 @@ def test_l0039_engine_blocks_exactly_the_snapped_boxes_and_the_lanes_between_the
 def test_the_trap_walls_block_exactly_their_drawn_cells():
     """L-0080's walls are already on the 100 grid: the old 1 wu pad blocked a whole extra ring of cells (investigation L-0083); now the blocked cells are the drawn ones."""
     lay = _layout("L-0080")
-    assert _blocked_cells(lay, True) == _cells(_authored(lay))
+    assert _blocked_cells(lay, True, layer=1) - {(0, 0)} == _cells(_authored(lay))   # layer 1: the hills' own cells are blocked on layer 0 (the ground is a band up there), not on layer 1; (0, 0) is the band-step marker cell of hills.py
 
 
 def test_the_old_conversion_is_unchanged_without_exact():

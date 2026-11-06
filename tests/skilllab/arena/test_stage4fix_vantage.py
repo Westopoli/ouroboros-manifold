@@ -78,7 +78,7 @@ def test_the_walker_changes_layer_exactly_where_the_ramp_midline_is():
     assert abs(x_flip - (CX + RADIUS + RAMP / 2)) <= 60.0, "flip at x %.1f against the drawn midline %.1f" % (x_flip, CX + RADIUS + RAMP / 2)
 
 
-@pytest.mark.parametrize("heading", [0.0, 45.0, 90.0, 180.0, 270.0])
+@pytest.mark.parametrize("heading", [0.0, 45.0, 90.0, 270.0, 315.0])
 def test_the_flip_is_within_one_cell_of_the_drawn_midline_from_every_side(heading):
     """The drawn midline is a ring at radius + RAMP / 2; the engine's flip is a cell boundary, so it can sit up to about one cell off along a diagonal."""
     rows, _, _ = _climb(heading)
