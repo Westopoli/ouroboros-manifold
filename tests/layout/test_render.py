@@ -19,6 +19,7 @@ Red until scripts/layout/render.py exists. At most 40 assertions in this file (c
 import ast
 import copy
 import json
+import math
 import pathlib
 import subprocess
 import sys
@@ -39,6 +40,7 @@ SHEET_COLS, SHEET_ROWS = 4, 3      # spec: "12 layouts ... in a 4 by 3 grid"
 TILE_MIN = 50                      # px: a run of non-background columns or rows narrower than this is not a tile
 TONE = 40                          # min green-over-red (or red-over-green) channel gap that reads as a green or red mark
 REACH_MIN, REACH_MAX = 40, 90      # px: a wall_span 1200 wu (60 px) or radius 1200 wu (60 px) change reaches this far
+SCALE_TOL = 2                      # px: slack on the distance between two places (pad shapes are a few px across)
 AA_TONES = 4                       # distinct colours in a 13 x 13 window over a slanted lane edge: ground, lane and 2 blends
 CELL_INK = 0.005                   # fraction of a sheet tile that must differ from the sheet's background colour
 DASH_TONE = 40                     # min grey-level change that counts as "the lane is here"; the 2x draw and LANCZOS reduction
@@ -170,6 +172,31 @@ def _swap_sides(doc):
     """Both bases and both expansions change side; kinds, shapes and places stay."""
     for i, side in ((1, "A"), (2, "B"), (5, "B"), (6, "A")):
         doc["places"][i]["side"] = side
+
+
+def centroid(draw, full, index):
+    """Centre in px of a side-coloured fixture place, found by its colour: among the pixels that change when the place is
+    moved away, those whose saturation (max channel minus min) is at least half the strongest are the place's own
+    colour (ground tints, black or grey label ink and blended edges are paler); their mean position is its centre."""
+    p = BASE["places"][index]
+    away = draw(f"away{index}", moved(index))
+    box = max(boxes(p["x"], p["y"], int(p["pad_r"] / PX_WU) + 2), key=lambda b: changed_pixels(full, away, b))
+    px = [((x, y), max(full.getpixel((x, y))) - min(full.getpixel((x, y)))) for x in range(box[0], box[2])
+          for y in range(box[1], box[3]) if full.getpixel((x, y)) != away.getpixel((x, y))]
+    top = max((s for _, s in px), default=0)
+    own = [q for q, s in px if s * 2 >= top]
+    return (sum(x for x, _ in own) / len(own), sum(y for _, y in own) / len(own)) if own and top else (math.inf, math.inf)
+
+
+def test_S_247_places_are_apart_by_their_distance_in_wu_over_20(draw):
+    """S-247 R-112-04 (criterion 8: 20 wu per pixel): the centres of the A base and the B expansion, and of the B base
+    and the A expansion, are as many pixels apart, horizontally and vertically, as their distance in wu over 20 (within
+    SCALE_TOL px; absolute distances, so the y direction is not fixed)."""
+    full = draw("full")
+    c = {i: centroid(draw, full, i) for i in (1, 2, 5, 6)}       # B base, A base, A expansion, B expansion
+    dist = lambda a, b: (abs(a[0] - b[0]), abs(a[1] - b[1]))
+    want = lambda i, j: tuple(abs(BASE["places"][i][k] - BASE["places"][j][k]) / PX_WU for k in ("x", "y"))
+    assert all(abs(g - w) <= SCALE_TOL for i, j in ((2, 6), (1, 5)) for g, w in zip(dist(c[i], c[j]), want(i, j)))
 
 
 def test_S_247_side_a_side_b_and_neutral_places_have_their_own_colours(draw):
