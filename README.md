@@ -120,7 +120,7 @@ Each of these is a scar, and the fix is in the repo. The incident records, with 
 
 ### Open in the editor
 
-Run `scripts/setup_editor.sh` once, and again after any pull that changes `csrc/` (it rebuilds a stale pipe, fills `addons/godotsteam/` and imports the project once). Then open `project.godot` in the Godot editor and press F5. The editor, the test gate and the beta export are all Godot 4.6.3. A stale pipe is refused at the galaxy with a message that says to run the script again. `scripts/setup_editor.sh --check` lists the steps and changes nothing. On a Mac, install Godot 4.6.3 from godotengine.org into `/Applications` and the Xcode command line tools (`xcode-select --install`) for `clang`; the one command is the same.
+Run `scripts/setup_editor.sh` once, and again after any pull that changes `csrc/` (it rebuilds a stale pipe, fills `addons/godotsteam/` and imports the project once). Then open `project.godot` in the Godot editor and press F5. The editor, the test gate and the beta export are all Godot 4.6.3. A stale pipe is refused at the galaxy with a message that says to run the script again. `scripts/setup_editor.sh --check` lists the steps and changes nothing. On a Mac, install Godot 4.6.3 from godotengine.org into `/Applications` and the Xcode command line tools (`xcode-select --install`) for `clang`; the one command is the same. `scripts/play_mac.sh` boots the game windowed and leaves it open; `--check` also verifies the main scene over the QA port, captures `proof.png` with `screencapture`, and refuses a console with errors.
 
 ### Watch a lab fight
 

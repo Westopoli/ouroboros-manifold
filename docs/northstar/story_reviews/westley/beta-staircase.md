@@ -45,6 +45,6 @@ Rewritten by whoever moves a stage, in the same commit (ROADMAP.md section 1 car
 | Stage | State 2026-11-05 |
 |---|---|
 | B0 | Seen 2026-11-02 (Westley: 'I saw B0 and approved it'). The editor route (H-067) is finished in parallel: built, gated green on the 2026-11-02 main, not yet landed; the landing is in flight on the beta gate since 2026-11-04 (first of three: H-067, H-069, H-060). |
-| B1 | Seen 2026-11-05 (Westley: "B1 approved"), landed as `Land H-060 H-087 beta-b1-approved-screens`. Open bug from his Mac walk: no pan or zoom in the galaxy view and on the field (ROADMAP.md W8; Linux unknown). |
+| B1 | Seen 2026-11-05 (Westley: "B1 approved"), landed as `Land H-060 H-087 beta-b1-approved-screens`. His Mac walk found no pan or zoom in the galaxy view and on the field; fixed in `459c524d` (ROADMAP.md W8), waits on his trackpad walk with `scripts/play_mac.sh`. |
 | B2 | Spec'd, not Ready: the 2026-11-02 story read "layout" as a lab catalogue layout; rewritten 2026-11-05 as the game's layout. Waits on the layout engine, which Westley took up himself in a separate chat on 2026-11-05; the B2 cascade plan is written after that. |
 | B3 to B9 | Spec'd in this table only; story files written one stage ahead |
