@@ -1,6 +1,6 @@
 # Method rev 3: close the 23 gaps, with hard tests that fail loudly (spec)
 
-Status: Phase 0, Architect, 2026-10-26. Westley approved the plan on 2026-10-26 ("go ahead with plan execution"). Source plan: the Architect chat's plan file, copied below from "Design" on. The retro it answers: `docs/northstar/story_reviews/westley/method_retro_2026-10-24.md` and `retro_2026-10-24/method_cost.md`.
+Status: Phase 0, Architect, 2026-10-26. Westley approved the plan on 2026-10-26 ("go ahead with plan execution"). Source plan: the Architect chat's plan file, copied below from "Design" on. The retro it answers: `docs/legacy/westley_hand_overs/method_retro_2026-10-24.md` and `retro_2026-10-24/method_cost.md`.
 
 Tool line: every piece here is `Tool: Workflow` (harness work, ends in no frame, one piece each). Builders are Sonnet 5.5 engineers or doers on the subscription, run in parallel on disjoint files (DEC-method-rev3-parallel-2026-10-26); landings one at a time through the gate. Westley's words (2026-10-26) that fix the scope: "Subscription in parallel"; "The lab is more important than the beta ... We should prioritize the lab and finish building that first"; look rule kept; FAIL is report only; "Each individual fix should have how exactly it's measured thought out ahead of time."
 
