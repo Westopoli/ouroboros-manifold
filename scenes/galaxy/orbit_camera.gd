@@ -21,6 +21,8 @@ const ZOOM_OUT_STEP := 1.1
 const ORBIT_RAD_PER_PX := 0.01
 const ORBIT_PITCH_DEG_PER_PX := 0.1
 const CLICK_SLOP_PX := 4.0
+## W8: trackpad two-finger scroll, as pixels of a left-drag. If the view moves the wrong way on the Mac, flip the sign here.
+const PAN_GESTURE_PX := 1.0
 const GalaxyView := preload("res://scenes/galaxy/galaxy_view.gd")
 const FOCUS_SEC := 1.5
 
@@ -123,6 +125,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			var hit := _system_at(event.position)
 			if hit != -1:
 				focus_region(hit)
+	elif event is InputEventPanGesture:
+		_autonomous = false
+		_pan(event.delta * PAN_GESTURE_PX)
+	elif event is InputEventMagnifyGesture:
+		_autonomous = false
+		_stop_focus()
+		set_view(_distance / event.factor, _target)
 
 
 func _pan(rel: Vector2) -> void:
