@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-03 (records doer, Architect's brief, the pause day): section 1 rows brought to the state after the stack's first landing and the Dispatcher pause (DEC-pause-2026-11-03); section 1 is the two staircases on two gate channels, with a first row pointing to the one list of what waits on Westley (`story_reviews/westley/README.md`, section Waiting on you); sections 0 (run a prototype), 2b (after the beta workflow), 3 (blocked on Westley) and 3b (parallel work) are removed, their method not enforced or their items answered or old; section 2 keeps the Steam rows only.
 
-What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
+What is being built now, what is built next, and in what order. `docs/method/` is the method; this file is the order. One row per plan.
 
 Rules for this file:
 
@@ -69,7 +69,7 @@ Target: a private Steam beta with multiplayer and every approved prototype integ
 | # | Step | State (2026-10-13) | Gate | Then |
 |---|---|---|---|---|
 | 5 | Steam wiring phase B: pipe frame flag, bridge wrappers, lobby, tactical hookup | lane F: skeleton lobby (dbe480a) and net first tick (b12b47a) on main; S-141 reviewer yes, S-140 unclear, both pending Westley | gate plus a two-process loopback match (S-141, S-142 green) | 6 |
-| 6 | Shipping the C pipe on Windows, macOS, Linux (static pipe per OS, mingw-w64 cross build, client path fix, signing) | Windows: first probe matched byte for byte under wine (2026-10-06). macOS: done 2026-10-18 on the Mac, `scripts/build_pipe_macos.sh` static ad-hoc-signed pipe, full checksums equal the Linux pins at ticks 100 to 2000 (`plans/2026-10-18-macos-pipe-probe.md`); notarisation and a signing identity are Westley's | a build per OS runs the probe and matches checksums (Q-NET-05) | 7 |
+| 6 | Shipping the C pipe on Windows, macOS, Linux (static pipe per OS, mingw-w64 cross build, client path fix, signing) | Windows: first probe matched byte for byte under wine (2026-10-06). macOS: done 2026-10-18 on the Mac, `scripts/build_pipe_macos.sh` static ad-hoc-signed pipe, full checksums equal the Linux pins at ticks 100 to 2000 (`plans/archive/specs/2026-10-18-macos-pipe-probe.md`); notarisation and a signing identity are Westley's | a build per OS runs the probe and matches checksums (Q-NET-05) | 7 |
 | 7 | First real-Steam test: Westley's two accounts on Spacewar 480, Linux + Mac | after 5 and 6 | a match to its end, a stall, a leave | 8 |
 | 8 | Beta build on Westley's app id, Dev Comp keys, tester guide (`docs/northstar/beta/`) | guide and store copy drafted; app id is Westley's, by hand | one tester plays a mission and files an F12 report | public track |
 
@@ -102,9 +102,9 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Economy and bases, rules | Instrument, needed | None exists; the number flags are asked piece by piece in lane E |
 | Economy and bases, look | In the game, not a mockup | Lane E (E1k, the economy screens); Westley judges shots per piece |
 | Layout engine | Built as game code in C, iterated on flat pictures in his directory, no throwaway mockup (Westley 2026-11-05) | S-247 (Assault): engine, CLI and renderer built on `s/S-247-layout-kit-assault`, round A1 pictures await his word (`story_reviews/westley/layout_engine/round-A1/`); then S-248 (the other nine kinds), the contract story S-249, then H-061 (B2 drawing); `push/proto-layout` is reference; the lab supplies numbers as it can |
-| Mission-to-galaxy transition (S-108) | Mockup `scenes/mockups/transition/` on `push/proto-transition` | Needed (Westley, 2026-10-15); spec `plans/2026-10-15-transition-mockup-spec.md`; a Doer builds it on the Mac |
+| Mission-to-galaxy transition (S-108) | Mockup `scenes/mockups/transition/` on `push/proto-transition` | Needed (Westley, 2026-10-15); spec `plans/archive/specs/2026-10-15-transition-mockup-spec.md`; a Doer builds it on the Mac |
 | Multiplayer lobby | Mockup needed for the lobby screens | Lane F's skeleton lobby (S-141 shot) stands in; Westley's verdict pending |
-| Simulation | The sim viewer (`plans/2026-10-12-simviewer-plan.md`) | Specced 2026-10-12, not built |
+| Simulation | The sim viewer (`plans/archive/specs/2026-10-12-simviewer-plan.md`) | Specced 2026-10-12, not built |
 
 ## 5. Dependency notes
 
@@ -122,11 +122,11 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Plan | Doc | Landed | Date |
 |---|---|---|---|
 | Restart point 400k context; ROADMAP rewritten; galaxy density and S-132 shots committed for Westley | CLAUDE.md, `workflows_2026-10-07/`, `story_reviews/westley/2026-10-13/` | bb30cd9c, 7ccc8dbe, 26cdb319 | 2026-10-13 |
-| Sim viewer spec SV-0 to SV-3 and owner rows; the simulation lane context | `plans/2026-10-12-simviewer-plan.md`, `plans/2026-10-12-sim-lane-context.md` | dc7da0ac, c4d3d939, c7961d75 | 2026-10-12 |
+| Sim viewer spec SV-0 to SV-3 and owner rows; the simulation lane context | `plans/archive/specs/2026-10-12-simviewer-plan.md`, `plans/archive/specs/2026-10-12-sim-lane-context.md` | dc7da0ac, c4d3d939, c7961d75 | 2026-10-12 |
 | Programme landings of 2026-10-11 to 10-13: K-e5/K-e6 contracts, settlement port E1q, F-SKEL lobby, F-NETTICK, K-d1, A16, A17, VG-C-unitscale, VG-B23b dot colour, S-004 play fix, W1 planner | `plans/2026-10-07-visible-game-programme.md` lane table | `scripts/journal.sh` | 2026-10-11 to 13 |
 | Retrospective and method rev 2: Sonnet Dispatcher, Architect on call, skeleton first, pre-gate, tests on the built tree, method check at every compaction | `plans/retro_2026-10-10/README.md`, `workflows_2026-10-07/dispatcher.md`, `method_check.md` | 393a1d04 and the rev 9 spec | 2026-10-10 |
 | Programme stage 3 under method rev 1: lanes A to F first pieces (98 planned plus 37 unplanned), guard pieces (reach lint, lane plays, play split, daemon verb) | programme file, `retro_2026-10-10/` | fc986411, 7bb1f5a2, f37a926f and the lane table | 2026-10-07 to 10-10 |
 | Terrain stages 2 and 3; Steam phase A | `plans/2026-10-06-terrain-stage2-spec.md`, `-stage3-spec.md`, `2026-10-06-steam-multiplayer-wiring-spec.md` | 008de465, 0304d821, e63483f6 | 2026-10-06 to 07 |
-| Refuse fix; long-mission suite; Agora QA plays loops | `plans/2026-10-03-finish-loop-rulings.md` | a136e3c0 | 2026-10-04 |
-| Finish-the-loop batch; MVP loop plays end to end; playthrough stage in the gate | `plans/2026-10-03-finish-loop-rulings.md`, `plans/2026-10-03-loop-fix-workflow-brief.md` | 0d4006fd, 465d7145 | 2026-10-03 |
-| Bible rewrite: E-22 added, E-17 terrain-first; movement phases A and C; space landscape passes 1 to 5 | `research/epics_audit_2026-10-02/`, rulings-2 Addenda 62 to 64, `research/space_landscape/README.md` | 6b8a6c59, 1fe25028, 8b5d7d07, 424055f8, 6c2989ec | 2026-10-02 to 03 |
+| Refuse fix; long-mission suite; Agora QA plays loops | `plans/archive/specs/2026-10-03-finish-loop-rulings.md` | a136e3c0 | 2026-10-04 |
+| Finish-the-loop batch; MVP loop plays end to end; playthrough stage in the gate | `plans/archive/specs/2026-10-03-finish-loop-rulings.md`, `plans/archive/specs/2026-10-03-loop-fix-workflow-brief.md` | 0d4006fd, 465d7145 | 2026-10-03 |
+| Bible rewrite: E-22 added, E-17 terrain-first; movement phases A and C; space landscape passes 1 to 5 | `docs/legacy/research/epics_audit_2026-10-02/`, rulings-2 Addenda 62 to 64, `research/space_landscape/README.md` | 6b8a6c59, 1fe25028, 8b5d7d07, 424055f8, 6c2989ec | 2026-10-02 to 03 |
