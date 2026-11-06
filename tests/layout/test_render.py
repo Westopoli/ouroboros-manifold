@@ -10,6 +10,9 @@ another, neutral grey" and nothing more), so each pixel test compares a render w
 away, a lane widened, a drafts value changed) instead of naming a colour. The fixture's canvas is 8,000 wu = 400 px at
 DRAFT_PX_WU 20; A base, the objective and B base sit on the centre line y = 4,000 and the two resources mirror each
 other about it, so those samples do not depend on whether the renderer draws y downward or upward.
+Only what the spec's criteria 8 and 9 pin is asserted; the thresholds below are this file's, loose, and named.
+Not checked by any test (Westley's eye, or no spec figure): the label wording, round joints, the hatching pattern, the
+dashed line to the overlooked lane, how faint a district tint is.
 Red until scripts/layout/render.py exists. At most 40 assertions in this file (counted by `assert` statements).
 """
 import ast
@@ -31,7 +34,12 @@ MAP = int(CANVAS / PX_WU)          # 400 px: the map area of the picture, sideba
 EDGE = 8                           # px kept clear of the map/sidebar seam (LANCZOS reduction blends a few px)
 GREY_SPREAD = 16                   # max channel spread that still reads as neutral grey (question render-Q4)
 FAR = 7800.0                       # where a "removed" item is parked: far from everything in the fixture
-SHEET_COLS, SHEET_ROWS = 4, 3      # spec: "12 layouts ... in a 4 by 3 grid"
+SHEET_COLS, SHEET_ROWS = 4, 3      # spec: "12 layouts ... in a 4 by 3 grid"; tiles are located by that equal split, no trim
+TONE = 40                          # min green-over-red (or red-over-green) channel gap that reads as a green or red mark
+REACH_MIN, REACH_MAX = 40, 90      # px: a wall_span 1200 wu (60 px) or radius 1200 wu (60 px) change reaches this far
+AA_TONES = 4                       # distinct colours in a 13 x 13 window over a slanted lane edge: ground, lane and 2 blends
+CELL_INK = 0.005                   # fraction of a sheet tile that must differ from the sheet's background colour
+RUN_X = (180, 370)                 # px: the stretch of the dash test's long lane (x 3,600..7,400 wu) clear of every other item
 BASE = json.loads(FIXTURE.read_text())
 
 
@@ -86,10 +94,30 @@ def mode_colour(img, cx, cy, half=2):
     return max(set(px), key=px.count)
 
 
-def moved(index):
+def moved(*indexes):
     def f(doc):
-        doc["places"][index]["x"] = doc["places"][index]["y"] = FAR
+        for index in indexes:
+            doc["places"][index]["x"] = doc["places"][index]["y"] = FAR
     return f
+
+
+def gap(p, q):
+    return max(abs(i - j) for i, j in zip(p, q))
+
+
+def ink(img, other, box):
+    """The pixel of img, inside box, where img and other differ most: the core of a thin shape, not its blended edge
+    (None when they do not differ there)."""
+    at = max(((x, y) for x in range(box[0], box[2]) for y in range(box[1], box[3])),
+             key=lambda q: gap(img.getpixel(q), other.getpixel(q)))
+    return img.getpixel(at) if img.getpixel(at) != other.getpixel(at) else None
+
+
+def reach(a, b, cx, cy):
+    """Largest distance in px from (cx, cy) to any pixel of the map area where a and b differ (-1 when none)."""
+    box = (0, 0, MAP - EDGE, MAP)
+    bb = ImageChops.difference(a.crop(box), b.crop(box)).getbbox()
+    return -1 if bb is None else max(abs(bb[0] - cx), abs(bb[2] - 1 - cx), abs(bb[1] - cy), abs(bb[3] - 1 - cy))
 
 
 # ---- the map picture --------------------------------------------------------------------------------------------------
@@ -112,16 +140,29 @@ def test_S_247_every_place_is_drawn_where_it_is_at_20_wu_a_pixel(draw, index):
     assert max(changed_pixels(full, away, b) for b in boxes(p["x"], p["y"], half)) > 0
 
 
+def _swap_sides(doc):
+    """Both bases and both expansions change side; kinds, shapes and places stay."""
+    for i, side in ((1, "A"), (2, "B"), (5, "B"), (6, "A")):
+        doc["places"][i]["side"] = side
+
+
 def test_S_247_side_a_side_b_and_neutral_places_have_their_own_colours(draw):
-    """S-247 R-112-04 (criterion 8): the A base and the B base (on the centre line) are drawn in different colours,
-    each differing from the ground under it; neutral resources are grey."""
-    full = draw("full")
-    ax, bx = home(1200.0, 4000.0), home(6000.0, 4000.0)
-    ground_a, ground_b = draw("away2", moved(2)), draw("away1", moved(1))
-    ca, cb = mode_colour(full, *ax), mode_colour(full, *bx)
-    grey = [mode_colour(full, *home(3000.0, y)) for y in (2400.0, 5600.0)]
-    assert ca != cb and ca != mode_colour(ground_a, *ax) and cb != mode_colour(ground_b, *bx) \
-        and all(max(c) - min(c) <= GREY_SPREAD for c in grey)
+    """S-247 R-112-04 (criterion 8): colour follows the side, not the kind: swapping the sides of the two bases changes
+    both; the two expansions (same kind, A and B) are drawn in different colours and trade them when their sides swap (each
+    one's core pixel in the swapped picture is nearer the other's colour in the full one than its own is);
+    the neutral resources are grey, differ from both side colours and from the ground under them."""
+    full, swap, no_res = draw("full"), draw("swap", _swap_sides), draw("away_res", moved(3, 4))
+    ex = [max(boxes(p["x"], p["y"], int(p["pad_r"] / PX_WU) + 2), key=lambda b: changed_pixels(full, swap, b))
+          for p in BASE["places"][5:7]]
+    c = [(ink(full, swap, b), ink(swap, full, b)) for b in ex]
+    bases = [changed_pixels(full, swap, boxes(x, 4000.0, 14)[0]) for x in (1200.0, 6000.0)]
+    ca, cb = mode_colour(full, *home(1200.0, 4000.0)), mode_colour(full, *home(6000.0, 4000.0))
+    grey = [(mode_colour(full, *home(3000.0, y)), mode_colour(no_res, *home(3000.0, y))) for y in (2400.0, 5600.0)]
+    (a_full, a_swap), (b_full, b_swap) = c if None not in c[0] + c[1] else ((ca,) * 2, (ca,) * 2)   # None: fails below
+    assert min(bases) > 0 and None not in c[0] + c[1] and gap(a_full, b_full) > 0 \
+        and gap(a_full, b_swap) < gap(a_full, b_full) and gap(b_full, a_swap) < gap(b_full, a_full) \
+        and all(max(g) - min(g) <= GREY_SPREAD and g != ca and g != cb and g != ground for g, ground in grey) \
+        and ca != cb and max(ca) - min(ca) > GREY_SPREAD and max(cb) - min(cb) > GREY_SPREAD
 
 
 def test_S_247_a_lane_is_a_strip_with_its_width_to_scale(draw):
@@ -135,23 +176,22 @@ def test_S_247_a_lane_is_a_strip_with_its_width_to_scale(draw):
 
 
 def test_S_247_a_way_round_lane_is_dashed_and_a_route_lane_is_solid(draw):
-    """S-247 R-112-04 (criterion 8): a way_round lane covers fewer pixels than the same lane drawn as a route (it is
-    dashed) but still some; measured as the pixels that change when the lane is parked away."""
+    """S-247 R-112-04 (criterion 8): along the centre row of a long straight lane, the pixels the lane changes are one
+    unbroken run for a route and at least two runs with unchanged pixels between them for a way_round (dashed)."""
     def lane2(kind, parked):
         def f(doc):
             doc["lanes"][2]["kind"] = kind
-            if parked:
-                doc["lanes"][2]["pts"] = [[FAR - 800.0, FAR], [FAR - 600.0, FAR], [FAR - 200.0, FAR], [FAR, FAR]]
+            doc["lanes"][2]["pts"] = [[FAR - 800.0, FAR], [FAR, FAR]] if parked else [[400.0, 3000.0], [7600.0, 3000.0]]
         return f
 
-    def at(kind, parked):
-        return draw(f"{kind}-{'away' if parked else 'on'}", lane2(kind, parked))
-    seg = [b for b in boxes(3400.0, 3000.0, 1)]       # centre of the lane's horizontal middle segment
-    box = [(150, b[1] - 5, 191, b[3] + 5) for b in seg]
-    solid = [changed_pixels(at("route", False), at("route", True), b) for b in box]
-    dashed = [changed_pixels(at("way_round", False), at("way_round", True), b) for b in box]
-    side = solid.index(max(solid))
-    assert 0 < dashed[side] < solid[side]
+    def runs(kind):
+        on, off = draw(f"{kind}-long", lane2(kind, False)), draw(f"{kind}-parked", lane2(kind, True))
+        rows = [home(0.0, 3000.0)[1], MAP - home(0.0, 3000.0)[1]]       # the centre row, picture y-down or y-up
+        flags = [[changed_pixels(on, off, (x, r, x + 1, r + 1)) > 0 for x in range(*RUN_X)] for r in rows]
+        f = max(flags, key=sum)
+        return sum(1 for i, v in enumerate(f) if v and (i == 0 or not f[i - 1])), f
+    (route_runs, route_flags), (dashed_runs, _) = runs("route"), runs("way_round")
+    assert route_runs == 1 and all(route_flags) and dashed_runs >= 2
 
 
 @pytest.mark.parametrize("what,x,y,half", [("chokes", 3500.0, 4000.0, 32), ("vantages", 3600.0, 5000.0, 22)])
@@ -162,6 +202,39 @@ def test_S_247_chokes_and_vantages_are_drawn(draw, what, x, y, half):
     assert max(changed_pixels(full, gone, b) for b in boxes(x, y, half)) > 0
 
 
+@pytest.mark.parametrize("what,key,x,y", [("chokes", "wall_span", 3500.0, 4000.0), ("vantages", "radius", 3600.0, 5000.0)])
+def test_S_247_wall_span_and_vantage_radius_are_drawn_to_scale(draw, what, key, x, y):
+    """S-247 R-112-04 (criterion 8): tripling a choke's wall_span (400 to 1,200 wu) or a vantage's radius (400 to
+    1,200 wu) changes the map out to about 60 px from the choke or vantage (REACH_MIN..REACH_MAX) and no farther."""
+    full, big = draw("full"), draw(f"big_{key}", lambda d: d[what][0].__setitem__(key, 1200.0))
+    cx, cy = home(x, y)
+    assert any(REACH_MIN <= reach(full, big, cx, c) <= REACH_MAX for c in (cy, MAP - cy))
+
+
+def test_S_247_district_roles_are_faint_tints_and_each_kind_has_its_own_shape(draw):
+    """S-247 R-112-04 (criterion 8): changing a district's role (near A to near B, the map's corner cell) changes the
+    picture in that cell; changing the objective's kind to resource changes the picture at the objective and at no
+    other place (places are shapes by kind)."""
+    full, tint = draw("full"), draw("tint", lambda d: d["district"][0].__setitem__(0, 4))
+    swapped = draw("shape", lambda d: d["places"][0].__setitem__("kind", "resource"))
+    cell = [(0, 0, 50, 50), (0, MAP - 50, 50, MAP)]
+    obj = max(changed_pixels(full, swapped, b) for b in boxes(4400.0, 4000.0, 14))
+    others = [max(changed_pixels(full, swapped, b) for b in boxes(p["x"], p["y"], int(p["pad_r"] / PX_WU) + 2))
+              for p in BASE["places"][1:]]
+    assert max(changed_pixels(full, tint, b) for b in cell) > 0 and obj > 0 and others == [0] * len(others)
+
+
+def test_S_247_lane_edges_are_anti_aliased_and_render_py_reduces_with_lanczos(draw):
+    """S-247 R-112-04 (criterion 8: "drawn at 2x then reduced with LANCZOS"): the edge of a slanted lane carries blended
+    tones (at least AA_TONES colours in a small window over it), and render.py names LANCZOS."""
+    img = draw("full")
+    px, py = home(2720.0, 3520.0)       # 30 % along the slanted lane from (2600, 4000) to (3000, 2400); no district edge near
+    tones = [len({img.getpixel((x, y)) for x in range(px - 6, px + 7) for y in range(y0 - 6, y0 + 7)}) for y0 in (py, MAP - py)]
+    names = {n.attr for n in ast.walk(ast.parse(RENDER.read_text())) if isinstance(n, ast.Attribute)} \
+        | {n.id for n in ast.walk(ast.parse(RENDER.read_text())) if isinstance(n, ast.Name)}
+    assert max(tones) >= AA_TONES and "LANCZOS" in names
+
+
 def _sidebar_edit(kind):
     def f(doc):
         if kind == "drafts_value":
@@ -170,17 +243,29 @@ def _sidebar_edit(kind):
             doc["drafts"]["DRAFT_BRAND_NEW_ONE"] = 7.0
         elif kind == "seed":
             doc["seed"] = 2
+        elif kind == "archetype":
+            doc["archetype"] = "ambush"
+        elif kind == "sides":
+            doc["sides"] = "mirror"
         elif kind == "check":
             doc["checks"]["bounds"] = False
         elif kind == "fairness":
             doc["fairness"]["dist_a_objective"] = 3999.0
+        elif kind == "dist_b_objective":
+            doc["fairness"]["dist_b_objective"] = 2222.0
+        elif kind == "dist_a_res":
+            doc["fairness"]["dist_a_res"] = [4321.0, 1940.0]
+        elif kind == "dist_b_res":
+            doc["fairness"]["dist_b_res"] = [3520.0, 777.0]
     return f
 
 
-@pytest.mark.parametrize("kind", ["drafts_value", "drafts_new", "seed", "check", "fairness"])
+@pytest.mark.parametrize("kind", ["drafts_value", "drafts_new", "seed", "archetype", "sides", "check", "fairness",
+                                  "dist_b_objective", "dist_a_res", "dist_b_res"])
 def test_S_247_the_sidebar_shows_the_drafts_seed_checks_and_distances(draw, kind):
-    """S-247 R-112-04 (criterion 8): changing a drafts value, adding a draft, the seed, a check result or a route
-    distance in the JSON changes the sidebar (right of the map) and leaves the map itself untouched."""
+    """S-247 R-112-04 (criterion 8): changing a drafts value, adding a draft, the seed, the archetype, the sides mode, a
+    check result or any one of the route distances in the JSON changes the sidebar (right of the map) and leaves the
+    map itself untouched."""
     a, b = draw("full"), draw(f"side_{kind}", _sidebar_edit(kind))
     h = min(a.height, b.height)
     side = changed_pixels(a, b, (MAP, 0, min(a.width, b.width), h))
@@ -188,48 +273,87 @@ def test_S_247_the_sidebar_shows_the_drafts_seed_checks_and_distances(draw, kind
     assert (side > 0, mapped) == (True, 0)
 
 
+def test_S_247_a_passing_check_is_green_and_a_failing_one_red(draw):
+    """S-247 R-112-04 (criterion 8: "each check green or red"): among the sidebar pixels that change when one check
+    goes from true to false, the passing picture's are green-dominant and the failing picture's red-dominant."""
+    ok, bad = draw("full"), draw("side_check", _sidebar_edit("check"))
+    box = (MAP, 0, min(ok.width, bad.width), min(ok.height, bad.height))
+
+    def tones(a, b):
+        px = [a.getpixel((x, y)) for x in range(box[0], box[2]) for y in range(box[1], box[3])
+              if a.getpixel((x, y)) != b.getpixel((x, y))]
+        return sum(1 for r, g, _ in px if g - r > TONE), sum(1 for r, g, _ in px if r - g > TONE)
+    (ok_green, ok_red), (bad_green, bad_red) = tones(ok, bad), tones(bad, ok)
+    assert ok_green > ok_red and bad_red > bad_green
+
+
 # ---- the sheet --------------------------------------------------------------------------------------------------------
-def _sheet(work, name, mutate=None, drop=None):
-    """12 fixture copies with seeds 1..12 in work/name/, run `sheet`, return (returncode, image)."""
+def _sheet(work, name, mutate=None, drop=None, sides="separate"):
+    """12 fixture copies with seeds 1..12 in work/name/ as layout_assault_s<N>_<sides>.json, run `sheet`, return
+    (returncode, image, stderr)."""
     d = work / name
     d.mkdir(exist_ok=True)
     for s in range(1, 13):
         doc = copy.deepcopy(BASE)
-        doc["seed"] = s
+        doc["seed"], doc["sides"] = s, sides
         if mutate:
             mutate(s, doc)
         if s != drop:
-            (d / f"layout_assault_s{s}_separate.json").write_text(json.dumps(doc))
+            (d / f"layout_assault_s{s}_{sides}.json").write_text(json.dumps(doc))
     out = work / f"{name}.png"
     r = run("sheet", d, out)
     return r.returncode, (Image.open(out).convert("RGB") if out.is_file() else None), r.stderr
 
 
 def _cells(img):
+    """The 4 x 3 equal split of the whole image, no trim (the spec fixes the grid, not margins or gutters)."""
     cw, ch = img.width // SHEET_COLS, img.height // SHEET_ROWS
-    return [img.crop((c * cw + EDGE, r * ch + EDGE, (c + 1) * cw - EDGE, (r + 1) * ch - EDGE))
-            for r in range(SHEET_ROWS) for c in range(SHEET_COLS)]
+    return [img.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch)) for r in range(SHEET_ROWS) for c in range(SHEET_COLS)]
 
 
 def _differing(a, b):
     return [i for i, (x, y) in enumerate(zip(_cells(a), _cells(b))) if ImageChops.difference(x, y).getbbox()]
 
 
+def _inked(img):
+    """Fraction of each cell that is not the sheet's most common colour (its background)."""
+    bg = max(img.getcolors(img.width * img.height))[1]
+    return [sum(n for n, c in cell.getcolors(cell.width * cell.height) if c != bg) / (cell.width * cell.height)
+            for cell in _cells(img)]
+
+
 def test_S_247_the_sheet_has_twelve_tiles_in_a_4_by_3_grid(work):
     """S-247 R-112-04 (criterion 9): 12 fixtures s1..s12 in a directory give exit 0 and one image wider than tall
-    whose 4 x 3 cells are all drawn and all different (each tile carries its own seed number)."""
+    whose 4 x 3 cells (equal split of the image) each hold drawn content (not just background) and all differ (each
+    tile carries its own seed number); the same holds for the files named with another sides mode."""
     rc, img, err = _sheet(work, "sheet_full")
+    rc2, img2, _ = _sheet(work, "sheet_mirror", sides="mirror")
     cells = _cells(img) if img else []
-    assert rc == 0 and img is not None and img.width > img.height and len(cells) == 12 \
-        and all(len(c.getcolors(c.width * c.height)) > 1 for c in cells) and len({c.tobytes() for c in cells}) == 12, err[-500:]
+    assert rc == 0 and rc2 == 0 and img is not None and img2 is not None and img.width > img.height and len(cells) == 12 \
+        and min(_inked(img)) >= CELL_INK and min(_inked(img2)) >= CELL_INK \
+        and len({c.tobytes() for c in cells}) == 12, err[-500:]
 
 
-def test_S_247_a_missing_seed_leaves_one_empty_tile_and_exit_1(work):
-    """S-247 R-112-04 (criterion 9): with s5 missing the sheet is still written, the exit status is 1, and exactly
-    that one tile differs from the full sheet."""
+def test_S_247_each_tile_holds_its_own_map(work):
+    """S-247 R-112-04 (criterion 9: each tile a map without the sidebar): widening one lane of seed 3's layout changes
+    exactly one tile, and inside it only above the lowest tenth (the caption strip under the map is not touched)."""
+    _, full, _ = _sheet(work, "sheet_full")
+    _, wide, err = _sheet(work, "sheet_wide", mutate=lambda s, d: d["lanes"][0].__setitem__("width", 600.0) if s == 3 else None)
+    one = _differing(full, wide)
+    cw, ch = full.width // SHEET_COLS, full.height // SHEET_ROWS
+    box = ImageChops.difference(_cells(full)[one[0]], _cells(wide)[one[0]]).getbbox() if len(one) == 1 else None
+    assert wide is not None and len(one) == 1 and box is not None and box[3] <= ch * 0.9, err[-500:]
+
+
+def test_S_247_a_missing_seed_leaves_one_labelled_empty_tile_and_exit_1(work):
+    """S-247 R-112-04 (criterion 9): with s5 missing the sheet is still written, the exit status is 1, exactly that one
+    tile differs from the full sheet and it is not blank (it carries a label)."""
     _, full, _ = _sheet(work, "sheet_full")
     rc, img, err = _sheet(work, "sheet_missing", drop=5)
-    assert rc == 1 and img is not None and img.size == full.size and len(_differing(full, img)) == 1, err[-500:]
+    gone = _differing(full, img) if img else []
+    cell = _cells(img)[gone[0]] if len(gone) == 1 else None
+    assert rc == 1 and img is not None and img.size == full.size and len(gone) == 1 \
+        and len(cell.getcolors(cell.width * cell.height)) > 1, err[-500:]
 
 
 def test_S_247_a_failed_check_changes_only_its_own_tile(work):

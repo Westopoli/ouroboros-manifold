@@ -7,11 +7,13 @@ R-112-01 R-112-02 R-112-03 R-112-04 R-112-05 R-112-07 R-112-08 R-113-01 R-113-02
 Red until leaf 1 replaces the sentinel bodies of csrc/layout_kit.c (they return -1 / NULL / 0). Every expectation is
 computed here from the spec's numbers and from the dumped lanes (an independent Dijkstra), never from the engine's own
 check bits alone. Dumps print doubles as integer hundredths (the probe's rule), so geometry tolerances are 0.02 wu.
-Budget: at most 40 assertions in this file and test_layout_kit_header.py together (counted by `assert` statements).
+Budget: at most 40 assertions in this file and test_layout_kit_header.py together (counted by `assert` statements;
+the `assert`s of the shared helpers count too).
 """
 import heapq
 import math
 import pathlib
+import re
 import subprocess
 from functools import lru_cache
 
@@ -38,6 +40,9 @@ SEEDS = range(1, 13)
 SIDES = {0: "mirror", 1: "rotate", 2: "separate"}
 SLACK = 1.0                 # wu: the dump quantises to 0.01 wu; path sums over a few lanes stay well under 1 wu
 GEO_SLACK = 0.02            # wu: two quantised coordinates
+ON_LANE = 0.05              # wu: a choke point must lie this close to its lane polyline (quantised coordinates)
+FRAC_TOL = 0.006            # a choke's frac prints in hundredths of the lane, so 0.005 of rounding plus a little
+SEPARATE_MIN = 10           # seeds of 12 whose side B is neither the mirror nor the rotation of side A (spec: 10 of 12)
 
 NAMES = {
     0: ["objective", "base_home", "base_forward", "resource", "expansion"],
@@ -161,6 +166,21 @@ def dijkstra(d, src, skip_lane=None):
     return dist
 
 
+def arc_position(lane, x, y):
+    """(distance in wu from (x, y) to the lane polyline, fraction 0..1 of the polyline length at the nearest point)."""
+    pts = [(wu(a), wu(b)) for a, b in lane["pts"]]
+    total, acc, best = lane_len(lane), 0.0, (math.inf, 0.0)
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        dx, dy = x1 - x0, y1 - y0
+        seg = math.hypot(dx, dy)
+        t = 0.0 if seg == 0 else max(0.0, min(1.0, ((wu(x) - x0) * dx + (wu(y) - y0) * dy) / (seg * seg)))
+        dist = math.hypot(wu(x) - (x0 + t * dx), wu(y) - (y0 + t * dy))
+        if dist < best[0]:
+            best = (dist, (acc + t * seg) / total)
+        acc += seg
+    return best
+
+
 def places_of(d, kind):
     return [p for p in d["place"] if p["kind"] == kind]
 
@@ -179,18 +199,23 @@ IDS36 = [f"s{s}-{SIDES[m]}" for s, m in ALL36]
     (-1, 24000, 0, -2), (0, 24000, 0, -2), (2, 24000, 0, -2), (4, 24000, 0, -2), (9, 24000, 0, -2), (10, 24000, 0, -2),
     (3, 7999, 0, -3), (3, 8000, 0, 0), (3, 64000, 0, 0), (3, 64001, 0, -3), (3, 0, 0, -3), (3, -24000, 0, -3),
     (3, 24000, -1, -3), (3, 24000, 3, -3),
+    # combinations: the header's order is NULL out, then archetype, then canvas and sides mode
+    (9, 0, 0, -2), (9, 24000, 3, -2), (-1, 7999, 9, -2), (10, 64001, -1, -2), (3, 0, 3, -3), (3, 64001, -1, -3),
 ])
 def test_S_247_return_codes_and_range_boundaries(probes, arch, canvas, sides, want):
     """S-247 R-112-01: -2 for an archetype outside 0..9 or not built (only Assault), -3 for a canvas outside
-    8,000..64,000 (both ends inclusive) or a sides mode outside 0..2 (header contract, spec 'Design' step 1)."""
+    8,000..64,000 (both ends inclusive) or a sides mode outside 0..2 (header contract, spec 'Design' step 1); when
+    two faults meet the archetype's -2 wins over the canvas's and sides mode's -3 (overlord ruling Q2)."""
     d = parse(_run(probes["O2"], "gen", 1, arch, float(canvas), sides))
     assert d["kv"]["rc"] == want
 
 
 def test_S_247_null_out_returns_minus_one(probes):
     """S-247 R-112-01: a NULL out is -1 (header contract), where the same call with an out struct returns 0 (the
-    sentinel returns -1 for everything, so the second half keeps this test red until the engine is built)."""
-    assert (gen(probes, 1, 2)["kv"]["rc"], parse(_run(probes["O2"], "null"))["kv"]["rc"]) == (0, -1)
+    sentinel returns -1 for everything, so the first value keeps this test red until the engine is built); -1 also
+    wins over a bad archetype, canvas and sides mode together (overlord ruling Q2: NULL out is checked first)."""
+    rc = lambda *a: parse(_run(probes["O2"], "null", *a))["kv"]["rc"]
+    assert (gen(probes, 1, 2)["kv"]["rc"], rc(), rc(9, 0.0, 3), rc(3, 0.0, 0)) == (0, -1, -1, -1)
 
 
 # ---- the layout is made, whole, every seed and mode ------------------------------------------------------------------
@@ -205,7 +230,8 @@ def test_S_247_all_six_checks_pass(probes, seed, sides):
 @pytest.mark.parametrize("seed,sides", ALL36, ids=IDS36)
 def test_S_247_places_and_counts_are_the_assault_budget(probes, seed, sides):
     """S-247 R-113-01 R-113-02 R-112-07: exactly one objective, one base per side (forward camp = side A, home =
-    side B), two resources, two expansions (one per side), one crossing, one height, >= 2 approach lanes."""
+    side B), two neutral resources (side -1), two expansions (one per side), one crossing, one height, >= 2 approach
+    lanes and the objective still reachable from side A's base with any one of them removed."""
     d = gen(probes, seed, sides)
     k = d["kv"]
     got = {"objective": k["count_objective"], "home": k["count_base_home"], "forward": k["count_base_forward"],
@@ -213,16 +239,21 @@ def test_S_247_places_and_counts_are_the_assault_budget(probes, seed, sides):
            "vantages": k["count_vantages"]}
     obj_node = places_of(d, K_OBJ)[0]["node"]
     approaches = sum(1 for ln in d["lane"] if obj_node in (ln["a"], ln["b"]))
-    sides_of = (places_of(d, K_FWD)[0]["side"], places_of(d, K_HOME)[0]["side"], sorted(p["side"] for p in places_of(d, K_EXP)))
-    assert (got, sides_of, approaches >= APPROACHES_MIN) == (
+    sides_of = (places_of(d, K_FWD)[0]["side"], places_of(d, K_HOME)[0]["side"], sorted(p["side"] for p in places_of(d, K_EXP)),
+                [p["side"] for p in places_of(d, K_RES)])
+    # spec check 4: removing any one lane of the objective leaves it reachable from side A's base (own Dijkstra)
+    na = base_nodes(d)[0]
+    cut_ok = all(math.isfinite(dijkstra(d, na, skip_lane=i)[obj_node]) for i, ln in enumerate(d["lane"]) if obj_node in (ln["a"], ln["b"]))
+    assert (got, sides_of, approaches >= APPROACHES_MIN, cut_ok) == (
         {"objective": 1, "home": 1, "forward": 1, "resource": 2, "expansion": 2, "chokes": 1, "vantages": 1},
-        (0, 1, [0, 1]), True)
+        (0, 1, [0, 1], [-1, -1]), True, True)
 
 
 @pytest.mark.parametrize("seed,sides", ALL36, ids=IDS36)
 def test_S_247_fairness_is_true_on_the_dumped_lanes(probes, seed, sides):
     """S-247 R-112-05 R-112-07: a Dijkstra I wrote here over the dumped lanes: both resources are equal-distance from
-    the two bases within DRAFT_EQUAL_TOL, the objective is nearer side B's base than side A's (Q-191-11, the slant), and
+    the two bases within DRAFT_EQUAL_TOL, every node is reachable from side A's base (check 1), the objective is nearer
+    side B's base than side A's (Q-191-11, the slant), and
     the engine's own reported fairness numbers agree with mine to 1 wu."""
     d = gen(probes, seed, sides)
     na, nb = base_nodes(d)
@@ -230,7 +261,7 @@ def test_S_247_fairness_is_true_on_the_dumped_lanes(probes, seed, sides):
     res = [p["node"] for p in places_of(d, K_RES)]
     obj = places_of(d, K_OBJ)[0]["node"]
     unfair = [(da[r], db[r]) for r in res if abs(da[r] - db[r]) > EQUAL_TOL * max(da[r], db[r]) + SLACK]
-    assert unfair == [] and math.isfinite(max(da[r] for r in res + [obj])) and db[obj] < da[obj]
+    assert unfair == [] and all(math.isfinite(x) for x in da) and db[obj] < da[obj]   # check 1 (connected), own oracle
     f = d["fair"]
     reported = [f["dist_a_objective"], f["dist_b_objective"], f["dist_a_res0"], f["dist_a_res1"],
                 f["dist_b_res0"], f["dist_b_res1"]]
@@ -240,15 +271,20 @@ def test_S_247_fairness_is_true_on_the_dumped_lanes(probes, seed, sides):
 
 @pytest.mark.parametrize("seed,sides", ALL36, ids=IDS36)
 def test_S_247_chokes_have_width_axis_and_a_way_round(probes, seed, sides):
-    """S-247 R-113-03 R-112-05 R-112-07: each choke is 300..700 wu wide with a length, an axis in 15-degree steps
-    0..11 and a position 0..1 on a real lane; its lane has a way_round lane between the same two nodes whose length is
+    """S-247 R-113-03 R-112-05 R-112-07: each choke is 300..700 wu wide with a length, a wall span, an axis in
+    15-degree steps 0..11 and a position 0..1 on a spine lane (route or objective_route), its point lying on that
+    lane at that fraction of its length; its lane has a way_round lane between the same two nodes whose length is
     1.5..2.4 times the lane's, and no path avoiding the lane is shorter than 1.5 times it."""
     d = gen(probes, seed, sides)
     bad, short = [], []
     for ck in d["choke"]:
         w = wu(ck["width"])
-        ok = (CHOKE_W_MIN <= w <= CHOKE_W_MAX and ck["length"] > 0 and 0 <= ck["axis_k"] <= 11
+        ok = (CHOKE_W_MIN <= w <= CHOKE_W_MAX and ck["length"] > 0 and ck["wall_span"] > 0 and 0 <= ck["axis_k"] <= 11
               and 0 <= ck["frac"] <= 100 and 0 <= ck["lane"] < len(d["lane"]))
+        if ok:     # on the spine, at frac of its lane (spec Design 3 and header)
+            lane = d["lane"][ck["lane"]]
+            dist, at = arc_position(lane, ck["x"], ck["y"])
+            ok = lane["kind"] in (L_ROUTE, L_OBJROUTE) and dist <= ON_LANE and abs(at - ck["frac"] / 100.0) <= FRAC_TOL
         if not ok:
             bad.append(ck)
             continue
@@ -265,8 +301,8 @@ def test_S_247_chokes_have_width_axis_and_a_way_round(probes, seed, sides):
 
 @pytest.mark.parametrize("seed,sides", ALL36, ids=IDS36)
 def test_S_247_each_vantage_has_two_climbs_and_one_overlook(probes, seed, sides):
-    """S-247 R-113-04: a vantage has 1..3 height bands, overlooks one lane (not a climb lane) and is reached by two
-    distinct climb lanes."""
+    """S-247 R-113-04: a vantage has 1..3 height bands, overlooks one spine lane (route or objective_route) and is
+    reached by two distinct climb lanes, each ending within the vantage's radius of it."""
     d = gen(probes, seed, sides)
     n = len(d["lane"])
     bad = []
@@ -274,7 +310,9 @@ def test_S_247_each_vantage_has_two_climbs_and_one_overlook(probes, seed, sides)
         c0, c1, ov = v["climb0"], v["climb1"], v["overlooks"]
         ok = (BANDS_MIN <= v["height_bands"] <= BANDS_MAX and c0 != c1 and 0 <= c0 < n and 0 <= c1 < n
               and 0 <= ov < n and d["lane"][c0]["kind"] == L_CLIMB and d["lane"][c1]["kind"] == L_CLIMB
-              and d["lane"][ov]["kind"] != L_CLIMB)
+              and d["lane"][ov]["kind"] in (L_ROUTE, L_OBJROUTE)
+              and all(any(math.hypot(wu(px - v["x"]), wu(py - v["y"])) <= wu(v["radius"]) + GEO_SLACK
+                          for px, py in (d["lane"][c]["pts"][0], d["lane"][c]["pts"][-1])) for c in (c0, c1)))
         if not ok:
             bad.append(v)
     assert bad == []
@@ -294,7 +332,8 @@ def test_S_247_pieces_and_landforms_are_named(probes, seed, sides):
 
 @pytest.mark.parametrize("seed,sides", ALL36, ids=IDS36)
 def test_S_247_the_request_list_covers_the_layout(probes, seed, sides):
-    """S-247 R-112-04 (the B3 seam): a room pad request per place named base_a, base_b, objective, site_0..; a keep_open
+    """S-247 R-112-04 (the B3 seam): a room pad request per place (with the place's piece) named base_a, base_b,
+    objective, site_0.. (the sites are the resources and expansions); a keep_open
     choke request per choke with its numbers; a height vantage request per vantage with side +1 when nearer side A's
     base by straight line, -1 nearer B's, 0 equal; a number route request per route/way_round/objective_route lane;
     a keep_open landform request for every landform a choke or vantage carries."""
@@ -303,10 +342,12 @@ def test_S_247_the_request_list_covers_the_layout(probes, seed, sides):
     by = {k: [r for r in rq if r["kind"] == k] for k in (R_PAD, R_CHOKE, R_VANT, R_ROUTE, R_LAND)}
     a, b = places_of(d, K_FWD)[0], places_of(d, K_HOME)[0]
     names = {r["name"]: (r["x"], r["y"]) for r in by[R_PAD]}
-    assert sorted((r["x"], r["y"], r["r"]) for r in by[R_PAD]) == sorted((p["x"], p["y"], p["pad_r"]) for p in d["place"]) \
+    xy = lambda ps: sorted((p["x"], p["y"]) for p in ps)
+    assert sorted((r["x"], r["y"], r["r"], r["piece"]) for r in by[R_PAD]) == sorted((p["x"], p["y"], p["pad_r"], p["piece"]) for p in d["place"]) \
         and all(r["mode"] == M_ROOM for r in by[R_PAD]) \
         and sorted(names) == ["base_a", "base_b", "objective", "site_0", "site_1", "site_2", "site_3"] \
-        and (names["base_a"], names["base_b"]) == ((a["x"], a["y"]), (b["x"], b["y"]))
+        and (names["base_a"], names["base_b"], names["objective"]) == ((a["x"], a["y"]), (b["x"], b["y"]), xy(places_of(d, K_OBJ))[0]) \
+        and sorted(v for k, v in names.items() if k.startswith("site_")) == xy(places_of(d, K_RES) + places_of(d, K_EXP))
     assert sorted((r["x"], r["y"], r["w"], r["len"], r["span"], r["frac"], r["axis_k"], r["mode"]) for r in by[R_CHOKE]) == \
         sorted((c["x"], c["y"], c["width"], c["length"], c["wall_span"], c["frac"], c["axis_k"], M_OPEN) for c in d["choke"])
 
@@ -332,6 +373,19 @@ def test_S_247_two_runs_give_identical_dumps(probes, seed, sides):
     assert _run(probes["O2"], "gen", seed, ARCH_ASSAULT, repr(CANVAS), sides) == first
 
 
+@pytest.mark.parametrize("sides", sorted(SIDES), ids=list(SIDES.values()))
+def test_S_247_a_second_call_in_one_process_starts_from_nothing(probes, sides):
+    """S-247 R-112-01: the header's "fills *out (zeroed first)" and no state kept between calls: in one process, one
+    struct filled with 0xA5, seed 5 then seed 9 then seed 5 again print three dumps; the third equals the first, and
+    each equals the single-run dump of its seed; every unused array slot is zero after each call (checked field by field)."""
+    out = _run(probes["O2"], "chain", 5, 9, ARCH_ASSAULT, repr(CANVAS), sides)
+    runs = re.split(r"^run \d\n", out, flags=re.M)[1:]
+    tail = runs[-1].splitlines()[-1] if runs else ""
+    runs = [r.replace(tail + "\n", "") for r in runs]
+    assert (runs, tail) == ([gen(probes, 5, sides)["text"], gen(probes, 9, sides)["text"], gen(probes, 5, sides)["text"]],
+                            "tail_clean 1 1 1")
+
+
 @pytest.mark.parametrize("seed,sides", ALL36, ids=IDS36)
 def test_S_247_O0_and_O2_builds_agree(probes, seed, sides):
     """S-247 R-112-01: the -O0 and -O2 probe binaries print identical dumps over the 36 layouts."""
@@ -347,12 +401,17 @@ def test_S_247_different_seeds_make_different_layouts(probes, sides):
 
 
 # ---- canvas and sides modes -------------------------------------------------------------------------------------------
-@pytest.mark.parametrize("canvas", [CANVAS_MIN, CANVAS, CANVAS_MAX])
+# the two extremes stress the fixed 300..700 wu choke widths most, so they get every seed; the default one seed
+CANVAS_CASES = [(CANVAS, 3)] + [(c, s) for c in (CANVAS_MIN, CANVAS_MAX) for s in SEEDS]
+
+
+@pytest.mark.parametrize("canvas,seed", CANVAS_CASES, ids=[f"c{int(c)}-s{s}" for c, s in CANVAS_CASES])
 @pytest.mark.parametrize("sides", sorted(SIDES), ids=list(SIDES.values()))
-def test_S_247_stays_on_the_canvas_with_chokes_300_to_700(probes, canvas, sides):
-    """S-247 R-112-05 R-112-07: at the smallest, default and largest canvas every place pad, node, lane point, choke and
-    vantage circle lies on the canvas (checked here on the dump), choke widths stay 300..700 wu, all six checks pass."""
-    d = gen(probes, 3, sides, canvas=canvas)
+def test_S_247_stays_on_the_canvas_with_chokes_300_to_700(probes, canvas, seed, sides):
+    """S-247 R-112-05 R-112-07: at the smallest and largest canvas (seeds 1..12) and the default one (seed 3) every
+    place pad, node, lane point, choke and vantage circle lies on the canvas (checked here on the dump), choke widths
+    stay 300..700 wu, all six checks pass."""
+    d = gen(probes, seed, sides, canvas=canvas)
     assert d["kv"]["rc"] == 0 and d["kv"]["checks"] == 0x3F and wu(d["kv"]["canvas"]) == canvas
     inside = lambda x, y, r=0.0: r - GEO_SLACK <= x <= canvas - r + GEO_SLACK and r - GEO_SLACK <= y <= canvas - r + GEO_SLACK
     pts = [(wu(x), wu(y)) for ln in d["lane"] for x, y in ln["pts"]]
@@ -367,57 +426,74 @@ def test_S_247_stays_on_the_canvas_with_chokes_300_to_700(probes, canvas, sides)
 
 def test_S_247_the_dump_echoes_its_inputs_and_fills_every_district_role(probes):
     """S-247 R-112-01 R-112-02: seed, archetype, sides mode and canvas are echoed; the kept candidate is one of the
-    DRAFT_CANDIDATES; the 8 x 8 district grid holds all six roles (home A/B, near A/B, contested, objective)."""
-    d = gen(probes, 7, 1, canvas=30000)
-    k = d["kv"]
-    assert (k["seed"], k["archetype"], k["sides_mode"], wu(k["canvas"])) == (7, ARCH_ASSAULT, 1, 30000.0)
-    roles = {v for row in d["district"] for v in row}
-    assert 0 <= k["candidate"] < CANDIDATES and len(d["district"]) == 8 and all(len(r) == 8 for r in d["district"]) \
-        and {1, 2, 3, 4, 5, 6} <= roles
+    DRAFT_CANDIDATES; in all 36 layouts the 8 x 8 district grid holds all six roles (home A/B, near A/B, contested,
+    objective) and the grid is not the same for every seed."""
+    k = gen(probes, 7, 1, canvas=30000)["kv"]
+    grids, short = set(), []
+    for seed, m in ALL36:
+        dd = gen(probes, seed, m)
+        roles = {v for row in dd["district"] for v in row}
+        grids.add(str(dd["district"]))
+        if not ({1, 2, 3, 4, 5, 6} <= roles and len(dd["district"]) == 8 and all(len(r) == 8 for r in dd["district"])):
+            short.append((seed, m))
+    assert (k["seed"], k["archetype"], k["sides_mode"], wu(k["canvas"])) == (7, ARCH_ASSAULT, 1, 30000.0) \
+        and 0 <= k["candidate"] < CANDIDATES and short == [] and len(grids) > 1
 
 
-def _pair(d):
-    """Expansion sites as (side A point, side B point) in wu."""
+def _ground(d):
+    """Side A's expansion and side B's, and the two resources, as points in wu."""
     e = {p["side"]: (wu(p["x"]), wu(p["y"])) for p in places_of(d, K_EXP)}
-    return e[0], e[1]
+    return e[0], e[1], [(wu(p["x"]), wu(p["y"])) for p in places_of(d, K_RES)]
 
 
 @pytest.mark.parametrize("mode", ["mirror", "rotate", "separate"])
 def test_S_247_sides_modes_shape_side_b(probes, mode):
     """S-247 R-112-08: rotate puts side B's expansion at side A's turned half a turn about the centre; mirror at
-    side A's reflected across the map's mid line (x = canvas/2 or y = canvas/2); separate is neither for most seeds
-    (side B grown from its own stream)."""
+    side A's reflected across the map's mid line (x = canvas/2 or y = canvas/2); in both the two resources, as an
+    unordered pair, map onto each other by the same transform (the bases are not asserted: spec silent, Assault's
+    bases are of different kinds); separate is neither for at least 10 of 12 seeds (side B grown from its own stream)."""
     m = {"mirror": 0, "rotate": 1, "separate": 2}[mode]
     close = lambda p, q: abs(p[0] - q[0]) <= GEO_SLACK and abs(p[1] - q[1]) <= GEO_SLACK
+    pair = lambda P, Q: (close(P[0], Q[0]) and close(P[1], Q[1])) or (close(P[0], Q[1]) and close(P[1], Q[0]))
+    rot = lambda p: (CANVAS - p[0], CANVAS - p[1])
+    mirrors = (lambda p: (CANVAS - p[0], p[1]), lambda p: (p[0], CANVAS - p[1]))
     tag = []
     for s in SEEDS:
-        a, b = _pair(gen(probes, s, m))
-        rot = (CANVAS - a[0], CANVAS - a[1])
-        mir = [(CANVAS - a[0], a[1]), (a[0], CANVAS - a[1])]
-        tag.append((close(b, rot), any(close(b, q) for q in mir)))
-    holds = {"rotate": all(t[0] for t in tag), "mirror": all(t[1] for t in tag),
-             "separate": sum(1 for t in tag if t[0] or t[1]) < len(SEEDS)}
+        a, b, res = _ground(gen(probes, s, m))
+        tag.append((close(b, rot(a)), any(close(b, f(a)) for f in mirrors),
+                    close(b, rot(a)) and pair(res, [rot(r) for r in res]),
+                    any(close(b, f(a)) and pair(res, [f(r) for r in res]) for f in mirrors)))
+    holds = {"rotate": all(t[2] for t in tag), "mirror": all(t[3] for t in tag),
+             "separate": sum(1 for t in tag if not (t[0] or t[1])) >= SEPARATE_MIN}
     assert holds[mode], tag
 
 
 # ---- names and drafts -------------------------------------------------------------------------------------------------
-@pytest.mark.parametrize("domain", sorted(NAMES))
+@pytest.mark.parametrize("domain", [-1] + sorted(NAMES) + [6])
 def test_S_247_om_lk_name_lists_the_json_strings(probes, domain):
     """S-247 R-112-04 (spec 'JSON'): om_lk_name returns the lower-case strings of the JSON section for ids in range
-    and NULL for -1 and for one past the last id."""
-    rows = [ln.split() for ln in _run(probes["O2"], "names").splitlines() if ln.startswith(f"name {domain} ")]
+    and NULL for -1 and for one past the last id; a domain outside 0..5 is NULL for every id (overlord ruling Q1)."""
+    lines = _run(probes["O2"], "names").splitlines()
+    rows = [ln.split() for ln in lines if ln.startswith(f"name {domain} ")]
     got = {int(r[2]): r[3] for r in rows}
-    n = len(NAMES[domain])
-    assert got == {-1: "NULL", **dict(enumerate(NAMES[domain])), n: "NULL"}
+    names = NAMES.get(domain, [])
+    # the anchor row keeps the two out-of-range domains red on the sentinel, whose NULLs are right for them
+    assert got == {-1: "NULL", **dict(enumerate(names)), len(names): "NULL"} and "name 0 0 objective" in lines
 
 
 def test_S_247_the_drafts_table_lists_the_named_drafts(probes):
     """S-247 R-112-01 (spec 'Named drafts'): om_lk_draft_count/name/value list at least every named draft with the
-    spec's value (printed in hundredths), names unique and in the DRAFT_ namespace."""
+    spec's value (printed in hundredths), names unique, in the DRAFT_ namespace and in the order of the X(DRAFT_...)
+    entries of LK_DRAFT_TABLE in csrc/layout_drafts.h (criterion 3: "in order"); index -1 and the count give NULL and
+    0.0 (overlord ruling Q3)."""
     lines = _run(probes["O2"], "drafts").splitlines()
     count = int(lines[0].split()[1])
     rows = [ln.split() for ln in lines[1:] if ln.startswith("draft ")]
     table = {r[2]: int(r[3]) for r in rows}
+    drafts_h = CSRC / "layout_drafts.h"
+    order = re.findall(r"\bX\(\s*(DRAFT_\w+)\s*,", drafts_h.read_text() if drafts_h.is_file() else "")
+    oob = [ln.split() for ln in lines if ln.startswith("oob ")]
     assert count == len(rows) and len(table) == len(rows) and all(n.startswith("DRAFT_") for n in table) \
-        and count >= len(NAMED_DRAFTS)
+        and count >= len(NAMED_DRAFTS) and [r[2] for r in rows] == order \
+        and oob == [["oob", "-1", "NULL", "0"], ["oob", str(count), "NULL", "0"]]
     assert {n: table.get(n) for n in NAMED_DRAFTS} == {n: round(v * 100) for n, v in NAMED_DRAFTS.items()}
