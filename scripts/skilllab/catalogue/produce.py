@@ -485,6 +485,10 @@ def dump_toml(layout):
                       "layer = %d" % u["layer"]] + (["range = %r" % u["range"]] if "range" in u else [])  # a round-one row has no range, and none is invented
             if "arc" in u:   # H-053: which of the side's arcs the unit sits on
                 lines.append("arc = %d" % u["arc"])
+            if "group" in u:   # stage 4 fix F3: the unit's order group (scripts/skilllab/arena/groups.py)
+                lines.append("group = %s" % _q(u["group"]))
+    for g in layout.get("order_groups", []):   # stage 4 fix F3: one row per group order, with an optional release trigger
+        lines += ["", "[[order_groups]]"] + ["%s = %s" % (k, _tv(v)) for k, v in g.items()]
     for f in layout.get("features", []):
         lines += ["", "[[features]]"] + ["%s = %s" % (k, _tv(v)) for k, v in f.items()]
     return "\n".join(lines) + "\n"

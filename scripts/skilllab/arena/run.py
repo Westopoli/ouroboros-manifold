@@ -20,7 +20,12 @@ H-088 (stage 4, sight): `--sight on` is the stage 4 rule set (docs/stories/H-088
 walks, reach 0 up 1 down for every role (DRAFT-stage4-reach-down), the holder of `hold:A` / `hold:B` on `order_guard` (R-096-08). The fight file then carries per-unit `seen`,
 `sights`, `result.first_seen` (sampled every CHECK_EVERY ticks from tick 0) and `orders.guard`, and `results.md` two columns `first seen A` / `first seen B`. `--control sight`
 (with `--control-dir`, `--sight on` only) writes D/<id>-control-s<n>.fight.json for every layout: the same fight with targeting by sight off (`fight` sight "control"),
-the document `sight` "off". `--control ground` (default) is the twin above. See also: snapshot.validate, SNAPSHOT.md."""
+the document `sight` "off". `--control ground` (default) is the twin above. See also: snapshot.validate, SNAPSHOT.md.
+Stage 4 fixes (docs/reports/2026-11-06-stage4-fix-plan.md, H-088 follow-up): under `--sight on` the ground is the exact conversion (`features.apply(exact=True)`): planar rectangles
+snapped to the 100 wu grid (snap.py; one `SNAPPED <id> <kind> authored ... built ...` line per feature, and `built_features` in the fight file) and each `vantage` as terrain
+(hills.py), so a unit's starting layer is the ground's: `REJECT <id> G1 layer: side_a unit 0 ...` when the layout's `layer` column disagrees (a runner-local rule, not in rules.toml).
+Layout `orders = "groups"` gives per-group orders with an optional release trigger (groups.py; `orders.groups` in the fight file); `REJECT <id> G2 groups: ...` for a malformed layout.
+`--sight off` is unchanged (stages 1 to 3 reproduce byte for byte)."""
 import argparse
 import json
 import sys
@@ -28,7 +33,7 @@ import tomllib
 from pathlib import Path
 from types import SimpleNamespace
 
-from scripts.skilllab.arena import features, snapshot
+from scripts.skilllab.arena import features, groups, hills, snap, snapshot
 from scripts.skilllab.arena.rate import rate
 from scripts.skilllab.catalogue.produce import _roster_ranges, check_layout, dump_toml, presets, rules
 from scripts.skilllab.engine import Engine
@@ -82,6 +87,8 @@ def _frame(engine, w, tick, rows, blocked=None, seen=False):
 def _orders_point(layout, centre):
     """(point, movers): where the orders send units and which sides ('side_a', 'side_b') move; the engine's own rule, read from tick-0 centroids."""
     orders = layout.get("orders", "both_same_point")
+    if orders == "groups":
+        return tuple(groups.marker_point(layout)), ("side_a", "side_b")
     if orders == "both_same_point":
         point = tuple(layout["orders_point"]) if "orders_point" in layout else ((centre[0][0] + centre[1][0]) / 2, (centre[0][1] + centre[1][1]) / 2)
         return point, ("side_a", "side_b")
@@ -96,16 +103,48 @@ def _layout_centres(layout):
             for _, _, key in SIDES]
 
 
-def unreachable(layout):
-    """'side_b unit 2' for the first unit that cannot route to its orders point over the ground the engine is given (planar blocks, the slope), else None (H-063 rule R8).
-    Builds a throwaway world to read the engine's own walk mask. See also: features.first_unreachable."""
-    point, movers = _orders_point(layout, _layout_centres(layout))
+def _ground_world(layout, sight):
+    """(engine, world, preset) with the layout's ground laid as the fight lays it (`sight` as in fight()); the caller frees the world."""
     preset = presets()[layout["landscape"]]
     engine = Engine()
     w = engine.new_world(layout.get("seed", 1))
+    features.apply(engine, w, layout, preset, layout.get("seed", 1), exact=sight != "off")
+    return engine, w, preset
+
+
+def unreachable(layout, sight="off"):
+    """'side_b unit 2' for the first unit that cannot route to its orders point over the ground the engine is given (planar blocks, the slope, the hills), else None (H-063 rule R8).
+    Builds a throwaway world to read the engine's own walk mask. A groups layout (F3) checks each group that walks to a fixed point (an `enemy_centroid` target is unknown
+    before the fight); a release point is not a destination. See also: features.first_unreachable."""
+    point, movers = _orders_point(layout, _layout_centres(layout))
+    engine, w, preset = _ground_world(layout, sight)
     try:
-        features.apply(engine, w, layout, preset, layout.get("seed", 1))
-        return features.first_unreachable(engine, w, layout, preset, point, movers)
+        if layout.get("orders") != "groups":
+            return features.first_unreachable(engine, w, layout, preset, point, movers, **({"exact": True} if sight != "off" else {}))   # --sight off: the stage 3 call, unchanged
+        for r in layout["order_groups"]:
+            if isinstance(r["to"], list):
+                side = groups.SIDES[r["side"]][1]
+                members = {(side, i) for i, u in enumerate(layout[side]["units"]) if u["group"] == r["group"]}
+                miss = features.first_unreachable(engine, w, layout, preset, tuple(r["to"]), (side,), sight != "off", members)
+                if miss:
+                    return miss
+        return None
+    finally:
+        engine.free_world(w)
+
+
+def layer_mismatch(layout):
+    """'side_a unit 0 is on layer 0 ...' for the first unit whose `layer` column disagrees with the ground the hills give it (stage 4, G1), else None. Only a layout with a vantage."""
+    if not hills.vantages(layout):
+        return None
+    engine, w, _ = _ground_world(layout, "on")
+    try:
+        for _, _, key in SIDES:
+            for i, u in enumerate(layout[key]["units"]):
+                ground = hills.ground_layer(engine, w, u["x"], u["y"])
+                if ground != u["layer"]:
+                    return "%s unit %d is on layer %d in the layout but the ground there is layer %d" % (key, i, u["layer"], ground)
+        return None
     finally:
         engine.free_world(w)
 
@@ -137,7 +176,7 @@ def fight(layout, seed, sight, cap_seconds):
         if sight != "on":
             engine.set_param(w, engine.param_id("OM_TP_TARGET_BY_SIGHT"), 0)
         preset = presets()[layout["landscape"]]
-        ground = features.apply(engine, w, layout, preset, seed)
+        ground = features.apply(engine, w, layout, preset, seed, exact=stage4)
         types = _register_types(engine, w, _setup_for(layout))
         if ground or stage4 or layout.get("movement") == "walk":   # the control twin has no features and still walks; so does every stage 4 fight
             if not ground:
@@ -159,7 +198,12 @@ def fight(layout, seed, sight, cap_seconds):
         rows.sort()
         centre = {f: _centroid(engine, w, ids[f]) for f in ids}
         orders = layout.get("orders", "both_same_point")
-        if orders == "both_same_point":
+        group_state = None
+        if orders == "groups":
+            group_state = groups.start(engine, w, layout, ids, stage4)
+            point = groups.marker_point(layout)
+            doc_orders = {"mode": "groups", "point": [round(point[0], 2), round(point[1], 2)], "attacker": None}
+        elif orders == "both_same_point":
             point = tuple(layout["orders_point"]) if "orders_point" in layout else ((centre[0][0] + centre[1][0]) / 2, (centre[0][1] + centre[1][1]) / 2)
             engine.order_attack_move(w, ids[0], *point)
             engine.order_attack_move(w, ids[1], *point)
@@ -174,7 +218,7 @@ def fight(layout, seed, sight, cap_seconds):
         else:
             raise ValueError("orders %r is not both_same_point, hold:A or hold:B" % (orders,))
         if stage4:
-            doc_orders["guard"] = orders != "both_same_point"
+            doc_orders["guard"] = groups.guarded(layout, True) if orders == "groups" else orders != "both_same_point"
         first_seen = {"A": None, "B": None}   # H-088, --sight on: the first sampled tick at which that side's living units see a living enemy
 
         def sample_seen(at):
@@ -200,6 +244,8 @@ def fight(layout, seed, sight, cap_seconds):
         while tick < cap:
             engine.step(w)
             tick += 1
+            if group_state:
+                groups.tick(engine, w, group_state, ids, tick)
             for u in everyone:
                 if hp[u] > 0:
                     h = engine.unit_hp(w, u)
@@ -230,6 +276,8 @@ def fight(layout, seed, sight, cap_seconds):
         if seen:
             sights = {r: engine.type_stats(w, types[r][0])["sensor_radius"] for r in sorted(types)}
             doc_orders["stage4"] = {"first_seen": first_seen, "sights": sights}
+        if group_state:
+            doc_orders["groups"] = groups.record(group_state)
         return frames, tick, end, doc_orders
     finally:
         engine.free_world(w)
@@ -259,6 +307,8 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders):
                        "agree": winner == layout["predict"]}}
     if walks:
         doc["movement_kind"] = features.WALKING_KIND
+    if sight != "off" and features.planar_rects(layout):
+        doc["built_features"] = snap.built_features(layout)   # F2: the snapped rectangles the engine blocks; the replay draws these, so drawn equals blocked
     if stage4:
         doc["sights"] = stage4["sights"]
         doc["result"]["first_seen"] = stage4["first_seen"]
@@ -300,10 +350,22 @@ def main(argv=None):
         for rule in broken:
             print("REJECT %s %s" % (layout.get("id", args.layout.stem), rule))
         return 2
-    miss = unreachable(layout)
+    if layout.get("orders") == "groups":
+        bad = groups.check(layout)
+        if bad:
+            print("REJECT %s G2 groups: %s" % (layout["id"], bad))
+            return 2
+    wrong = layer_mismatch(layout) if args.sight == "on" else None
+    if wrong:
+        print("REJECT %s G1 layer: %s" % (layout["id"], wrong))
+        return 2
+    miss = unreachable(layout, args.sight)
     if miss:
         print("REJECT %s %s unreachable: %s" % (layout["id"], REACH_RULE, miss))
         return 2
+    if args.sight == "on":
+        for line in snap.report(layout):
+            print(line)
     count = args.seeds or 1
     if args.seeds and "predict_rate" not in layout:
         print("REJECT %s missing predict_rate (--seeds writes a rate file)" % layout["id"])

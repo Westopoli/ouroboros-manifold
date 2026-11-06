@@ -96,7 +96,7 @@ def test_control_the_fixtures_are_legal_layouts_and_the_crossing_helper_discrimi
     cover = f8.cover_layout("L-9891")
     rows = [dict(u, id=i, side=side) for i, (side, u) in enumerate([("A", u) for u in cover["side_a"]["units"]] + [("B", u) for u in cover["side_b"]["units"]])]
     cells = f8.blocked_cells(cover)
-    assert (legal, len(f8.crossing_pairs(cover, rows)) > 0, f8.crosses((1700, 2000), (2300, 2000), cells), f8.crosses((1700, 1700), (2300, 1700), cells)) == (
+    assert (legal, len(f8.crossing_pairs(cover, rows)) > 0, f8.crosses((1700, 2050), (2300, 2050), cells), f8.crosses((1700, 1700), (2300, 1700), cells)) == (
         ([[]] * 4, [None] * 4), True, True, False)
 
 
@@ -268,9 +268,19 @@ def test_results_md_has_the_first_seen_columns_with_sight_on_only(sight, head, c
 
 
 def test_results_md_prints_a_dash_for_a_side_that_never_saw(vantage_on):
-    """Criterion 4, spec line 24: "tick or `-`": the vantage row has `first_seen.A` in its `first seen A` cell and `-` in `first seen B` (B never sees up)."""
+    """Criterion 4, spec line 24: "tick or `-`": the row prints each side's `first_seen` tick in its cell, and `-` for a side that never saw. Stage 4 fix F1 (2026-11-06): the
+    vantage is real terrain, B climbs it and sees A from the midline, so both cells are ticks (B no earlier than A, the sample is a sim second); the dash is read from a fight whose sides never meet."""
     doc, d = vantage_on
-    assert result_rows(d / "out")[2][0][8:] == [str(doc["result"]["first_seen"]["A"]), "-"]
+    first = doc["result"]["first_seen"]
+    assert first["B"] >= first["A"] and result_rows(d / "out")[2][0][8:] == [str(first["A"]), str(first["B"])]
+    lay = f8.open_layout("L-9819")
+    for u in lay["side_b"]["units"]:
+        u["x"] += 1500.0   # 3800 wu apart, out of every sensor radius; one second of fight, nobody sees anyone
+    for u in lay["side_a"]["units"]:
+        u["x"] -= 1500.0
+    d2 = d.parent / "dash"
+    run_ok(lay, d2, "--sight", "on", "--cap-seconds", "1")
+    assert result_rows(d2 / "out")[2][0][8:] == ["-", "-"]
 
 
 def test_control_sight_writes_one_control_fight_per_seed_and_nothing_else(tmp_path):
@@ -343,19 +353,24 @@ def test_control_sight_needs_sight_on(tmp_path):
 # ---------------------------------------------------------------- criterion 5: the vantage
 
 def test_the_high_ground_sees_down_and_the_low_ground_never_sees_up(vantage_on):
-    """Criterion 5, spec line 25 (R-005-09): in some frame an A unit's `seen` is non-empty; in no frame is any B unit's `seen` non-empty; `first_seen.A` is an int and
-    `first_seen.B` is null."""
+    """Criterion 5, spec line 25 (R-005-09): in some frame an A unit's `seen` is non-empty; a B unit's `seen` is non-empty only while that unit is on layer 1 (a lower
+    layer never sees up; stage 4 fix F1, 2026-11-06: the hill is terrain, so B sees A from the ramp's midline, when it is on the upper layer); `first_seen.A` is an int and
+    `first_seen.B` is a tick no earlier than A's."""
     doc, _ = vantage_on
     units = [u for f in doc["frames"] for u in f["units"]]
     first = doc["result"]["first_seen"]
-    assert (any(u["seen"] for u in units if u["side"] == "A"), any(u["seen"] for u in units if u["side"] == "B"), isinstance(first["A"], int), first["B"]) == (True, False, True, None)
+    assert (any(u["seen"] for u in units if u["side"] == "A"), any(u["seen"] and u["layer"] == 0 for u in units if u["side"] == "B"), isinstance(first["A"], int),
+            isinstance(first["B"], int) and first["B"] >= first["A"]) == (True, False, True, True)
 
 
 def test_the_high_ground_fires_down_and_is_never_hit(vantage_on):
-    """Criterion 5, spec line 25: some B unit's hp falls below its tick-0 value in some frame and no A unit's does (A fires down, B never sees up)."""
+    """Criterion 5, spec line 25: some B unit's hp falls below its tick-0 value in some frame, and no A unit's does in any frame before a B unit is on layer 1 (A fires
+    down, B cannot see up; stage 4 fix F1, 2026-11-06: once B is on the ramp's upper half the fight is on equal terms)."""
     doc, _ = vantage_on
     start = {u["id"]: u["hp"] for u in doc["frames"][0]["units"]}
-    hurt = {s: any(u["hp"] < start[u["id"]] for f in doc["frames"] for u in f["units"] if u["side"] == s) for s in "AB"}
+    low = [f for f in doc["frames"][:next(i for i, f in enumerate(doc["frames"]) if any(u["layer"] == 1 and u["side"] == "B" for u in f["units"]))]]
+    hurt = {"A": any(u["hp"] < start[u["id"]] for f in low for u in f["units"] if u["side"] == "A"),
+            "B": any(u["hp"] < start[u["id"]] for f in doc["frames"] for u in f["units"] if u["side"] == "B")}
     assert hurt == {"A": False, "B": True}
 
 
@@ -370,7 +385,10 @@ def test_control_the_sight_off_control_fight_has_the_high_ground_firing_down(tmp
 def test_nobody_fires_at_what_the_cover_hides(tmp_path):
     """Criteria 5 and 6, spec lines 25 and 26, and the summary ("units fire only at what their side sees", R-093-02; cover blocks sight, not hits, R-007-04; audit Y4): the
     cover fixture with the sides moved to x 1850 and 2150 (300 wu apart, inside the Vanguard weapon range, the three boxes between them): with sight on no unit has a target in
-    any frame; the same fight with targeting by sight off (`--control sight`) has targets. The vantage fixture cannot tell the two apart (B never targets there)."""
+    any frame that crosses a box; the same fight with targeting by sight off (`--control sight`) has targets across the boxes. The vantage fixture cannot tell the two apart.
+    Stage 4 fix F2 (2026-11-06): the boxes block their snapped cells only (three 100 x 100 cells, y 1900 to 2200), so the rows of units at y 1860 have a clear line and may
+    fire, and a unit with a clear line lets its side see (R-093-02 is the side's visible set), so a teammate behind a box may hold the target: the test reads "no target across a
+    blocked cell that the unit's side does not see"."""
     lay = f8.cover_layout("L-9822")
     for u in lay["side_a"]["units"]:
         u["x"] = 1850.0
@@ -378,8 +396,18 @@ def test_nobody_fires_at_what_the_cover_hides(tmp_path):
         u["x"] = 2150.0
     on = run_ok(lay, tmp_path, "--sight", "on", "--cap-seconds", "5", "--control-dir", tmp_path / "control", "--control", "sight")
     control = snapshot.read(tmp_path / "control" / "L-9822-control-s1.fight.json") if names(tmp_path / "control") else {"frames": []}
-    targets = lambda d: [u["target"] for f in d["frames"] for u in f["units"] if u["target"] is not None]
-    assert (targets(on), bool(targets(control))) == ([], True)
+    def across(d, unseen_only):
+        """(unit, target) pairs whose segment crosses a blocked cell; `unseen_only`: only those whose target no unit of the unit's side lists in `seen` (R-093-02 is the side's set)."""
+        cells = f8.blocked_cells(lay)
+        out = []
+        for f in d["frames"]:
+            pos = {u["id"]: (u["x"], u["y"]) for u in f["units"]}
+            side = {u["id"]: u["side"] for u in f["units"]}
+            side_sees = {s: {e for u in f["units"] if u["side"] == s for e in u.get("seen", [])} for s in "AB"}
+            out += [(u["id"], u["target"]) for u in f["units"] if u["target"] is not None and f8.crosses(pos[u["id"]], pos[u["target"]], cells)
+                    and not (unseen_only and u["target"] in side_sees[side[u["id"]]])]
+        return out
+    assert (across(on, True), bool(across(control, False))) == ([], True)
 
 
 # ---------------------------------------------------------------- criterion 6: cover and guard

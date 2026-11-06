@@ -182,8 +182,8 @@ def test_slope_walk_mask_is_read_once_per_layer_not_per_unit(monkeypatch):
 
 
 def test_nav_cell_is_the_engines_navmesh_cell():
-    """Criterion 1 (spec line 21): `NAV_CELL`, the engine's `OM_NAVMESH_CELL_SIZE`, is 50 wu and is exported by `features`."""
-    assert features.NAV_CELL == 50.0
+    """Criterion 1 (spec line 21): `NAV_CELL`, the engine's `OM_NAVMESH_CELL_SIZE`, is 100 wu (R-097-01, csrc/om_constants.h:585) and is exported by `features`; the stage 3 preflight keeps 50 as `LEGACY_NAV_CELL`."""
+    assert features.NAV_CELL == 100.0 and features.LEGACY_NAV_CELL == 50.0
 
 
 # ---------------------------------------------------------------- composition: run.unreachable calls the new signature

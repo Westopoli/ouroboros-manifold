@@ -23,7 +23,7 @@
     20
   ],
   "wins_a": 0,
-  "wins_b": 0,
+  "wins_b": 20,
   "stalls": 0,
   "stall_seeds": [],
   "none_seeds": [],
@@ -34,8 +34,8 @@
   "mirror": false,
   "agree": false,
   "firing_capable": {
-    "A": 5.0,
-    "B": 10.0
+    "A": 8.0,
+    "B": 3.0
   },
   "median_seed": 10
 }

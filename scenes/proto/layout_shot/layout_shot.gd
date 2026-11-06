@@ -354,6 +354,7 @@ func _add_feature(parent: Node3D, f: Dictionary) -> void:
 		"vantage":  # the raised tier itself is the fill (terrain heights and the tier tint); its top edge and the foot of its slope are outlined
 			parent.add_child(_ring(centre, float(f["radius"]), colour))
 			parent.add_child(_ring(centre, float(f["radius"]) + RAMP_WU, RAMP_COLOUR))
+			parent.add_child(_ring(centre, float(f["radius"]) + RAMP_WU * 0.5, Color(colour.r, colour.g, colour.b, 0.6)))  # the midline: a unit on it changes layer (R-004-06); stage 4 fix F1
 		"objective", "hazard_anchor":
 			_disc(parent, centre, float(f["radius"]), colour)
 		"staging":

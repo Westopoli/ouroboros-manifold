@@ -1,4 +1,31 @@
 {
+  "built_features": [
+    {
+      "boxes": [
+        {
+          "h": 100.0,
+          "w": 100.0,
+          "x": 1950.0,
+          "y": 1850.0
+        },
+        {
+          "h": 100.0,
+          "w": 100.0,
+          "x": 1950.0,
+          "y": 2050.0
+        },
+        {
+          "h": 100.0,
+          "w": 100.0,
+          "x": 1950.0,
+          "y": 2250.0
+        }
+      ],
+      "kind": "cover",
+      "x": 2000.0,
+      "y": 2000.0
+    }
+  ],
   "frames": [
     {
       "alive": [
@@ -220,7 +247,7 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
       "blocked": [],
@@ -228,46 +255,46 @@
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -3.192,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
           "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "x": 2000.57,
+          "y": 2014.62
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.68,
-          "y": 2031.71
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.179,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.65,
-          "y": 1936.08
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -2.718,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
@@ -275,38 +302,47 @@
           "seen": [],
           "side": "A",
           "target": null,
-          "x": 2102.59,
-          "y": 2061.15
+          "x": 2000.15,
+          "y": 2074.42
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -3.007,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
           "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "x": 1999.01,
+          "y": 2044.53
         },
         {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2108.18,
-          "y": 1965.57
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -2.953,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
@@ -314,12 +350,12 @@
           "seen": [],
           "side": "A",
           "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "x": 2029.28,
+          "y": 2058.5
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -3.047,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
@@ -327,12 +363,12 @@
           "seen": [],
           "side": "A",
           "target": null,
-          "x": 2129.15,
-          "y": 2041.06
+          "x": 2030.13,
+          "y": 2028.51
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.085,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
@@ -340,12 +376,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 1965.0
+          "x": 1481.64,
+          "y": 1950.01
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": -0.232,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -353,12 +389,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1470.13,
+          "y": 2049.82
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": -0.033,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -366,51 +402,57 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1501.44,
+          "y": 2050.05
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 0.236,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1732.47,
+          "y": 1950.22
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": 0.019,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
-          "hp": 375.0,
+          "facing": 2.938,
+          "hp": 265.3,
           "id": 14,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1678.11,
+          "y": 2033.09
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.091,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -418,12 +460,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1580.0,
-          "y": 1965.0
+          "x": 1413.59,
+          "y": 1950.01
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": -0.253,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -431,100 +473,111 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1580.0,
-          "y": 2005.0
+          "x": 1410.05,
+          "y": 2049.95
         }
       ]
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
+      "blocked": [
+        14
+      ],
       "tick": 1600,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -3.134,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 13,
+          "x": 2006.7,
+          "y": 2015.38
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.71
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.178,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.7,
-          "y": 1936.77
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -3.104,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.59,
-          "y": 2061.14
+          "target": 13,
+          "x": 2005.92,
+          "y": 2074.4
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -3.198,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 13,
+          "x": 1999.36,
+          "y": 2045.18
         },
         {
-          "alive": true,
-          "facing": -3.117,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2103.74,
-          "y": 1966.15
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -3.072,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
@@ -532,38 +585,38 @@
           "seen": [],
           "side": "A",
           "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "x": 2032.21,
+          "y": 2059.82
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -3.236,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.05
+          "target": 13,
+          "x": 2032.99,
+          "y": 2029.83
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.146,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 1,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.128,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -571,12 +624,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": -0.024,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -584,51 +637,57 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 2.887,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1684.81,
+          "y": 1948.13
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": 0.038,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "target": 4,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
+          "facing": -3.62,
           "hp": 375.0,
           "id": 14,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1668.61,
+          "y": 2019.73
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.173,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -641,7 +700,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.094,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -656,132 +715,152 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
+      "blocked": [
+        14
+      ],
       "tick": 2400,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -2.996,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 12,
+          "x": 1999.5,
+          "y": 2015.41
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.71
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.177,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2110.42,
-          "y": 1936.98
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -2.719,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.59,
-          "y": 2061.14
+          "target": 12,
+          "x": 2005.88,
+          "y": 2072.92
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -2.802,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 12,
+          "x": 1999.95,
+          "y": 2043.56
         },
         {
-          "alive": true,
-          "facing": -3.12,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2098.95,
-          "y": 1964.69
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -2.79,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "target": 12,
+          "x": 2032.6,
+          "y": 2059.2
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -2.875,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.05
+          "target": 12,
+          "x": 2030.64,
+          "y": 2029.26
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.302,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 4,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.13,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -789,12 +868,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": 0.03,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -802,51 +881,60 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 0.423,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1,
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1723.38,
+          "y": 1945.43
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": 0.033,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1,
+            5
+          ],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "target": 4,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
+          "facing": -3.62,
           "hp": 375.0,
           "id": 14,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1,
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1668.61,
+          "y": 2019.73
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.119,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -859,7 +947,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.09,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -874,132 +962,143 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
+      "blocked": [
+        14
+      ],
       "tick": 3200,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -2.948,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 12,
+          "x": 2005.47,
+          "y": 2012.88
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.72
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.179,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2105.2,
-          "y": 1935.99
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -3.113,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.6,
-          "y": 2061.15
+          "target": 13,
+          "x": 2005.38,
+          "y": 2071.49
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -3.207,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 13,
+          "x": 1999.24,
+          "y": 2042.18
         },
         {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2110.49,
-          "y": 1965.52
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -3.149,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "target": 13,
+          "x": 2033.15,
+          "y": 2060.08
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -3.236,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.06
+          "target": 13,
+          "x": 2031.29,
+          "y": 2030.13
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.271,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 4,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.125,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -1007,12 +1106,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": 0.075,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -1020,51 +1119,57 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 2.929,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1686.37,
+          "y": 1950.69
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": 0.029,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "target": 4,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
+          "facing": -3.62,
           "hp": 375.0,
           "id": 14,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1668.61,
+          "y": 2019.73
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.248,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -1077,7 +1182,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.015,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -1092,132 +1197,152 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
+      "blocked": [
+        14
+      ],
       "tick": 4000,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -2.884,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 12,
+          "x": 1998.32,
+          "y": 2013.11
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.72
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.18,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2100.11,
-          "y": 1936.1
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -2.699,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.6,
-          "y": 2061.15
+          "target": 12,
+          "x": 2005.38,
+          "y": 2070.61
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -2.787,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 12,
+          "x": 1999.49,
+          "y": 2041.28
         },
         {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2105.89,
-          "y": 1965.54
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -2.772,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "target": 12,
+          "x": 2033.0,
+          "y": 2058.77
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -2.862,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.06
+          "target": 12,
+          "x": 2031.06,
+          "y": 2028.83
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.296,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 4,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.037,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -1225,12 +1350,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": 0.071,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -1238,51 +1363,60 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 0.45,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1,
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1743.22,
+          "y": 1946.03
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": 0.026,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1,
+            5
+          ],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "target": 4,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
+          "facing": -3.62,
           "hp": 375.0,
           "id": 14,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1,
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1668.61,
+          "y": 2019.73
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.244,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -1295,7 +1429,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.084,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -1310,132 +1444,143 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
+      "blocked": [
+        14
+      ],
       "tick": 4800,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -3.148,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 13,
+          "x": 2006.03,
+          "y": 2011.26
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.71
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.176,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2112.55,
-          "y": 1937.25
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -3.118,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.59,
-          "y": 2061.14
+          "target": 13,
+          "x": 2005.19,
+          "y": 2069.89
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -3.213,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 13,
+          "x": 1999.57,
+          "y": 2040.51
         },
         {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2101.34,
-          "y": 1965.4
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -3.151,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "target": 13,
+          "x": 2033.36,
+          "y": 2059.46
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -3.238,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.05
+          "target": 13,
+          "x": 2032.0,
+          "y": 2029.49
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.295,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 4,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.118,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -1443,12 +1588,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": 0.068,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -1456,51 +1601,57 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 2.829,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1682.22,
+          "y": 1944.85
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": 0.023,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "target": 4,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
+          "facing": -3.62,
           "hp": 375.0,
           "id": 14,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1668.61,
+          "y": 2019.73
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.244,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -1513,7 +1664,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.011,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -1528,132 +1679,152 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
+      "blocked": [
+        14
+      ],
       "tick": 5600,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -2.864,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 12,
+          "x": 1999.02,
+          "y": 2011.76
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.68,
-          "y": 2031.71
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.179,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2107.73,
-          "y": 1936.01
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -2.659,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.59,
-          "y": 2061.15
+          "target": 12,
+          "x": 2005.23,
+          "y": 2069.49
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -2.755,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 12,
+          "x": 1999.83,
+          "y": 2040.08
         },
         {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2112.81,
-          "y": 1965.57
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -2.74,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "target": 12,
+          "x": 2033.08,
+          "y": 2058.19
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -2.839,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.06
+          "target": 12,
+          "x": 2031.74,
+          "y": 2028.22
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.294,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 4,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.032,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -1661,12 +1832,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": 0.066,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -1674,51 +1845,60 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 0.288,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1,
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1772.63,
+          "y": 1947.23
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": 0.022,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1,
+            5
+          ],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "target": 4,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
+          "facing": -3.62,
           "hp": 375.0,
           "id": 14,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1,
+            5
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1668.61,
+          "y": 2019.73
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.242,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -1731,7 +1911,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.081,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -1746,132 +1926,134 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
+      "blocked": [
+        14
+      ],
       "tick": 6400,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -3.304,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 13,
+          "x": 2006.37,
+          "y": 2009.97
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.68,
-          "y": 2031.71
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.179,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.65,
-          "y": 1936.08
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -3.121,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.59,
-          "y": 2061.15
+          "target": 13,
+          "x": 2005.12,
+          "y": 2068.84
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -3.216,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 13,
+          "x": 2000.01,
+          "y": 2039.28
         },
         {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2108.18,
-          "y": 1965.57
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -3.153,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "target": 13,
+          "x": 2033.4,
+          "y": 2058.81
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -3.239,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.06
+          "target": 13,
+          "x": 2032.5,
+          "y": 2028.82
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.292,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 4,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.114,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -1879,12 +2061,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": 0.065,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -1892,12 +2074,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 2.471,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
@@ -1905,25 +2087,25 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1657.83,
+          "y": 1935.08
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": 0.02,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
           "seen": [],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "target": 4,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
+          "facing": -3.62,
           "hp": 375.0,
           "id": 14,
           "layer": 0,
@@ -1931,12 +2113,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1668.61,
+          "y": 2019.73
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.241,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -1949,7 +2131,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.009,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -1964,54 +2146,66 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
+      "blocked": [
+        7,
+        14
+      ],
       "tick": 7200,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -2.87,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 12,
+          "x": 1999.88,
+          "y": 2014.51
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.71
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.178,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.7,
-          "y": 1936.77
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -3.037,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
@@ -2019,38 +2213,38 @@
           "seen": [],
           "side": "A",
           "target": null,
-          "x": 2102.59,
-          "y": 2061.14
+          "x": 2005.18,
+          "y": 2073.67
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -2.751,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 12,
+          "x": 2005.65,
+          "y": 2043.66
         },
         {
-          "alive": true,
-          "facing": -3.117,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2103.74,
-          "y": 1966.15
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -2.977,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
@@ -2058,12 +2252,12 @@
           "seen": [],
           "side": "A",
           "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "x": 2032.28,
+          "y": 2057.47
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -3.051,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
@@ -2071,25 +2265,25 @@
           "seen": [],
           "side": "A",
           "target": null,
-          "x": 2129.15,
-          "y": 2041.05
+          "x": 2031.71,
+          "y": 2027.42
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.224,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 5,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.03,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -2097,12 +2291,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": 0.063,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -2110,51 +2304,57 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 0.698,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.459,
-          "hp": 375.0,
-          "id": 13,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "x": 1774.73,
+          "y": 1948.21
         },
         {
           "alive": true,
           "facing": -0.06,
           "hp": 375.0,
-          "id": 14,
+          "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            1
+          ],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "target": 5,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": -3.62,
+          "hp": 375.0,
+          "id": 14,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            1
+          ],
+          "side": "B",
+          "target": null,
+          "x": 1668.61,
+          "y": 2019.73
+        },
+        {
+          "alive": true,
+          "facing": 0.24,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -2167,7 +2367,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.081,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -2182,350 +2382,1080 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
+      "blocked": [
+        14
+      ],
       "tick": 8000,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -3.294,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 13,
+          "x": 2003.81,
+          "y": 2013.85
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.71
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.177,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2110.42,
-          "y": 1936.98
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -3.104,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.59,
-          "y": 2061.14
+          "target": 13,
+          "x": 2006.01,
+          "y": 2074.46
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -3.201,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
+          "target": 13,
+          "x": 2005.47,
+          "y": 2043.8
+        },
+        {
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
+          "id": 6,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
+        },
+        {
+          "alive": true,
+          "facing": -3.154,
+          "hp": 400.0,
+          "id": 7,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "A",
+          "target": 13,
+          "x": 2031.78,
+          "y": 2058.31
+        },
+        {
+          "alive": true,
+          "facing": -3.241,
+          "hp": 400.0,
+          "id": 8,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "A",
+          "target": 13,
+          "x": 2032.54,
+          "y": 2028.32
+        },
+        {
+          "alive": true,
+          "facing": 0.225,
+          "hp": 1050.0,
+          "id": 9,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": 5,
+          "x": 1660.0,
+          "y": 1965.0
+        },
+        {
+          "alive": true,
+          "facing": 0.114,
+          "hp": 1050.0,
+          "id": 10,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
           "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "x": 1647.57,
+          "y": 1998.35
+        },
+        {
+          "alive": true,
+          "facing": -0.01,
+          "hp": 1050.0,
+          "id": 11,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1656.45,
+          "y": 2047.16
+        },
+        {
+          "alive": true,
+          "facing": 2.649,
+          "hp": 375.0,
+          "id": 12,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1671.49,
+          "y": 1937.29
+        },
+        {
+          "alive": true,
+          "facing": 0.038,
+          "hp": 375.0,
+          "id": 13,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [],
+          "side": "B",
+          "target": 4,
+          "x": 1683.86,
+          "y": 2062.53
+        },
+        {
+          "alive": true,
+          "facing": -3.62,
+          "hp": 375.0,
+          "id": 14,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1668.61,
+          "y": 2019.73
+        },
+        {
+          "alive": true,
+          "facing": 0.184,
+          "hp": 400.0,
+          "id": 15,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1580.0,
+          "y": 1965.0
+        },
+        {
+          "alive": true,
+          "facing": 0.022,
+          "hp": 400.0,
+          "id": 16,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1580.0,
+          "y": 2005.0
+        }
+      ]
+    },
+    {
+      "alive": [
+        5,
+        8
+      ],
+      "blocked": [
+        14
+      ],
+      "tick": 8800,
+      "units": [
+        {
+          "alive": true,
+          "facing": -2.891,
+          "hp": 447.5,
+          "id": 1,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "side": "A",
+          "target": 12,
+          "x": 1997.29,
+          "y": 2016.9
+        },
+        {
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
+          "id": 2,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
+        },
+        {
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
+          "id": 3,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
+        },
+        {
+          "alive": true,
+          "facing": -3.04,
+          "hp": 325.0,
+          "id": 4,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "side": "A",
+          "target": null,
+          "x": 1994.3,
+          "y": 2071.57
+        },
+        {
+          "alive": true,
+          "facing": -2.798,
+          "hp": 325.0,
+          "id": 5,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [],
+          "side": "A",
+          "target": 12,
+          "x": 2005.83,
+          "y": 2044.55
+        },
+        {
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
+          "id": 6,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
+        },
+        {
+          "alive": true,
+          "facing": -3.068,
+          "hp": 400.0,
+          "id": 7,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "A",
+          "target": null,
+          "x": 2030.9,
+          "y": 2061.12
+        },
+        {
+          "alive": true,
+          "facing": -3.05,
+          "hp": 400.0,
+          "id": 8,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "A",
+          "target": null,
+          "x": 2030.45,
+          "y": 2027.41
+        },
+        {
+          "alive": true,
+          "facing": 0.227,
+          "hp": 1050.0,
+          "id": 9,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": 5,
+          "x": 1660.0,
+          "y": 1965.0
+        },
+        {
+          "alive": true,
+          "facing": 0.045,
+          "hp": 1050.0,
+          "id": 10,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1647.57,
+          "y": 1998.35
+        },
+        {
+          "alive": true,
+          "facing": -0.01,
+          "hp": 1050.0,
+          "id": 11,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1656.45,
+          "y": 2047.16
+        },
+        {
+          "alive": true,
+          "facing": 1.678,
+          "hp": 375.0,
+          "id": 12,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            1,
+            4
+          ],
+          "side": "B",
+          "target": null,
+          "x": 1741.37,
+          "y": 1949.52
+        },
+        {
+          "alive": true,
+          "facing": -0.057,
+          "hp": 375.0,
+          "id": 13,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            1,
+            4
+          ],
+          "side": "B",
+          "target": 5,
+          "x": 1683.86,
+          "y": 2062.53
+        },
+        {
+          "alive": true,
+          "facing": -3.62,
+          "hp": 375.0,
+          "id": 14,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            1,
+            4
+          ],
+          "side": "B",
+          "target": null,
+          "x": 1668.61,
+          "y": 2019.73
+        },
+        {
+          "alive": true,
+          "facing": 0.184,
+          "hp": 400.0,
+          "id": 15,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1580.0,
+          "y": 1965.0
+        },
+        {
+          "alive": true,
+          "facing": 0.081,
+          "hp": 400.0,
+          "id": 16,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1580.0,
+          "y": 2005.0
+        }
+      ]
+    },
+    {
+      "alive": [
+        5,
+        8
+      ],
+      "blocked": [
+        14
+      ],
+      "tick": 9600,
+      "units": [
+        {
+          "alive": true,
+          "facing": -3.297,
+          "hp": 447.5,
+          "id": 1,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 13,
+          "x": 2002.77,
+          "y": 2013.12
+        },
+        {
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
+          "id": 2,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
+        },
+        {
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
+          "id": 3,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
+        },
+        {
+          "alive": true,
+          "facing": -3.112,
+          "hp": 325.0,
+          "id": 4,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "side": "A",
+          "target": 13,
+          "x": 1999.97,
+          "y": 2071.8
+        },
+        {
+          "alive": true,
+          "facing": -3.204,
+          "hp": 325.0,
+          "id": 5,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [],
+          "side": "A",
+          "target": 13,
+          "x": 2006.4,
+          "y": 2042.73
+        },
+        {
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
+          "id": 6,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
+        },
+        {
+          "alive": true,
+          "facing": -3.146,
+          "hp": 400.0,
+          "id": 7,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "A",
+          "target": 13,
+          "x": 2031.65,
+          "y": 2060.89
+        },
+        {
+          "alive": true,
+          "facing": -3.239,
+          "hp": 400.0,
+          "id": 8,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "A",
+          "target": 13,
+          "x": 2033.09,
+          "y": 2029.03
+        },
+        {
+          "alive": true,
+          "facing": 0.221,
+          "hp": 1050.0,
+          "id": 9,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": 5,
+          "x": 1660.0,
+          "y": 1965.0
+        },
+        {
+          "alive": true,
+          "facing": 0.114,
+          "hp": 1050.0,
+          "id": 10,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1647.57,
+          "y": 1998.35
+        },
+        {
+          "alive": true,
+          "facing": -0.008,
+          "hp": 1050.0,
+          "id": 11,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1656.45,
+          "y": 2047.16
+        },
+        {
+          "alive": true,
+          "facing": 1.257,
+          "hp": 375.0,
+          "id": 12,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            4
+          ],
+          "side": "B",
+          "target": null,
+          "x": 1677.4,
+          "y": 1937.58
+        },
+        {
+          "alive": true,
+          "facing": -0.063,
+          "hp": 375.0,
+          "id": 13,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            4
+          ],
+          "side": "B",
+          "target": 5,
+          "x": 1683.86,
+          "y": 2062.53
+        },
+        {
+          "alive": true,
+          "facing": -3.62,
+          "hp": 375.0,
+          "id": 14,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            4
+          ],
+          "side": "B",
+          "target": null,
+          "x": 1668.61,
+          "y": 2019.73
+        },
+        {
+          "alive": true,
+          "facing": 0.186,
+          "hp": 400.0,
+          "id": 15,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1580.0,
+          "y": 1965.0
+        },
+        {
+          "alive": true,
+          "facing": 0.025,
+          "hp": 400.0,
+          "id": 16,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1580.0,
+          "y": 2005.0
+        }
+      ]
+    },
+    {
+      "alive": [
+        5,
+        8
+      ],
+      "blocked": [
+        14
+      ],
+      "tick": 10400,
+      "units": [
+        {
+          "alive": true,
+          "facing": -2.927,
+          "hp": 447.5,
+          "id": 1,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 12,
+          "x": 2008.65,
+          "y": 2011.43
+        },
+        {
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
+          "id": 2,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
+        },
+        {
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
+          "id": 3,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
+        },
+        {
+          "alive": true,
+          "facing": -2.726,
+          "hp": 325.0,
+          "id": 4,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "side": "A",
+          "target": 12,
+          "x": 1999.87,
+          "y": 2070.45
+        },
+        {
+          "alive": true,
+          "facing": -2.826,
+          "hp": 325.0,
+          "id": 5,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [],
+          "side": "A",
+          "target": 12,
+          "x": 2005.66,
+          "y": 2041.16
+        },
+        {
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
+          "id": 6,
+          "layer": 0,
+          "role": "Interceptor",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
+        },
+        {
+          "alive": true,
+          "facing": -2.793,
+          "hp": 400.0,
+          "id": 7,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "A",
+          "target": 12,
+          "x": 2031.72,
+          "y": 2060.92
+        },
+        {
+          "alive": true,
+          "facing": -2.885,
+          "hp": 400.0,
+          "id": 8,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "A",
+          "target": 12,
+          "x": 2033.79,
+          "y": 2030.74
+        },
+        {
+          "alive": true,
+          "facing": 0.134,
+          "hp": 1050.0,
+          "id": 9,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": 1,
+          "x": 1660.0,
+          "y": 1965.0
+        },
+        {
+          "alive": true,
+          "facing": 0.048,
+          "hp": 1050.0,
+          "id": 10,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1647.57,
+          "y": 1998.35
+        },
+        {
+          "alive": true,
+          "facing": -0.013,
+          "hp": 1050.0,
+          "id": 11,
+          "layer": 0,
+          "role": "Bastion",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1656.45,
+          "y": 2047.16
+        },
+        {
+          "alive": true,
+          "facing": 2.084,
+          "hp": 375.0,
+          "id": 12,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            4
+          ],
+          "side": "B",
+          "target": null,
+          "x": 1731.0,
+          "y": 1951.29
+        },
+        {
+          "alive": true,
+          "facing": -0.068,
+          "hp": 375.0,
+          "id": 13,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            4
+          ],
+          "side": "B",
+          "target": 5,
+          "x": 1683.86,
+          "y": 2062.53
+        },
+        {
+          "alive": true,
+          "facing": -3.62,
+          "hp": 375.0,
+          "id": 14,
+          "layer": 0,
+          "role": "Warden",
+          "seen": [
+            4
+          ],
+          "side": "B",
+          "target": null,
+          "x": 1668.61,
+          "y": 2019.73
+        },
+        {
+          "alive": true,
+          "facing": 0.181,
+          "hp": 400.0,
+          "id": 15,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1580.0,
+          "y": 1965.0
+        },
+        {
+          "alive": true,
+          "facing": 0.159,
+          "hp": 400.0,
+          "id": 16,
+          "layer": 0,
+          "role": "Bombard",
+          "seen": [],
+          "side": "B",
+          "target": null,
+          "x": 1580.0,
+          "y": 2005.0
+        }
+      ]
+    },
+    {
+      "alive": [
+        5,
+        8
+      ],
+      "blocked": [
+        14
+      ],
+      "tick": 11200,
+      "units": [
+        {
+          "alive": true,
+          "facing": -3.305,
+          "hp": 447.5,
+          "id": 1,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 13,
+          "x": 2001.5,
+          "y": 2010.69
+        },
+        {
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
+          "id": 2,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
+        },
+        {
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
+          "id": 3,
+          "layer": 0,
+          "role": "Vanguard",
+          "seen": [],
+          "side": "A",
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
           "facing": -3.12,
           "hp": 325.0,
-          "id": 6,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2098.95,
-          "y": 1964.69
-        },
-        {
-          "alive": true,
-          "facing": -3.062,
-          "hp": 400.0,
-          "id": 7,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
-        },
-        {
-          "alive": true,
-          "facing": -3.04,
-          "hp": 400.0,
-          "id": 8,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.05
-        },
-        {
-          "alive": true,
-          "facing": 0.109,
-          "hp": 1050.0,
-          "id": 9,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.309,
-          "hp": 1050.0,
-          "id": 10,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 2005.0
-        },
-        {
-          "alive": true,
-          "facing": -0.039,
-          "hp": 1050.0,
-          "id": 11,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 2045.0
-        },
-        {
-          "alive": true,
-          "facing": 0.153,
-          "hp": 375.0,
-          "id": 12,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.459,
-          "hp": 375.0,
-          "id": 13,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
-        },
-        {
-          "alive": true,
-          "facing": -0.06,
-          "hp": 375.0,
-          "id": 14,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2045.0
-        },
-        {
-          "alive": true,
-          "facing": 0.096,
-          "hp": 400.0,
-          "id": 15,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1580.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.174,
-          "hp": 400.0,
-          "id": 16,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1580.0,
-          "y": 2005.0
-        }
-      ]
-    },
-    {
-      "alive": [
-        8,
-        8
-      ],
-      "blocked": [],
-      "tick": 8800,
-      "units": [
-        {
-          "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
-          "id": 1,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
-        },
-        {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
-          "id": 2,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.72
-        },
-        {
-          "alive": true,
-          "facing": -3.179,
-          "hp": 500.0,
-          "id": 3,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2105.2,
-          "y": 1935.99
-        },
-        {
-          "alive": true,
-          "facing": -3.085,
-          "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2102.6,
-          "y": 2061.15
+          "target": 13,
+          "x": 1999.32,
+          "y": 2069.14
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -3.212,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 13,
+          "x": 2005.89,
+          "y": 2040.15
         },
         {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2110.49,
-          "y": 1965.52
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -3.148,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "target": 13,
+          "x": 2031.57,
+          "y": 2060.51
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -3.24,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.06
+          "target": 13,
+          "x": 2033.49,
+          "y": 2028.39
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.215,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 5,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.206,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -2533,12 +3463,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": -0.018,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -2546,51 +3476,57 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 1.179,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            4
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1669.65,
+          "y": 1936.24
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": -0.071,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            4
+          ],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "target": 5,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
+          "facing": -3.62,
           "hp": 375.0,
           "id": 14,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            4
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1668.61,
+          "y": 2019.73
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.109,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -2603,7 +3539,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.15,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -2618,786 +3554,143 @@
     },
     {
       "alive": [
-        8,
+        5,
         8
       ],
-      "blocked": [],
-      "tick": 9600,
-      "units": [
-        {
-          "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
-          "id": 1,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
-        },
-        {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
-          "id": 2,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.72
-        },
-        {
-          "alive": true,
-          "facing": -3.18,
-          "hp": 500.0,
-          "id": 3,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2100.11,
-          "y": 1936.1
-        },
-        {
-          "alive": true,
-          "facing": -3.085,
-          "hp": 325.0,
-          "id": 4,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2102.6,
-          "y": 2061.15
-        },
-        {
-          "alive": true,
-          "facing": -3.111,
-          "hp": 325.0,
-          "id": 5,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
-        },
-        {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
-          "id": 6,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2105.89,
-          "y": 1965.54
-        },
-        {
-          "alive": true,
-          "facing": -3.062,
-          "hp": 400.0,
-          "id": 7,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
-        },
-        {
-          "alive": true,
-          "facing": -3.04,
-          "hp": 400.0,
-          "id": 8,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.06
-        },
-        {
-          "alive": true,
-          "facing": 0.109,
-          "hp": 1050.0,
-          "id": 9,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.309,
-          "hp": 1050.0,
-          "id": 10,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 2005.0
-        },
-        {
-          "alive": true,
-          "facing": -0.039,
-          "hp": 1050.0,
-          "id": 11,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 2045.0
-        },
-        {
-          "alive": true,
-          "facing": 0.153,
-          "hp": 375.0,
-          "id": 12,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.459,
-          "hp": 375.0,
-          "id": 13,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
-        },
-        {
-          "alive": true,
-          "facing": -0.06,
-          "hp": 375.0,
-          "id": 14,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2045.0
-        },
-        {
-          "alive": true,
-          "facing": 0.096,
-          "hp": 400.0,
-          "id": 15,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1580.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.174,
-          "hp": 400.0,
-          "id": 16,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1580.0,
-          "y": 2005.0
-        }
-      ]
-    },
-    {
-      "alive": [
-        8,
-        8
+      "blocked": [
+        14
       ],
-      "blocked": [],
-      "tick": 10400,
-      "units": [
-        {
-          "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
-          "id": 1,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
-        },
-        {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
-          "id": 2,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2097.67,
-          "y": 2031.71
-        },
-        {
-          "alive": true,
-          "facing": -3.176,
-          "hp": 500.0,
-          "id": 3,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2112.55,
-          "y": 1937.25
-        },
-        {
-          "alive": true,
-          "facing": -3.085,
-          "hp": 325.0,
-          "id": 4,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2102.59,
-          "y": 2061.14
-        },
-        {
-          "alive": true,
-          "facing": -3.111,
-          "hp": 325.0,
-          "id": 5,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
-        },
-        {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
-          "id": 6,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2101.34,
-          "y": 1965.4
-        },
-        {
-          "alive": true,
-          "facing": -3.062,
-          "hp": 400.0,
-          "id": 7,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
-        },
-        {
-          "alive": true,
-          "facing": -3.04,
-          "hp": 400.0,
-          "id": 8,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.05
-        },
-        {
-          "alive": true,
-          "facing": 0.109,
-          "hp": 1050.0,
-          "id": 9,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.309,
-          "hp": 1050.0,
-          "id": 10,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 2005.0
-        },
-        {
-          "alive": true,
-          "facing": -0.039,
-          "hp": 1050.0,
-          "id": 11,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 2045.0
-        },
-        {
-          "alive": true,
-          "facing": 0.153,
-          "hp": 375.0,
-          "id": 12,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.459,
-          "hp": 375.0,
-          "id": 13,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
-        },
-        {
-          "alive": true,
-          "facing": -0.06,
-          "hp": 375.0,
-          "id": 14,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2045.0
-        },
-        {
-          "alive": true,
-          "facing": 0.096,
-          "hp": 400.0,
-          "id": 15,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1580.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.174,
-          "hp": 400.0,
-          "id": 16,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1580.0,
-          "y": 2005.0
-        }
-      ]
-    },
-    {
-      "alive": [
-        8,
-        8
-      ],
-      "blocked": [],
-      "tick": 11200,
-      "units": [
-        {
-          "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
-          "id": 1,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
-        },
-        {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
-          "id": 2,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2097.68,
-          "y": 2031.71
-        },
-        {
-          "alive": true,
-          "facing": -3.179,
-          "hp": 500.0,
-          "id": 3,
-          "layer": 0,
-          "role": "Vanguard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2107.73,
-          "y": 1936.01
-        },
-        {
-          "alive": true,
-          "facing": -3.085,
-          "hp": 325.0,
-          "id": 4,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2102.59,
-          "y": 2061.15
-        },
-        {
-          "alive": true,
-          "facing": -3.111,
-          "hp": 325.0,
-          "id": 5,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
-        },
-        {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
-          "id": 6,
-          "layer": 0,
-          "role": "Interceptor",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2112.81,
-          "y": 1965.57
-        },
-        {
-          "alive": true,
-          "facing": -3.062,
-          "hp": 400.0,
-          "id": 7,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
-        },
-        {
-          "alive": true,
-          "facing": -3.04,
-          "hp": 400.0,
-          "id": 8,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.06
-        },
-        {
-          "alive": true,
-          "facing": 0.109,
-          "hp": 1050.0,
-          "id": 9,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.309,
-          "hp": 1050.0,
-          "id": 10,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 2005.0
-        },
-        {
-          "alive": true,
-          "facing": -0.039,
-          "hp": 1050.0,
-          "id": 11,
-          "layer": 0,
-          "role": "Bastion",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1660.0,
-          "y": 2045.0
-        },
-        {
-          "alive": true,
-          "facing": 0.153,
-          "hp": 375.0,
-          "id": 12,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.459,
-          "hp": 375.0,
-          "id": 13,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
-        },
-        {
-          "alive": true,
-          "facing": -0.06,
-          "hp": 375.0,
-          "id": 14,
-          "layer": 0,
-          "role": "Warden",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2045.0
-        },
-        {
-          "alive": true,
-          "facing": 0.096,
-          "hp": 400.0,
-          "id": 15,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1580.0,
-          "y": 1965.0
-        },
-        {
-          "alive": true,
-          "facing": -0.174,
-          "hp": 400.0,
-          "id": 16,
-          "layer": 0,
-          "role": "Bombard",
-          "seen": [],
-          "side": "B",
-          "target": null,
-          "x": 1580.0,
-          "y": 2005.0
-        }
-      ]
-    },
-    {
-      "alive": [
-        8,
-        8
-      ],
-      "blocked": [],
       "tick": 12000,
       "units": [
         {
           "alive": true,
-          "facing": -3.033,
-          "hp": 500.0,
+          "facing": -2.964,
+          "hp": 447.5,
           "id": 1,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2107.21,
-          "y": 2090.64
+          "target": 12,
+          "x": 2009.19,
+          "y": 2009.64
         },
         {
-          "alive": true,
-          "facing": -3.068,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.576,
+          "hp": 0.0,
           "id": 2,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2097.68,
-          "y": 2031.71
+          "target": 14,
+          "x": 1586.25,
+          "y": 1935.83
         },
         {
-          "alive": true,
-          "facing": -3.179,
-          "hp": 500.0,
+          "alive": false,
+          "facing": -3.475,
+          "hp": 0.0,
           "id": 3,
           "layer": 0,
           "role": "Vanguard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2102.65,
-          "y": 1936.08
+          "target": 14,
+          "x": 1596.81,
+          "y": 1963.91
         },
         {
           "alive": true,
-          "facing": -3.085,
+          "facing": -3.123,
           "hp": 325.0,
           "id": 4,
           "layer": 0,
           "role": "Interceptor",
-          "seen": [],
+          "seen": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
           "side": "A",
-          "target": null,
-          "x": 2102.59,
-          "y": 2061.15
+          "target": 13,
+          "x": 1999.29,
+          "y": 2068.34
         },
         {
           "alive": true,
-          "facing": -3.111,
+          "facing": -2.872,
           "hp": 325.0,
           "id": 5,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2117.94,
-          "y": 2009.6
+          "target": 12,
+          "x": 2005.95,
+          "y": 2039.29
         },
         {
-          "alive": true,
-          "facing": -3.119,
-          "hp": 325.0,
+          "alive": false,
+          "facing": -3.637,
+          "hp": 0.0,
           "id": 6,
           "layer": 0,
           "role": "Interceptor",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2108.18,
-          "y": 1965.57
+          "target": 14,
+          "x": 1533.1,
+          "y": 1944.17
         },
         {
           "alive": true,
-          "facing": -3.062,
+          "facing": -2.835,
           "hp": 400.0,
           "id": 7,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2130.91,
-          "y": 2071.06
+          "target": 12,
+          "x": 2031.72,
+          "y": 2060.25
         },
         {
           "alive": true,
-          "facing": -3.04,
+          "facing": -2.919,
           "hp": 400.0,
           "id": 8,
           "layer": 0,
           "role": "Bombard",
           "seen": [],
           "side": "A",
-          "target": null,
-          "x": 2129.15,
-          "y": 2041.06
+          "target": 12,
+          "x": 2034.48,
+          "y": 2030.0
         },
         {
           "alive": true,
-          "facing": 0.109,
+          "facing": 0.129,
           "hp": 1050.0,
           "id": 9,
           "layer": 0,
           "role": "Bastion",
           "seen": [],
           "side": "B",
-          "target": null,
+          "target": 1,
           "x": 1660.0,
           "y": 1965.0
         },
         {
           "alive": true,
-          "facing": -0.309,
+          "facing": 0.173,
           "hp": 1050.0,
           "id": 10,
           "layer": 0,
@@ -3405,12 +3698,12 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2005.0
+          "x": 1647.57,
+          "y": 1998.35
         },
         {
           "alive": true,
-          "facing": -0.039,
+          "facing": -0.021,
           "hp": 1050.0,
           "id": 11,
           "layer": 0,
@@ -3418,51 +3711,57 @@
           "seen": [],
           "side": "B",
           "target": null,
-          "x": 1660.0,
-          "y": 2045.0
+          "x": 1656.45,
+          "y": 2047.16
         },
         {
           "alive": true,
-          "facing": 0.153,
+          "facing": 2.441,
           "hp": 375.0,
           "id": 12,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            4
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 1965.0
+          "x": 1694.84,
+          "y": 1953.49
         },
         {
           "alive": true,
-          "facing": -0.459,
+          "facing": -0.073,
           "hp": 375.0,
           "id": 13,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            4
+          ],
           "side": "B",
-          "target": null,
-          "x": 1620.0,
-          "y": 2005.0
+          "target": 5,
+          "x": 1683.86,
+          "y": 2062.53
         },
         {
           "alive": true,
-          "facing": -0.06,
+          "facing": -3.62,
           "hp": 375.0,
           "id": 14,
           "layer": 0,
           "role": "Warden",
-          "seen": [],
+          "seen": [
+            4
+          ],
           "side": "B",
           "target": null,
-          "x": 1620.0,
-          "y": 2045.0
+          "x": 1668.61,
+          "y": 2019.73
         },
         {
           "alive": true,
-          "facing": 0.096,
+          "facing": 0.176,
           "hp": 400.0,
           "id": 15,
           "layer": 0,
@@ -3475,7 +3774,7 @@
         },
         {
           "alive": true,
-          "facing": -0.174,
+          "facing": 0.154,
           "hp": 400.0,
           "id": 16,
           "layer": 0,
@@ -3514,13 +3813,13 @@
     "capped": true,
     "end": "cap",
     "first_seen": {
-      "A": null,
-      "B": null
+      "A": 60,
+      "B": 80
     },
     "predict": "B",
     "stall": false,
     "survivors": [
-      8,
+      5,
       8
     ],
     "ticks": 12000,

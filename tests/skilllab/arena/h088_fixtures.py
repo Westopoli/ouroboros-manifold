@@ -5,7 +5,7 @@
 VANTAGE (spec criterion 5): `small_tiered`, side A eight Vanguards at layer 1 in a block at x 1400, y 1860 to 2140, side B eight Vanguards at layer 0 at x 2600, same
 rows, orders `hold:A`, feature `{kind: vantage, x: 1100, y: 2000, radius: 700, height_band: 1}`. `layer = 1` rows stand one band up with no terrain built.
 COVER (criterion 6): `small_flat`, eight Vanguards a side at x 1700 (A) and x 2300 (B), same rows, orders `hold:A`, three 120 x 60 boxes at x 2000, y 1900 / 2000 / 2100.
-`crossing_pairs` is criterion 6's "segment crosses a box's cells (the engine's 50 wu rounding, features._engine_boxes)".
+`crossing_pairs` is criterion 6's "segment crosses a box's cells" (the engine blocks whole 100 wu cells, R-097-01; under `--sight on` the cells are the snapped rectangles, snap.built_rects).
 
 SIGHT_OFF_PIN is criterion 1's byte pin: the H-063 chokepoint fixture (`fx.planar("chokepoint", "L-9800")`), `--sight off --cap-seconds 30 --control-dir D`, seed 1, run on
 the code of main 240773dd (before the leaf): the sha256 of the main fight file, of the control twin's fight file and of results.md. A fight file carries its layout's path,
@@ -17,7 +17,7 @@ import math
 from pathlib import Path
 
 import h063_fixtures as fx
-from scripts.skilllab.arena import features
+from scripts.skilllab.arena import features, snap
 
 VANTAGE_FEATURE = {"kind": "vantage", "x": 1100.0, "y": 2000.0, "radius": 700.0, "height_band": 1}
 COVER_BOXES = [fx.rect(2000, y, 120, 60) for y in (1900, 2000, 2100)]
@@ -57,11 +57,8 @@ def open_layout(lid, orders="both_same_point", roles=("Vanguard", "Vanguard")):
 
 
 def blocked_cells(layout):
-    """[(x0, y0, x1, y1)] the engine blocks for the layout: each `_engine_boxes` rectangle rounded out to whole NAV_CELL cells, as features._open_grid rounds it."""
-    out = []
-    for x0, y0, x1, y1 in features._engine_boxes(layout):
-        out.append((math.floor(x0 / NAV_CELL) * NAV_CELL, math.floor(y0 / NAV_CELL) * NAV_CELL, math.ceil(x1 / NAV_CELL) * NAV_CELL, math.ceil(y1 / NAV_CELL) * NAV_CELL))
-    return out
+    """[(x0, y0, x1, y1)] the engine blocks for the layout under `--sight on`: the rectangles snapped to the 100 wu grid (snap.built_rects, no pad)."""
+    return snap.built_rects(layout)
 
 
 def crosses(a, b, cells):
