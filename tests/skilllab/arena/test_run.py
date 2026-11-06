@@ -56,7 +56,8 @@ PITCH = 40.0   # H-025 round two block pitch (DRAFT-block-pitch); R2 min spacing
 # Imports the story allows the runner (scripts.* only; the standard library is checked separately).
 ALLOWED = {"scripts.skilllab.engine", "scripts.skilllab.fight", "scripts.skilllab.catalogue.produce", "scripts.skilllab.arena.snapshot",
            "scripts.skilllab.arena.rate",
-           "scripts.skilllab.arena.features"}   # rate: H-053 Interfaces 1, run.py --seeds calls rate.rate; features: H-063 Files list, layout features to engine blocking calls
+           "scripts.skilllab.arena.features",
+           "scripts.skilllab.arena.snap", "scripts.skilllab.arena.hills", "scripts.skilllab.arena.groups"}   # stage 4 fixes (2026-11-06): snap, hills, groups are new files behind run.py; rate: H-053 Interfaces 1, run.py --seeds calls rate.rate; features: H-063 Files list, layout features to engine blocking calls
 
 # The trim report's "Not needed for that answer" paragraph names these as prose; each is mapped here to the module that holds it (mapping by the Architect's
 # words, one comment per row). The ALLOWED check above is the strict one and covers all of these; this list only gives the failure a name.

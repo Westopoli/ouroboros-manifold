@@ -30,10 +30,10 @@ def test_stage4_pipeline_end_to_end(tmp_path):
     assert set(doc["sights"]) >= {"Vanguard"} and doc["sights"]["Vanguard"] > 0
     assert all("seen" in u for f in doc["frames"] for u in f["units"])
     first = doc["result"]["first_seen"]
-    assert isinstance(first["A"], int) and first["B"] is None, "the high ground sees red coming; red never sees up (R-005-09)"
+    assert isinstance(first["A"], int) and isinstance(first["B"], int) and first["B"] >= first["A"], "the high ground sees red coming; red sees up only from the ramp's midline (R-005-09, stage 4 fix F1)"
     side = {u["id"]: u["side"] for u in doc["frames"][0]["units"]}
     assert any(u["seen"] for f in doc["frames"] for u in f["units"] if u["side"] == "A")
-    assert not any(u["seen"] for f in doc["frames"] for u in f["units"] if u["side"] == "B"), "no B unit sees an A unit on the band above"
+    assert not any(u["seen"] and u["layer"] == 0 for f in doc["frames"] for u in f["units"] if u["side"] == "B"), "no B unit on the low layer sees an A unit on the band above"
     assert all(side[e] == "B" for f in doc["frames"] for u in f["units"] if u["side"] == "A" for e in u["seen"])
     assert snapshot.validate(doc) == []
 
@@ -50,4 +50,4 @@ def test_stage4_pipeline_end_to_end(tmp_path):
     text = html.read_text()
     assert "Stage 4, sight" in text
     assert "control: the same fight with everyone seeing everyone (sight off)" in text
-    assert "first seen A %d  B never" % first["A"] in text
+    assert "first seen A %d  B %d" % (first["A"], first["B"]) in text
