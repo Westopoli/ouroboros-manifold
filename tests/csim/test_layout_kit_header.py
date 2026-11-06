@@ -18,6 +18,7 @@ CSRC = REPO / "csrc"
 EXPECTED_FILES = ["layout_drafts.h", "layout_kit.c", "layout_kit_pieces.c", "layout_kit_graph.c"]
 # Comments, string literals and character literals first (so digits in them do not count).
 _STRIP = re.compile(r"//[^\n]*|/\*.*?\*/|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])+'", re.S)
+_COMMENT = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)     # comments only: a traceability note may name what it does not read
 # An array size is a subscript in a declaration: `type name[16]`, `type name[8][8]` (a type word, then the name).
 _ARRAY_DECL = re.compile(r"\b(?!(?:return|case|else|sizeof|goto|do)\b)[A-Za-z_]\w*\s+\**\w+\s*((?:\[\s*\d+\s*\])+)")
 # The kit .c files include only these (leaf-01 brief: stdint and the header; sqrt needs math.h). Overlord ruling, wave 1.
@@ -90,8 +91,9 @@ def test_S_247_libm_lint_passes_and_there_is_no_heap_or_clock():
 
 
 def test_S_247_the_kit_never_reads_the_old_library_or_the_sibling_engine():
-    """S-247 R-112-06: no layout_kit* or layout_drafts file names simulation/layout_library or includes
-    layout_internal.h (the sibling places engine's header)."""
+    """S-247 R-112-06: no layout_kit* or layout_drafts file names simulation/layout_library in code (a comment saying
+    it is reference only is fine) or includes layout_internal.h (the sibling places engine's header)."""
     texts = {f.name: f.read_text() for f in sorted(CSRC.glob("layout_kit*")) + [CSRC / "layout_drafts.h"] if f.is_file()}
-    hits = [n for n, t in texts.items() if "layout_library" in t or re.search(r'#\s*include\s*[<"]layout_internal\.h', t)]
+    hits = [n for n, t in texts.items() if "layout_library" in _COMMENT.sub(" ", t)
+            or re.search(r'#\s*include\s*[<"]layout_internal\.h', t)]
     assert hits == [] and "layout_drafts.h" in texts

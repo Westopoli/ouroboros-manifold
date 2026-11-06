@@ -12,7 +12,8 @@ DRAFT_PX_WU 20; A base, the objective and B base sit on the centre line y = 4,00
 other about it, so those samples do not depend on whether the renderer draws y downward or upward.
 Only what the spec's criteria 8 and 9 pin is asserted; the thresholds below are this file's, loose, and named.
 Not checked by any test (Westley's eye, or no spec figure): the label wording, round joints, the hatching pattern, the
-dashed line to the overlooked lane, how faint a district tint is.
+dashed line to the overlooked lane, how faint a district tint is, that the place shapes are a star, square, diamond and
+hollow circle, and the words on a missing seed's empty tile (the tests only prove it is not a blank box).
 Red until scripts/layout/render.py exists. At most 40 assertions in this file (counted by `assert` statements).
 """
 import ast
@@ -34,11 +35,15 @@ MAP = int(CANVAS / PX_WU)          # 400 px: the map area of the picture, sideba
 EDGE = 8                           # px kept clear of the map/sidebar seam (LANCZOS reduction blends a few px)
 GREY_SPREAD = 16                   # max channel spread that still reads as neutral grey (question render-Q4)
 FAR = 7800.0                       # where a "removed" item is parked: far from everything in the fixture
-SHEET_COLS, SHEET_ROWS = 4, 3      # spec: "12 layouts ... in a 4 by 3 grid"; tiles are located by that equal split, no trim
+SHEET_COLS, SHEET_ROWS = 4, 3      # spec: "12 layouts ... in a 4 by 3 grid"
+TILE_MIN = 50                      # px: a run of non-background columns or rows narrower than this is not a tile
 TONE = 40                          # min green-over-red (or red-over-green) channel gap that reads as a green or red mark
 REACH_MIN, REACH_MAX = 40, 90      # px: a wall_span 1200 wu (60 px) or radius 1200 wu (60 px) change reaches this far
 AA_TONES = 4                       # distinct colours in a 13 x 13 window over a slanted lane edge: ground, lane and 2 blends
 CELL_INK = 0.005                   # fraction of a sheet tile that must differ from the sheet's background colour
+DASH_TONE = 40                     # min grey-level change that counts as "the lane is here"; the 2x draw and LANCZOS reduction
+                                   # leave ringing of a few grey levels past a dash, which a zero threshold reads as solid
+                                   # (checked with PIL: dash/gap 6/3, 8/4, 8/6, 10/6 px read dashed at 16..100, solid at 0)
 RUN_X = (180, 370)                 # px: the stretch of the dash test's long lane (x 3,600..7,400 wu) clear of every other item
 BASE = json.loads(FIXTURE.read_text())
 
@@ -87,6 +92,27 @@ def boxes(x_wu, y_wu, half_px):
 def changed_pixels(a, b, box):
     d = ImageChops.difference(a.crop(box), b.crop(box)).convert("L")
     return sum(1 for v in d.tobytes() if v)
+
+
+def tone_change(a, b, at):
+    """Grey-level difference of one pixel between two pictures."""
+    return ImageChops.difference(a.crop(at + (at[0] + 1, at[1] + 1)), b.crop(at + (at[0] + 1, at[1] + 1))).convert("L").getpixel((0, 0))
+
+
+def padded(img, size):
+    """img on a canvas of the given size, the extra filled with img's own sidebar background (its most common colour
+    right of the map), so a renderer that grows taller for a longer sidebar compares with one that does not."""
+    side = img.crop((MAP, 0, img.width, img.height))
+    bg = max(side.getcolors(side.width * side.height))[1]
+    out = Image.new("RGB", size, bg)
+    out.paste(img, (0, 0))
+    return out
+
+
+def sidebar_pair(a, b):
+    """a and b padded to the larger of their sizes."""
+    size = (max(a.width, b.width), max(a.height, b.height))
+    return padded(a, size), padded(b, size)
 
 
 def mode_colour(img, cx, cy, half=2):
@@ -187,7 +213,7 @@ def test_S_247_a_way_round_lane_is_dashed_and_a_route_lane_is_solid(draw):
     def runs(kind):
         on, off = draw(f"{kind}-long", lane2(kind, False)), draw(f"{kind}-parked", lane2(kind, True))
         rows = [home(0.0, 3000.0)[1], MAP - home(0.0, 3000.0)[1]]       # the centre row, picture y-down or y-up
-        flags = [[changed_pixels(on, off, (x, r, x + 1, r + 1)) > 0 for x in range(*RUN_X)] for r in rows]
+        flags = [[tone_change(on, off, (x, r)) > DASH_TONE for x in range(*RUN_X)] for r in rows]
         f = max(flags, key=sum)
         return sum(1 for i, v in enumerate(f) if v and (i == 0 or not f[i - 1])), f
     (route_runs, route_flags), (dashed_runs, _) = runs("route"), runs("way_round")
@@ -211,10 +237,11 @@ def test_S_247_wall_span_and_vantage_radius_are_drawn_to_scale(draw, what, key, 
     assert any(REACH_MIN <= reach(full, big, cx, c) <= REACH_MAX for c in (cy, MAP - cy))
 
 
-def test_S_247_district_roles_are_faint_tints_and_each_kind_has_its_own_shape(draw):
+def test_S_247_district_roles_are_faint_tints_and_a_places_kind_changes_its_drawing(draw):
     """S-247 R-112-04 (criterion 8): changing a district's role (near A to near B, the map's corner cell) changes the
     picture in that cell; changing the objective's kind to resource changes the picture at the objective and at no
-    other place (places are shapes by kind)."""
+    other place (the kind drives the drawing; that the shapes are a star, square, diamond and hollow circle is for
+    Westley's eye: a different label or colour alone would pass here)."""
     full, tint = draw("full"), draw("tint", lambda d: d["district"][0].__setitem__(0, 4))
     swapped = draw("shape", lambda d: d["places"][0].__setitem__("kind", "resource"))
     cell = [(0, 0, 50, 50), (0, MAP - 50, 50, MAP)]
@@ -266,9 +293,8 @@ def test_S_247_the_sidebar_shows_the_drafts_seed_checks_and_distances(draw, kind
     """S-247 R-112-04 (criterion 8): changing a drafts value, adding a draft, the seed, the archetype, the sides mode, a
     check result or any one of the route distances in the JSON changes the sidebar (right of the map) and leaves the
     map itself untouched."""
-    a, b = draw("full"), draw(f"side_{kind}", _sidebar_edit(kind))
-    h = min(a.height, b.height)
-    side = changed_pixels(a, b, (MAP, 0, min(a.width, b.width), h))
+    a, b = sidebar_pair(draw("full"), draw(f"side_{kind}", _sidebar_edit(kind)))
+    side = changed_pixels(a, b, (MAP, 0, a.width, a.height))
     mapped = changed_pixels(a, b, (0, 0, MAP - EDGE, MAP))
     assert (side > 0, mapped) == (True, 0)
 
@@ -276,8 +302,8 @@ def test_S_247_the_sidebar_shows_the_drafts_seed_checks_and_distances(draw, kind
 def test_S_247_a_passing_check_is_green_and_a_failing_one_red(draw):
     """S-247 R-112-04 (criterion 8: "each check green or red"): among the sidebar pixels that change when one check
     goes from true to false, the passing picture's are green-dominant and the failing picture's red-dominant."""
-    ok, bad = draw("full"), draw("side_check", _sidebar_edit("check"))
-    box = (MAP, 0, min(ok.width, bad.width), min(ok.height, bad.height))
+    ok, bad = sidebar_pair(draw("full"), draw("side_check", _sidebar_edit("check")))
+    box = (MAP, 0, ok.width, ok.height)
 
     def tones(a, b):
         px = [a.getpixel((x, y)) for x in range(box[0], box[2]) for y in range(box[1], box[3])
@@ -305,14 +331,46 @@ def _sheet(work, name, mutate=None, drop=None, sides="separate"):
     return r.returncode, (Image.open(out).convert("RGB") if out.is_file() else None), r.stderr
 
 
-def _cells(img):
-    """The 4 x 3 equal split of the whole image, no trim (the spec fixes the grid, not margins or gutters)."""
+def _runs(flags):
+    """(start, end) of each stretch of True in flags that is at least TILE_MIN long."""
+    out, start = [], None
+    for i, f in enumerate(flags + [False]):
+        if f and start is None:
+            start = i
+        elif not f and start is not None:
+            if i - start >= TILE_MIN:
+                out.append((start, i))
+            start = None
+    return out
+
+
+def _boxes(img):
+    """The 12 tile boxes, row-major. Located by the non-background content of the sheet: 4 column stretches and the last
+    3 row stretches (a title strip above is allowed), whatever the margins and gutters. A sheet whose tiles touch has no
+    gap to find; it falls back to the equal 4 x 3 split of the image, which is then exactly right."""
+    bg = max(img.getcolors(img.width * img.height))[1]
+    ink_ = ImageChops.difference(img, Image.new("RGB", img.size, bg)).convert("L").point(lambda v: 255 if v else 0)
+    cols = _runs([ink_.crop((x, 0, x + 1, img.height)).getbbox() is not None for x in range(img.width)])
+    rows = _runs([ink_.crop((0, y, img.width, y + 1)).getbbox() is not None for y in range(img.height)])
+    if len(cols) == SHEET_COLS and len(rows) >= SHEET_ROWS:
+        return [(c0, r0, c1, r1) for r0, r1 in rows[-SHEET_ROWS:] for c0, c1 in cols]
     cw, ch = img.width // SHEET_COLS, img.height // SHEET_ROWS
-    return [img.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch)) for r in range(SHEET_ROWS) for c in range(SHEET_COLS)]
+    return [(c * cw, r * ch, (c + 1) * cw, (r + 1) * ch) for r in range(SHEET_ROWS) for c in range(SHEET_COLS)]
+
+
+def _cells(img, boxes=None):
+    return [img.crop(b) for b in (boxes or _boxes(img))]
 
 
 def _differing(a, b):
-    return [i for i, (x, y) in enumerate(zip(_cells(a), _cells(b))) if ImageChops.difference(x, y).getbbox()]
+    """Indexes of the tiles (located in a) in which b differs from a, and any change outside every tile counts as one
+    more entry, -1."""
+    boxes = _boxes(a)
+    hit = [i for i, (x, y) in enumerate(zip(_cells(a, boxes), _cells(b, boxes))) if ImageChops.difference(x, y).getbbox()]
+    outside = ImageChops.difference(a, b)
+    for box in boxes:
+        outside.paste((0, 0, 0), box)
+    return hit + ([-1] if outside.getbbox() else [])
 
 
 def _inked(img):
@@ -340,9 +398,9 @@ def test_S_247_each_tile_holds_its_own_map(work):
     _, full, _ = _sheet(work, "sheet_full")
     _, wide, err = _sheet(work, "sheet_wide", mutate=lambda s, d: d["lanes"][0].__setitem__("width", 600.0) if s == 3 else None)
     one = _differing(full, wide)
-    cw, ch = full.width // SHEET_COLS, full.height // SHEET_ROWS
-    box = ImageChops.difference(_cells(full)[one[0]], _cells(wide)[one[0]]).getbbox() if len(one) == 1 else None
-    assert wide is not None and len(one) == 1 and box is not None and box[3] <= ch * 0.9, err[-500:]
+    tile = _boxes(full)[one[0]] if len(one) == 1 and one[0] >= 0 else None
+    box = ImageChops.difference(full.crop(tile), wide.crop(tile)).getbbox() if tile else None
+    assert wide is not None and tile is not None and box is not None and box[3] <= (tile[3] - tile[1]) * 0.9, err[-500:]
 
 
 def test_S_247_a_missing_seed_leaves_one_labelled_empty_tile_and_exit_1(work):
@@ -351,9 +409,9 @@ def test_S_247_a_missing_seed_leaves_one_labelled_empty_tile_and_exit_1(work):
     _, full, _ = _sheet(work, "sheet_full")
     rc, img, err = _sheet(work, "sheet_missing", drop=5)
     gone = _differing(full, img) if img else []
-    cell = _cells(img)[gone[0]] if len(gone) == 1 else None
+    cell = img.crop(_boxes(full)[gone[0]]) if len(gone) == 1 and gone[0] >= 0 else None
     assert rc == 1 and img is not None and img.size == full.size and len(gone) == 1 \
-        and len(cell.getcolors(cell.width * cell.height)) > 1, err[-500:]
+        and cell is not None and len(cell.getcolors(cell.width * cell.height)) > 1, err[-500:]
 
 
 def test_S_247_a_failed_check_changes_only_its_own_tile(work):
@@ -390,5 +448,7 @@ def test_S_247_render_py_imports_only_pillow_and_the_stdlib_and_never_opens_a_wi
     shows = [n for n in ast.walk(tree) if isinstance(n, ast.Attribute) and n.attr == "show"]
     consts = {t.id: n.value.value for n in ast.walk(tree) if isinstance(n, ast.Assign) and isinstance(n.value, ast.Constant)
               for t in n.targets if isinstance(t, ast.Name)}
+    consts.update({n.target.id: n.value.value for n in ast.walk(tree) if isinstance(n, ast.AnnAssign)
+                   and isinstance(n.target, ast.Name) and isinstance(n.value, ast.Constant)})   # DRAFT_PX_WU: float = 20.0
     assert all(m in sys.stdlib_module_names or m == "PIL" for m in mods) and not ({"tkinter", "webbrowser"} & mods) \
         and shows == [] and consts.get("DRAFT_PX_WU") == 20
