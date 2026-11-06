@@ -1,0 +1,91 @@
+{
+  "schema": "om-layout-1",
+  "seed": 1,
+  "archetype": "assault",
+  "canvas": 8000.00,
+  "sides": "separate",
+  "candidate": 0,
+  "drafts": {
+    "DRAFT_CANVAS_ASSAULT": 24000.00,
+    "DRAFT_PX_WU": 20.00,
+    "DRAFT_EQUAL_TOL": 0.10,
+    "DRAFT_CHOKE_W_MIN": 300.00,
+    "DRAFT_CHOKE_W_MAX": 700.00,
+    "DRAFT_BYPASS_MIN": 1.50,
+    "DRAFT_BYPASS_MAX": 2.40,
+    "DRAFT_CANDIDATES": 5.00
+  },
+  "district": [
+    [3, 3, 0, 0, 0, 0, 4, 4],
+    [3, 1, 0, 0, 0, 0, 2, 4],
+    [0, 0, 5, 5, 5, 5, 0, 0],
+    [0, 0, 5, 5, 5, 6, 0, 0],
+    [0, 0, 5, 5, 5, 5, 0, 0],
+    [0, 0, 5, 5, 5, 5, 0, 0],
+    [3, 3, 0, 0, 0, 0, 4, 4],
+    [3, 3, 0, 0, 0, 0, 4, 4]
+  ],
+  "places": [
+    {"kind": "objective", "side": "none", "x": 4400.00, "y": 4000.00, "pad_r": 250.00, "piece": "objective_ground", "node": 0},
+    {"kind": "base_home", "side": "B", "x": 6000.00, "y": 4000.00, "pad_r": 350.00, "piece": "home_ground", "node": 1},
+    {"kind": "base_forward", "side": "A", "x": 1200.00, "y": 4000.00, "pad_r": 300.00, "piece": "gate", "node": 2},
+    {"kind": "resource", "side": "none", "x": 3000.00, "y": 2400.00, "pad_r": 150.00, "piece": "prize", "node": 3},
+    {"kind": "resource", "side": "none", "x": 3000.00, "y": 5600.00, "pad_r": 150.00, "piece": "prize", "node": 4},
+    {"kind": "expansion", "side": "A", "x": 1400.00, "y": 1800.00, "pad_r": 150.00, "piece": "none", "node": 5},
+    {"kind": "expansion", "side": "B", "x": 6400.00, "y": 6200.00, "pad_r": 150.00, "piece": "none", "node": 6}
+  ],
+  "nodes": [
+    {"x": 4400.00, "y": 4000.00, "place": 0},
+    {"x": 6000.00, "y": 4000.00, "place": 1},
+    {"x": 1200.00, "y": 4000.00, "place": 2},
+    {"x": 3000.00, "y": 2400.00, "place": 3},
+    {"x": 3000.00, "y": 5600.00, "place": 4},
+    {"x": 1400.00, "y": 1800.00, "place": 5},
+    {"x": 6400.00, "y": 6200.00, "place": 6},
+    {"x": 2600.00, "y": 4000.00, "place": -1},
+    {"x": 3600.00, "y": 5000.00, "place": -1}
+  ],
+  "lanes": [
+    {"kind": "route", "a": 2, "b": 7, "width": 120.00, "pts": [[1200.00, 4000.00], [2600.00, 4000.00]]},
+    {"kind": "objective_route", "a": 7, "b": 0, "width": 120.00, "pts": [[2600.00, 4000.00], [4400.00, 4000.00]]},
+    {"kind": "way_round", "a": 7, "b": 0, "width": 90.00, "pts": [[2600.00, 4000.00], [3000.00, 3000.00], [3800.00, 3000.00], [4400.00, 4000.00]]},
+    {"kind": "route", "a": 0, "b": 1, "width": 120.00, "pts": [[4400.00, 4000.00], [6000.00, 4000.00]]},
+    {"kind": "route", "a": 7, "b": 3, "width": 90.00, "pts": [[2600.00, 4000.00], [3000.00, 2400.00]]},
+    {"kind": "route", "a": 7, "b": 4, "width": 90.00, "pts": [[2600.00, 4000.00], [3000.00, 5600.00]]},
+    {"kind": "climb", "a": 4, "b": 8, "width": 60.00, "pts": [[3000.00, 5600.00], [3600.00, 5000.00]]},
+    {"kind": "climb", "a": 7, "b": 8, "width": 60.00, "pts": [[2600.00, 4000.00], [3600.00, 5000.00]]},
+    {"kind": "route", "a": 2, "b": 5, "width": 90.00, "pts": [[1200.00, 4000.00], [1400.00, 1800.00]]},
+    {"kind": "route", "a": 1, "b": 6, "width": 90.00, "pts": [[6000.00, 4000.00], [6400.00, 6200.00]]}
+  ],
+  "chokes": [
+    {"x": 3500.00, "y": 4000.00, "width": 400.00, "length": 300.00, "axis_k": 6, "wall_span": 400.00, "frac": 0.50, "lane": 1, "landform": "ford", "piece": "crossing"}
+  ],
+  "vantages": [
+    {"x": 3600.00, "y": 5000.00, "radius": 400.00, "height_bands": 2, "overlooks": 1, "climb": [6, 7], "landform": "ridge", "piece": "heights"}
+  ],
+  "requests": [
+    {"kind": "pad", "mode": "room", "piece": "home_ground", "name": "base_b", "x": 6000.00, "y": 4000.00, "r": 350.00, "w": 0.00, "len": 0.00, "span": 0.00, "frac": 0.00, "axis_k": 0, "height_bands": 0.00, "side": 0, "landform": "none"},
+    {"kind": "pad", "mode": "room", "piece": "gate", "name": "base_a", "x": 1200.00, "y": 4000.00, "r": 300.00, "w": 0.00, "len": 0.00, "span": 0.00, "frac": 0.00, "axis_k": 0, "height_bands": 0.00, "side": 0, "landform": "none"},
+    {"kind": "pad", "mode": "room", "piece": "objective_ground", "name": "objective", "x": 4400.00, "y": 4000.00, "r": 250.00, "w": 0.00, "len": 0.00, "span": 0.00, "frac": 0.00, "axis_k": 0, "height_bands": 0.00, "side": 0, "landform": "none"},
+    {"kind": "pad", "mode": "room", "piece": "prize", "name": "site_0", "x": 3000.00, "y": 2400.00, "r": 150.00, "w": 0.00, "len": 0.00, "span": 0.00, "frac": 0.00, "axis_k": 0, "height_bands": 0.00, "side": 0, "landform": "none"},
+    {"kind": "choke", "mode": "keep_open", "piece": "crossing", "name": "", "x": 3500.00, "y": 4000.00, "r": 0.00, "w": 400.00, "len": 300.00, "span": 400.00, "frac": 0.50, "axis_k": 6, "height_bands": 0.00, "side": 0, "landform": "ford"},
+    {"kind": "vantage", "mode": "height", "piece": "heights", "name": "", "x": 3600.00, "y": 5000.00, "r": 400.00, "w": 0.00, "len": 0.00, "span": 0.00, "frac": 0.00, "axis_k": 0, "height_bands": 2.00, "side": 1, "landform": "ridge"},
+    {"kind": "route", "mode": "number", "piece": "none", "name": "", "x": 0.00, "y": 0.00, "r": 120.00, "w": 0.00, "len": 0.00, "span": 0.00, "frac": 0.00, "axis_k": 0, "height_bands": 0.00, "side": 0, "landform": "none"},
+    {"kind": "landform", "mode": "keep_open", "piece": "crossing", "name": "", "x": 3500.00, "y": 4000.00, "r": 0.00, "w": 0.00, "len": 0.00, "span": 0.00, "frac": 0.00, "axis_k": 0, "height_bands": 0.00, "side": 0, "landform": "ford"}
+  ],
+  "fairness": {
+    "dist_a_objective": 3200.00,
+    "dist_b_objective": 1600.00,
+    "dist_a_res": [1940.00, 1940.00],
+    "dist_b_res": [3520.00, 3520.00]
+  },
+  "checks": {
+    "connected": true,
+    "fairness": true,
+    "bypass": true,
+    "approaches": true,
+    "chokes": true,
+    "bounds": true
+  },
+  "route_count": 8
+}
