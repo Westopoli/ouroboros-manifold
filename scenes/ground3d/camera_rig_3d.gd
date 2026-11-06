@@ -8,6 +8,8 @@ signal band_changed(band: String)
 
 const PAN_SPEED_MIN := 1500.0
 const ZOOM_STEP := 300.0
+## W8: trackpad two-finger scroll, wu per pixel per wu of camera height. If the view moves the wrong way on the Mac, flip the sign here.
+const PAN_GESTURE_WU_PER_PX := 0.0015
 const ZOOM_MIN := 150.0
 const ZOOM_MAX_MIN := 40000.0
 const ZOOM_CANVAS_FACTOR := 1.2
@@ -132,6 +134,10 @@ func _input(event: InputEvent) -> void:
 			zoom_by(-1)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			zoom_by(1)
+	elif event is InputEventPanGesture:
+		pan(event.delta * _height * PAN_GESTURE_WU_PER_PX)
+	elif event is InputEventMagnifyGesture:
+		zoom_scale(event.factor)
 
 
 func _wheel_step() -> float:
@@ -141,6 +147,13 @@ func _wheel_step() -> float:
 ## steps > 0 zooms out (camera rises), steps < 0 zooms in.
 func zoom_by(steps: int) -> void:
 	_height = clampf(_height + steps * _wheel_step(), ZOOM_MIN, _zoom_max)
+	_update_band()
+	_place()
+
+
+## factor > 1 (fingers spread) zooms in, like wheel up.
+func zoom_scale(factor: float) -> void:
+	_height = clampf(_height / factor, ZOOM_MIN, _zoom_max)
 	_update_band()
 	_place()
 
