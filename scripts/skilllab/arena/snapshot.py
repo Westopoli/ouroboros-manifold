@@ -122,7 +122,7 @@ def validate(doc: dict) -> list[str]:
                 if not isinstance(unit, dict):
                     out.append(f"bad type {uwhere}")
                     continue
-                _check_keys(unit, dict(_UNIT, seen=list) if v2 and "seen" in unit else _UNIT, uwhere, out)   # H-088: optional ids of the living enemies the unit sees
+                _check_keys(unit, dict(_UNIT, **{k: t for k, t in (("seen", list), ("fired", bool)) if v2 and k in unit}), uwhere, out)   # H-088: optional ids of the living enemies the unit sees; replay-firing-lines: optional `fired`
                 if v2 and isinstance(unit.get("seen"), list) and not all(_kind_ok(e, int) for e in unit["seen"]):
                     out.append(f"bad type {uwhere}.seen (want a list of unit ids)")
                 if unit.get("side") not in ("A", "B") and "side" in unit:

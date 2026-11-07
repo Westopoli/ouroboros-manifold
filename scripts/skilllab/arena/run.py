@@ -64,9 +64,10 @@ def _centroid(engine, w, ids):
     return sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
 
 
-def _frame(engine, w, tick, rows, blocked=None, seen=False):
+def _frame(engine, w, tick, rows, blocked=None, seen=False, fired=()):
     """One frame: every spawned unit (dead ones stay), sorted by id; rows is [(unit id, side letter, role)]; `blocked` (H-063) is written when not None;
-    `seen` (H-088) adds to each unit the sorted ids of the living enemies it sees (`engine.can_see`), [] for a dead unit."""
+    `seen` (H-088) adds to each unit the sorted ids of the living enemies it sees (`engine.can_see`), [] for a dead unit; `fired` is the set of unit ids that fired
+    since the previous captured frame (replay-firing-lines): each row says whether its unit, alive here, is in it."""
     units = []
     living = {uid: side for uid, side, _ in rows if engine.unit_alive(w, uid)}
     for uid, side, role in rows:
@@ -75,7 +76,7 @@ def _frame(engine, w, tick, rows, blocked=None, seen=False):
         target = engine.unit_target(w, uid)
         units.append({"id": uid, "side": side, "role": role, "x": round(x, 2), "y": round(y, 2), "layer": int(engine.unit_layer(w, uid)),
                       "facing": round(engine.unit_facing(w, uid), 3), "hp": round(engine.unit_hp(w, uid), 1) if alive else 0.0,
-                      "alive": alive, "target": target if target else None})
+                      "alive": alive, "target": target if target else None, "fired": alive and uid in fired})
         if seen:
             units[-1]["seen"] = [e for e, s in sorted(living.items()) if s != side and engine.can_see(w, uid, e)] if alive else []
     frame = {"tick": tick, "alive": [sum(1 for u in units if u["alive"] and u["side"] == s) for s in "AB"], "units": units}
@@ -239,10 +240,12 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
         cap = cap_seconds * TICKS_PER_SECOND
         everyone = [u for f in ids for u in ids[f]]
         hp = {u: engine.unit_hp(w, u) for u in everyone}
+        fired = set()   # attackers of fire events since the last captured frame; a thinned file keeps what the frame had when captured
         last_shot, history = 0, {0: {u: engine.unit_pos(w, u) for u in everyone}}
         tick, end = 0, "cap"
         while tick < cap:
             engine.step(w)
+            fired |= engine.fire_attackers(w)
             tick += 1
             if group_state:
                 groups.tick(engine, w, group_state, ids, tick)
@@ -258,7 +261,8 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
                     if uid not in still or (x - still[uid][0]) ** 2 + (y - still[uid][1]) ** 2 > STILL_WU * STILL_WU:
                         still[uid] = (x, y, tick)
             if tick % every == 0 or tick == cap:
-                frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen)
+                frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen, fired)
+                fired = set()
             if seen and tick % CHECK_EVERY == 0:
                 sample_seen(tick)
             if min(sum(1 for u in ids[f] if engine.unit_alive(w, u)) for f in ids) == 0:
@@ -272,7 +276,7 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
                     end = "silence"
                     break
         if tick not in frames:
-            frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen)
+            frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen, fired)
         if seen:
             sights = {r: engine.type_stats(w, types[r][0])["sensor_radius"] for r in sorted(types)}
             doc_orders["stage4"] = {"first_seen": first_seen, "sights": sights}
