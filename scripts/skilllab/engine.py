@@ -115,6 +115,8 @@ class Engine:
             "om_command_guard": ([V, c.POINTER(u32), u32], i),
             "om_roster_set_reach": ([V, i, u32, u32], i),
             "om_tactical_step": ([V], u64),
+            "om_tactical_event_count": ([V], u32),
+            "om_tactical_event_get_at": ([V, u32, c.POINTER(c.c_int32), c.POINTER(u32), c.POINTER(c.c_int32), c.POINTER(u64)], i),
             "om_unit_get_hp": ([V, u32], d),
             "om_unit_get_pos": ([V, u32, pd, pd], i),
             "om_unit_get_destination": ([V, u32, pd, pd], i),
@@ -308,6 +310,15 @@ class Engine:
     @_bumps
     def step(self, w):
         self._lib.om_tactical_step(w)
+
+    def fire_attackers(self, w):
+        """Ids of the units that fired (tactical event kind 0, csrc/unit.c OM_TAC_EV_FIRE) in the last `step`; read it right after the step."""
+        kind, a, b, t = ctypes.c_int32(), ctypes.c_uint32(), ctypes.c_int32(), ctypes.c_uint64()
+        out = set()
+        for n in range(self._lib.om_tactical_event_count(w)):
+            if self._lib.om_tactical_event_get_at(w, n, ctypes.byref(kind), ctypes.byref(a), ctypes.byref(b), ctypes.byref(t)) == 0 and kind.value == 0:
+                out.add(a.value)
+        return out
 
     def unit_hp(self, w, u):
         return self._lib.om_unit_get_hp(w, u)

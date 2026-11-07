@@ -2,7 +2,7 @@ extends "res://scenes/proto/layout_shot/layout_shot.gd"
 
 ## H-040 part 3, fight replay: plays one `om-fight-1` file (docs/northstar/research/layer_dynamics/arena/SNAPSHOT.md; JSON path in OM_FIGHT, unknown keys
 ## ignored) frame by frame. It extends the layout shot (H-025) so terrain, glyphs, side colours, facing arrows, legend, camera fit and the DRAFT drawing numbers are
-## that scene's own; this file adds the frame cursor, the HUD, the dead marker and the target line. Frame 0 is drawn as the layout shot draws a layout; the camera
+## that scene's own; this file adds the frame cursor, the HUD, the dead marker and the target line (drawn only while the unit fires: row `fired`). Frame 0 is drawn as the layout shot draws a layout; the camera
 ## then stays put for every frame, framed on the box of every position any unit takes in any frame plus FIT_MARGIN, so no unit walks out of the picture. When that
 ## box would shrink a unit under the glyph minimum (a wide field), the units keep it and the camera instead follows each frame's centroid (H-053 Replay readability).
 ## Rings: one per role per side, a line style per role (replay_marks.gd), per-unit rings behind key R. Six role glyphs, the legend names each.
@@ -225,7 +225,7 @@ func _add_hud() -> void:
 	layer.add_child(_hud_rate_label)
 
 
-## Draw frame `i`: bodies at their positions, fallen units grey and flat with no arrow, a thin line from each unit to its target, the HUD.
+## Draw frame `i`: bodies at their positions, fallen units grey and flat with no arrow, a thin line from each unit that fired to its target (a row with no `fired` key counts as fired), the HUD.
 func _show(i: int) -> void:
 	_cursor = i
 	var frame: Dictionary = _fight_frames[i]
@@ -250,7 +250,7 @@ func _show(i: int) -> void:
 		if not bool(u["alive"]):
 			(node as MeshInstance3D).material_override = _unshaded(DEAD_COLOUR)
 			node.get_node("Arrow").visible = false
-		elif u.get("target") != null and by_id.has(int(u["target"])):
+		elif _draws_line(u, by_id):
 			var t: Dictionary = by_id[int(u["target"])]
 			var c: Color = SIDE_COLOURS[u["side"]]
 			_overlay.add_child(_line(PackedVector3Array([_at(float(u["x"]), float(u["y"]), GLYPH_LIFT_WU), _at(float(t["x"]), float(t["y"]), GLYPH_LIFT_WU)]),
@@ -381,7 +381,7 @@ func qa_state() -> Dictionary:
 	var frame: Dictionary = _fight_frames[_cursor]
 	return {"scene": REPLAY_SCENE_PATH, "fight_id": String(_fight["layout_id"]), "frame": _cursor, "frame_count": _fight_frames.size(),
 			"tick": int(frame["tick"]), "alive_a": int(frame["alive"][0]), "alive_b": int(frame["alive"][1]), "result": _fight.get("result", {}),
-			"autoplay": _autoplay, "autoplay_fps": _autoplay_fps, "targets": _targets(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a, "ring_count": _ring_count,
+			"autoplay": _autoplay, "autoplay_fps": _autoplay_fps, "targets": _targets(frame), "firing_lines": _firing_lines(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a, "ring_count": _ring_count,
 			"camera": {"fit": _fit, "unit_px": _unit_px}, "facing_px": maxf(FACING_MIN_PX, _unit_px), "rings": _ring_state(frame), "glyphs": _glyph_state(),
 			"end_label": _end_label if _cursor == _fight_frames.size() - 1 else "", "rate_label": _rate_label,
 			"features": _features_state(), "blocked_units": _blocked_ids(frame), "landscape": _landscape, "hud_tick": _hud.text,
@@ -404,6 +404,23 @@ func _targets(frame: Dictionary) -> Array:
 		if bool(u["alive"]) and u.get("target") != null:
 			out.append([int(u["id"]), int(u["target"])])
 	return out
+
+
+## [unit id, target id] for each target line drawn on `frame`: the living units that fired (or whose row has no `fired` key, a file from before it) and have a target in the frame.
+func _firing_lines(frame: Dictionary) -> Array:
+	var by_id := {}
+	for u in frame["units"]:
+		by_id[int(u["id"])] = u
+	var out: Array = []
+	for u in frame["units"]:
+		if bool(u["alive"]) and _draws_line(u, by_id):
+			out.append([int(u["id"]), int(u["target"])])
+	return out
+
+
+## True when unit row `u` gets a target line: it has a target present in the frame and it fired (`fired` absent: draws, as before the key).
+func _draws_line(u: Dictionary, by_id: Dictionary) -> bool:
+	return bool(u.get("fired", true)) and u.get("target") != null and by_id.has(int(u["target"]))
 
 
 func _ring_state(frame: Dictionary) -> Array:
