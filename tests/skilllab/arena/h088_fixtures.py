@@ -25,9 +25,9 @@ COVER_FEATURE = {"kind": "cover", "x": 2000.0, "y": 2000.0, "boxes": COVER_BOXES
 NAV_CELL = features.NAV_CELL
 
 PIN_LAYOUT_ID = "L-9800"
-SIGHT_OFF_PIN = {   # recorded on main 240773dd, --sight off, seed 1, --cap-seconds 30 (identical across two runs in two directories)
-    "fight": "6c082339c423c293db6a442b51ec8e93fbf0ef841e7ca5f078adc9797e68c11d",
-    "control_fight": "15da6a6a065679da1fb7955d345b2847bbe6d4690c5128c2f363a94eeb25452c",
+SIGHT_OFF_PIN = {   # recorded on main 240773dd, --sight off, seed 1, --cap-seconds 30 (identical across two runs in two directories); the two fight shas re-recorded 2026-11-07 for the per-unit `fired` key (the files minus every `fired` line have the old shas)
+    "fight": "37902ffed239789c1f768f340489a1fd8b3cb0074a2714b7fb5a360d0fb3d716",
+    "control_fight": "608e81cbc5cf54b3a2f849ead839179bf4b27c263cb96702b39195a40dafb19f",
     "results": "1903a2be82d2f00ac7508ce2e38eb9b988641ff8744982579977681e70ad7603",
 }
 
