@@ -6,7 +6,7 @@ extends "res://scenes/proto/layout_shot/layout_shot.gd"
 ## then stays put for every frame, framed on the box of every position any unit takes in any frame plus FIT_MARGIN, so no unit walks out of the picture. When that
 ## box would shrink a unit under the glyph minimum (a wide field), the units keep it and the camera instead follows each frame's centroid (H-053 Replay readability).
 ## Rings: one per role per side, a line style per role (replay_marks.gd), per-unit rings behind key R. Six role glyphs, the legend names each.
-## Space or Right steps forward, Left back (at either end the cursor stays put); OM_AUTOPLAY=1 steps at REPLAY_FPS; OM_SHOT_OUT=<dir> saves frame-<i>.png for each
+## Space or Right steps forward, Left back (at either end the cursor stays put); OM_AUTOPLAY=1 steps at REPLAY_FPS, or at OM_FPS frames a second (a float > 0; H-088 closeup); OM_SHOT_OUT=<dir> saves frame-<i>.png for each
 ## frame and quits. Every number below that the story does not give is a named DRAFT; Westley rules. See also scenes/proto/layout_shot/layout_shot.gd.
 
 const REPLAY_SCENE_PATH := "res://scenes/proto/fight_replay/fight_replay.tscn"
@@ -37,6 +37,7 @@ var _fight_frames: Array = []
 var _ordinal: Dictionary = {}  # fight unit id -> the layout shot's unit id (side A rows first, then side B, in frame 0 order)
 var _cursor := 0
 var _autoplay := false
+var _autoplay_fps := REPLAY_FPS  # OM_FPS when it is a finite float > 0, else REPLAY_FPS
 var _clock := 0.0
 var _units3d: Node3D
 var _ground: Node
@@ -68,6 +69,9 @@ var _rate_a = null  # H-053: rate_a from <layout id>.rate.json beside the fight 
 func _ready() -> void:
 	_shot_path = OS.get_environment("OM_SHOT_OUT")
 	_autoplay = OS.get_environment("OM_AUTOPLAY") == "1"
+	var fps_text := OS.get_environment("OM_FPS")
+	if fps_text.is_valid_float() and is_finite(fps_text.to_float()) and fps_text.to_float() > 0.0:
+		_autoplay_fps = fps_text.to_float()
 	var path := OS.get_environment("OM_FIGHT")
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path)) if path != "" else null
 	if not parsed is Dictionary or not parsed.get("frames") is Array or parsed["frames"].is_empty():
@@ -353,7 +357,7 @@ func _process(delta: float) -> void:
 				_save_all_frames()
 	elif _autoplay:
 		_clock += delta
-		if _clock >= 1.0 / REPLAY_FPS:
+		if _clock >= 1.0 / _autoplay_fps:
 			_step(1)
 
 
@@ -377,7 +381,7 @@ func qa_state() -> Dictionary:
 	var frame: Dictionary = _fight_frames[_cursor]
 	return {"scene": REPLAY_SCENE_PATH, "fight_id": String(_fight["layout_id"]), "frame": _cursor, "frame_count": _fight_frames.size(),
 			"tick": int(frame["tick"]), "alive_a": int(frame["alive"][0]), "alive_b": int(frame["alive"][1]), "result": _fight.get("result", {}),
-			"autoplay": _autoplay, "targets": _targets(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a, "ring_count": _ring_count,
+			"autoplay": _autoplay, "autoplay_fps": _autoplay_fps, "targets": _targets(frame), "first_shot_frame": _first_shot, "seed": int(_fight.get("seed", 0)), "rate_a": _rate_a, "ring_count": _ring_count,
 			"camera": {"fit": _fit, "unit_px": _unit_px}, "facing_px": maxf(FACING_MIN_PX, _unit_px), "rings": _ring_state(frame), "glyphs": _glyph_state(),
 			"end_label": _end_label if _cursor == _fight_frames.size() - 1 else "", "rate_label": _rate_label,
 			"features": _features_state(), "blocked_units": _blocked_ids(frame), "landscape": _landscape, "hud_tick": _hud.text,

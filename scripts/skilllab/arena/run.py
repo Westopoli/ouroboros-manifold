@@ -164,9 +164,9 @@ def control_twin(layout, layout_path, control_dir):
     return twin, toml_path
 
 
-def fight(layout, seed, sight, cap_seconds):
-    """Run one fight; returns (frames by tick, last tick, end, orders block). Frames are kept every BASE_EVERY ticks and at the last tick, then chosen by
-    `snapshot.frame_ticks` once the last tick is known. `sight` "off" is stage 3's rule set; "on" is stage 4's (module docstring); "control" is stage 4's with
+def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
+    """Run one fight; returns (frames by tick, last tick, end, orders block). Frames are kept every `every` ticks (BASE_EVERY; closeup.py passes its K) and at the last tick,
+    then chosen by `snapshot.frame_ticks` once the last tick is known (closeup.py keeps them all). `sight` "off" is stage 3's rule set; "on" is stage 4's (module docstring); "control" is stage 4's with
     targeting by sight off (`--control sight`). Under "on" the orders block gains `guard` and a `stage4` entry ({first_seen, sights}) that `_document` removes and writes."""
     engine = Engine()
     w = engine.new_world(seed)
@@ -257,7 +257,7 @@ def fight(layout, seed, sight, cap_seconds):
                     x, y = engine.unit_pos(w, uid)
                     if uid not in still or (x - still[uid][0]) ** 2 + (y - still[uid][1]) ** 2 > STILL_WU * STILL_WU:
                         still[uid] = (x, y, tick)
-            if tick % BASE_EVERY == 0 or tick == cap:
+            if tick % every == 0 or tick == cap:
                 frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen)
             if seen and tick % CHECK_EVERY == 0:
                 sample_seen(tick)
@@ -283,12 +283,13 @@ def fight(layout, seed, sight, cap_seconds):
         engine.free_world(w)
 
 
-def _document(layout, layout_path, seed, sight, frames, last, end, orders):
-    """The fight file; `sight` "control" (fight()) is written as "off". `orders` may carry fight()'s `stage4` entry, which becomes `sights` and `result.first_seen`."""
+def _document(layout, layout_path, seed, sight, frames, last, end, orders, dense_every=None):
+    """The fight file; `sight` "control" (fight()) is written as "off". `orders` may carry fight()'s `stage4` entry, which becomes `sights` and `result.first_seen`.
+    `dense_every` (closeup.py): keep every frame given, in tick order, and write it as `snapshot_every`, instead of thinning to snapshot.MAX_FRAMES."""
     orders = dict(orders)
     stage4 = orders.pop("stage4", None)
-    ticks = snapshot.frame_ticks(last, TICKS_PER_SECOND)
-    every = ticks[1] - ticks[0] if len(ticks) > 2 else BASE_EVERY
+    ticks = snapshot.frame_ticks(last, TICKS_PER_SECOND) if dense_every is None else sorted(frames)
+    every = dense_every or (ticks[1] - ticks[0] if len(ticks) > 2 else BASE_EVERY)
     survivors = frames[last]["alive"]
     a, b = survivors
     stall = end == "silence" and a > 0 and b > 0
