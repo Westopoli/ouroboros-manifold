@@ -33,11 +33,12 @@ from scripts.skilllab.fight import TICKS_PER_SECOND
 ROOT = Path(__file__).resolve().parents[3]
 OPEN_TICKS = {"off": 585, "on": 575, "control": 575}   # dumped 2026-11-07 on base 633ea3e4
 OPEN_NORMAL_FRAMES = {"off": [0, 100, 200, 300, 400, 500, 585], "on": [0, 100, 200, 300, 400, 500, 575]}
-# CL-7 pins: sha256 of run.main's fight file (layout_path replaced by "layout_path_pinned", as h088_fixtures.sight_off_digests) and results.md, recorded on base 633ea3e4.
+# CL-7 pins: sha256 of run.main's fight file (layout_path replaced by "layout_path_pinned", as h088_fixtures.sight_off_digests) and results.md, recorded on base 633ea3e4;
+# the fight-file shas re-recorded 2026-11-07 for the per-unit `fired` key (replay-firing-lines; the file minus every `fired` line has the old sha, results.md is unchanged).
 PINS = {
-    ("open", "off"): ("a92f75f7c27a0dff559742fffca94cfa3ed3bbe60ca32564ca8f3e901fcb2fc8", "50b2ea2453446efa5e3b91eb9045509c0ed6ce6c147fdb14dc1d6798fc80f35f"),
-    ("open", "on"): ("dfe0b59b24662c5bd832fc55376090f877a3c1aba082ba3bf37a6c089871b757", "0ce389e63a247e2fb1e07de00983a92d7f17ecbe3acae572a101912ce6f33d35"),
-    ("cover", "on"): ("dee5c1cb5bdd98d601dc38d003cbb107b12c6121ac3b62114adb4aa3085d3167", "481c4854124ad471f861c4b794b6fdce0545daa33a72ef4df064ccfc20ead75d"),
+    ("open", "off"): ("d8c84587cb4fae64e1aaeb8ff3e5ddadb10552ec0568c729c8201a2129666db9", "50b2ea2453446efa5e3b91eb9045509c0ed6ce6c147fdb14dc1d6798fc80f35f"),
+    ("open", "on"): ("699aedfa886c7403658bf2190ebb67593c6a24fb7390fec8fa09cff40974e70a", "0ce389e63a247e2fb1e07de00983a92d7f17ecbe3acae572a101912ce6f33d35"),
+    ("cover", "on"): ("5f6a5e120a6c170009d5af59c0d1a3c2c3926f6cf062356d08338e5017c5fd12", "481c4854124ad471f861c4b794b6fdce0545daa33a72ef4df064ccfc20ead75d"),
 }
 
 
@@ -291,7 +292,8 @@ def test_cl6_frames_at_ticks_the_normal_file_has_are_the_normal_frames(lab, case
     normal frame; for K 7 it is at least tick 0 (and the last tick, 575 not being a multiple of 7 but kept as the last)."""
     normal, dense = by_tick(lab.normal(case, sight)[0]), by_tick(lab.ok(case, sight, k))
     common = sorted(set(normal) & set(dense))
-    assert (all(normal[t] == dense[t] for t in common), set(common) >= (set(normal) if k != 7 else {0, 575}), len(common) >= 2) == (True, True, True)
+    unfired = lambda f: dict(f, units=[{key: v for key, v in u.items() if key != "fired"} for u in f["units"]])   # `fired` is the window since the previous frame, which differs (test_replay_firing_record RF-4)
+    assert (all(unfired(normal[t]) == unfired(dense[t]) for t in common), set(common) >= (set(normal) if k != 7 else {0, 575}), len(common) >= 2) == (True, True, True)
 
 
 # ---------------------------------------------------------------- CL-8 the module runs as a CLI
