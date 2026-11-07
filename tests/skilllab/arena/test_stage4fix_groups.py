@@ -13,6 +13,7 @@ every step (Engine.step wrapped), the first tick on which the trigger holds."""
 import hashlib
 import json
 import math
+import re
 from pathlib import Path
 
 import pytest
@@ -100,7 +101,8 @@ def test_a_layout_without_group_keys_writes_no_groups_and_the_old_stage3_fight_r
     out = tmp_path / "s3"
     proc = fx.run(ROOT / "docs/northstar/research/layer_dynamics/catalogue/L-0039.toml", out, 1, "--sight", "off", "--control-dir", tmp_path / "s3c")
     assert proc.returncode == 0, proc.stdout
-    assert (out / "L-0039-s1.fight.json").read_bytes() == committed.read_bytes()
+    # replay-firing-lines: the runner now writes `fired` on every unit row, which the committed file (written before the key) lacks; every other byte is the same.
+    assert re.sub(rb'\n\s*"fired": (true|false),(?=\n)', b"", (out / "L-0039-s1.fight.json").read_bytes()) == committed.read_bytes()
 
 
 def test_a_unit_without_a_group_or_a_group_without_a_unit_is_rejected(tmp_path):
