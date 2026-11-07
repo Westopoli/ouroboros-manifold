@@ -26,3 +26,11 @@ Open for you (findings, nothing fixed in the engine here):
 | Vantage, then its control | Blue on the plateau sees red from the start and fires first; red is hollow until it is past the ramp's halfway line. | The high ground sees first and fires first, and red sees up only from the halfway line. | Red sees blue before the halfway line, or hits blue unseen; name the frame. |
 | Traps, then their controls | Red starts in the pocket and moves out; the hill forces hold unseen; all three forces attack when red is at the centre. | The trap springs together and red does not see the hills until a hill force has come down. | The forces do not attack together, or red sees them first; say so. |
 | Cover (as you like) | Boxes hide units; hollow marks sit behind the boxes. | The boxes hide units. | A unit is hollow with a clear line, or fires through a box. |
+
+## Watching it like a video
+
+The page shows a frame every 5 sim seconds or less. For L-0039 (cover, seed 10) there are four denser files in `closeup/`: a frame every 10 ticks (half a second) and every 7 ticks (about a third of a second), with sight on and the same fight with targeting by sight off. The result is the one above (a draw at the 600 s cap with sight on, a stall at tick 3260 with it off). `OM_FPS` is the replay's speed in frames a second (default 1); a half-second file at `OM_FPS=2` runs in real time, at `OM_FPS=1` at half speed, and a third-of-a-second file at `OM_FPS=3` runs in real time. Space still steps by hand.
+
+On the Mac: `OM_AUTOPLAY=1 OM_FPS=2 scripts/replay.sh docs/northstar/story_reviews/westley/arena_stage4/closeup/L-0039-s10-every10.fight.json`. On Linux: `OM_AUTOPLAY=1 OM_FPS=2 OM_FIGHT=$PWD/docs/northstar/story_reviews/westley/arena_stage4/closeup/L-0039-s10-every10.fight.json scripts/play.sh --scene res://scenes/proto/fight_replay/fight_replay.tscn`. The files are `L-0039-s10-every10`, `L-0039-s10-every7`, `L-0039-control-s10-every10` and `L-0039-control-s10-every7` (`.fight.json`); use `OM_FPS=3` for the `every7` ones.
+
+To make another: `python3 -m scripts.skilllab.arena.closeup --layout docs/northstar/research/layer_dynamics/catalogue/L-0039.toml --seed 10 --sight on --every-ticks 10 --out <dir>` (`--sight control` for the sight-off twin; `--from-tick A --to-tick B` keeps only that stretch, which is the way to see one fight moment closely).
