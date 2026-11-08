@@ -299,11 +299,12 @@ def _visible_hash(lib, w):
 # Re-recorded day20 on push/pp-c3-land (parity wave, leash anchor, give-up rule moved target choice and paths on purpose; baseline_hashes.json still green with both switches at 0; was: A155 to A159 recorded).
 # Re-recorded day21 on push/pp-settle-gold (A184 collision settle epsilon 0.1 wu ends the push sequence early; was: day20 pp-c3-land recorded).
 # Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold recorded). TD-PP-A199-rerecord.
+# Re-recorded 2026-11-08 (engine rule fixes F2, F3, F4: a mover does not fire, a lock holds, Wardens do not stack; the new run has 0 R-207-06, R-087-04, R-084-04, R-087-03, R-083-03 violations by scripts/skilllab/invariants.py; was: day23 recorded: clash state e10663fd, spread state b98bdb02, spread visible 4b28a8fb). Test-defect.
 GOLDEN = {
-    "clash": ("e10663fd10109b51c6e14b44dfe0828a0031580bb15ca02fe52d1a55c56666eb",
+    "clash": ("d8f9a38d1077e6414c79cdbc4515bead8fc3ab68a1b6c9e90e995a38e9a037af",
               "740858b42c174da068bb0ad94b10fddef168a6b370c8b6d5f99b51e9e89b57df"),
-    "spread": ("b98bdb02c701ee3a875e5566eef0b0580764186436f916411b7437da47856e61",
-               "4b28a8fba6ffbcd30bf97182d8cd4ded79232b2dd749fc664fab17d831f274db"),
+    "spread": ("26e1766f5e3f798861ebd59723143039424281d919890784692b78ed0439bfe4",
+               "4ba1758c6137483d99c707d0f1a69c36af48cc979dd58501d312a477bd489312"),
 }
 
 
