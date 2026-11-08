@@ -172,6 +172,7 @@ typedef struct {
     double   pushed_x, pushed_y;
     double   facing;
     double   prev_x, prev_y, prev_facing;
+    uint64_t moved_own_tick;             /* F2 (R-087-04): the last tick this unit's own movement step changed its position; not saved or hashed, rewritten every tick */
     int      has_dest;
     uint32_t giveup_near;
     double   dest_x, dest_y;
@@ -2165,7 +2166,8 @@ static double om_move_member_pace(om_world *w, const om_move_unit *mu, uint32_t 
     double eff = om_unit_effective_speed(w, id);
     if (mu->group_id == 0) return eff;
     if (om_tactical_get_param(w, OM_TP_PURSUE_BY_STEERING) != 0.0 && eff > om_unit_profile_speed(w, om_unit_get_unit_type(w, id))) return eff;
-    return mu->speed_cap;
+    /* F2 (R-084-04, ALG-60): a member also stops for the pause after a shot and obeys Brace and Fortify, as a lone unit does (eff is 0 or lower then). */
+    return eff < mu->speed_cap ? eff : mu->speed_cap;
 }
 
 /* PP-move P8, P7 (R-097-03, R-097-04, ALG-68, R-099-04): one unit's move under PURSUE_BY_STEERING, as the
@@ -2373,6 +2375,15 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
         }
         om_move_grid_update(ms, mu);
     }
+}
+
+/* Internal, not in the header (om_internal.h): 1 when the unit's own movement step changed its position on tick `tick` (F2, R-087-04).
+ * A push by collision comes after the step and does not count. Reads through om_move_get, never om_move_touch.
+ * See also: om_tac_fire_pass in csrc/unit.c, which skips such a unit's shot. */
+int om_move_moved_own_power(const om_world *w, uint32_t unit_id, uint64_t tick) {
+    const om_move_state *ms = w ? (const om_move_state *)w->move_state : NULL;
+    const om_move_unit *mu = ms ? om_move_get((om_move_state *)ms, unit_id) : NULL;
+    return mu && mu->in_use && tick != 0 && mu->moved_own_tick == tick;
 }
 
 /* Internal, not in the header (om_internal.h): the stored walk route of a unit. Returns route_n (0 without a movement
@@ -2678,7 +2689,10 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
         ms->probe_extra = 0.0;
     }
     for (id = 1; id <= ms->discovery_max; id++) {
+        om_move_unit *mu = om_move_get(ms, id);
+        const double bx = mu ? mu->x : 0.0, by = mu ? mu->y : 0.0;
         om_move_tick_unit(w, ms, id, period);
+        if (mu && mu->in_use && (mu->x != bx || mu->y != by)) mu->moved_own_tick = new_tick;
     }
     om_move_walker_tick(w);
     om_move_collision_pass_internal(w, ms);

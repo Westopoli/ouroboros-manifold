@@ -467,6 +467,8 @@ uint32_t om_move_terrain_epoch(om_world *w);
  * interleaved (x, y) pairs, a read that changes no checksum. Body in csrc/tactical_move.c.
  * See also: tests/csim/test_VG_W_w2_routes.py */
 uint32_t om_move_route_get(const om_world *w, uint32_t unit_id, uint32_t *route_i, double *pts, uint32_t cap);
+/* F2 (R-087-04): 1 when the unit's own movement step changed its position on that tick (a push does not count); body in csrc/tactical_move.c. */
+int om_move_moved_own_power(const om_world *w, uint32_t unit_id, uint64_t tick);
 /* H-041, defined in csrc/tactical_move.c beside om_roster_set_collision_radius. om_move_largest_radius: the roster's largest per-type
  * collision radius, wu, for a site with no unit type in hand (OM_UNIT_COLLISION_RADIUS when none is set). om_move_type_radius: one
  * type's, OM_UNIT_COLLISION_RADIUS when never set; om_tactical_reset reads it to carry the built-in types across the reset. Neither
