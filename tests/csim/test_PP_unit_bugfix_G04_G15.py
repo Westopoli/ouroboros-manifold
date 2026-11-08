@@ -117,23 +117,25 @@ def test_control_R_083_03_no_warden_no_reduction_one_warden_is_ten_percent(lib, 
     assert lib.om_unit_damage_reduction(w, v) == pytest.approx(0.10, abs=1e-9)
 
 
-def test_R_083_03_a_second_warden_adds_005_not_009(lib, world_factory):
-    """R-083-03 / Q-084-01: a second Warden within 300 wu adds 0.05: two Wardens give 0.15. Today
-    it is 1 - 0.9^2 = 0.19 (the second Warden adds 0.09)."""
+def test_R_083_03_a_second_warden_adds_nothing(lib, world_factory):
+    """R-083-03 / Q-084-01 (closed 2026-10-20, "no stacking"): a second Warden within 300 wu adds nothing: two Wardens give 0.10, as one does.
+    Test-defect, F4 engine rule fixes 2026-11-08: was test_R_083_03_a_second_warden_adds_005_not_009, pinned 0.15 for two Wardens; cause: the
+    bible says Wardens do not stack, the diminishing 0.10 + 0.05 pin was stale."""
     w = world_factory(n_regions=1)
     v = _line_with_wardens(lib, w, 2)
 
-    assert lib.om_unit_damage_reduction(w, v) == pytest.approx(0.15, abs=1e-9)
+    assert lib.om_unit_damage_reduction(w, v) == pytest.approx(0.10, abs=1e-9)
 
 
-def test_R_083_03_healing_stacks_per_warden(lib, world_factory):
-    """R-083-03: "regains 0.075 HP per tick ... healing stacks per Warden". A damaged Vanguard in
-    reach of two Wardens regains 0.15 hp in one tick. Green today; keeps the healing as it is while
-    the reduction is fixed."""
+def test_R_083_03_healing_does_not_stack_per_warden(lib, world_factory):
+    """R-083-03: the aura regains 0.075 HP per tick and a second Warden adds nothing. A damaged Vanguard in reach of two Wardens regains 0.075 hp
+    in one tick, as with one.
+    Test-defect, F4 engine rule fixes 2026-11-08: was test_R_083_03_healing_stacks_per_warden, pinned 2 * 0.075; cause: R-083-03 and Q-084-01
+    closed say no stacking."""
     w = world_factory(n_regions=1)
     v = _line_with_wardens(lib, w, 2)
     lib.om_unit_set_hp(w, v, 400.0)   # 80 percent: not 'badly damaged', so no Rally (R-086-08) muddies the reading
 
     step(lib, w)
 
-    assert hp(lib, w, v) == pytest.approx(400.0 + 2 * 0.075, abs=1e-9)
+    assert hp(lib, w, v) == pytest.approx(400.0 + 0.075, abs=1e-9)
