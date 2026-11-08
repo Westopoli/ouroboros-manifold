@@ -34,6 +34,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "move_commit.h"
 #include "economy_internal.h"
 #include "om_constants.h"
 #include <math.h>
@@ -1906,15 +1907,16 @@ static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty)
                   * (double)om_tac_period(om_tac(w));
     if (d <= OM_TIE_EPSILON) return 1;
     if (step <= 0.0) return 0;
-    if (d <= step) {
-        u->x = tx; u->y = ty;
-    } else {
-        u->x += dx / d * step;
-        u->y += dy / d * step;
+    {
+        /* F1 (R-207-06, R-207-07): the step goes through the move side's commit, so a flinch or a seen-step cannot leave the canvas or enter a
+         * blocked cell. A step the commit cut short ends the movement (the unit stands at the face), as arriving would. */
+        double nx = d <= step ? tx : u->x + dx / d * step, ny = d <= step ? ty : u->y + dy / d * step;
+        const int cut = om_move_commit(w, u->unit_id, u->x, u->y, &nx, &ny, OM_COMMIT_FLINCH) & (OM_COMMIT_CLAMPED | OM_COMMIT_SLID | OM_COMMIT_HELD);
+        u->x = nx; u->y = ny;
+        om_grid_move(om_tac(w), u->unit_id - 1);
+        om_unit_set_pos(w, u->unit_id, u->x, u->y);
+        return d <= step || cut;
     }
-    om_grid_move(om_tac(w), u->unit_id - 1);
-    om_unit_set_pos(w, u->unit_id, u->x, u->y);
-    return d <= step;
 }
 
 /* See also: om_tac_move_resume in tactical_move.c, which clears the held flag and keeps the group */

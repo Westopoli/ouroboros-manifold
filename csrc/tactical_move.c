@@ -2159,20 +2159,15 @@ static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_
     om_move_grid_update(ms, mu);
 }
 
-/* A step that would end in a blocked cell of the unit's layer slides along one axis, else is dropped, and
- * the route is planned again (E-13: a unit never enters a blocked cell). */
-static void om_move_terrain_guard(const om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t layer, double *nx, double *ny) {
-    int32_t cx, cy;
-    om_move_cell_at(ms, *nx, *ny, &cx, &cy);
-    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return;
-    mu->plan_valid = 0;
-    om_move_route_drop(mu);
-    om_move_cell_at(ms, *nx, mu->y, &cx, &cy);
-    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) { *ny = mu->y; return; }
-    om_move_cell_at(ms, mu->x, *ny, &cx, &cy);
-    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) { *nx = mu->x; return; }
-    *nx = mu->x;
-    *ny = mu->y;
+/* F1 (R-207-06, R-207-07): a unit's own step is written through om_move_commit, which cuts it to the canvas and keeps it out of a blocked cell.
+ * Returns the OM_COMMIT_* flags; a step cut short (slid or held) drops the plan, so the route is planned again from where the unit stands.
+ * See also: csrc/move_commit.c. */
+static int om_move_commit_step(om_world *w, om_move_unit *mu, double nx, double ny, int reason) {
+    const int r = om_move_commit(w, mu->unit_id, mu->x, mu->y, &nx, &ny, reason);
+    mu->x = nx;
+    mu->y = ny;
+    if (r & (OM_COMMIT_SLID | OM_COMMIT_HELD)) { mu->plan_valid = 0; om_move_route_drop(mu); }
+    return r;
 }
 
 /* R-095-01, R-095-06 (Q-095-01; PURSUE_BY_STEERING): a group member moves at the group's slowest pace, except a unit
@@ -2247,9 +2242,8 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     if (move_dist > 0.0) {
         double nx = om_move_clamp_axis(mu->x + steer_x * move_dist, ms->canvas_w);
         double ny = om_move_clamp_axis(mu->y + steer_y * move_dist, ms->canvas_h);
-        if (route) om_move_terrain_guard(w, ms, mu, (uint32_t)om_move_layer(w, id), &nx, &ny);
-        mu->x = nx;
-        mu->y = ny;
+        if (route) om_move_commit_step(w, mu, nx, ny, OM_COMMIT_STEER);
+        else { mu->x = nx; mu->y = ny; }
         om_move_grid_update(ms, mu);
     }
     if (mu->deflecting) {
@@ -2370,8 +2364,7 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
             if (mu->route_n > 1) { mu->route_i++; om_move_route_aim(ms, mu); }
             else mu->plan_valid = 0;
         } else if (d == 0.0 || v * left >= d) {
-            mu->x = mu->aim_x;
-            mu->y = mu->aim_y;
+            if (om_move_commit_step(w, mu, mu->aim_x, mu->aim_y, OM_COMMIT_WALK) & (OM_COMMIT_SLID | OM_COMMIT_HELD)) { om_move_grid_update(ms, mu); return; }
             if (d > 0.0) left -= d / v;
             if (mu->aim_is_waypoint && mu->route_n > 1) {
                 mu->route_i++;
@@ -2384,9 +2377,9 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
                 if (!mu->aim_is_waypoint) { mu->has_dest = 0; mu->deflecting = 0; }
             }
         } else {
-            mu->x += dx / d * v * left;
-            mu->y += dy / d * v * left;
+            const double wx = mu->x + dx / d * v * left, wy = mu->y + dy / d * v * left;
             left = 0.0;
+            if (om_move_commit_step(w, mu, wx, wy, OM_COMMIT_WALK) & (OM_COMMIT_SLID | OM_COMMIT_HELD)) { om_move_grid_update(ms, mu); return; }
         }
         om_move_grid_update(ms, mu);
     }
@@ -2446,10 +2439,10 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
         speed = om_unit_effective_speed(w, id);
         step_dist = speed * (double)period / (double)OM_TACTICAL_TICK_RATE;
         if (step_dist >= dist_to_dest) {
-            mu->x = mu->dest_x; mu->y = mu->dest_y;
+            om_move_commit_step(w, mu, mu->dest_x, mu->dest_y, OM_COMMIT_KITE);
         } else if (step_dist > 0.0) {
-            mu->x += step_dist * om_cos(heading);
-            mu->y += step_dist * om_sin(heading);
+            const double kx = mu->x + step_dist * om_cos(heading), ky = mu->y + step_dist * om_sin(heading);
+            om_move_commit_step(w, mu, kx, ky, OM_COMMIT_KITE);
         }
         om_move_grid_update(ms, mu);
         return;
