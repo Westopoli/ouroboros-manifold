@@ -34,7 +34,8 @@ TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
 
 
 class Rules:
-    """What the checks need to know about the world. blocked_cell(cx, cy, layer) -> bool; max_step / sensor_radius {unit id: wu}; suspended {rule: switch}."""
+    """What the checks need to know about the world. blocked_cell(cx, cy, layer) -> bool; max_step {unit id: wu a tick}; sensor_radius {unit id: wu}, the radius a unit
+    may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch}."""
 
     def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None):
         self.width, self.height = float(width), float(height)
@@ -144,6 +145,8 @@ class _Checker:
         return out
 
     def _lock(self, frame, u, r, p, tick, out):
+        """R-087-03. The leash (R-087-05) is its own rule and breaks a lock; the engine measures it from the unit's anchor, the place where its run of targets
+        began (a change straight from one target to another keeps the anchor, a pause with no target resets it), by max(sensor radius, weapon range)."""
         tgt = r["target"] if r["alive"] else 0
         held = self.lock.get(u)
         if p is not None and p["alive"] and r["alive"] and p["target"] and tgt and tgt != p["target"]:
@@ -151,15 +154,17 @@ class _Checker:
             o_prev, o_now = self.prev["units"].get(old), frame["units"].get(old)
             seen = p.get("seen", True) and r.get("prev_seen", r.get("seen", True))
             same_order = p.get("order") == r.get("order")
-            sr = self.rules.sensor_radius.get(u)
-            took = held[1] if held and held[0] == old else (p["x"], p["y"])
-            walked = math.hypot(r["x"] - took[0], r["y"] - took[1])
-            if o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not (sr is not None and walked > sr + LEASH_SLACK):
+            leash = self.rules.sensor_radius.get(u)
+            anchor = held[1] if held else (p["x"], p["y"])
+            walked = math.hypot(r["x"] - anchor[0], r["y"] - anchor[1])
+            if o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not (leash is not None and walked > leash + LEASH_SLACK):
                 out.append(_violation("R-087-03", tick, u, "target %d -> %d while %d was alive and seen" % (old, tgt, old)))
         if not tgt:
             self.lock.pop(u, None)
-        elif not held or held[0] != tgt:
+        elif not held:
             self.lock[u] = (tgt, (r["x"], r["y"]))
+        elif held[0] != tgt:
+            self.lock[u] = (tgt, held[1])
 
     def _held(self, units, u, r, tick, out):
         tgt = r["target"] if r["alive"] else 0
@@ -225,7 +230,7 @@ class Monitor:
             t = engine.unit_type(world, u)
             st = stats.get(t) or stats.setdefault(t, engine.type_stats(world, t))
             self._max_step[u] = st["speed"] * max(1.0, down) / TICK_RATE
-            self._sensor[u] = st["sensor_radius"]
+            self._sensor[u] = max(st["sensor_radius"], st["attack_range"])   # the leash, om_tac_leash in csrc/unit.c
         self._cache = {}
         self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight)))
         self.suspended = dict(self._chk.suspended)
