@@ -14,7 +14,7 @@ A violation is {"rule", "tick", "unit", "detail"}. The cell test of R-207-06 is 
 never a Python re-derivation. Every number below is a DRAFT constant, Westley's to change:
   DRAFT-inv-cell-depth 1 wu     DRAFT-inv-push-radius 40 wu     DRAFT-inv-stuck-ticks 20     DRAFT-inv-step-slack 1.3 wu
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
-(R-083-03), LEASH_SLACK 25 wu (the sweep's I27).
+(R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
 import ctypes
 import math
@@ -37,8 +37,9 @@ class Rules:
     """What the checks need to know about the world. blocked_cell(cx, cy, layer) -> bool; max_step {unit id: wu a tick}; sensor_radius {unit id: wu}, the radius a unit
     may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch}."""
 
-    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None):
+    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None):
         self.width, self.height = float(width), float(height)
+        self.reach = reach or {}      # {unit id: (layers up, layers down)}: a locked target that moves beyond it is dropped by the engine (R-164-02), not swapped
         self.blocked_cell = blocked_cell
         self.max_step = max_step or {}
         self.sensor_radius = sensor_radius or {}
@@ -144,9 +145,16 @@ class _Checker:
         out.sort(key=lambda v: (v["rule"], v["unit"]))
         return out
 
+    @staticmethod
+    def _in_reach(reach, mine, theirs):
+        """csrc/unit.c om_tac_in_reach: the same layer, or within the type's reach up / down."""
+        if mine == theirs:
+            return True
+        return theirs - mine <= reach[0] if theirs > mine else mine - theirs <= reach[1]
+
     def _lock(self, frame, u, r, p, tick, out):
         """R-087-03. The leash (R-087-05) is its own rule and breaks a lock; the engine measures it from the unit's anchor, the place where its run of targets
-        began (a change straight from one target to another keeps the anchor, a pause with no target resets it), by max(sensor radius, weapon range)."""
+        began (a change of target, or a pause with no target, keeps it; a new order resets it), by max(sensor radius, weapon range)."""
         tgt = r["target"] if r["alive"] else 0
         held = self.lock.get(u)
         if p is not None and p["alive"] and r["alive"] and p["target"] and tgt and tgt != p["target"]:
@@ -157,14 +165,16 @@ class _Checker:
             leash = self.rules.sensor_radius.get(u)
             anchor = held[1] if held else (p["x"], p["y"])
             walked = math.hypot(r["x"] - anchor[0], r["y"] - anchor[1])
-            if o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not (leash is not None and walked > leash + LEASH_SLACK):
+            reach = self.rules.reach.get(u)
+            out_of_reach = reach is not None and any(not self._in_reach(reach, a["layer"], o["layer"]) for a, o in ((p, o_prev), (r, o_now)) if o)
+            if (o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not out_of_reach
+                    and not (leash is not None and walked > leash - LEASH_SLACK)):
                 out.append(_violation("R-087-03", tick, u, "target %d -> %d while %d was alive and seen" % (old, tgt, old)))
-        if not tgt:
+        if p is not None and p.get("order") != r.get("order"):
+            held = None                      # a new order starts a new anchor
             self.lock.pop(u, None)
-        elif not held:
-            self.lock[u] = (tgt, (r["x"], r["y"]))
-        elif held[0] != tgt:
-            self.lock[u] = (tgt, held[1])
+        if tgt and (not held or held[0] != tgt):
+            self.lock[u] = (tgt, held[1] if held else (r["x"], r["y"]))   # the anchor stays through a pause with no target: an attack-mover keeps it while it pursues
 
     def _held(self, units, u, r, tick, out):
         tgt = r["target"] if r["alive"] else 0
@@ -224,15 +234,16 @@ class Monitor:
                     self._side[u] = faction
         self._ids.sort()
         stats = {}
-        self._max_step, self._sensor = {}, {}
+        self._max_step, self._sensor, self._reach = {}, {}, {}
         down = engine.get_param(world, engine.param_id("OM_TP_SLOPE_DOWN_MULT"))
         for u in self._ids:
             t = engine.unit_type(world, u)
             st = stats.get(t) or stats.setdefault(t, engine.type_stats(world, t))
             self._max_step[u] = st["speed"] * max(1.0, down) / TICK_RATE
             self._sensor[u] = max(st["sensor_radius"], st["attack_range"])   # the leash, om_tac_leash in csrc/unit.c
+            self._reach[u] = engine.profile_reach(world, t)
         self._cache = {}
-        self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight)))
+        self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
         self.tick = 0
