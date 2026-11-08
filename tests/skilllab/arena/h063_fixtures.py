@@ -89,7 +89,9 @@ def write(lay, directory):
 def run(path, out, seed=1, *extra):
     """The arena CLI (`arena.run.main`), called in-process so the engine library (a 13 s `cc` build per process) is built once per test session, not per fight;
     stdout and the exit code are the CLI's own (an argparse exit is caught as its code)."""
-    argv = ["--layout", str(path), "--seed", str(seed), "--out", str(out), *[str(e) for e in extra]]
+    # Test-defect (F0 engine rule fixes, 2026-11-08): `--allow-invalid`. run.py now exits 2 for a fight that broke a rule of scripts/skilllab/invariants.py (the stage
+    # fixtures still trip R-087-09 and continuity, Round 2 rules F5 and F8); these tests read the fight, not the checker's verdict, which test_invariants_wiring.py pins.
+    argv = ["--layout", str(path), "--seed", str(seed), "--out", str(out), "--allow-invalid", *[str(e) for e in extra]]
     buf, err = io.StringIO(), io.StringIO()
     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(err):
         try:
