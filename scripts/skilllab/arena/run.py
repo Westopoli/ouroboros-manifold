@@ -33,6 +33,7 @@ import tomllib
 from pathlib import Path
 from types import SimpleNamespace
 
+from scripts.skilllab import invariants
 from scripts.skilllab.arena import features, groups, hills, snap, snapshot
 from scripts.skilllab.arena.rate import rate
 from scripts.skilllab.catalogue.produce import _roster_ranges, check_layout, dump_toml, presets, rules
@@ -233,6 +234,7 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
             return [uid for uid, _, _ in rows if uid in still and engine.unit_alive(w, uid) and at - still[uid][2] > BLOCKED_SECONDS * TICKS_PER_SECOND
                     and not engine.unit_target(w, uid) and engine.unit_destination(w, uid) is not None]
 
+        monitor = invariants.Monitor(engine, w, preset["width"], preset["height"], sight)   # F0: every rule the checker knows, judged after each step; see doc["violations"]
         seen = sight == "on"
         frames = {0: _frame(engine, w, 0, rows, [] if ground else None, seen)}
         if seen:
@@ -245,10 +247,14 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
         tick, end = 0, "cap"
         while tick < cap:
             engine.step(w)
+            monitor.after_step()
             fired |= engine.fire_attackers(w)
             tick += 1
             if group_state:
                 groups.tick(engine, w, group_state, ids, tick)
+                for g in group_state:
+                    if g["released_at"] == tick:
+                        monitor.new_order(g["units"])
             for u in everyone:
                 if hp[u] > 0:
                     h = engine.unit_hp(w, u)
@@ -282,6 +288,7 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
             doc_orders["stage4"] = {"first_seen": first_seen, "sights": sights}
         if group_state:
             doc_orders["groups"] = groups.record(group_state)
+        doc_orders["invariants"] = monitor.document_keys()   # _document removes it
         return frames, tick, end, doc_orders
     finally:
         engine.free_world(w)
@@ -292,6 +299,7 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders, dense
     `dense_every` (closeup.py): keep every frame given, in tick order, and write it as `snapshot_every`, instead of thinning to snapshot.MAX_FRAMES."""
     orders = dict(orders)
     stage4 = orders.pop("stage4", None)
+    checked = orders.pop("invariants", None)   # F0: fight()'s verdict of the checker
     ticks = snapshot.frame_ticks(last, TICKS_PER_SECOND) if dense_every is None else sorted(frames)
     every = dense_every or (ticks[1] - ticks[0] if len(ticks) > 2 else BASE_EVERY)
     survivors = frames[last]["alive"]
@@ -317,6 +325,8 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders, dense
     if stage4:
         doc["sights"] = stage4["sights"]
         doc["result"]["first_seen"] = stage4["first_seen"]
+    if checked:
+        doc.update(checked)   # `violations` (the first 20) and `invalid`, only when a rule was broken
     return doc
 
 
@@ -334,6 +344,16 @@ def is_mirror(layout):
                for a2 in ([(r, 2 * cx - x, y) for r, x, y in a], [(r, x, 2 * cy - y) for r, x, y in a], [(r, 2 * cx - x, 2 * cy - y) for r, x, y in a]))
 
 
+def report_invalid(label, doc):
+    """F0: one `INVALID <label> <rule> tick <N> unit <U>` line per distinct rule of the fight's `violations` (the earliest of that rule); True when the fight is invalid."""
+    first = {}
+    for v in doc.get("violations", []):
+        first.setdefault(v["rule"], v)
+    for rule in sorted(first, key=lambda r: (first[r]["tick"], r)):
+        print("INVALID %s %s tick %d unit %d" % (label, rule, first[rule]["tick"], first[rule]["unit"]))
+    return bool(doc.get("invalid"))
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python3 -m scripts.skilllab.arena.run")
     ap.add_argument("--layout", required=True, type=Path)
@@ -345,6 +365,7 @@ def main(argv=None):
     ap.add_argument("--control", choices=("ground", "sight"), default="ground",
                     help="ground: the twin with `features` emptied (H-063); sight: the same fight with targeting by sight off, every layout (H-088, needs --sight on)")
     ap.add_argument("--cap-seconds", type=int, default=snapshot.CAP_SECONDS)
+    ap.add_argument("--allow-invalid", action="store_true", help="exit 0 although a fight broke a rule of scripts/skilllab/invariants.py (the INVALID lines and the flag in the file stay)")
     args = ap.parse_args(argv)
     if args.control == "sight" and args.sight == "off":
         ap.error("--control sight needs --sight on")
@@ -377,18 +398,24 @@ def main(argv=None):
         return 2
     args.out.mkdir(parents=True, exist_ok=True)
     fights = []
+    invalid = False
+    for rule, switch in sorted(invariants.suspended_for(args.sight).items()):
+        print("SUSPENDED %s %s %s" % (layout["id"], rule, switch))   # F0: a check this run cannot judge is said, never passed in silence
     for seed in range(args.seed, args.seed + count):
         frames, last, end, orders = fight(layout, seed, args.sight, args.cap_seconds)
         doc = _document(layout, args.layout, seed, args.sight, frames, last, end, orders)
         snapshot.write(doc, args.out / ("%s-s%d.fight.json" % (layout["id"], seed)))
+        invalid = report_invalid(layout["id"], doc) or invalid
         if args.control_dir and args.control == "sight":
             args.control_dir.mkdir(parents=True, exist_ok=True)
-            snapshot.write(_document(layout, args.layout, seed, "control", *fight(layout, seed, "control", args.cap_seconds)),
-                           args.control_dir / ("%s-control-s%d.fight.json" % (layout["id"], seed)))
+            control = _document(layout, args.layout, seed, "control", *fight(layout, seed, "control", args.cap_seconds))
+            snapshot.write(control, args.control_dir / ("%s-control-s%d.fight.json" % (layout["id"], seed)))
+            invalid = report_invalid(layout["id"] + "-control", control) or invalid
         elif args.control_dir and features.bound(layout):
             twin, twin_path = control_twin(layout, args.layout, args.control_dir)
-            snapshot.write(_document(twin, twin_path, seed, args.sight, *fight(twin, seed, args.sight, args.cap_seconds)),
-                           args.control_dir / ("%s-control-s%d.fight.json" % (layout["id"], seed)))
+            control = _document(twin, twin_path, seed, args.sight, *fight(twin, seed, args.sight, args.cap_seconds))
+            snapshot.write(control, args.control_dir / ("%s-control-s%d.fight.json" % (layout["id"], seed)))
+            invalid = report_invalid(layout["id"] + "-control", control) or invalid
         fights.append(snapshot.read(args.out / ("%s-s%d.fight.json" % (layout["id"], seed))))
         res = doc["result"]
         results = args.out / "results.md"
@@ -410,7 +437,7 @@ def main(argv=None):
         (args.out / ("%s.rate.json" % layout["id"])).write_text(json.dumps(summary, indent=2) + "\n")
         print("RATE %s seeds %d rate_a %s predict_rate %s agree %s" % (layout["id"], len(fights), summary["rate_a"], summary["predict_rate"],
                                                                       {True: "yes", False: "no", None: "not scored (mirror)"}[summary["agree"]]))
-    return 0
+    return 2 if invalid and not args.allow_invalid else 0
 
 
 if __name__ == "__main__":

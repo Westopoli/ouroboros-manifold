@@ -192,6 +192,12 @@ SWITCH_TARGET_BY_SIGHT = "OM_TP_TARGET_BY_SIGHT"
 KEEP = 20          # violations written to a fight document (spec: the first 20)
 
 
+def suspended_for(sight):
+    """{rule: switch} the checker cannot judge in a run with this `sight` ("off", "on" or "control"): sight "off" turns targeting by sight off, and R-087-03's
+    clause 'leaves its side's sight' has no meaning without it. ("control" also has targeting by sight off; the test writer's contract names only "off".)"""
+    return {"R-087-03": SWITCH_TARGET_BY_SIGHT} if sight == "off" else {}
+
+
 class Monitor:
     """`run.fight` builds one after spawning and orders, and calls `after_step()` right after every `engine.step(w)`. It reads the engine's state, builds one frame
     and feeds the checker; `violations` is every violation so far ordered by (tick, rule, unit); `suspended` the {rule: switch} this run cannot judge (sight "off" turns
@@ -221,8 +227,7 @@ class Monitor:
             self._max_step[u] = st["speed"] * max(1.0, down) / TICK_RATE
             self._sensor[u] = st["sensor_radius"]
         self._cache = {}
-        suspended = {"R-087-03": SWITCH_TARGET_BY_SIGHT} if sight == "off" else {}
-        self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended))
+        self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight)))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
         self.tick = 0
@@ -281,11 +286,7 @@ class Monitor:
         self.violations += self._chk.feed(self._frame)
 
     def document_keys(self):
-        """What a fight document carries (spec F0): `violations` (the first KEEP, by (tick, rule, unit)), `invalid`, and, when a check was not judged, `suspended`."""
-        out = {}
-        if self.violations:
-            out["violations"] = sorted(self.violations, key=lambda v: (v["tick"], v["rule"], v["unit"]))[:KEEP]
-            out["invalid"] = True
-        if self.suspended:
-            out["suspended"] = dict(self.suspended)
-        return out
+        """What a fight document carries (spec F0): `violations` (the first KEEP, by (tick, rule, unit)) and `invalid`, only when a rule was broken."""
+        if not self.violations:
+            return {}
+        return {"violations": sorted(self.violations, key=lambda v: (v["tick"], v["rule"], v["unit"]))[:KEEP], "invalid": True}
