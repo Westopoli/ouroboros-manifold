@@ -243,8 +243,9 @@ def _state_hash(lib, w):
 # Re-recorded day20 on push/pp-c3-land (parity wave, leash anchor, give-up rule moved target choice and paths on purpose; baseline_hashes.json still green with both switches at 0; was: A155 to A159 recorded).
 # Re-recorded day21 on push/pp-settle-gold (A184 collision settle epsilon 0.1 wu ends the push sequence early; was: day20 pp-c3-land recorded).
 # Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold recorded). TD-PP-A199-rerecord.
+# Re-recorded 2026-11-08 (engine rule fixes F2, F3, F4; the new clash run has 0 R-207-06, R-087-04, R-084-04, R-087-03, R-083-03 violations by scripts/skilllab/invariants.py; was: day23 recorded: clash d6ac88b5; spread 12ad27cb unchanged). Test-defect.
 GOLDEN = {
-    "clash": "d6ac88b519859b668f3870174c658375ea356528a4f2798f868190b139a41e7c",
+    "clash": "ec37b6038acaaa0d6a0b6eab93bfa0c744966a3d8e9b025984258b71d0c8d3c0",
     "spread": "12ad27cb5f68afb9e32c68dbd9c38cf22ccaa61cbda43a18e7409024a861cceb",
 }
 
