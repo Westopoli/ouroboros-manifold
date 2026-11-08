@@ -400,7 +400,7 @@ def main(argv=None):
     fights = []
     invalid = False
     for rule, switch in sorted(invariants.suspended_for(args.sight).items()):
-        print("SUSPENDED %s %s %s" % (layout["id"], rule, switch))   # F0: a check this run cannot judge is said, never passed in silence
+        print("SUSPENDED %s %s %s" % (layout["id"], rule, switch), file=sys.stderr)   # F0: a check this run cannot judge is said, never passed in silence (stderr: stdout is pinned by the stage tests)
     for seed in range(args.seed, args.seed + count):
         frames, last, end, orders = fight(layout, seed, args.sight, args.cap_seconds)
         doc = _document(layout, args.layout, seed, args.sight, frames, last, end, orders)

@@ -225,7 +225,7 @@ class Monitor:
         self._cell = lib.om_navmesh_is_cell_blocked
         self._cell.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32]
         self._cell.restype = ctypes.c_int
-        self._can_shoot, self._can_see = lib.om_combat_can_shoot, lib.om_player_can_see
+        self._can_shoot = lib.om_combat_can_shoot
         self._ids, self._side = [], {}
         for (wa, faction), us in engine._own.items():
             if wa == world.value:
@@ -243,6 +243,7 @@ class Monitor:
             self._sensor[u] = max(st["sensor_radius"], st["attack_range"])   # the leash, om_tac_leash in csrc/unit.c
             self._reach[u] = engine.profile_reach(world, t)
         self._cache = {}
+        self._terrain = bool(engine._lib.om_terrain_band_at(world, 0.0, 0.0) > 0)   # a world with no terrain reads band 0 everywhere
         self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
@@ -253,10 +254,16 @@ class Monitor:
         self._chk.feed(self._frame)
 
     def _blocked(self, cx, cy, layer):
+        """The engine's own cell test, `om_navmesh_is_cell_blocked`. On a terrain world its bits also hold the ground (R-200-02: layers below a cell's band minus one are
+        blocked); that is not a box, wall or building, and a walker climbs a slope cell through it (R-207-06 covers planar obstacles, not slope cells: spec F1), so a
+        cell blocked only by the ground counts as open."""
         key = (cx, cy, layer)
         v = self._cache.get(key)
         if v is None:
-            v = self._cache[key] = bool(self._cell(self.w, cx, cy, layer))
+            v = bool(self._cell(self.w, cx, cy, layer))
+            if v and self._terrain and layer < self.engine.terrain_band_at(self.w, cx * CELL + CELL / 2, cy * CELL + CELL / 2) - 1:
+                v = False
+            self._cache[key] = v
         return v
 
     def new_order(self, ids):
@@ -289,7 +296,7 @@ class Monitor:
             row["order"] = token
             p = prev.get(u)
             if alive and p is not None and p["alive"] and p["target"] and tgt and tgt != p["target"]:
-                row["prev_seen"] = bool(self._can_see(w, self._side[u], p["target"]))
+                row["prev_seen"] = bool(e.seen_by_sight(w, self._side[u], [p["target"]]))   # the engine's own test (om_tac_faction_sees): any living unit of the side sees it
             if alive and tgt:
                 row["shootable"] = bool(self._can_shoot(w, u, tgt))
             units[u] = row
