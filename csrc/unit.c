@@ -2228,7 +2228,10 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     most_damaged = om_tac_most_damaged_for(w, u);
     cohort_turn = (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT;
-    if ((u->target_id == 0 || most_damaged || (pursue && t && !om_tac_in_range(w, u, t))) && u->order != OM_ORDER_ATTACK_TARGET
+    /* F3 (R-087-03, R-087-08 as rewritten 2026-11-08): acquisition runs only while the unit has no lock (or under the lab-only
+     * most_damaged policy, Q-008-05). A locked target that stepped out of attack range is walked to (R-087-04), not swapped
+     * for the nearest; it leaves the lock only by dying, leaving the side's sight, the leash or a new order. */
+    if ((u->target_id == 0 || most_damaged) && u->order != OM_ORDER_ATTACK_TARGET
         && cohort_turn) {
         /* H-057: an idle or attack-moving unit looks as far as it can be led, the type's leash; a guard, and a unit on
          * its way back to its anchor, only as far as it can shoot */
