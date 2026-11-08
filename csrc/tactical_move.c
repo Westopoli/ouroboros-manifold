@@ -49,6 +49,7 @@
 #include "ouroboros_sim.h"
 #include "om_internal.h"
 #include "om_constants.h"
+#include "move_commit.h"
 #include <math.h>
 #include <stddef.h>
 #include <string.h>
@@ -1286,8 +1287,22 @@ static int om_move_is_walker(const om_world *w, uint32_t id) {
     return t >= 0 && om_unit_profile_movement_kind(w, t) == OM_MOVE_WALKING;
 }
 
+/* F1 (E-13 Invariants, R-207-06): one definition of "blocked for this unit". A box, a wall, a building or a dense obstacle cell blocks every
+ * unit; a walker on a terrain world is also blocked by the walk mask (before F1 it read the mask alone, which let it through a box).
+ * See also: om_move_blocked_for and om_move_route_cell_blocked below, which hand this to csrc/move_commit.c and csrc/walk_route.c. */
 static int om_move_cell_blocked_for(const om_world *w, om_move_state *ms, int walk, uint32_t layer, int32_t cx, int32_t cy) {
-    return walk ? om_move_walk_blocked(w, layer, cx, cy) : om_move_cell_blocked(w, ms, layer, cx, cy);
+    return om_move_cell_blocked(w, ms, layer, cx, cy) || (walk && om_move_walk_blocked(w, layer, cx, cy));
+}
+
+/* Internal (csrc/move_commit.h): cell (cx, cy) of the unit's own layer, blocked for that unit. Reads only (no om_move_touch, no sync). */
+int om_move_blocked_for(const om_world *w, uint32_t unit_id, int32_t cx, int32_t cy) {
+    int32_t layer = om_unit_get_layer(w, unit_id);
+    return om_move_cell_blocked_for(w, om_ms((om_world *)w), om_move_is_walker(w, unit_id), layer < 0 ? 0u : (uint32_t)layer, cx, cy);
+}
+
+/* Internal (csrc/move_commit.h): the mapgen and density part of "blocked" on a layer, for the router (csrc/walk_route.c). */
+int om_move_route_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy) {
+    return om_move_cell_blocked(w, om_ms((om_world *)w), layer, cx, cy);
 }
 
 static double om_move_density_at_pos(om_move_state *ms, double x, double y, uint32_t layer) {
