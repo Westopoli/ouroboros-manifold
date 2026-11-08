@@ -258,6 +258,7 @@ typedef struct {
 
     om_move_field        fields[OM_MOVE_FIELD_POOL];
     uint32_t             field_next, terrain_epoch;
+    uint64_t             serial; /* F1: which world this state belongs to, for the route cache key (walk_route.c); not saved or hashed, a loaded state gets a fresh one */
     uint32_t             *bfs_queue, *bfs_scratch; /* a cell per entry of the largest canvas, allocated by the first search */
     double               *density; /* OM_LAYER_COUNT * OM_MOVE_DENSITY_SIDE^2, allocated by the first set */
 
@@ -563,11 +564,14 @@ static const double OM_STEERING_SWEEP_ANGLES[OM_STEERING_SWEEP_COUNT] = {
 };
 
 static void om_move_set_save_hooks(om_world *w);
+static uint64_t om_move_next_serial; /* F1: the route cache identifies a world by this, not by its address, which a freed world's successor can reuse */
+
 static om_move_state *om_ms(om_world *w) {
     om_move_state *ms = (om_move_state *)w->move_state;
     if (!ms) {
         uint32_t k;
         ms = (om_move_state *)calloc(1, sizeof(om_move_state));
+        ms->serial = ++om_move_next_serial;
         for (k = 0; k < OM_STEERING_SWEEP_COUNT; k++) {
             om_move_sincos_approx(OM_STEERING_SWEEP_ANGLES[k], &ms->sweep_sin[k], &ms->sweep_cos[k]);
         }
@@ -650,6 +654,12 @@ void om_move_terrain_changed(om_world *w) {
  * See also: walk_route.c, the caller; om_move_terrain_changed above, the bump. */
 uint32_t om_move_terrain_epoch(om_world *w) {
     return w ? om_ms(w)->terrain_epoch : 0;
+}
+
+/* Internal, not in the header: the serial of the world's movement state (part of the planner's cache key with the epoch).
+ * See also: walk_route.c, the caller; F1 (the mask now depends on the mapgen cells, which a world at a reused address does not share). */
+uint64_t om_move_world_serial(om_world *w) {
+    return w ? om_ms(w)->serial : 0;
 }
 
 /* Internal, not in the header: the canvas only lives in the private mapgen state, so om_map_set_canvas and
@@ -4003,6 +4013,7 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         return 1;
     }
     if (w->move_state && w->move_state_free) w->move_state_free(w->move_state);
+    ms->serial = ++om_move_next_serial;
     w->move_state = ms;
     w->move_state_free = om_move_state_free_fn;
     return 0;

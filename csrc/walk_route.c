@@ -73,6 +73,7 @@ static struct {
     int keyed;
     const om_world *key_w;
     uint32_t key_gen, key_epoch, key_cw, key_ch, count;
+    uint64_t key_serial;
     int key_layer;
 } wr_scr;
 
@@ -210,6 +211,7 @@ int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double
     int32_t off[WR_NEIGHBOURS];
     int terrain, layer;
     uint32_t cw = 0, ch = 0, gen, epoch;
+    uint64_t serial;
     int ret = -1;
 
     if (seconds) *seconds = 0.0;
@@ -229,7 +231,8 @@ int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double
     if (!wr_scratch_alloc()) return -1;
     gen = terrain ? ((const om_terrain_state *)w->terrain_state)->gen_id : 0;
     epoch = om_move_terrain_epoch((om_world *)w);
-    if (!(wr_scr.keyed && wr_scr.key_w == w && wr_scr.key_gen == gen && wr_scr.key_epoch == epoch && wr_scr.key_layer == layer &&
+    serial = om_move_world_serial((om_world *)w);
+    if (!(wr_scr.keyed && wr_scr.key_w == w && wr_scr.key_serial == serial && wr_scr.key_gen == gen && wr_scr.key_epoch == epoch && wr_scr.key_layer == layer &&
           wr_scr.key_cw == cw && wr_scr.key_ch == ch)) {
         wr_scr.keyed = 0;
         wr_scr.count = 0;
@@ -242,7 +245,7 @@ int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double
             for (i = 0; i < n_cells; i++) wr_scr.mask[i] = (uint8_t)!om_move_route_cell_blocked(w, (uint32_t)layer, (int32_t)(i % cw), (int32_t)(i / cw));
         }
         wr_edges_fill(cw, ch, wr_scr.mask, terrain ? wr_scr.hcm : NULL);
-        wr_scr.key_w = w; wr_scr.key_gen = gen; wr_scr.key_epoch = epoch; wr_scr.key_layer = layer;
+        wr_scr.key_w = w; wr_scr.key_serial = serial; wr_scr.key_gen = gen; wr_scr.key_epoch = epoch; wr_scr.key_layer = layer;
         wr_scr.key_cw = cw; wr_scr.key_ch = ch;
         wr_scr.keyed = 1;
     }

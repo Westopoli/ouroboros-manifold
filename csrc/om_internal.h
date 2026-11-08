@@ -463,6 +463,8 @@ int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double
 void om_move_walker_tick(om_world *w);
 /* The route-cache epoch om_move_terrain_changed and om_move_set_canvas_size bump; body in csrc/tactical_move.c, caller csrc/walk_route.c. */
 uint32_t om_move_terrain_epoch(om_world *w);
+/* F1: which world the movement state belongs to (the planner's cache key); body in csrc/tactical_move.c, caller csrc/walk_route.c. */
+uint64_t om_move_world_serial(om_world *w);
 /* Internal, not in the header: the stored walk route of a unit (W2); returns route_n, writes route_i and min(route_n, cap)
  * interleaved (x, y) pairs, a read that changes no checksum. Body in csrc/tactical_move.c.
  * See also: tests/csim/test_VG_W_w2_routes.py */
