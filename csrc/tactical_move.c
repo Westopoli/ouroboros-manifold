@@ -1288,10 +1288,21 @@ static int om_move_is_walker(const om_world *w, uint32_t id) {
 }
 
 /* F1 (E-13 Invariants, R-207-06): one definition of "blocked for this unit". A box, a wall, a building or a dense obstacle cell blocks every
- * unit; a walker on a terrain world is also blocked by the walk mask (before F1 it read the mask alone, which let it through a box).
+ * unit; a walker on a terrain world is also blocked by the walk mask (before F1 it read the mask alone, which let it through a box). What the
+ * terrain's own ground wrote into the same bits (om_terrain_apply_ground: layers below a cell's band minus one are blocked) is not planar and
+ * stays with the walk mask, which lets a walker climb a slope cell on its way to the next layer.
  * See also: om_move_blocked_for and om_move_route_cell_blocked below, which hand this to csrc/move_commit.c and csrc/walk_route.c. */
+static int om_move_planar_blocked(const om_world *w, om_move_state *ms, uint32_t layer, int32_t cx, int32_t cy) {
+    const om_terrain_state *st;
+    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return 0;
+    st = (const om_terrain_state *)w->terrain_state;
+    if (st && st->present && cx >= 0 && cy >= 0 && cx < (int32_t)st->cells_w && cy < (int32_t)st->cells_h
+        && (int)layer < (int)st->band[(size_t)cy * st->cells_w + (size_t)cx] - 1) return 0;
+    return 1;
+}
+
 static int om_move_cell_blocked_for(const om_world *w, om_move_state *ms, int walk, uint32_t layer, int32_t cx, int32_t cy) {
-    return om_move_cell_blocked(w, ms, layer, cx, cy) || (walk && om_move_walk_blocked(w, layer, cx, cy));
+    return walk ? (om_move_planar_blocked(w, ms, layer, cx, cy) || om_move_walk_blocked(w, layer, cx, cy)) : om_move_cell_blocked(w, ms, layer, cx, cy);
 }
 
 /* Internal (csrc/move_commit.h): cell (cx, cy) of the unit's own layer, blocked for that unit. Reads only (no om_move_touch, no sync). */
@@ -1300,9 +1311,9 @@ int om_move_blocked_for(const om_world *w, uint32_t unit_id, int32_t cx, int32_t
     return om_move_cell_blocked_for(w, om_ms((om_world *)w), om_move_is_walker(w, unit_id), layer < 0 ? 0u : (uint32_t)layer, cx, cy);
 }
 
-/* Internal (csrc/move_commit.h): the mapgen and density part of "blocked" on a layer, for the router (csrc/walk_route.c). */
+/* Internal (csrc/move_commit.h): the planar part of "blocked" on a layer (box, wall, building, dense cell; not the terrain's ground), for the router (csrc/walk_route.c). */
 int om_move_route_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy) {
-    return om_move_cell_blocked(w, om_ms((om_world *)w), layer, cx, cy);
+    return om_move_planar_blocked(w, om_ms((om_world *)w), layer, cx, cy);
 }
 
 static double om_move_density_at_pos(om_move_state *ms, double x, double y, uint32_t layer) {

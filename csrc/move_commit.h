@@ -25,12 +25,13 @@ enum {
 };
 
 /* The one definition of "blocked for this unit": cell (cx, cy) of the unit's own layer is blocked when the mapgen grid says so (a box, a wall,
- * a building, the canvas edge), its density is above the obstacle threshold, or, for a walker on a terrain world, the walk mask says so.
+ * a building, the canvas edge), its density is above the obstacle threshold, or, for a walker on a terrain world, the walk mask says so (the ground's
+ * own bits in the mapgen grid are left to the walk mask for a walker: a slope is climbed through them).
  * Body in csrc/tactical_move.c, beside the density grid it reads. */
 int om_move_blocked_for(const om_world *w, uint32_t unit_id, int32_t cx, int32_t cy);
 
-/* The router's view of the same definition for a layer (walk_route.c): the mapgen and density part, without the walk mask, which the router
- * reads itself. Body in csrc/tactical_move.c. */
+/* The router's view of the same definition for a layer (walk_route.c): the planar part (mapgen box, wall, building, density), without the walk mask,
+ * which the router reads itself. Body in csrc/tactical_move.c. */
 int om_move_route_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy);
 
 /* A unit that stood at (ox, oy) is asked to stand at (*nx, *ny). Writes the position it may stand at: clamped to the canvas when one is set, and

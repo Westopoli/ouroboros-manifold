@@ -11,12 +11,16 @@
 
 void om_move_get_canvas_size(om_world *w, double *width, double *height); /* csrc/tactical_move.c */
 
-static int omc_cell_of(double v) {
-    return (int)floor(v / (double)OM_NAVMESH_CELL_SIZE);
+/* The cell a coordinate is in; a coordinate on the canvas's far edge is in the last cell, not in the blocked cell beyond the canvas (a unit may stand
+ * on the edge, R-207-07). `extent` is the canvas size on that axis, 0 when none is set. */
+static int omc_cell_of(double v, double extent) {
+    int c = (int)floor(v / (double)OM_NAVMESH_CELL_SIZE);
+    if (extent > 0.0 && v >= extent) c = (int)ceil(extent / (double)OM_NAVMESH_CELL_SIZE) - 1;
+    return c;
 }
 
-static int omc_blocked_at(const om_world *w, uint32_t unit_id, double x, double y) {
-    return om_move_blocked_for(w, unit_id, omc_cell_of(x), omc_cell_of(y));
+static int omc_blocked_at(const om_world *w, uint32_t unit_id, double cw, double ch, double x, double y) {
+    return om_move_blocked_for(w, unit_id, omc_cell_of(x, cw), omc_cell_of(y, ch));
 }
 
 int om_move_commit(const om_world *w, uint32_t unit_id, double ox, double oy, double *nx, double *ny, int reason) {
@@ -31,12 +35,12 @@ int om_move_commit(const om_world *w, uint32_t unit_id, double ox, double oy, do
     }
     *nx = rx;
     *ny = ry;
-    if ((rx == ox && ry == oy) || omc_blocked_at(w, unit_id, ox, oy) || !omc_blocked_at(w, unit_id, rx, ry)) return result;
-    if (!omc_blocked_at(w, unit_id, rx, oy)) {
+    if ((rx == ox && ry == oy) || omc_blocked_at(w, unit_id, cw, ch, ox, oy) || !omc_blocked_at(w, unit_id, cw, ch, rx, ry)) return result;
+    if (!omc_blocked_at(w, unit_id, cw, ch, rx, oy)) {
         *ny = oy;
         return result | OM_COMMIT_SLID;
     }
-    if (!omc_blocked_at(w, unit_id, ox, ry)) {
+    if (!omc_blocked_at(w, unit_id, cw, ch, ox, ry)) {
         *nx = ox;
         return result | OM_COMMIT_SLID;
     }
