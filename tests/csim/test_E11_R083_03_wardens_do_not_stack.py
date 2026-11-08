@@ -70,9 +70,9 @@ def _hit_loss(lib, wf, in_range, out_of_range=0):
     Vanguard is hurt, and the LAST hit is used (the first lands on a full-hp Vanguard, which cannot be healed that tick)."""
     w = _world(lib, wf)
     v = _vanguard(lib, w, 500.0)
-    _wardens(lib, w, in_range, out_of_range)
-    r = spawn(lib, w, RAIDER, 1, 1000, 1150)
+    r = spawn(lib, w, RAIDER, 1, 1000, 1150)       # Test-defect (F3, 2026-11-08): spawned before the Wardens so its id, and its targeting cohort, is the same for every n
     lib.om_unit_set_hp(w, r, 1.0e6)
+    _wardens(lib, w, in_range, out_of_range)
     deltas = []
     for _ in range(HIT_TICKS):
         before = hp(lib, w, v)
