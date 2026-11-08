@@ -38,7 +38,10 @@ def test_R_087_03_control_units_lock_and_re_lock_in_these_fights(name, sight):
     the locks held while the fight moved on, not that no unit ever had a target."""
     rec = oracle.played(name, sight)
     changes = sum(1 for tk in rec.ticks for u in rec.ids if tk["pre"][u]["alive"] and tk["post"][u]["alive"] and tk["pre"][u]["tgt"] != tk["post"][u]["tgt"])
-    assert changes > 100, "only %d target changes" % changes
+    # Test-defect (F3 with F1, 2026-11-08): the bound was 100, measured on the unfixed tree where L-0039 units swapped targets 694 (sight off) and 6121 (sight on)
+    # times with no shot fired. With locks held and walkers routed round the box the 8 v 8 fights change targets 70 (off) and 84 (on) times while
+    # firing 626 and 521 shots; 50 is three changes a unit, so a fight where nobody locked still fails.
+    assert changes > 50, "only %d target changes" % changes
 
 
 def test_R_087_03_control_sight_off_open_fight_with_boxes_has_no_swaps_today():
