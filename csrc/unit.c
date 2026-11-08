@@ -2758,8 +2758,8 @@ void om_unit_attack(om_world *w, uint32_t attacker, uint32_t target) {
 
 /* ALG-60: Brace 0.50 (self, while its bonus is granted) + Fortify 0.20
  * (any friendly within OM_FORTIFY_RADIUS of an active Bastion) + Warden
- * aura (om_warden_aura_reduction_for, already diminishing per extra
- * Warden), capped at OM_ABILITY_DAMAGE_REDUCTION_CAP. Brace/Fortify/Warden
+ * aura 0.10 (om_warden_aura_reduction_for, once however many Wardens
+ * are in range: R-083-03), capped at OM_ABILITY_DAMAGE_REDUCTION_CAP. Brace/Fortify/Warden
  * each also have a force_*_reduction flag (om_unit_set_brace_active,
  * om_unit_set_fortify_active, om_unit_set_warden_aura_active) that a test
  * can set directly on any unit type, independent of the real Vanguard
