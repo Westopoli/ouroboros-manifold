@@ -104,7 +104,7 @@ def _bombards(lib, wf, walk, n):
     """n Bombards attack-moved together (one group) toward a Supply with 1 hp that the first shot kills; the shooter then has its target
     gone and resumes the walk, so any step it takes inside the pause is the pause being ignored."""
     w = _world(lib, wf, walk)
-    us = [spawn(lib, w, BOMBARD, 0, 100, 400 + 40 * i) for i in range(n)]
+    us = [spawn(lib, w, BOMBARD, 0, 100, 400 + 60 * i) for i in range(n)]   # Test-defect (F2, 2026-11-08): was 40 wu apart; the walkers close to 29.9 wu and the mover pushes the paused shooter, a push the scene says it keeps out
     t = spawn(lib, w, SUPPLY, 1, 560, 400)
     lib.om_unit_set_hp(w, t, 1.0)
     attack_move(lib, w, us, 1500, 400)
