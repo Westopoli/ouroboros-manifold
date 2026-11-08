@@ -122,9 +122,9 @@ def test_R_083_03_two_wardens_and_one_leave_the_vanguard_equally_hurt_over_a_fig
     for n in (1, 2, 3):
         w = _world(lib, world_factory)
         v = _vanguard(lib, w, 500.0)
-        _wardens(lib, w, n)
-        r = spawn(lib, w, RAIDER, 1, 1000, 1150)
+        r = spawn(lib, w, RAIDER, 1, 1000, 1150)       # Test-defect (F4, 2026-11-08): spawned before the Wardens so its id, and its targeting cohort, is the same for every n
         lib.om_unit_set_hp(w, r, 1.0e6)
+        _wardens(lib, w, n)
         step(lib, w, 80)
         left.append(hp(lib, w, v))
     assert max(left) - min(left) < EPS, "hp after 80 ticks with 1, 2, 3 Wardens: %s" % left
