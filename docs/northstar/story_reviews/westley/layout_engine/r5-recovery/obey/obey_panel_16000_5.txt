@@ -1,6 +1,6 @@
 OBEY pass 2   seed 5   canvas 16000   FAIL (ring)
-check 756 ms incl. carving 569 (draft 500)   route_count 2 (2 + floor(u*3))
-carved 2229 cells in 12 routes   choke on a route: true   pad scale 1.00   span 900 wu
+check 730 ms incl. carving 552 (draft 500)   route_count 2 (2 + floor(u*3))
+carved 2217 cells in 12 routes   choke on a route: true   pad scale 1.00   span 900 wu
 choke asked 228 wu, measured 210 wu   at 0.60 of the base line (rolled 0.58)
 per point: routes small / big (need 2 / 1), pad ring max slope (limit 35 deg)
   base_b    small 4  big 2  ring 41.2 deg  FAIL
