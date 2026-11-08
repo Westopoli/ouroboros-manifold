@@ -149,10 +149,6 @@
  * OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9: no ALG/config source; kept local. */
 #define OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION 0.5
 #define OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9
-/* Q-084-01 (c): each further Warden adds half the previous one's reduction
- * (0.10, 0.05, then 0.025 ...); no ALG/config source for the halving. */
-#define OM_WARDEN_AURA_DIMINISH_FACTOR 0.5
-
 /* ALG-60: "after firing the unit's movement pauses ATTACK_BACKSWING_SEC =
  * 0.5" -- OM_ATTACK_BACKSWING_SEC/OM_TACTICAL_TICK_RATE are both already
  * declared in om_constants.h. */
@@ -1066,23 +1062,15 @@ static int om_tactical_multiple_factions_alive(const om_tac_state *st) {
     return 0;
 }
 
-/* R-083-03/Q-084-01: n Wardens in range give diminishing reduction: the first
- * 0.10, each additional Warden half the previous one's contribution (two
- * Wardens 0.15). Summed term by term, no libm pow(). */
+/* R-083-03/R-084-01, Q-084-01 closed 2026-10-20 "no stacking": one Warden in
+ * range gives the reduction 0.10; two or more give the same 0.10. */
 static double om_warden_aura_reduction_for(om_tac_state *st, const om_unit_row *target) {
-    int n;
-    double total = 0.0, term = OM_WARDEN_AURA_DAMAGE_REDUCTION;
     if (st->n_wardens == 0) {
         if (!st->grid.built) om_grid_rebuild(st);
         return 0.0;
     }
-    n = (int)om_grid_kind_scan(st, 0, target->faction_id, -1, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS);
-    if (n <= 0) return 0.0;
-    while (n-- > 0) {
-        total += term;
-        term *= OM_WARDEN_AURA_DIMINISH_FACTOR;
-    }
-    return total;
+    return om_grid_kind_scan(st, 0, target->faction_id, -1, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS) > 0
+        ? OM_WARDEN_AURA_DAMAGE_REDUCTION : 0.0;
 }
 
 /* Each Warden counts the same-faction living units in its circle. The counts are
@@ -1130,7 +1118,7 @@ static int om_aura_flatten(om_tac_state *st) {
     return 1;
 }
 
-/* R-083-03: healing stacks linearly, unlike the damage reduction above. */
+/* R-083-03: the heal does not stack either: one Warden in range heals 0.075 a tick, a second adds nothing (Q-084-01). */
 static void om_tactical_apply_aura_regen(om_world *w) {
     om_tac_state *st = om_tac(w);
     uint32_t i, k;
@@ -1160,7 +1148,7 @@ static void om_tactical_apply_aura_regen(om_world *w) {
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (st->aura_count[i] > 0) {
-            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)st->aura_count[i] * (double)om_tac_period(st);
+            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)om_tac_period(st);
             if (u->hp > u->max_hp) u->hp = u->max_hp;
         }
     }
