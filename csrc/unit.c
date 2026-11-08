@@ -2340,6 +2340,8 @@ static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
         int pending = u->fire_pending;
         u->fire_pending = 0;
         if (!pending || !u->in_use || u->hp <= 0.0 || u->target_id == 0) continue;
+        /* F2 (R-087-04, R-096-02): a unit that walked this tick does not fire; it fires on the next, when halted. */
+        if (om_move_moved_own_power(w, u->unit_id, om_tactical_tick(w))) continue;
         t = om_registry_find_in(st, u->target_id);
         if (t && t->hp > 0.0 && om_tac_in_range(w, u, t)
             && (u->cooldown >= u->attack_interval * (double)OM_TACTICAL_TICK_RATE - OM_TIE_EPSILON || !u->fired)
