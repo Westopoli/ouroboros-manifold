@@ -8,7 +8,7 @@ Stories are the north star. Nothing is built that is not a story, and a story is
 |---|---|---|---|
 | Epic | `E-##` | A feature area, one file | `docs/bible/epics/E-##-<slug>.md` |
 | Story | `S-###` | One player-facing behaviour in the player's words | `docs/bible/stories.md` (one row) and the epic file (one section) |
-| Rule | `R-###-##` | One acceptance criterion, Given/When/Then with concrete values, mapped to at least one test | the epic file |
+| Rule | `R-###-##` | One acceptance criterion, Given/When/Then with concrete values, carrying a Proof line once built (Proof, below) | the epic file |
 | Flag | `Q-###-##` | An open question with two or three candidate answers; blocks Ready | `docs/northstar/ambiguity_register.md` |
 | Reference | none | A clip, shot or note from another game showing how a story should look or feel | `docs/bible/references/E-##/` |
 | Harness story | `H-###` | Work on the method or the tooling, same columns as a story | `docs/method/harness.md` |
@@ -23,7 +23,9 @@ As a commander, I want a unit's layer to change what it can see, so that choosin
 
 Rules
 - R-042-01  Given a Line unit on layer 2 and an enemy on layer 1 at distance 8, When one tick passes, Then the enemy is in the unit's visible set.
+  Proof: tests/csim/test_E01_S042_layer_sight.py::test_enemy_at_8_is_visible | scenario | verified 1a2b3c4d 2026-11-09
 - R-042-02  Given the same units at distance 14, When one tick passes, Then the enemy is not in the visible set.
+  Proof: unbuilt
 
 Inputs: layer command (1..3), unit position, enemy position, fog state.
 Outputs: visible set per unit in the tick delta; HUD vision cone; fog reveal on screen.
@@ -36,9 +38,36 @@ Open flags: none.
 
 Rules use concrete values, never adjectives. "Sees further" is not a rule; "sees at 14, not at 8" is.
 
+## Proof
+
+A rule that code implements points at the one test that enforces it. Written 2026-11-09 after the stage 4 lab re-run showed rules that were written, built and green in tests, and broken in play (`docs/reports/2026-11-07-rule-enforcement.md`).
+
+The pointer is its own line directly under the rule in the epic file, never on the rule line (rule pins hash that line):
+
+```
+  Proof: <test file>::<test name> | scenario, whole-run or client | verified <sha> <date>
+  Proof: unbuilt        (no code claims the rule)
+  Proof: MISSING        (code exists and no test qualifies)
+```
+
+Each bullet of an epic's Invariants section carries a Proof line too; a test cites it as "E-13 Invariant 2". A rule is built only when its Proof line names a test, and a story is Tested or Seen only when every one of its rules has one. `MISSING` and `unbuilt` are written out so that a gap shows in the epic.
+
+A test qualifies as proof when all six hold:
+
+1. It is one named test function that names the rule id and quotes the rule's current text. A mention of the id elsewhere in a file is not a proof.
+2. It asserts the rule's Then, not that something happened nearby (hit points fell, a distance closed). A hash or golden is never a proof: it detects change, not a broken rule.
+3. It runs in the shipped configuration, the settings the lab batch and `scripts/play.sh` launch today (walking units, obstacles, sight on), or the Proof line names the switch that differs and why.
+4. A rule worded never, always or every tick, and every Invariant, is proved by a whole-run test that checks each tick of a fight, not the final state.
+5. It goes red against wrong code: a filled control or a recorded break of the rule's code turns it red. A placeholder control does not count.
+6. It is not skipped, not xfail and not on a known-red list. A known-red proof means the rule is unproven.
+
+A `Test-defect:` commit that touches a proof test updates the `verified` sha, and never weakens a per-tick check to a final-state check without naming the invariant test that replaces it. The weekly check of rules and proofs is `requirement_audit.md`.
+
+Backfill: all 22 epics receive Proof lines in one pass before further stage work (Westley, 2026-11-09; H-090).
+
 ## Status
 
-Spec'd (written), Ready (below), Tested (landed on main with its tests green, the game opened and the scene reached by the overlord), Revised (built, then changed; back to Spec'd for the changed rules), Killed, Seen (Tested, and Westley approved the scene). In flight is not a status: it is the branch `s/S-###-*` on origin.
+Spec'd (written), Ready (below), Tested (landed on main with its tests green, every rule carrying a Proof line that names a test, the game opened and the scene reached by the overlord), Revised (built, then changed; back to Spec'd for the changed rules), Killed, Seen (Tested, and Westley approved the scene). In flight is not a status: it is the branch `s/S-###-*` on origin.
 
 ## Definition of Ready
 
@@ -61,4 +90,4 @@ A question the Architect cannot answer from the epic, the references, `docs/bibl
 
 ## Change protocol
 
-When a requirement changes: rewrite the story and its rules in the epic (delete the old text; history is `git log`); set the catalog row to Revised, then Spec'd for the changed rules; the tests are rewritten in the same change; the story file under `docs/stories/` is rewritten; one commit carries all of it. The bible never lags the tests and the tests never lag the bible. A story that cannot fit 1,500 implementation lines is split in the epic, never in the queue.
+When a requirement changes: rewrite the story and its rules in the epic (delete the old text; history is `git log`); set the catalog row to Revised, then Spec'd for the changed rules; the tests are rewritten in the same change; the story file under `docs/stories/` is rewritten; one commit carries all of it. A rule that is reworded or renumbered moves its Proof line and the test's citation in that commit. A change to a rule's text quotes Westley's words or a `DEC-` row beside it and changes no more than those words require. The bible never lags the tests and the tests never lag the bible. A story that cannot fit 1,500 implementation lines is split in the epic, never in the queue.
