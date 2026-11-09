@@ -1,0 +1,10 @@
+# R5 round 2 pictures: after the round 1 fixes (water views, quiet line, vantages and lanes)
+
+Role: Engineer (Sonnet 5.5), clerk. Spawn nothing. Think tersely. Report once, under 25 lines: files produced with sizes, the panel first lines, any FAIL, anything that did not run. Never open a PNG as an image; check size and pixel variance only.
+
+## Sources
+
+- `~/Projects/om-wt/r5-obey` (branch `wip/r5-obey-shots`, head `14db9564`): assault generator. Shots: `env -u DISPLAY -u WAYLAND_DISPLAY xvfb-run -a -s "-screen 0 1920x1080x24" godot.real --path ~/Projects/om-wt/r5-obey --display-driver x11 --rendering-driver opengl3 -w --resolution 1920x1080 scenes/mockups/landscape/landscape_mockup.tscn -- --mode assault --shot <out>` (read `_run_shots` and `_start` in `scenes/mockups/landscape/obey_layer.gd` for the exact flags; the quiet line is set by `--shot`; file names come from `shot_file_name`, a `_FAIL` suffix marks a failed vantage reach). Seeds 1 to 5 at 16,000. Import first if needed (`godot.real --headless --path ... --import`, timeout 600 s). Also produce the as-is set the same way without `--mode assault` (5 pictures).
+- `~/Projects/om-wt/r5-pass5` (branch `wip/r5-pass5-shots`, head `720a03ed`): `scripts/mockup_qa.sh run scenes/mockups/landscape/landscape_mockup.tscn scenes/mockups/landscape/qa/r5_pass5.json <out> --res 1920x1080` from the worktree; 15 pictures `L0N_s11_{raw_layout,react,walk}.png` for N in 01, 03, 05, 06, 08; `errors.txt` must be empty, `exit.txt` 0.
+
+Output root: `~/Projects/om-wt/r5-rounds/docs/northstar/story_reviews/westley/layout_engine/r5-recovery/round-2/` with `obey/`, `obey-assault/`, `pass5/`. Copy the PNGs and the panel `.txt` files there (pass 5: also `shots.txt` and `_run.json`). Check every PNG is 1920x1080 and its grey-level standard deviation is above 8 (Python with PIL from `/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python`, or Godot `Image`). Do not commit; the Architect commits. Do not touch any file outside `round-2/` and the scratchpad. Never `pkill -f`; `pkill -x godot.real` only for processes you started.
