@@ -10,6 +10,7 @@ Sonnet 5.5, `subagent_type: engineer`. Read this card, then the story file. Spaw
 - Scene premises are dumped, not assumed: a test that reads `qa_state()`, a frame or a sim scene runs the scene once and pastes the keys and values it relies on; a premise that does not hold is fixed in the test now and said in the report.
 - Thresholds, windows and tolerances are Westley's: a value nobody gave goes in a `*_park_*` file with a comment naming the register row.
 - A story that copies numbers or geometry from an approved prototype ships a parity test reading each constant from the live scene against the prototype's value, file:line beside each row.
+- Proof (`requirements.md` Proof, six qualifications): the default world is the shipped configuration (walking units, obstacles, sight on), and a scene that switches any of it off says which switch and why. A rule worded never, always or every tick gets a whole-run test that checks each tick. Each rule's test is shown red against a break of the rule's code, and the break is named in the report.
 - Isolation and integration: a new system gets one test that runs it alone and one that reaches it from the tick, the jump or a pipe handler.
 
 Commit, push, stop. Inside a cascade the skill's shard-test-writer rules apply instead of this card.
@@ -20,5 +21,6 @@ Commit, push, stop. Inside a cascade the skill's shard-test-writer rules apply i
 ok, branch, sha
 summary: the failing line, the control line, the dumped premises
 red_ids: [...]
+proofs: per rule, <test file>::<test name>, the kind, the break that turned it red
 gaps: rules with no test, behaviours with no rule
 ```

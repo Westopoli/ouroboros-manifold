@@ -17,6 +17,8 @@ Task matching and the usage rules (builders push and stop, a clerk lands, no wai
 
 Every story exists as failing tests before any code, in fenced paths builders cannot edit, each naming the `S-###` or `R-###-##` it proves. Every detector ships with a positive control. A test is fixed only when it is classed as a `test-defect` with a ledger row. Thresholds and tolerances are Westley's: narrowing an invariant is allowed, loosening one needs him. Source: [`CLAUDE.md`](../CLAUDE.md) "Tests are the spec"; the Definition of Ready is in [`northstar/agile.md`](northstar/agile.md).
 
+Since 2026-11-09 a rule that code implements carries a Proof line naming the one test that enforces it, and a weekly audit checks each rule against the bible and each proof against the current lab and beta: [`method/requirements.md`](method/requirements.md) "Proof" and [`method/requirement_audit.md`](method/requirement_audit.md).
+
 ## One owner per file
 
 [`northstar/plans/push/pieces.toml`](northstar/plans/push/pieces.toml) names every file's owner. Two in-flight pieces never own the same file. New code goes in new files behind a frozen header; wiring is its own small piece. `scripts/specfactory/owner_lint.py` checks the table.

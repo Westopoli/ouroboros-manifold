@@ -1,6 +1,6 @@
 # The method
 
-Where another document disagrees with this directory, this directory wins. Westley drives: he points a Fable chat at one stage, it writes the cascade plan, he hands the plan to a Sonnet chat that runs `/manager-mode`, and he relays between chats by hand. His plan prompt names `story_loop.md` and says everything the plan must do; the cards here hold only what every plan shares. Written 2026-10-30; cut to eight files 2026-11-05 (`history.md` lists what left and where it is).
+Where another document disagrees with this directory, this directory wins. Westley drives: he points a Fable chat at one stage, it writes the cascade plan, he hands the plan to a Sonnet chat that runs `/manager-mode`, and he relays between chats by hand. His plan prompt names `story_loop.md` and says everything the plan must do; the cards here hold only what every plan shares. Written 2026-10-30; cut to eight files 2026-11-05 (`history.md` lists what left and where it is); `requirement_audit.md` added 2026-11-09.
 
 ## Roles
 
@@ -10,6 +10,7 @@ Where another document disagrees with this directory, this directory wins. Westl
 | Overlord (runs one cascade) | Sonnet 5.5, a chat running `/manager-mode` | the skill |
 | Builder | Sonnet 5.5, `subagent_type: doer` or a cascade leaf | `builder.md` |
 | Test writer | Sonnet 5.5, `subagent_type: engineer` or the skill's shard-test-writer | `test_writer.md` |
+| Auditor (weekly, read-only) | Sonnet 5.5, `subagent_type: engineer` | `requirement_audit.md` |
 | Westley | human | `westley.md` |
 
 Every spawn names its model. Sub-agents never spawn sub-agents. Nothing is spawned in plan mode. Engineers and doers are never Fable.
@@ -37,12 +38,13 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 
 ## Status
 
-`scripts/method/status.sh` reads `git log` and prints stories in flight, landed this week, and the weekly numbers; `scripts/method/token_report.py` writes them nightly to `~/Projects/om-push/metrics/<week>.csv`. Under 50% build plus tests for a week is a method defect: the Architect names the class that grew and proposes the cut. The nightly sweep and nightly play (`om-sweep.timer`, `om-nightly-play.timer`) run the full suite and the scripted playthrough on main and report; they block nothing.
+`scripts/method/status.sh` reads `git log` and prints stories in flight, landed this week, and the weekly numbers; `scripts/method/token_report.py` writes them nightly to `~/Projects/om-push/metrics/<week>.csv`. Under 50% build plus tests for a week is a method defect: the Architect names the class that grew and proposes the cut. The nightly sweep and nightly play (`om-sweep.timer`, `om-nightly-play.timer`) run the full suite and the scripted playthrough on main and report; they block nothing. Once a week, on Westley's word, the requirement audit checks each rule against the bible and each rule's Proof line against the current lab and beta (`requirement_audit.md`); an unproven rule blocks the sign-off of the stage that depends on it.
 
 ## Files
 
 - `story_loop.md`: the six steps and the git conventions.
-- `requirements.md`: epics, stories, rules, flags, Ready, the prototype gate, change protocol.
+- `requirements.md`: epics, stories, rules, the Proof line, flags, Ready, the prototype gate, change protocol.
+- `requirement_audit.md`: the weekly audit of rules and their proofs; the auditor's card.
 - `architect.md`, `builder.md`, `test_writer.md`, `westley.md`: role cards.
 - `harness.md`: the `H-` stories.
 - `history.md`: what was retired and where it is.

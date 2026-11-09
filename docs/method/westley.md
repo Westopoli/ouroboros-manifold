@@ -19,6 +19,7 @@ What you see, where, and the words you give.
 - On a flag batch: **approve defaults**, or `Q-###-##: c`.
 - A plan: you write the prompt, point a Fable chat at the stage, hand the plan to a Sonnet chat. Answers are never a go.
 - A threshold, tolerance or pass mark: yours, by number.
+- **audit**, once a week: the Architect runs the requirement audit and tells you which rules are proven, which are not, and which disagree with the bible. A stage is not signed off while one of its rules is unproven.
 
 ## What you lose and gain
 
