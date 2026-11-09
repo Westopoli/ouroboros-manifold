@@ -1,0 +1,21 @@
+# R5 round 2: peak ramps (T1), bases as footings (B1), the generator stands alone. Tests (red) first.
+
+Status: DRAFT until Westley says go on the T1 plus B1 mix (asked 2026-11-08). Do not spawn against it before then.
+
+Role: Engineer (Sonnet 5.5), test writer. Tests only; a different engineer builds. Spawn nothing. Think tersely. Report once, under 30 lines: file, test names, run command, red output's decisive lines, open points.
+
+## Westley's words (2026-11-08)
+
+"I want to explore options for how to keep the tremendous sense of scale we're getting from the large mountains, while still making the areas reachable, like there's a lot of great mountains that have no way to access their peaks." "Bases are always 'flat', that's not how I want it to be, bases should be *in* the environment, not be only in valleys. Bases should be able to be on mountain sides, even intense ones."
+
+## The rules the tests pin (Architect's reading; every number a DRAFT he owns; the report `docs/reports/2026-11-08-r5-round1-water-and-reach.md` section 2 has the measurements behind them)
+
+Generator: terrain-obeys assault mode, `~/Projects/om-wt/r5-obey` (branch `wip/r5-obey-shots`), `scenes/mockups/landscape/obey_layer.gd`, `pass4_terrain.gd` (`cut_ramps`, peaks, walk flood, `metrics.walk`), `pass6_shape.gd` (`HEIGHT_FRAC`), `field_map.gd`. Harness as `tests/test_mockup_obey_assault.gd`; seeds 1 to 5 at 16,000 wu in assault mode.
+
+1. **The generator stands alone.** In assault mode no library layout shapes the terrain: `p5_layout` is null and `p6_info.applied` is false after generation (today seed modulo 8 picks a library drawing under the obey edits). The relief, octaves and band step are unchanged from today (assert the kit values `field_map.gd:77-79` and `PEAK_HEIGHT_WU` are what they are now, so a later change is deliberate).
+2. **Peak ramps (T1).** After the ground is final and the roads are carved, every hill (local maximum over DRAFT-hill-min 1,500 wu above the surrounding 1,000 wu window) not reached by the walk flood from `base_a` at 35 degrees gets a ramp: grade at most `ramp-grade` 28 degrees, width DRAFT-peak-ramp-w 500 wu, from the nearest reached cell, except that DRAFT-wild-peaks 0.30 of the non-vantage hills (chosen by the seed, lowest-index deterministic draw) stay uncut (R-192-03). The vantage always has two ways up (R-189-07) and is reached. Assert: share of hills reached at least 0.65 on every seed; vantage reached; the panel prints `peaks reached <n>/<m>  wild <k>`; ramp cells are marked carved and counted in the panel's `carved` line; no ramp cell steeper than 28 degrees after carving.
+3. **Bases as footings (B1).** The pad request for `base_a`, `base_b`, `objective`, `site_0`, `site_1` no longer levels the ground flat: a footing is a connected walkable area of the pad's radius, on any band, every cell under the walk limit, stepped into at most DRAFT-footing-steps 3 terraces whose risers are at most `ramp-grade` 28 degrees; the footing's mean height may be anywhere in the relief (assert across seeds 1 to 5 at least one base footing has mean height above 0.35 of the map's max height, and no footing is forced to the lowest band). Pass 6 `HEIGHT_FRAC` for staging and spawn becomes a range DRAFT-base-height-lo 0.10 to DRAFT-base-height-hi 0.60 drawn per seed, not a fixed 0.10/0.13. The `ring` check becomes `footing`: connected, risers under 28, two routes in (R-189-07); panel prints `footing <name> steps <s> mean <h> ok|FAIL`.
+4. **Nothing else moves.** Land reached from `base_a` does not fall below today's per-seed value minus 2 points (today: 73, 65, 71, 47, 63 percent); the water views test and the vantage/lanes test stay at their counts.
+5. **Positive controls.** With the ramp pass disabled through a scratch hook, at least one seed has a hill share under 0.65 and the panel line is absent; with footings disabled, every base ring has slope under 1 degree (the old flat pad).
+
+Deterministic across two runs. Commit on `wip/r5-obey-shots` as `tests/test_mockup_obey_reach_bases.gd`, subject `R5 round 2: red tests for peak ramps, footings, the generator alone`, trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`; add only your file, never `-a`/`-A`.
