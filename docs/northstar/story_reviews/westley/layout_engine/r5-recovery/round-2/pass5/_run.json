@@ -1,0 +1,31 @@
+{
+  "adapter": "llvmpipe (LLVM 21.1.8, 256 bits)",
+  "display": "X11",
+  "fps_ms": 450.824,
+  "frame": 92,
+  "last_input": "Mouse motion at position ((960.0, 540.0)) with velocity ((735.0206, 413.4491))",
+  "method": "gl_compatibility",
+  "os_inputs": 1,
+  "plants": [],
+  "shots": [
+    "L01_s11_raw_layout",
+    "L01_s11_react",
+    "L01_s11_walk",
+    "L03_s11_raw_layout",
+    "L03_s11_react",
+    "L03_s11_walk",
+    "L05_s11_raw_layout",
+    "L05_s11_react",
+    "L05_s11_walk",
+    "L06_s11_raw_layout",
+    "L06_s11_react",
+    "L06_s11_walk",
+    "L08_s11_raw_layout",
+    "L08_s11_react",
+    "L08_s11_walk"
+  ],
+  "window_px": [
+    1920,
+    1080
+  ]
+}

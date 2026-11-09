@@ -1,0 +1,15 @@
+L01_s11_raw_layout.png 1920x1080 sd=0.257937
+L01_s11_react.png 1920x1080 sd=0.0953362
+L01_s11_walk.png 1920x1080 sd=0.157211
+L03_s11_raw_layout.png 1920x1080 sd=0.257674
+L03_s11_react.png 1920x1080 sd=0.100598
+L03_s11_walk.png 1920x1080 sd=0.158375
+L05_s11_raw_layout.png 1920x1080 sd=0.256508
+L05_s11_react.png 1920x1080 sd=0.0960614
+L05_s11_walk.png 1920x1080 sd=0.157639
+L06_s11_raw_layout.png 1920x1080 sd=0.251799
+L06_s11_react.png 1920x1080 sd=0.088786
+L06_s11_walk.png 1920x1080 sd=0.163014
+L08_s11_raw_layout.png 1920x1080 sd=0.258892
+L08_s11_react.png 1920x1080 sd=0.101016
+L08_s11_walk.png 1920x1080 sd=0.15754
