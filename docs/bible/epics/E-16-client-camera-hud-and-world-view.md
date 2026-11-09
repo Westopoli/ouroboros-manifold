@@ -242,7 +242,7 @@ Design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-233-01  Given a commander who will play alone, When the player makes the choices for a mission, Then the player can set which doctrine the rules begin with and whether each of the two unit-mix behaviours (R-231-03) is on; the starting doctrine is the player's pick and has no default, so until the player sets it nothing is produced (Westley, 2026-10-07), and it is set in the lobby (E-22 R-179-03).
-- R-233-02  Given the enemy's economy, When the player makes the choices for a mission, Then the player chooses whether it also scouts, counters and disguises (E-22 S-181), as a pick.
+- R-233-02  Given the enemy's economy, When the player makes the choices for a mission, Then the difficulty decides whether it also scouts, counters and disguises (E-22 S-181, R-181-03; E-14 R-215-06) and the player makes no pick (Westley, 2026-10-07, Q-181-01; this rule said "as a pick" until 2026-11-08).
 - R-233-03  Given a multiplayer universe, When these choices are made, Then they are locked with the rest of the universe's configuration (E-19 R-144-03).
 
 Inputs: the player's choices.
@@ -307,7 +307,7 @@ Q-235-01 closed 2026-10-12, R-235-03. Q-104-02 closed 2026-10-23, R-104-01.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. The long-term goal of thousands of units and workers on one map (hub "Reference Hardware") is not yet a client budget; E-18 S-240 states 30 fps at 1,000 units where this epic states 60 fps, and whether workers, buildings and settlement pieces count as units on screen is decided with the budgets for thousands, which stay a direction until the simulation's budgets (10,000) are reached (Westley, 2026-10-06). Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. The long-term goal of thousands of units and workers on one map (hub "Reference Hardware") is not yet a client budget; E-18 S-240 states 30 fps at 1,000 units where this epic states 60 fps [Q-240-02], and whether workers, buildings and settlement pieces count as units on screen is decided with the budgets for thousands, which stay a direction until the simulation's budgets (10,000) are reached (Westley, 2026-10-06). Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
 
 ## Look and behavior references
 

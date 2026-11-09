@@ -216,7 +216,7 @@ Open flags: none.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD; both on the minimum-spec machine (`game_bible.md` "Reference Hardware": about 110 and 55 fps on the forge's RTX 3060). E-16 states 60 fps at 1,000 units where this epic states a 30 fps floor, and neither covers the long-term goal of thousands of units and workers, which stays a direction until the simulation's budgets (10,000) are reached (Westley, 2026-10-06).
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD; both on the minimum-spec machine (`game_bible.md` "Reference Hardware": about 110 and 55 fps on the forge's RTX 3060). E-16 states 60 fps at 1,000 units where this epic states a 30 fps floor [Q-240-02], and neither covers the long-term goal of thousands of units and workers, which stays a direction until the simulation's budgets (10,000) are reached (Westley, 2026-10-06).
 
 ## Look and behavior references
 

@@ -54,7 +54,7 @@ Rules
 - R-140-04  Given a dropped peer that held an economy seat, When the match continues, Then the rules that run an economy with nobody in the seat take the seat (E-22 S-179, S-181); Given any other dropped peer, Then its units stand idle, and every other player is alerted to the disconnection; a disconnected player's problem is theirs, not the team's to solve (Westley, 2026-10-06).
 - R-140-05  Given the handshake, When measured, Then it completes within 5 s in the common case.
 - R-140-06  Given a lockstep match, When the two simulations disagree on a tick's checksum, Then the view shows 'Desync at tick N, section S' with no Retry and the match ends (Architect, 2026-10-09).
-- R-140-07  Given a match, When the player chooses End Mission, Then the view leaves the match (NetMatch.leave) and the peer sees the stall overlay until the drop timer of R-140-03; the orders a player can send in a match are move, attack-move and attack a target (the match verbs), no others (Architect, 2026-10-09).
+- R-140-07  Given a match, When the player chooses End Mission, Then the view leaves the match (NetMatch.leave) and the peer sees the stall overlay until the drop timer of R-140-03; the military orders a player can send in a match are move, attack-move and attack a target (the match verbs), no others; the economy seat's and the commander's economy commands are S-242 (Architect, 2026-10-09; amended 2026-11-08, DEC-econ-match-verbs-2026-11-08).
 
 Inputs: peer commands; relay.
 Outputs: lockstep tick advance; stall and drop events.

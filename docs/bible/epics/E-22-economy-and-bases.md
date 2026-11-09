@@ -36,7 +36,7 @@ Start a mission with nobody in the economy seat. At the base, buildings stand un
 As a commander, I want literal workers who walk to a source and bring back one of three resources, so that the base is a place with people in it that I can protect or lose.
 
 Rules
-- R-167-01  Given a side's economy, When it gathers, Then there are three resources, each gathered in its own way, on the model of classic Age of Empires Online and Age of Empires 3: two common ones that together are about 75 percent of what lies on the map, and one rare one, about 25 percent, that technology draws on most (Westley, 2026-10-06); the names are Food, Wood and Coin in the ground era and Metal, Water and Uranium in the space era (Westley, 2026-10-07) ; the rare one is Coin in the ground era and Uranium in the space era (Westley, 2026-10-07) (closed 2026-10-21, Q-159-08: each role costs two of the three resources in a fixed pattern; amounts stay placeholders).
+- R-167-01  Given a side's economy, When it gathers, Then there are three resources, each gathered in its own way, on the model of classic Age of Empires Online and Age of Empires 3: two common ones that together are about 75 percent of what lies on the map, and one rare one, about 25 percent, that technology draws on most (Westley, 2026-10-06); the names are Food, Wood and Coin in the ground era and Metal, Water and Uranium in the space era (Westley, 2026-10-07) ; the rare one is Coin in the ground era and Uranium in the space era (Westley, 2026-10-07) (closed 2026-10-21, Q-159-08: each role costs two of the three resources in a fixed pattern; amounts stay placeholders) [Q-167-04: which source gives which resource, and which are wild and finite or built and permanent].
 - R-167-02  Given a base, When a worker is trained, Then it appears at the base as a literal unit, walks to a source, gathers, and walks back to a drop-off, visible to the enemy and able to be killed (closed 2026-10-21, Q-167-01: a named draft, Westley tunes it by feel).
 - R-167-03  Given economic buildings, When the base is built, Then they include drop-off points, and Given a worker with a load, When it walks to a drop-off, Then the farther it walked the less it brings in (closed 2026-10-21, Q-167-02: a named draft, Westley tunes it by feel).
 - R-167-04  Given a worker, When units are counted, Then it counts against the one population cap (E-22 S-169) and in the unit budgets, and it cannot fight: it never acquires a target, never returns fire, and flinches from damage (E-15 R-129-01); for the beta workers are not part of the roster of E-11 S-082 and post-beta will decide (Westley, 2026-10-07).
@@ -45,7 +45,7 @@ Rules
 
 Inputs: the base; sources (E-22 S-177); the era's resources.
 Outputs: resource counts per side; worker positions in the tick delta.
-Open flags: none. Q-159-08, Q-167-01 and Q-167-02 closed 2026-10-21 (register; named drafts). Unpicked pieces that touch this story, listed under Open ambiguity flags: workers under raid.
+Open flags: Q-167-04. Q-159-08, Q-167-01 and Q-167-02 closed 2026-10-21 (register; named drafts, values asked as a table in `story_reviews/westley/economy_rulings_2026-11-08.md`). Unpicked pieces that touch this story, listed under Open ambiguity flags: workers under raid.
 
 ### S-168 — Building and placement
 
@@ -55,12 +55,12 @@ Rules
 - R-168-01  Given a paired economy player, When he places a building, Then it claims its footprint and the self-built pieces around it are cleared and refilled, so the city reshapes around what he placed (E-17 R-166-03); buildings in a settlement share the contour orientation of their ground with a jitter of DRAFT-building-yaw-jitter 0.05 rad (DEC-S005-building-yaw, Westley 2026-10-22: some uniformity, we're emulating reality).
 - R-168-02  Given a base, When lots are counted, Then no count of lots limits the buildings, and only terrain limits where one may stand, as in E-17 R-166-01 (Westley, 2026-10-06); the engine's lot table is finite (OM_LOT_CAP, 2048 today, 8192 after P3); the bound is a memory limit, never a design limit, and no mission reaches it (Architect 2026-10-21, implementation; Westley may veto). Direction for later, not for the beta: a very large base may be upgraded past its maximum into another tech level; there is no maximum in the beta, only terrain limits (Westley, 2026-10-07).
 - R-168-03  Given a building, When what stands beside it changes, Then what it yields changes; for the beta the effects are placeholders, and their kinds, size and range are set later in the lab (Westley, 2026-10-06).
-- R-168-04  Given a building is placed, When work begins, Then it stands under construction and rises in stages until it is finished (closed 2026-10-21, Q-168-03: a named draft, Westley tunes it by feel).
+- R-168-04  Given a building is placed, When work begins, Then it stands under construction and rises in stages until it is finished (closed 2026-10-21, Q-168-03: a named draft, Westley tunes it by feel) [Q-168-06: whether workers build it or it rises alone].
 - R-168-05  Given an era, When its buildings are listed, Then they include drop-off points, housing, production buildings (E-22 S-170) and defenses (E-22 S-174); the set is small and fixed per era pack (E-20 R-146-01) and its names are era pack content, and the pack manifest field that lists them is named "buildings", as the validator requires (Westley, 2026-10-06; field name, Architect 2026-10-10).
 
 Inputs: placement commands from the economy player; the terrain (E-17); the era's building set.
 Outputs: buildings with owner, footprint, stage and yield in the tick delta.
-Open flags: none. Q-168-03 closed 2026-10-21 (register; named draft). Unpicked: deeper districts, the Keystone. With nobody in the seat the rules place buildings (E-22 S-179) and a solo commander never does (E-22 S-180).
+Open flags: Q-168-06. Q-168-03 closed 2026-10-21 (register; named draft). Unpicked: deeper districts, the Keystone. With nobody in the seat the rules place buildings (E-22 S-179) and a solo commander never does (E-22 S-180).
 
 ### S-169 — One population cap
 
@@ -128,11 +128,11 @@ Rules
 - R-173-02  Given a mission is set up, When its starting technology is set, Then it is derived from the simulation's technology level, only slightly [Q-173-01: the formula, and how slight].
 - R-173-03  Given an era, When its technology levels are counted, Then there is a wide range of levels, for example 1 to 5, and in a normal timed single match a side has the time to go up one or two levels, as in the tech-up of StarCraft 2 [Q-173-02: the range per era, and the resource cost and time per level that give one or two levels in a normal match].
 - R-173-04  Given a technology level, When it is reached, Then it does [Q-159-12: what technology does, including whether a level reached in a running mission changes the tier of units already fielded, which E-06 R-048-02 fixes today].
-- R-173-05  Given spending, When resources are used, Then technology competes with economy and army (E-22 S-177), and with nobody in the seat the rules spend on technology by the dial and the doctrine and never counter-pick it (E-22 S-179, E-22 S-180).
+- R-173-05  Given spending, When resources are used, Then technology competes with economy and army (E-22 S-177) [Q-173-03: whether technology is in the beta's economy at all], and with nobody in the seat the rules spend on technology by the dial and the doctrine and never counter-pick it (E-22 S-179, E-22 S-180).
 
 Inputs: the simulation's technology level (E-06); the economy player's choices.
 Outputs: a side's technology level in the tick delta.
-Open flags: Q-159-12, Q-173-01 and Q-173-02 (parked, post-beta). Unpicked: ages by landmark, the Contested Tree.
+Open flags: Q-173-03; Q-159-12, Q-173-01 and Q-173-02 (parked, post-beta). Unpicked: ages by landmark, the Contested Tree.
 
 ### S-174 — Defenses and raid lanes
 
@@ -156,7 +156,7 @@ Open flags: none. Q-174-02 closed 2026-10-21 (register; named draft). Unpicked: 
 As an economy player, I want to grow a settlement into a further base and to build production near the front, so that my side out-produces the side that stays home.
 
 Rules
-- R-175-01  Given a settlement on the map, When a side holds it uncontested for a length of time (Westley, 2026-10-06; for now), Then it grows into a further base with its own main building, worker production and lots.
+- R-175-01  Given a settlement on the map, When a side holds it uncontested for a length of time (Westley, 2026-10-06; for now), Then it grows into a further base with its own main building, worker production and lots [Q-175-05: what uncontested counts, and the length].
 - R-175-02  Given a main base, When the mission runs, Then its sources never run dry but yield less over time, so a side that stays home and does not expand outward is out-produced and overrun; the resources of an expansion are quick to collect and fizzle out quickly (Westley, 2026-10-06; the rates are for the lab).
 - R-175-03  Given the economy player, When he builds production near the front or at an expansion, Then it is forward works, where units reinforce fast and which are exposed, and where they stand shows where the next push comes from; forward works can be production only, or also houses and workers if the side wants them, in the manner of Age of Empires 3, and the commander can flag "forward base here" to the economy player (Westley, 2026-10-06; cost and build time are Q-168-03).
 - R-175-05  Given trade caravans (Westley, 2026-10-07: in, and distinct from shipments), When they run, Then they walk visibly between a base and settlements, longer routes pay more and are easier to raid; the rules send them in solo play and the economy player in paired mode (Westley, 2026-10-07).
@@ -164,7 +164,7 @@ Rules
 
 Inputs: settlements (E-17); the economy player's build commands.
 Outputs: bases and forward works in the tick delta.
-Open flags: none. Unpicked: trading posts at neutral settlements. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations, is E-22 S-177 (supply lines are not an attacker-only rule, Westley, 2026-10-07). Forward works are not a forward base.
+Open flags: Q-175-05. Unpicked: trading posts at neutral settlements. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations, is E-22 S-177 (supply lines are not an attacker-only rule, Westley, 2026-10-07). Forward works are not a forward base.
 
 ### S-176 — Shipments
 
@@ -174,14 +174,14 @@ This story is written for land maps. Space eras wait on a space reading of this 
 
 Rules
 - R-176-01  Given a mission, When time passes, Then the civilization sends shipments to the base, and a side that holds a forward base or economic post away from its main city may also choose to send a shipment of resources to the main base, the farther the post is from the main city the better the resources it carries; in solo play the rules send them automatically; the amounts are for playtest and balance (Westley, 2026-10-06).
-- R-176-02  Given a shipment on its way, When the receiving side looks, Then it sees it on the map like any unit, as the enemy does (it is visible to both sides), but the shipment gives its own side no vision (Westley, 2026-10-06).
+- R-176-02  Given a shipment on its way, When the receiving side looks, Then it sees it on the map like any unit, as the enemy does (it is visible to both sides), but the shipment gives its own side no vision (Westley, 2026-10-06) [Q-176-05: this conflicts with his 2026-10-02 answer that the receiving side never sees it; which stands].
 - R-176-03  Given a shipment that is killed on the way, When it does not arrive, Then the side gets no ticker line that it was killed and no explanation, since it has "no idea what happened".
 - R-176-04  Given a shipment on its way, When raiders hold its lane (E-22 S-174), Then it can be stopped.
 - R-176-05  Given a shipment, When it is sent, Then it looks like a unit on the map but behaves like an event: it has no vision of its own and cannot be moved or given orders once it is sent (Westley, 2026-10-06).
 
 Inputs: the civilization's state (E-02, E-06); lanes.
 Outputs: arrivals at the base; a shipment in transit shows on the map to both sides. No output tells a side that one was killed.
-Open flags: none. Unpicked: demands from the civilization, the shared market, and a deck of shipments as a candidate of Q-159-07.
+Open flags: Q-176-05. Unpicked: demands from the civilization, the shared market, and a deck of shipments as a candidate of Q-159-07.
 
 ### S-177 — Bases, resources and the situation
 
@@ -206,12 +206,12 @@ Rules
 - R-177-06  Given the simulation's situation, When a mission is set up, Then resources are sometimes limited and sometimes abundant, consistent with that situation and slanted by it so that a defender has the better position, and the player always has the means to accomplish the mission even when it is hard; richness is derived from the simulation's existing region fields and composites (E-02), so a region with a big economy gives a mission big resources (Westley, 2026-10-06).
 - R-177-07  Given the resources, When the mission is scored, Then they are not scored separately, and a side that ignores them is overrun unless it rushes and finishes fast.
 - R-177-08  Given a side's spending, When it spends, Then it is balanced between economy, technology and army, as in StarCraft 2.
-- R-177-09  Given settlements on the map, When a neutral populace lives in them, Then it is contested, and winning it is not the economy player's job; winning it gives a strategic position, a new place for production buildings and, most of all, economic assistance, and the neutral villagers become part of the winning team; it is not an instant win, it needs a hold timer, and it can be lost again (Westley, 2026-10-06) (closed 2026-10-06, Q-177-06: the same event as R-175-01, one timer).
+- R-177-09  Given settlements on the map, When a neutral populace lives in them, Then it is contested, and winning it is not the economy player's job; winning it gives a strategic position, a new place for production buildings and, most of all, economic assistance, and the neutral villagers become part of the winning team; it is not an instant win, it needs a hold timer, and it can be lost again (Westley, 2026-10-06) (closed 2026-10-06, Q-177-06: the same event as R-175-01, one timer) [Q-177-08: whether the villagers become the winner's workers].
 - R-177-10  Given a paired match of 4 to 6 players, When it is set up, Then there are more resources and more enemies and a bigger map (E-17), and each pair is its own sub-civilization inside the over-arching civilization; pairs on a team share shipments and technology (Westley, 2026-10-06); how much more a big match has is a placeholder.
 
 Inputs: mission archetype (E-10); the region's situation (E-02); the map (E-17).
 Outputs: each side's base kind and place; economic locations and significant resources on the map.
-Open flags: none. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
+Open flags: Q-177-08. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
 
 ### S-178 — When a base falls
 
@@ -219,7 +219,7 @@ As a commander, I want a fallen base to be occupied and not destroyed, so that a
 
 Rules
 - R-178-01  Given a base of operations, When an enemy takes it, Then it is occupied, not destroyed, and the side that takes it gets its production and its people.
-- R-178-02  Given a base, When it is counted as occupied, Then enemy forces hold its central zone for a time and its main building is destroyed or captured, as the archetype sets (Westley, 2026-10-06); the taker may have to rebuild the building to take the location.
+- R-178-02  Given a base, When it is counted as occupied, Then enemy forces hold its central zone for a time and its main building is destroyed or captured, as the archetype sets (Westley, 2026-10-06); the taker may have to rebuild the building to take the location [Q-178-06: what zone and time count, and the archetype column].
 - R-178-03  Given an occupied base, When the mission runs, Then the side that lost it can take it back, a base can change hands more than once, and the region follows whoever holds it at the end: the side that takes the enemy's base gets that region (Westley, 2026-10-06).
 - R-178-04  Given a side holds an expansion or forward works, When its base of operations falls, Then it falls back to that one as its base of operations at no cost beyond the position; a side that loses an expansion loses the income it produced and its position (Westley, 2026-10-06).
 - R-178-05  Given a side has no expansion and no forward works, When its base of operations falls, Then the mission ends for that side and is scored (Westley, 2026-10-06; to be checked archetype by archetype against E-10 R-075-07 and S-077).
@@ -228,7 +228,7 @@ Rules
 
 Inputs: base ownership and occupation; the mission archetype.
 Outputs: base owner and kind in the tick delta; the result band's ceiling to E-10; the region's owner at the mission's end.
-Open flags: none.
+Open flags: Q-178-06.
 
 ### S-179 — The economy without a player
 
@@ -320,7 +320,7 @@ Open flags: Q-159-13 (to be designed with the simulation). What the mission leav
 ## Invariants
 
 - The population never exceeds the cap.
-- A side never sees a shipment on its way, and is never told why one did not arrive.
+- A side is never told why a shipment did not arrive; whether it sees its own shipment on the way is Q-176-05.
 - A base of operations is occupied, never destroyed.
 - The player always has the means to accomplish the mission.
 - With nobody in the seat the rules never idle a worker, hit the cap or leave resources unspent.
@@ -352,7 +352,7 @@ None confirmed for the economy. The direction is thousands of units and workers 
 
 Carried: Q-159-09, Q-159-12, Q-159-13.
 
-New: Q-173-01, Q-173-02, Q-180-01. Details in `docs/northstar/ambiguity_register.md`.
+Open: Q-173-01, Q-173-02, Q-180-01; added 2026-11-08 from the readiness report (`docs/reports/2026-11-08-economy-readiness.md`): Q-167-04, Q-168-06, Q-173-03, Q-175-05, Q-176-05, Q-177-08, Q-178-06. The nine named drafts of 2026-10-21 are asked as one table in `story_reviews/westley/economy_rulings_2026-11-08.md`. Details in `docs/northstar/ambiguity_register.md`.
 
 Q-159-10 (closed 2026-10-21, register), pieces offered to Westley and neither picked nor rejected. They are not rules. Where one would land is in brackets.
 - Build-ons: upkeep bands (S-169), foraging to farming (S-167), deeper districts (S-168), trading posts at neutral settlements (S-175, S-177), trade caravans (S-175), ages by landmark (S-173), worker scouting (S-172), a return-to-base ability (S-170), workers under raid (S-174).
