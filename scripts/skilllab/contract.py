@@ -123,6 +123,9 @@ class FightResult:
     reengage: tuple = (0, 0)  # (side 0, side 1) re-engage events: a silent side with an idle attack-move unit and a visible enemy was ordered onto the enemy centroid
     blind_cap: bool = False   # outcome "cap" and, at the cap tick, neither side sees any living enemy: a finding (blind post), not a lab cap defect
     living: tuple = ({}, {})  # ({side 0 Group.unit: count}, {side 1 Group.unit: count}) alive at the end of the fight, zero counts omitted
+    violations: list = field(default_factory=list)   # the rule checker (scripts/skilllab/invariants.py): [{"rule", "tick", "unit", "detail"}], the first 20 by (tick, rule, unit); [] when clean
+    invalid: bool = False     # True when the checker saw a rule broken: the fight is no evidence
+    suspended: dict = field(default_factory=dict)   # {rule: switch} the checker could not judge in this run (targeting by sight off, an engine it cannot read)
 
 
 def trim_series(result: "FightResult") -> "FightResult":
@@ -139,6 +142,10 @@ class CellResult:
     won: bool                 # every fight is side0
     defect: bool = False      # a draw or a cap sits in the cell (a lab defect to trace, never a result)
 
+    @property
+    def invalid(self) -> bool:
+        return any(getattr(f, "invalid", False) for f in self.fights)
+
 
 @dataclass
 class ScanResult:
@@ -148,6 +155,10 @@ class ScanResult:
     loses_to: Optional[int]
     ceiling_hit: bool = False   # won at every scanned headcount: beats is the top of the range, loses_to None
     multi_flip: bool = False    # the won/lost sequence over the scanned cells changes more than once
+
+    @property
+    def invalid(self) -> bool:
+        return any(c.invalid for c in self.cells)
 
 
 @dataclass
