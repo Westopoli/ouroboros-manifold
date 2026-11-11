@@ -7,7 +7,7 @@ _FROM_RESULT = ("outcome", "margin", "strength_left_0", "strength_left_1", "surv
                 "firing_unit_seconds_1", "firing_window_0", "firing_window_1", "weighted_unit_seconds_0",
                 "weighted_unit_seconds_1", "weighted_window_0", "weighted_window_1", "predicted_count",
                 "predicted_type", "agreement")
-_FIXED = _FROM_RESULT + ("knob", "knob_value", "baseline", "ceiling_hit", "prefight", "reengage_0", "reengage_1", "invalid")
+_FIXED = _FROM_RESULT + ("knob", "knob_value", "baseline", "ceiling_hit", "prefight", "reengage_0", "reengage_1")
 
 # Features field order, matching scripts.skilllab.maps.Features
 _FEATURE_FIELDS = ("choke_count", "choke_width_wu", "choke_width_bodies", "lane_count", "blocked_layer_ranges",
@@ -33,7 +33,6 @@ def fight_row(result, features=None, knob="none", knob_value=None, baseline="non
     row["predicted_count"], row["predicted_type"], row["agreement"] = result.predicted_count, result.predicted_type, result.agreement
     row["knob"], row["knob_value"], row["baseline"], row["ceiling_hit"], row["prefight"] = knob, knob_value, baseline, ceiling_hit, prefight
     row["reengage_0"], row["reengage_1"] = result.reengage
-    row["invalid"] = int(bool(getattr(result, "invalid", False)))     # the rule checker saw a rule broken (scripts/skilllab/invariants.py)
     if features is not None:
         for name in _FEATURE_FIELDS:
             row["feat_" + name] = getattr(features, name)
