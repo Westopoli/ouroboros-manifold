@@ -253,7 +253,8 @@ typedef struct {
      * a member resumes toward the point after every engagement). */
     uint32_t am_gid;
     int      am_engaged;
-    /* R-096-08: set by om_command_guard (tactical_move.c); the unit holds, fires in range, never walks */
+    /* R-096-08: set by om_command_guard (tactical_move.c); the post is anchor_x/y. With pursuit by steering the guard steps toward what it sees inside
+     * GUARD_RADIUS of the post and returns (om_tac_guard_tick); with it off (PP baseline) the unit holds, fires in range, never walks */
     int      guard;
     int      anchor_set;
     double   anchor_x, anchor_y;
@@ -2285,6 +2286,8 @@ void om_tac_unit_set_guard(om_world *w, uint32_t unit_id, int on) {
     u->flinching = 0;
     u->last_attacker = 0;
     u->guard = 1;
+    /* R-096-08: the unit's position when the order is given is its post; anchor_x/y is unused by a guard otherwise (anchor_set stays 0) */
+    if (!om_unit_get_pos(w, unit_id, &u->anchor_x, &u->anchor_y)) { u->anchor_x = u->x; u->anchor_y = u->y; }
 }
 
 static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
@@ -2397,6 +2400,9 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     }
     if (noncombat) { u->target_id = 0; return; }
     if (u->flinching) { u->suppress_auto = 1; return; }
+    /* F6 (R-096-08): a guard steps toward what it sees, inside its radius, fires and returns. The PP baseline (switch 0) keeps the guard that holds,
+     * through the u->guard terms below. */
+    if (u->guard && pursue) { om_tac_guard_tick(w, st, u, tick); return; }
 
     if (u->target_id != 0) {
         int drop, leash_drop = 0;
