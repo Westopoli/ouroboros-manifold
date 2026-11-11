@@ -16,10 +16,11 @@ never a Python re-derivation. Every number below is a DRAFT constant, Westley's 
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
 (R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
+import collections
 import ctypes
 import math
 
-RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity")
+RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02", "R-096-08", "R-087-10")
 
 CELL = 100.0                 # the engine's cell, wu (OM_NAVMESH_CELL_SIZE)
 DEPTH_TOL = 1.0              # DRAFT-inv-cell-depth
@@ -30,14 +31,26 @@ OWN_MOVE = 0.5
 BACKSWING_TICKS = 10
 HEAL_ONE = 0.075
 LEASH_SLACK = 25.0
+GUARD_RADIUS = 200.0         # R-096-08 (DRAFT-guard-radius, Westley's): how far from its post a guard may stand
+GUARD_SLACK = 1.0            # DRAFT-guard-leash-slack
+SLANT_SLACK = 1.0            # DRAFT-f7-slant-slack: a shot may exceed the attacker's range by this much (the same tick's push pass moves a unit by under 1 wu)
+PUSH_ALLOWANCE = 2.0         # DRAFT-inv-push-allowance: a collision push explains at most this much of a displacement above the top step (continuity)
 TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
+NEAREST_TOL = 1.0            # DRAFT-inv-nearest-tol: an acquired target within this much of the nearest eligible enemy counts as the nearest (R-087-03)
+RETURN_FIRE_TICKS = 4        # DRAFT-inv-return-fire-ticks: a hit by the target in the frame of the acquisition or the 3 before it is return fire (R-087-06)
+COHORT_SLOTS = 4             # R-087-08: a unit acquires at its cohort turn on every 4th tick
 
 
 class Rules:
     """What the checks need to know about the world. blocked_cell(cx, cy, layer) -> bool; max_step {unit id: wu a tick}; sensor_radius {unit id: wu}, the radius a unit
-    may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch}."""
+    may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch};
+    cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one)."""
 
-    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None):
+    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None, layer_heights=None):
+        self.guards = guards if guards is not None else {}     # {unit id: (post x, post y)}: R-096-08 judges these units only (the Monitor shares the engine's live dict)
+        self.layer_heights = layer_heights or []              # band floor height of each layer, wu (om_terrain_band_heights); empty: a flat world
+        self.cohort = cohort or {}
+        self.attack_range = attack_range or {}     # {unit id: wu}: R-087-09 judges a held target only inside it; no entry: always inside
         self.width, self.height = float(width), float(height)
         self.reach = reach or {}      # {unit id: (layers up, layers down)}: a locked target that moves beyond it is dropped by the engine (R-164-02), not swapped
         self.blocked_cell = blocked_cell
@@ -72,6 +85,8 @@ class _Checker:
         self.last_shot = {}          # unit -> tick of its last shot (R-084-04)
         self.lock = {}               # unit -> (target, (x, y) where it took that lock) (R-087-03)
         self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09)
+        self.breached = set()        # guards outside their radius now (R-096-08: one violation per breach, not one per frame)
+        self.hit_hist = collections.deque(maxlen=RETURN_FIRE_TICKS)   # the (attacker, victim) pairs of the last frames, this one included (R-087-06)
 
     # -- helpers
     @staticmethod
@@ -107,6 +122,7 @@ class _Checker:
         tick, units, prev = frame["tick"], frame["units"], self.prev
         on, rules, out = self.on, self.rules, []
         fires = frame.get("fires", [])
+        self.hit_hist.append(set(frame.get("hits", fires)))
         shooters = {a for a, _ in fires}
         hit = {b for _, b in fires}
         for u in sorted(units):
@@ -122,6 +138,14 @@ class _Checker:
                     if depth > DEPTH_TOL:
                         out.append(_violation("R-207-06", tick, u, "at (%.1f, %.1f), %s wu inside blocked cell (%d, %d) of layer %d" % (
                             r["x"], r["y"], "%.1f" % depth if depth < 1e8 else "far", cx, cy, r["layer"])))
+            if alive and "R-096-08" in on and u in rules.guards:
+                away = math.hypot(r["x"] - rules.guards[u][0], r["y"] - rules.guards[u][1])
+                if away > GUARD_RADIUS + GUARD_SLACK:
+                    if u not in self.breached:
+                        self.breached.add(u)
+                        out.append(_violation("R-096-08", tick, u, "guard ended the frame %.1f wu from its post (radius %.0f + %.0f)" % (away, GUARD_RADIUS, GUARD_SLACK)))
+                else:
+                    self.breached.discard(u)
             if p is not None and p["alive"] and alive:
                 moved = self._disp(p, r)
                 if "R-087-04" in on and u in shooters and moved > OWN_MOVE and not self._pushed(frame, u):
@@ -132,13 +156,20 @@ class _Checker:
                 if "R-083-03" in on and u not in hit and r["hp"] - p["hp"] > HEAL_ONE + 1e-6:
                     out.append(_violation("R-083-03", tick, u, "hp rose %.4f in a tick nothing hit it (one Warden heals %.3f)" % (r["hp"] - p["hp"], HEAL_ONE)))
                 step = rules.max_step.get(u)
-                if "continuity" in on and step is not None and moved > step + STEP_SLACK and not self._pushed(frame, u):
+                if ("continuity" in on and step is not None and moved > step + STEP_SLACK
+                        and (moved > step + STEP_SLACK + PUSH_ALLOWANCE or not self._pushed(frame, u))):
                     out.append(_violation("continuity", tick, u, "moved %.2f wu in a tick (at most %.2f + %.1f), layer %d to %d" % (
                         moved, step, STEP_SLACK, p["layer"], r["layer"])))
             if "R-087-03" in on:
                 self._lock(frame, u, r, p, tick, out)
-            if "R-087-09" in on:
+                if u in rules.cohort:
+                    self._acquire(frame, u, r, p, tick, out)
+            if "R-087-09" in on or "R-087-03" in on:
                 self._held(units, u, r, tick, out)
+        if "R-087-10" in on:
+            self._slant(frame, tick, out)
+        if "R-093-02" in on and prev is not None and "visible" in prev:
+            self._sight(frame, prev["visible"], tick, out)
         for a in shooters:
             self.last_shot[a] = tick
         self.prev = frame
@@ -169,12 +200,89 @@ class _Checker:
             out_of_reach = reach is not None and any(not self._in_reach(reach, a["layer"], o["layer"]) for a, o in ((p, o_prev), (r, o_now)) if o)
             if (o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not out_of_reach
                     and not (leash is not None and walked > leash - LEASH_SLACK)):
-                out.append(_violation("R-087-03", tick, u, "target %d -> %d while %d was alive and seen" % (old, tgt, old)))
+                why = self._gave_up(u, old, o_prev, o_now)
+                if why is None:
+                    out.append(_violation("R-087-03", tick, u, "target %d -> %d while %d was alive and seen" % (old, tgt, old)))
         if p is not None and p.get("order") != r.get("order"):
             held = None                      # a new order starts a new anchor
             self.lock.pop(u, None)
         if tgt and (not held or held[0] != tgt):
             self.lock[u] = (tgt, held[1] if held else (r["x"], r["y"]))   # the anchor stays through a pause with no target: an attack-mover keeps it while it pursues
+
+    def _slant(self, frame, tick, out):
+        """R-087-10. A shot's distance is spherical: the horizontal distance and the band-height difference of the two layers together. No shot is fired at a target
+        beyond the attacker's attack range by that measure (plus SLANT_SLACK). Both ends are read in the frame the shot was reported in."""
+        units, heights = frame["units"], self.rules.layer_heights
+        for a, b in frame.get("fires", []):
+            reach = self.rules.attack_range.get(a)
+            if reach is None or a not in units or b not in units:
+                continue
+            ra, rb = units[a], units[b]
+            dz = heights[rb["layer"]] - heights[ra["layer"]] if ra["layer"] < len(heights) and rb["layer"] < len(heights) else 0.0
+            slant = math.hypot(self._disp(ra, rb), dz)
+            if slant > reach + SLANT_SLACK:
+                out.append(_violation("R-087-10", tick, a, "fired at %d, %.1f wu away by slant (%.1f horizontal, %.0f in height), range %.0f" % (b, slant, self._disp(ra, rb), dz, reach)))
+
+    @staticmethod
+    def _sight(frame, visible, tick, out):
+        """R-093-02. A unit that fires at, or holds, a living target has it in its side's visible set of the previous frame (the state before the step that decided
+        it; a shot that kills the target takes it out of the set of its own frame). One violation per unit and frame."""
+        units, said = frame["units"], set()
+        for a, b in frame.get("fires", []):
+            if a in units and b not in visible.get(units[a]["side"], ()):
+                said.add(a)
+                out.append(_violation("R-093-02", tick, a, "fired at %d, which its side did not see before the step" % b))
+        for u, r in units.items():
+            t = units.get(r["target"]) if r["alive"] and r["target"] else None
+            if t is not None and t["alive"] and u not in said and r["target"] not in visible.get(r["side"], ()):
+                out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % r["target"]))
+
+    def _gave_up(self, u, old, o_prev, o_now):
+        """The rule that excuses the end of a lock, or None. R-087-09: the target was held unshootable and not closed in on for the checker's own window (STUCK_TICKS; one
+        frame less is counted here because the engine drops the lock on the tick that completes the window, which is the swap frame itself). R-096-08: a guard's target
+        stood so far beyond the guard's radius that no spot inside it reaches it with the unit's attack range (an engaged guard that would leave the radius lets go)."""
+        run = self.stuck.get(u)
+        if run is not None and run[0] == old and run[1] >= STUCK_TICKS - 1:
+            return "R-087-09"
+        post = self.rules.guards.get(u)
+        if post is not None:
+            reach = self.rules.attack_range.get(u, 0.0)
+            if any(math.hypot(o["x"] - post[0], o["y"] - post[1]) - GUARD_RADIUS - GUARD_SLACK > reach for o in (o_prev, o_now)):
+                return "R-096-08"
+        return None
+
+    def _acquire(self, frame, u, r, p, tick, out):
+        """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
+        judged on the previous frame (the state before the step): the target is the nearest enemy that frame's visible set of the unit's side holds (planar distance,
+        within the unit's layer reach), within NEAREST_TOL, and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
+        frame or the RETURN_FIRE_TICKS - 1 before it is return fire, which excuses both."""
+        tgt = r["target"] if r["alive"] else 0
+        prev = self.prev
+        if p is None or not p["alive"] or not tgt or tgt == p["target"]:
+            return
+        old = prev["units"].get(p["target"]) if p["target"] else None
+        if old is not None and old["alive"]:
+            return
+        if any((tgt, u) in hits for hits in self.hit_hist):
+            return
+        side, vis = p["side"], prev.get("visible")
+        reach = self.rules.reach.get(u)
+        nearest = mine = None            # distance to the nearest eligible enemy, and to the target when it is eligible
+        for e, row in prev["units"].items():
+            if not row["alive"] or row["side"] == side or (vis is not None and e not in vis.get(side, ())):
+                continue
+            if reach is not None and not self._in_reach(reach, p["layer"], row["layer"]):
+                continue
+            d = self._disp(p, row)
+            if e == tgt:
+                mine = d
+            if nearest is None or d < nearest:
+                nearest = d
+        if mine is None or mine > nearest + NEAREST_TOL:
+            out.append(_violation("R-087-03", tick, u, "acquired %d, not the nearest enemy its side sees (%s; nearest %s wu)" % (
+                tgt, "unseen, dead or out of reach" if mine is None else "%.1f wu" % mine, "none" if nearest is None else "%.1f" % nearest)))
+        elif tick % COHORT_SLOTS != self.rules.cohort[u]:
+            out.append(_violation("R-087-03", tick, u, "acquired %d at tick %d, off its cohort turn (slot %d)" % (tgt, tick, self.rules.cohort[u])))
 
     def _held(self, units, u, r, tick, out):
         tgt = r["target"] if r["alive"] else 0
@@ -183,11 +291,15 @@ class _Checker:
             self.stuck.pop(u, None)
             return
         dist = math.hypot(t["x"] - r["x"], t["y"] - r["y"])
+        reach = self.rules.attack_range.get(u)
+        if reach is not None and dist > reach:
+            self.stuck.pop(u, None)          # R-087-09 is about a target within attack range; the 20 ticks are consecutive in-range ticks
+            return
         run = self.stuck.get(u)
         if run is None or run[0] != tgt or dist < run[2] - 1.0:
             run = self.stuck[u] = [tgt, 0, dist, False]
         run[1] += 1
-        if run[1] > STUCK_TICKS and not run[3]:
+        if run[1] > STUCK_TICKS and not run[3] and "R-087-09" in self.on:
             run[3] = True
             out.append(_violation("R-087-09", tick, u, "held target %d unshootable for %d ticks without closing in (%.0f wu away)" % (tgt, run[1], dist)))
 
@@ -209,8 +321,8 @@ KEEP = 20          # violations written to a fight document (spec: the first 20)
 
 def suspended_for(sight):
     """{rule: switch} the checker cannot judge in a run with this `sight` ("off", "on" or "control"): sight "off" turns targeting by sight off, and R-087-03's
-    clause 'leaves its side's sight' has no meaning without it. ("control" also has targeting by sight off; the test writer's contract names only "off".)"""
-    return {"R-087-03": SWITCH_TARGET_BY_SIGHT} if sight == "off" else {}
+    clause 'leaves its side's sight' and R-093-02 have no meaning without it. ("control" also has targeting by sight off; the test writer's contract names only "off".)"""
+    return {"R-087-03": SWITCH_TARGET_BY_SIGHT, "R-093-02": SWITCH_TARGET_BY_SIGHT} if sight == "off" else {}
 
 
 class Monitor:
@@ -226,6 +338,10 @@ class Monitor:
         self._cell.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32]
         self._cell.restype = ctypes.c_int
         self._can_shoot = lib.om_combat_can_shoot
+        lib.om_unit_targeting_cohort.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+        lib.om_unit_targeting_cohort.restype = ctypes.c_uint32
+        lib.om_terrain_band_heights.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double), ctypes.c_uint32]
+        lib.om_terrain_band_heights.restype = ctypes.c_uint32
         self._ids, self._side = [], {}
         for (wa, faction), us in engine._own.items():
             if wa == world.value:
@@ -234,7 +350,7 @@ class Monitor:
                     self._side[u] = faction
         self._ids.sort()
         stats = {}
-        self._max_step, self._sensor, self._reach = {}, {}, {}
+        self._max_step, self._sensor, self._reach, self._range, self._aoe, cohort = {}, {}, {}, {}, {}, {}
         down = engine.get_param(world, engine.param_id("OM_TP_SLOPE_DOWN_MULT"))
         for u in self._ids:
             t = engine.unit_type(world, u)
@@ -242,9 +358,16 @@ class Monitor:
             self._max_step[u] = st["speed"] * max(1.0, down) / TICK_RATE
             self._sensor[u] = max(st["sensor_radius"], st["attack_range"])   # the leash, om_tac_leash in csrc/unit.c
             self._reach[u] = engine.profile_reach(world, t)
+            self._range[u], self._aoe[u] = st["attack_range"], st["aoe_radius"]
+            cohort[u] = lib.om_unit_targeting_cohort(world, u)
+        buf = (ctypes.c_double * 8)()
+        heights = list(buf)[:lib.om_terrain_band_heights(world, buf, 8)]
+        self._enemies = {s: [u for u in self._ids if self._side[u] != s] for s in set(self._side.values())}
         self._cache = {}
         self._terrain = bool(engine._lib.om_terrain_band_at(world, 0.0, 0.0) > 0)   # a world with no terrain reads band 0 everywhere
-        self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach))
+        self._posts = {}            # {guard id: (x, y)} where each stood when the lab ordered it to guard; the checker's Rules.guards
+        self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach, cohort, self._range,
+                                   self._posts, heights))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
         self.tick = 0
@@ -280,9 +403,24 @@ class Monitor:
                 out.append((a.value, b.value))
         return out
 
+    def _hits(self, units, prev, fires):
+        """Every (attacker, victim) the step's shots damaged: the target of each shot, and for an area weapon each other enemy of the attacker whose hp fell and that
+        stood within the area radius (plus 1 wu) of the target before the step (R-087-06 return fire answers splash too)."""
+        out = list(fires)
+        for a, b in fires:
+            radius = self._aoe.get(a, 0.0)
+            if radius > 0 and b in prev:
+                for v in self._enemies[self._side[a]]:
+                    pv = prev.get(v)
+                    if v != b and pv and pv["alive"] and units[v]["hp"] < pv["hp"] - 1e-9 and _Checker._disp(prev[b], pv) <= radius + 1.0:
+                        out.append((a, v))
+        return out
+
     def _read(self, tick, fires):
         e, w = self.engine, self.w
         prev = self._frame["units"] if getattr(self, "_frame", None) else {}
+        ordered = e.__dict__.get("order_log", {}).pop(w.value, {})     # {unit id: "guard" | "order"}: ordered since the last frame (those before frame 0 included)
+        self._ordered |= set(ordered)
         units = {}
         for u in self._ids:
             alive = e.unit_alive(w, u)
@@ -300,16 +438,54 @@ class Monitor:
             if alive and tgt:
                 row["shootable"] = bool(self._can_shoot(w, u, tgt))
             units[u] = row
+        for u, kind in ordered.items():
+            if kind == "guard":
+                self._posts[u] = (prev[u]["x"], prev[u]["y"]) if u in prev else (units[u]["x"], units[u]["y"])    # an order moves nobody: the post is where it stood
+            else:
+                self._posts.pop(u, None)
         self._ordered = set()
-        return {"tick": tick, "units": units, "fires": fires}
+        see = self.engine._lib.om_player_can_see          # the side's visible set: what its living units see and what its pings reveal (E-12 R-093-02)
+        visible = {s: {e for e in es if units[e]["alive"] and see(w, s, e)} for s, es in self._enemies.items()}
+        return {"tick": tick, "units": units, "fires": fires, "visible": visible, "hits": self._hits(units, prev, fires)}
 
     def after_step(self):
         self.tick += 1
         self._frame = self._read(self.tick, self._fires())
         self.violations += self._chk.feed(self._frame)
 
+    def verdict(self):
+        """What a lab result carries (FightResult, SearchResult): the first KEEP violations by (tick, rule, unit), whether any rule was broken, the suspended rules."""
+        return {"violations": sorted(self.violations, key=lambda v: (v["tick"], v["rule"], v["unit"]))[:KEEP], "invalid": bool(self.violations),
+                "suspended": dict(self.suspended)}
+
     def document_keys(self):
         """What a fight document carries (spec F0): `violations` (the first KEEP, by (tick, rule, unit)) and `invalid`, only when a rule was broken."""
         if not self.violations:
             return {}
         return {"violations": sorted(self.violations, key=lambda v: (v["tick"], v["rule"], v["unit"]))[:KEEP], "invalid": True}
+
+
+class Blind:
+    """Stands in for the Monitor on an engine the checker cannot read (a test double with no library): every rule reports suspended, nothing is judged."""
+    violations = []
+    tick = 0
+
+    def __init__(self):
+        self.suspended = {r: "engine not readable by the checker" for r in RULES}
+
+    def after_step(self):
+        pass
+
+    def new_order(self, ids):
+        pass
+
+    verdict = Monitor.verdict
+
+
+def watch(engine, world, width=float("inf"), height=float("inf")):
+    """The checker for a lab fight that is stepped by `engine` on `world` (fight.fight, search.run_search): a Monitor, or a Blind one when the engine has no library to read.
+    Targeting by sight is read from the world (OM_TP_TARGET_BY_SIGHT, 1 by default); a canvas the lab never set is as wide as the world (R-207-07 cannot fire)."""
+    if getattr(engine, "_lib", None) is None or not hasattr(engine, "_own"):
+        return Blind()
+    off = engine.get_param(world, engine.param_id(SWITCH_TARGET_BY_SIGHT)) == 0
+    return Monitor(engine, world, width, height, "off" if off else "on")

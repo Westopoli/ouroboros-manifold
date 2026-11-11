@@ -4,8 +4,9 @@ Hold fire: both sides spawn a clone of the Vanguard with attack_range 0 (HOLD_FI
 idle units of the stock Vanguard do auto-acquire and lose hp, and the clone loses none. No attack order is issued."""
 import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from scripts.skilllab import invariants
 from scripts.skilllab.formations import place
 
 VANGUARD = 2
@@ -61,6 +62,9 @@ class SearchResult:
     side: tuple
     contact_tick: int | None
     ended: str
+    violations: list = field(default_factory=list)   # the rule checker (scripts/skilllab/invariants.py): first 20 by (tick, rule, unit); [] when clean
+    invalid: bool = False
+    suspended: dict = field(default_factory=dict)
 
 
 def placements(seed, n, sight, reach_max):
@@ -124,6 +128,7 @@ def run_search(setting, policy0, policy1, placement, seed, cap_ticks=CAP_TICKS, 
              for px, py in place("blob", setting.force, sx, sy, 0.0, {"radius": BLOB_RADIUS})],
             [engine.spawn(w, HOLD_FIRE_TYPE, 1, px, py, placement.layer)
              for px, py in place("blob", HIDER_FORCE, hx, hy, 0.0, {"radius": BLOB_RADIUS})])
+        monitor = invariants.watch(engine, w, *CANVAS)
         policies = (POLICIES[policy0], POLICIES[policy1])
         script = HIDER_SCRIPTS[placement.script]
         headings = (SEEKER_HEADING_DEG, placement.heading_deg)
@@ -157,6 +162,7 @@ def run_search(setting, policy0, policy1, placement, seed, cap_ticks=CAP_TICKS, 
                                      if engine.unit_layer(w, e) == layer and math.hypot(ex - x, ey - y) <= setting.radius)
                         pings[s].append((tick, caught))
             engine.step(w)
+            monitor.after_step()
             now = tick + 1
             sight = tuple(engine.seen_by_sight(w, s, sides[1 - s]) for s in (0, 1))
             for s in (0, 1):
@@ -173,6 +179,6 @@ def run_search(setting, policy0, policy1, placement, seed, cap_ticks=CAP_TICKS, 
                 break
         heads = (HIDER_FORCE, setting.force)
         return SearchResult(tuple(summarise_side(logs[s], contact, cap_ticks, heads[s], pings[s]) for s in (0, 1)),
-                            contact, "contact" if contact is not None else "cap")
+                            contact, "contact" if contact is not None else "cap", **monitor.verdict())
     finally:
         engine.free_world(w)

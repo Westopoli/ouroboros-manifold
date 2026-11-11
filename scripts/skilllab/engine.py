@@ -88,6 +88,7 @@ class Engine:
         self._px, self._py = ctypes.c_double(), ctypes.c_double()
         self._pbx, self._pby = ctypes.byref(self._px), ctypes.byref(self._py)
         self._own = {}      # (world address, faction) -> unit ids spawned through this wrapper
+        self.order_log = {}  # per world address, filled by the order_* methods for the rule checker (see _ordered)
 
     def _bind(self):
         c, V, u32, u64, d, i = (ctypes, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_double,
@@ -188,6 +189,7 @@ class Engine:
         self._fast_forget(w)
         for k in [k for k in self._own if k[0] == w.value]:
             del self._own[k]
+        self.order_log.pop(w.value, None)
         self._lib.om_world_free(w)
 
     @_bumps
@@ -273,22 +275,34 @@ class Engine:
             if v is not None:
                 self.set_param(w, self.param_id(name), v)
 
+    def _ordered(self, w, unit_ids, kind="order"):
+        """Tell the rule checker (scripts/skilllab/invariants.py Monitor) which units were ordered: `order_log` {world address: {unit id: kind of its last order since the
+        checker looked}}, kind "guard" for order_guard (R-096-08 takes the guard's post from where it stood), "order" otherwise (R-087-03 forgives a retarget that follows one)."""
+        log = self.__dict__.setdefault("order_log", {}).setdefault(getattr(w, "value", w), {})
+        for u in unit_ids:
+            log.pop(int(u), None)
+            log[int(u)] = kind
+
     @_bumps
     def order_attack_move(self, w, unit_ids, x, y):
+        self._ordered(w, unit_ids)
         self._order(self._lib.om_command_attack_move, w, unit_ids, x, y)
 
     @_bumps
     def order_move(self, w, unit_ids, x, y):
         # om_command_move, not om_unit_order_move: the latter only records a destination and never moves the unit.
+        self._ordered(w, unit_ids)
         self._order(self._lib.om_command_move, w, unit_ids, x, y)
 
     @_bumps
     def order_group_move(self, w, unit_ids, x, y):
+        self._ordered(w, unit_ids)
         ids = [int(u) for u in unit_ids]
         return int(self._lib.om_command_group_move(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), float(x), float(y)))
 
     @_bumps
     def order_guard(self, w, unit_ids):
+        self._ordered(w, unit_ids, "guard")
         ids = [int(u) for u in unit_ids]
         rc = self._lib.om_command_guard(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids))
         if rc != 0:

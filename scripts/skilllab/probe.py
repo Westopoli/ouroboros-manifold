@@ -15,24 +15,25 @@ def coarse_heads():
 
 
 def _points(build, settings, heads, seeds, swap, fight_fn, base_settings, base_cache):
-    """Yields ((heads, seed), {"differed", "base_cached"}), heads major. base_cache, a dict the caller owns, holds the base row of (heads, seed)."""
+    """Yields ((heads, seed), {"differed", "base_cached", "invalid"}), heads major; invalid: the base or the moved fight broke a rule of the checker. base_cache, a dict the caller owns, holds the base row of (heads, seed)."""
     fight_fn = fight_fn or fight_mod.fight
     for h in coarse_heads() if heads is None else heads:
         for seed in seeds:
             setup = build(h, swap)
             cached = base_cache is not None and (h, seed) in base_cache
             if cached:
-                base_row = base_cache[(h, seed)]
+                base_row, base_invalid = base_cache[(h, seed)]
             else:
-                base_row = rows.fight_row(fight_fn(dataclasses.replace(setup, settings={**setup.settings, **(base_settings or {})}), seed, swap))
+                base = fight_fn(dataclasses.replace(setup, settings={**setup.settings, **(base_settings or {})}), seed, swap)
+                base_row, base_invalid = rows.fight_row(base), bool(getattr(base, "invalid", False))
                 if base_cache is not None:
-                    base_cache[(h, seed)] = base_row
-            moved = rows.fight_row(fight_fn(dataclasses.replace(setup, settings={**setup.settings, **settings}), seed, swap))
-            yield (h, seed), {"differed": base_row != moved, "base_cached": cached}
+                    base_cache[(h, seed)] = base_row, base_invalid
+            moved = fight_fn(dataclasses.replace(setup, settings={**setup.settings, **settings}), seed, swap)
+            yield (h, seed), {"differed": base_row != rows.fight_row(moved), "base_cached": cached, "invalid": base_invalid or bool(getattr(moved, "invalid", False))}
 
 
 def survey(build, settings, heads=None, seeds=SEEDS, swap=False, fight_fn=None, base_settings=None, base_cache=None):
-    """{(heads, seed): {"differed": bool, "base_cached": bool}} for every point; never stops early. heads=None: the sweep's coarse list."""
+    """{(heads, seed): {"differed": bool, "base_cached": bool, "invalid": bool}} for every point; never stops early. heads=None: the sweep's coarse list."""
     return dict(_points(build, settings, heads, seeds, swap, fight_fn, base_settings, base_cache))
 
 
