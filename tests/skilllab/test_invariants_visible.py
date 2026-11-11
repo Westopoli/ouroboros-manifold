@@ -46,9 +46,9 @@ def test_R_093_02_control_a_unit_that_sees_its_target_is_silent(inv):
     assert inv.check(frames(target=2), rules(inv)).violations == []
 
 
-def test_R_093_02_rules_lists_it_last(inv):
-    """R-093-02 is one of the checks, appended to RULES (the nine checks)."""
-    assert tuple(inv.RULES)[-1] == "R-093-02" and len(inv.RULES) == 9
+def test_R_093_02_rules_lists_it_ninth(inv):
+    """R-093-02 is one of the checks, appended to RULES as the ninth; R-096-08 and R-087-10 were appended after it (eleven checks in all)."""
+    assert tuple(inv.RULES)[8] == "R-093-02" and len(inv.RULES) == 11
 
 
 def test_R_093_02_a_unit_that_holds_an_unseen_target_is_flagged(inv):
