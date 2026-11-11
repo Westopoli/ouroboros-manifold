@@ -16,6 +16,7 @@ never a Python re-derivation. Every number below is a DRAFT constant, Westley's 
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
 (R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
+import collections
 import ctypes
 import math
 
@@ -31,13 +32,18 @@ BACKSWING_TICKS = 10
 HEAL_ONE = 0.075
 LEASH_SLACK = 25.0
 TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
+NEAREST_TOL = 1.0            # DRAFT-inv-nearest-tol: an acquired target within this much of the nearest eligible enemy counts as the nearest (R-087-03)
+RETURN_FIRE_TICKS = 4        # DRAFT-inv-return-fire-ticks: a hit by the target in the frame of the acquisition or the 3 before it is return fire (R-087-06)
+COHORT_SLOTS = 4             # R-087-08: a unit acquires at its cohort turn on every 4th tick
 
 
 class Rules:
     """What the checks need to know about the world. blocked_cell(cx, cy, layer) -> bool; max_step {unit id: wu a tick}; sensor_radius {unit id: wu}, the radius a unit
-    may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch}."""
+    may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch};
+    cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one)."""
 
-    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None):
+    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None):
+        self.cohort = cohort or {}
         self.width, self.height = float(width), float(height)
         self.reach = reach or {}      # {unit id: (layers up, layers down)}: a locked target that moves beyond it is dropped by the engine (R-164-02), not swapped
         self.blocked_cell = blocked_cell
@@ -72,6 +78,7 @@ class _Checker:
         self.last_shot = {}          # unit -> tick of its last shot (R-084-04)
         self.lock = {}               # unit -> (target, (x, y) where it took that lock) (R-087-03)
         self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09)
+        self.hit_hist = collections.deque(maxlen=RETURN_FIRE_TICKS)   # the (attacker, victim) pairs of the last frames, this one included (R-087-06)
 
     # -- helpers
     @staticmethod
@@ -107,6 +114,7 @@ class _Checker:
         tick, units, prev = frame["tick"], frame["units"], self.prev
         on, rules, out = self.on, self.rules, []
         fires = frame.get("fires", [])
+        self.hit_hist.append(set(frame.get("hits", fires)))
         shooters = {a for a, _ in fires}
         hit = {b for _, b in fires}
         for u in sorted(units):
@@ -137,6 +145,8 @@ class _Checker:
                         moved, step, STEP_SLACK, p["layer"], r["layer"])))
             if "R-087-03" in on:
                 self._lock(frame, u, r, p, tick, out)
+                if u in rules.cohort:
+                    self._acquire(frame, u, r, p, tick, out)
             if "R-087-09" in on:
                 self._held(units, u, r, tick, out)
         for a in shooters:
@@ -175,6 +185,39 @@ class _Checker:
             self.lock.pop(u, None)
         if tgt and (not held or held[0] != tgt):
             self.lock[u] = (tgt, held[1] if held else (r["x"], r["y"]))   # the anchor stays through a pause with no target: an attack-mover keeps it while it pursues
+
+    def _acquire(self, frame, u, r, p, tick, out):
+        """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
+        judged on the previous frame (the state before the step): the target is the nearest enemy that frame's visible set of the unit's side holds (planar distance,
+        within the unit's layer reach), within NEAREST_TOL, and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
+        frame or the RETURN_FIRE_TICKS - 1 before it is return fire, which excuses both."""
+        tgt = r["target"] if r["alive"] else 0
+        prev = self.prev
+        if p is None or not p["alive"] or not tgt or tgt == p["target"]:
+            return
+        old = prev["units"].get(p["target"]) if p["target"] else None
+        if old is not None and old["alive"]:
+            return
+        if any((tgt, u) in hits for hits in self.hit_hist):
+            return
+        side, vis = p["side"], prev.get("visible")
+        reach = self.rules.reach.get(u)
+        nearest = mine = None            # distance to the nearest eligible enemy, and to the target when it is eligible
+        for e, row in prev["units"].items():
+            if not row["alive"] or row["side"] == side or (vis is not None and e not in vis.get(side, ())):
+                continue
+            if reach is not None and not self._in_reach(reach, p["layer"], row["layer"]):
+                continue
+            d = self._disp(p, row)
+            if e == tgt:
+                mine = d
+            if nearest is None or d < nearest:
+                nearest = d
+        if mine is None or mine > nearest + NEAREST_TOL:
+            out.append(_violation("R-087-03", tick, u, "acquired %d, not the nearest enemy its side sees (%s; nearest %s wu)" % (
+                tgt, "unseen, dead or out of reach" if mine is None else "%.1f wu" % mine, "none" if nearest is None else "%.1f" % nearest)))
+        elif tick % COHORT_SLOTS != self.rules.cohort[u]:
+            out.append(_violation("R-087-03", tick, u, "acquired %d at tick %d, off its cohort turn (slot %d)" % (tgt, tick, self.rules.cohort[u])))
 
     def _held(self, units, u, r, tick, out):
         tgt = r["target"] if r["alive"] else 0
