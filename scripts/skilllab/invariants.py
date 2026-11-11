@@ -20,7 +20,7 @@ import collections
 import ctypes
 import math
 
-RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity")
+RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02")
 
 CELL = 100.0                 # the engine's cell, wu (OM_NAVMESH_CELL_SIZE)
 DEPTH_TOL = 1.0              # DRAFT-inv-cell-depth
@@ -149,6 +149,8 @@ class _Checker:
                     self._acquire(frame, u, r, p, tick, out)
             if "R-087-09" in on:
                 self._held(units, u, r, tick, out)
+        if "R-093-02" in on and prev is not None and "visible" in prev:
+            self._sight(frame, prev["visible"], tick, out)
         for a in shooters:
             self.last_shot[a] = tick
         self.prev = frame
@@ -185,6 +187,20 @@ class _Checker:
             self.lock.pop(u, None)
         if tgt and (not held or held[0] != tgt):
             self.lock[u] = (tgt, held[1] if held else (r["x"], r["y"]))   # the anchor stays through a pause with no target: an attack-mover keeps it while it pursues
+
+    @staticmethod
+    def _sight(frame, visible, tick, out):
+        """R-093-02. A unit that fires at, or holds, a living target has it in its side's visible set of the previous frame (the state before the step that decided
+        it; a shot that kills the target takes it out of the set of its own frame). One violation per unit and frame."""
+        units, said = frame["units"], set()
+        for a, b in frame.get("fires", []):
+            if a in units and b not in visible.get(units[a]["side"], ()):
+                said.add(a)
+                out.append(_violation("R-093-02", tick, a, "fired at %d, which its side did not see before the step" % b))
+        for u, r in units.items():
+            t = units.get(r["target"]) if r["alive"] and r["target"] else None
+            if t is not None and t["alive"] and u not in said and r["target"] not in visible.get(r["side"], ()):
+                out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % r["target"]))
 
     def _acquire(self, frame, u, r, p, tick, out):
         """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
@@ -252,8 +268,8 @@ KEEP = 20          # violations written to a fight document (spec: the first 20)
 
 def suspended_for(sight):
     """{rule: switch} the checker cannot judge in a run with this `sight` ("off", "on" or "control"): sight "off" turns targeting by sight off, and R-087-03's
-    clause 'leaves its side's sight' has no meaning without it. ("control" also has targeting by sight off; the test writer's contract names only "off".)"""
-    return {"R-087-03": SWITCH_TARGET_BY_SIGHT} if sight == "off" else {}
+    clause 'leaves its side's sight' and R-093-02 have no meaning without it. ("control" also has targeting by sight off; the test writer's contract names only "off".)"""
+    return {"R-087-03": SWITCH_TARGET_BY_SIGHT, "R-093-02": SWITCH_TARGET_BY_SIGHT} if sight == "off" else {}
 
 
 class Monitor:
