@@ -60,7 +60,14 @@ def plant(monkeypatch):
             u = sorted(self._own[(w.value, 0)])[0]
             x, y = self.unit_pos(w, u)
             lib.om_unit_set_pos(w, u, x, y + LEAP)
+    real_new = Engine.new_world
+
+    def new_world(self, seed):
+        w = real_new(self, seed)
+        count.pop(w.value, None)        # a freed world's address can come back for the next fight: its steps count from 0 again (the sweep-row tests run two fights)
+        return w
     monkeypatch.setattr(Engine, "step", step)
+    monkeypatch.setattr(Engine, "new_world", new_world)
     return count
 
 
