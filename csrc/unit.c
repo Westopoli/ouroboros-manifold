@@ -2095,8 +2095,9 @@ static int om_tac_giveup(om_unit_row *u, const om_unit_row *t, int shootable, ui
     double dx = t->x - u->x, dy = t->y - u->y, dist;
     if (shootable) { om_tac_giveup_clear(u); return 0; }
     dist = sqrt(dx * dx + dy * dy);
+    if (u->giveup_target != t->unit_id) u->spot_set = 0;
     if (u->giveup_target != t->unit_id || dist < u->giveup_ref - 1.0) {
-        u->giveup_target = t->unit_id; u->giveup_ref = dist; u->giveup_ticks = 0; u->spot_set = 0;
+        u->giveup_target = t->unit_id; u->giveup_ref = dist; u->giveup_ticks = 0;
     }
     u->giveup_ticks += period;
     if (u->giveup_ticks < OM_GIVEUP_TICKS) return 0;
@@ -3626,6 +3627,8 @@ static void om_unit_sr_row(om_unit_sr *s, om_unit_row *r) {
 #undef U
 #undef I
 #undef D
+    /* F5: the give-up run, the exclusion and the firing spot are not saved; a loaded unit starts with none (the row memory is not zeroed here) */
+    r->giveup_target = 0; r->giveup_ticks = 0; r->giveup_ref = 0.0; r->excl_id = 0; r->excl_until = 0; r->spot_set = 0; r->spot_x = 0.0; r->spot_y = 0.0;
 }
 
 static void om_unit_sw_state(om_unit_sw *s, const om_tac_state *st) {
