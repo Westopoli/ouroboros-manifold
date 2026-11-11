@@ -475,8 +475,8 @@ class Blind:
     violations = []
     tick = 0
 
-    def __init__(self):
-        self.suspended = {r: "engine not readable by the checker" for r in RULES}
+    def __init__(self, reason="engine not readable by the checker"):
+        self.suspended = {r: reason for r in RULES}
 
     def after_step(self):
         pass

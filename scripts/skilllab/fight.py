@@ -165,7 +165,8 @@ def _apply_cone(engine, w, setup, types):
         engine.set_cone(w, types[name][0], float(rng), float(half_angle), float(share))
 
 
-def fight(setup, seed=0, swap=False, engine=None):
+def fight(setup, seed=0, swap=False, engine=None, check=True):
+    """One lab fight. `check=False` exists for speed measurement of the engine's firing: the whole-run rule checker is off, every rule reports suspended ("checker off"), and a run made with it is not evidence about rules."""
     heads = tuple(sum(g.count for g in setup.groups if g.side == s) for s in (0, 1))
     if min(heads) < 1:
         raise ValueError("each side needs at least one unit, got headcounts %r" % (heads,))
@@ -207,7 +208,7 @@ def fight(setup, seed=0, swap=False, engine=None):
         start_hp = {u: engine.unit_hp(w, u) for ids in side_ids for u in ids}
         timeline = Timeline(engine, w, setup, ids_by_group, goals)
         canvas = setup.terrain.canvas if setup.terrain is not None else (float("inf"), float("inf"))
-        monitor = invariants.watch(engine, w, *canvas)    # the whole-run rule checker, fed after every step (scripts/skilllab/invariants.py)
+        monitor = invariants.watch(engine, w, *canvas) if check else invariants.Blind("checker off")    # check=False: speed measurement only, every rule suspended; # the whole-run rule checker, fed after every step (scripts/skilllab/invariants.py)
         return _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group, monitor)
     finally:
         engine.free_world(w)
