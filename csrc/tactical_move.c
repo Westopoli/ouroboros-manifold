@@ -323,6 +323,8 @@ uint32_t col_cur;
     double   start_x[OM_MOVE_MAX_UNITS], start_y[OM_MOVE_MAX_UNITS];
     double   pass_x[OM_MOVE_MAX_UNITS], pass_y[OM_MOVE_MAX_UNITS];
     int32_t  start_layer[OM_MOVE_MAX_UNITS];
+    /* F8: 1 for a unit om_move_leave_blocked placed this tick; om_move_slope_clamp leaves its displacement alone (a placement, not a walk). Not saved: rebuilt every tick. */
+    uint8_t  placed[OM_MOVE_MAX_UNITS];
     /* col_pursue / col_route cache the two switches during a collision pass. */
     int      col_pursue, col_route;
     /* The runtime unit collision radius (OM_TP_UNIT_COLLISION_RADIUS), read once per tick and per standalone collision
@@ -2193,6 +2195,7 @@ static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_
         mu->x = (double)best_x * OM_NAVMESH_CELL_SIZE + (rx < lo ? lo : (rx > hi ? hi : rx));
         mu->y = (double)best_y * OM_NAVMESH_CELL_SIZE + (ry < lo ? lo : (ry > hi ? hi : ry));
     }
+    ms->placed[mu->unit_id] = 1;   /* F8: the repair is a placement; om_move_slope_clamp does not cut it. See also: om_move_slope_clamp */
     mu->plan_valid = 0;
     om_move_route_drop(mu);
     om_move_grid_update(ms, mu);
@@ -2723,7 +2726,7 @@ static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
  * it among the units of the new layer, which it overlapped without colliding on the old one; the collision pass then resolved the whole overlap in one tick, a jump of
  * 10 to 20 wu (the I5tL jumps, the I23 flicker). A walker standing on a slope at the start or the end of the tick is brought back along its tick's displacement to the
  * most its pace allows (the unit's speed, and the slope's down multiplier) plus OM_SLOPE_STEP_SLACK; the rest of the overlap is resolved on the next ticks, a step at a time.
- * The same cut applies to an ejection (om_move_commit leave_blocked) on a slope: the unit walks out instead of jumping out.
+ * A unit om_move_leave_blocked placed this tick (R-207-06 repair, e.g. an ordered layer change landing in a blocked cell: nearest open cell, R-097-09) is not cut: that is a placement, not a walk.
  * Only with PURSUE_BY_STEERING on (start_x/start_y are the start-of-tick positions). See also: om_move_walker_tick, om_move_collision_pass_internal. */
 static void om_move_slope_clamp(om_world *w, om_move_state *ms, uint32_t period) {
     const double down = om_tactical_get_param(w, OM_TP_SLOPE_DOWN_MULT);
@@ -2734,7 +2737,7 @@ static void om_move_slope_clamp(om_world *w, om_move_state *ms, uint32_t period)
         om_move_unit *mu = &ms->units[id];
         om_slope sl;
         double dx, dy, d, bound, eff, nominal;
-        if (!mu->in_use || !ms->grid_in[id]) continue;
+        if (!mu->in_use || !ms->grid_in[id] || ms->placed[id]) continue;
         dx = mu->x - ms->start_x[id];
         dy = mu->y - ms->start_y[id];
         if (dx == 0.0 && dy == 0.0) continue;
@@ -2764,6 +2767,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
         for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
             ms->start_x[id] = ms->units[id].x;
             ms->start_y[id] = ms->units[id].y;
+            ms->placed[id] = 0;
             if (ms->grid_in[id]) {
                 ms->slot_sx[ms->unit_slot[id]] = ms->start_x[id];
                 ms->slot_sy[ms->unit_slot[id]] = ms->start_y[id];
