@@ -132,14 +132,17 @@ def test_engine_binds_the_terrain_heights_setter():
 
 def test_runner_writes_blocked_per_frame_for_the_gap_queue(runs):
     """H-063 "a marker on units blocked for more than 2 s: the first-contact queue at a gap" and ruling 5: "the runner writes an optional per-frame `blocked` list (unit
-    rows blocked more than 2 s, judged at sample ticks) into the fight file". The chokepoint fight with walls has `blocked` on every frame, a list of ints, and at some
-    frame it is not empty (units queue at the walls). CONTROL half: the features-emptied twin has no blocked unit in any frame (absent or empty), so the marker is the
-    ground's."""
-    _, _, with_p, with_doc, _, ctl_doc = runs["chokepoint"]
+    rows blocked more than 2 s, judged at sample ticks) into the fight file". The ridge fight has `blocked` on every frame, a list of ints, and at some
+    frame it is not empty (units stall at the ridge). CONTROL half: the features-emptied twin has no blocked unit in any frame (absent or empty), so the marker is the
+    ground's.
+    Test-defect (engine rule fixes F1 to F4, 2026-11-11): the chokepoint and cover fights no longer list a unit blocked (measured: 0 on every frame, seed 1, cap 60 s, sight on
+    and off), because a unit that halts at the walls now holds its lock on an enemy and fires, and `blocked` counts only units with no target. The ridge fixture (one wall
+    across the field, small_tiered) still stalls targetless units (6 on the frames at 300 and 400 ticks), so the marker is proved there."""
+    _, _, with_p, with_doc, _, ctl_doc = runs["ridge"]
     assert with_p.returncode == 0, with_p.stdout[-300:] + with_p.stderr[-500:]
     frames = with_doc["frames"]
     assert all(isinstance(f.get("blocked"), list) and all(isinstance(i, int) for i in f["blocked"]) for f in frames), "a frame has no int list `blocked`"
-    assert any(f["blocked"] for f in frames), "no unit is ever listed blocked at the walls"
+    assert any(f["blocked"] for f in frames), "no unit is ever listed blocked at the ridge"
     assert not any(f.get("blocked") for f in ctl_doc["frames"]), "the no-features control lists blocked units"
 
 
