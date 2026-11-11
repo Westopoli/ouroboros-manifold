@@ -294,9 +294,6 @@ typedef struct {
      * a clear line to it; a full list drops the entry that expires first.
      * spot_x/y is the firing spot an idle unit or a guard is walking to (spot_set). All zero at rest; hashed while any is set; not saved
      * (saving them needs OM_SAVE_FORMAT_VERSION and the pipe sidecar bumped, a contract step): a loaded game starts a fresh run. */
-    /* F7 (R-087-10): the layer the attack-move anchor was set on, so the leash is measured spherically. Read only while anchor_set; hashed only when it
-     * differs from the unit's layer (else it equals it); not saved (a loaded unit takes its own layer, as the F5 run starts fresh). */
-    uint32_t anchor_layer;
     uint32_t giveup_target;
     uint32_t giveup_ticks;
     double   giveup_ref;
@@ -1027,7 +1024,7 @@ static int om_tac_pursue(const om_world *w) {
 static double om_tac_leash(const om_world *w, const om_unit_row *u);
 static int om_tac_leash_broken(const om_world *w, const om_unit_row *u, const om_unit_row *t) {
     const om_unit_row *p = om_tac_pursue(w) ? u : t;
-    return !om_tac_dist_le_layers(w, p->layer, u->anchor_layer, p->x - u->anchor_x, p->y - u->anchor_y, om_tac_leash(w, u));
+    return !om_tac_dist_le(p->x - u->anchor_x, p->y - u->anchor_y, om_tac_leash(w, u));
 }
 
 /* H-057 (DEC-leash-param-2026-11-01): the leash and the acquisition radius are the unit's own type's
@@ -2419,7 +2416,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                     }
                     u->am_gid = 0;
                     u->target_id = atk->unit_id;
-                    u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_layer = u->layer; u->anchor_set = 1;
+                    u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
                 } else {
                     u->order = OM_ORDER_ATTACK_MOVE;
                     u->order_x = atk->x; u->order_y = atk->y;
@@ -2507,7 +2504,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         if (t) {
             u->target_id = t->unit_id;
             if (u->order == OM_ORDER_ATTACK_MOVE && (!pursue || !u->anchor_set)) {
-                u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_layer = u->layer; u->anchor_set = 1;
+                u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
             }
         }
         /* H-057 (R-087-04 rev 2026-11-01, replaces A199): a target beyond attack range is walked to below. The
@@ -2534,7 +2531,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             u->order_x = u->x; u->order_y = u->y;
             u->issued_x = u->x; u->issued_y = u->y;
             u->am_gid = 0;
-            u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_layer = u->layer; u->anchor_set = 1;
+            u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
         }
         if (u->order == OM_ORDER_ATTACK_TARGET) {
             if (in_range) {
@@ -2557,7 +2554,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         } else if (u->order == OM_ORDER_ATTACK_MOVE) {
             om_tac_hold(w, u, t->unit_id);
             /* a target taken by return fire is anchored here and leashed from the next tick */
-            if (pursue && !u->anchor_set) { u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_layer = u->layer; u->anchor_set = 1; }
+            if (pursue && !u->anchor_set) { u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1; }
         }
         /* F5 (R-087-09): an idle unit whose target is in range but behind a blocker walks to a spot with a clear line (an attack-mover walks its
          * goal, A171, and the give-up bounds it); a unit that moved does not fire this tick (R-087-04) */
@@ -3505,8 +3502,6 @@ static uint64_t om_unit_ck_row(const om_unit_row *r) {
     W(flinching); D(flinch_x); D(flinch_y); W(last_attacker); W(fire_pending);
     W(stealth); W(suppress_auto); W(brace_auto); W(fortify_auto);
     D(last_seen_x); D(last_seen_y); W(fired);
-    /* F7: the anchor's layer matters only when it is not the unit's own (otherwise it is derived from hashed state) */
-    if (r->anchor_set && r->anchor_layer != r->layer) W(anchor_layer);
     /* F5: mixed only while a give-up run, an exclusion or a firing spot is live, so a world that never blocks hashes as it did */
     {
         int excl_live = 0;
@@ -3665,7 +3660,6 @@ static void om_unit_sr_row(om_unit_sr *s, om_unit_row *r) {
 #undef U
 #undef I
 #undef D
-    r->anchor_layer = r->layer;   /* F7: not saved */
     /* F5: the give-up run, the exclusion and the firing spot are not saved; a loaded unit starts with none (the row memory is not zeroed here) */
     r->giveup_target = 0; r->giveup_ticks = 0; r->giveup_ref = 0.0; for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS; i++) { r->excl_id[i] = 0; r->excl_until[i] = 0; } r->spot_set = 0; r->spot_x = 0.0; r->spot_y = 0.0;
 }
