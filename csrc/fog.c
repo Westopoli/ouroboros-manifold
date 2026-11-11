@@ -252,6 +252,12 @@ static double om_fog_dist(double x1, double y1, double x2, double y2) {
     return sqrt(dx * dx + dy * dy);
 }
 
+/* F7 (R-087-10): sensor radius is measured spherically, the horizontal distance and the height difference of the two layers together. */
+static double om_fog_slant(const om_world *w, double ox, double oy, uint32_t ol, double tx, double ty, uint32_t tl) {
+    double dx = tx - ox, dy = ty - oy, dz = om_terrain_layer_dz(w, ol, tl);
+    return sqrt(dx * dx + dy * dy + dz * dz);
+}
+
 static const om_fog_unit_track *om_fog_find_tracked(const om_fog_state *st, uint32_t unit_id) {
     uint32_t i;
     if (!st) return NULL;
@@ -763,7 +769,7 @@ static int om_fog_can_see_at(const om_world *w, uint32_t observer, double ox, do
             double r = om_fog_effective_radius_at(st, w, observer, om_unit_get_unit_type(w, observer), ox, oy, ol, 0, 0);
             double tr = om_unit_profile_sensor_radius((om_world *)w, tt);
             if (tr > r) r = tr;
-            flyer_seen = om_fog_dist(ox, oy, tx, ty) <= r * om_tactical_get_param(w, OM_TP_GROUND_FLYER_SEEN_MULT) &&
+            flyer_seen = om_fog_slant(w, ox, oy, ol, tx, ty, tl) <= r * om_tactical_get_param(w, OM_TP_GROUND_FLYER_SEEN_MULT) &&
                          !(terrain_sight && om_terrain_sight_blocks(w, (int)ol, ox, oy, (int)tl, tx, ty));
         }
     }
@@ -773,7 +779,7 @@ static int om_fog_can_see_at(const om_world *w, uint32_t observer, double ox, do
         if (factor <= 0.0) return 0;
         factor = om_fog_emission_factor(w, factor, observer, target);
     }
-    if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius_at(st, w, observer, om_unit_get_unit_type(w, observer), ox, oy, ol,
+    if (om_fog_slant(w, ox, oy, ol, tx, ty, tl) > om_fog_effective_radius_at(st, w, observer, om_unit_get_unit_type(w, observer), ox, oy, ol,
                                                                  (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
     if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
     if (terrain_sight && om_terrain_sight_blocks(w, (int)ol, ox, oy, (int)tl, tx, ty)) return 0;
