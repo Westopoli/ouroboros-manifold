@@ -322,6 +322,10 @@ class Monitor:
         self._cell.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32]
         self._cell.restype = ctypes.c_int
         self._can_shoot = lib.om_combat_can_shoot
+        lib.om_unit_targeting_cohort.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+        lib.om_unit_targeting_cohort.restype = ctypes.c_uint32
+        lib.om_terrain_band_heights.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double), ctypes.c_uint32]
+        lib.om_terrain_band_heights.restype = ctypes.c_uint32
         self._ids, self._side = [], {}
         for (wa, faction), us in engine._own.items():
             if wa == world.value:
@@ -330,7 +334,7 @@ class Monitor:
                     self._side[u] = faction
         self._ids.sort()
         stats = {}
-        self._max_step, self._sensor, self._reach = {}, {}, {}
+        self._max_step, self._sensor, self._reach, self._range, self._aoe, cohort = {}, {}, {}, {}, {}, {}
         down = engine.get_param(world, engine.param_id("OM_TP_SLOPE_DOWN_MULT"))
         for u in self._ids:
             t = engine.unit_type(world, u)
@@ -338,9 +342,17 @@ class Monitor:
             self._max_step[u] = st["speed"] * max(1.0, down) / TICK_RATE
             self._sensor[u] = max(st["sensor_radius"], st["attack_range"])   # the leash, om_tac_leash in csrc/unit.c
             self._reach[u] = engine.profile_reach(world, t)
+            self._range[u], self._aoe[u] = st["attack_range"], st["aoe_radius"]
+            cohort[u] = lib.om_unit_targeting_cohort(world, u)
+        buf = (ctypes.c_double * 8)()
+        heights = list(buf)[:lib.om_terrain_band_heights(world, buf, 8)]
+        self._enemies = {s: [u for u in self._ids if self._side[u] != s] for s in set(self._side.values())}
         self._cache = {}
         self._terrain = bool(engine._lib.om_terrain_band_at(world, 0.0, 0.0) > 0)   # a world with no terrain reads band 0 everywhere
-        self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach))
+        self._order_log = engine.order_log
+        self._order_log.pop(world.value, None)      # orders given before frame 0 are part of frame 0
+        self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach, cohort, self._range,
+                                   engine.guard_posts.setdefault(world.value, {}), heights))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
         self.tick = 0
@@ -376,9 +388,23 @@ class Monitor:
                 out.append((a.value, b.value))
         return out
 
+    def _hits(self, units, prev, fires):
+        """Every (attacker, victim) the step's shots damaged: the target of each shot, and for an area weapon each other enemy of the attacker whose hp fell and that
+        stood within the area radius (plus 1 wu) of the target before the step (R-087-06 return fire answers splash too)."""
+        out = list(fires)
+        for a, b in fires:
+            radius = self._aoe.get(a, 0.0)
+            if radius > 0 and b in prev:
+                for v in self._enemies[self._side[a]]:
+                    pv = prev.get(v)
+                    if v != b and pv and pv["alive"] and units[v]["hp"] < pv["hp"] - 1e-9 and _Checker._disp(prev[b], pv) <= radius + 1.0:
+                        out.append((a, v))
+        return out
+
     def _read(self, tick, fires):
         e, w = self.engine, self.w
         prev = self._frame["units"] if getattr(self, "_frame", None) else {}
+        self._ordered |= self._order_log.pop(w.value, set())
         units = {}
         for u in self._ids:
             alive = e.unit_alive(w, u)
@@ -397,7 +423,9 @@ class Monitor:
                 row["shootable"] = bool(self._can_shoot(w, u, tgt))
             units[u] = row
         self._ordered = set()
-        return {"tick": tick, "units": units, "fires": fires}
+        see = self.engine._lib.om_player_can_see          # the side's visible set: what its living units see and what its pings reveal (E-12 R-093-02)
+        visible = {s: {e for e in es if units[e]["alive"] and see(w, s, e)} for s, es in self._enemies.items()}
+        return {"tick": tick, "units": units, "fires": fires, "visible": visible, "hits": self._hits(units, prev, fires)}
 
     def after_step(self):
         self.tick += 1
