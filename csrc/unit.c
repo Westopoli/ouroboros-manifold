@@ -2175,9 +2175,22 @@ static int om_tac_find_spot(om_world *w, om_unit_row *u, const om_unit_row *t, d
     return 0;
 }
 
+/* F5/F6: a unit about to walk for its own purpose (to a firing spot, after a target, back to a post) is not braced, as a unit under an order is not
+ * (R-087-02, om_tac_unit_ai): an auto Brace or Fortify it holds is cancelled (a Brace roots the unit, om_unit_speed_with_modifiers) and the threshold
+ * scan stays off this tick. */
+static void om_tac_unbrace_for_walk(om_tac_state *st, om_unit_row *u) {
+    u->suppress_auto = 1;
+    if (u->brace_auto && (u->ability_phase == OM_ABILITY_PHASE_WINDUP || u->ability_phase == OM_ABILITY_PHASE_ACTIVE)) {
+        om_ability_start_or_cancel_brace(st, u);
+        u->brace_auto = 0;
+    }
+    if (u->fortify_auto && u->ability_phase == OM_ABILITY_PHASE_ACTIVE) om_ability_cancel_fortify(st, u);
+}
+
 /* F5/F6: one step toward the unit's firing spot (searched for first). Returns 1 when the unit moved: a unit that moved does not fire this tick (R-087-04). */
 static int om_tac_spot_step(om_world *w, om_unit_row *u, const om_unit_row *t, double cx, double cy, double leash_r) {
     const double bx = u->x, by = u->y;
+    om_tac_unbrace_for_walk(om_tac(w), u);
     if (!u->spot_set && !om_tac_find_spot(w, u, t, cx, cy, leash_r)) return 0;
     if (om_tac_step_leashed(w, u, u->spot_x, u->spot_y, cx, cy, leash_r)) u->spot_set = 0;   /* reached, or cut short: look again */
     return u->x != bx || u->y != by;
@@ -2211,10 +2224,11 @@ static om_unit_row *om_tac_guard_seen(om_world *w, om_tac_state *st, const om_un
     return best;
 }
 
-/* F6: one step toward (tx, ty) inside the radius about the post; 1 when the guard moved. */
-static int om_tac_guard_step(om_world *w, om_unit_row *u, double tx, double ty, double px, double py) {
+/* F6: one step toward (tx, ty), cut back onto the circle of radius leash_r about the post (px, py) when leash_r >= 0; 1 when the guard moved. */
+static int om_tac_guard_step(om_world *w, om_unit_row *u, double tx, double ty, double px, double py, double leash_r) {
     const double bx = u->x, by = u->y;
-    om_tac_step_leashed(w, u, tx, ty, px, py, OM_GUARD_RADIUS);
+    om_tac_unbrace_for_walk(om_tac(w), u);
+    om_tac_step_leashed(w, u, tx, ty, px, py, leash_r);
     return u->x != bx || u->y != by;
 }
 
@@ -2243,11 +2257,11 @@ static void om_tac_guard_tick(om_world *w, om_tac_state *st, om_unit_row *u, uin
         if (t) u->target_id = t->unit_id;
     }
     if (t) {
-        if (!om_tac_in_range(w, u, t)) stepped = om_tac_guard_step(w, u, t->x, t->y, px, py);
+        if (!om_tac_in_range(w, u, t)) stepped = om_tac_guard_step(w, u, t->x, t->y, px, py, OM_GUARD_RADIUS);
         else if (!om_tac_shootable(w, u, t, &shoot_for, &shoot)) stepped = om_tac_spot_step(w, u, t, px, py, OM_GUARD_RADIUS);
         if (!stepped) u->fire_pending = 1;
     } else if (!om_tac_dist_le(u->x - px, u->y - py, OM_TIE_EPSILON)) {
-        om_tac_step_toward(w, u, px, py);
+        om_tac_guard_step(w, u, px, py, px, py, -1.0);
     }
 }
 
@@ -2287,9 +2301,12 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     int chase_idle = pursue && u->order == OM_ORDER_ATTACK_MOVE && !has_dest;
     int ordered = u->order != OM_ORDER_NONE && !chase_idle;
     om_unit_row *t;
+    uint32_t shoot_for = 0;   /* F5: whose shot the unit has asked about this tick, and the answer (om_tac_shootable) */
+    int shoot = 0;
 
     if (u->cooldown < interval_ticks) u->cooldown += (double)om_tac_period(st);
     u->suppress_auto = 0;
+    om_tac_excl_refresh(w, st, u, tick);
 
     /* What tactical_move.c currently believes about this unit's route vs
      * what unit.c last asked for: a route unit.c did not issue is the
@@ -2412,9 +2429,13 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                 drop = 1; leash_drop = 1;
             }
         }
+        /* F5 (R-087-09): a target the unit holds and cannot shoot, and does not close in on, for 1 s is given up for the next 100 ticks */
+        if (!drop && u->order != OM_ORDER_ATTACK_TARGET
+            && om_tac_giveup(u, t, om_tac_shootable(w, u, t, &shoot_for, &shoot), om_tac_period(st), tick)) drop = 1;
         if (drop) {
             int gone = !t || t->hp <= 0.0 || (u->order == OM_ORDER_ATTACK_TARGET && !om_tac_in_reach(w, u, t));
             u->target_id = 0;
+            om_tac_giveup_clear(u);
             /* H-057: a leash drop starts the walk back (2); a pursuit whose target is gone keeps its anchor until the
              * next cohort turn decides (never reset while pursuing); anything else clears it */
             if (leash_drop) u->anchor_set = 2;
@@ -2469,7 +2490,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
 
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     if (t) {
-        int in_range = om_tac_in_range(w, u, t);
+        int in_range = om_tac_in_range(w, u, t), stepped = 0;
         if (pursue && u->order == OM_ORDER_NONE && !u->guard && !in_range) {
             /* H-057: an idle unit leaves its post as an attack-mover whose point is the post (it walks back to it) */
             u->order = OM_ORDER_ATTACK_MOVE;
@@ -2501,11 +2522,16 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             /* a target taken by return fire is anchored here and leashed from the next tick */
             if (pursue && !u->anchor_set) { u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1; }
         }
+        /* F5 (R-087-09): an idle unit whose target is in range but behind a blocker walks to a spot with a clear line (an attack-mover walks its
+         * goal, A171, and the give-up bounds it); a unit that moved does not fire this tick (R-087-04) */
+        if (pursue && u->order == OM_ORDER_NONE && !u->guard && in_range && !om_tac_shootable(w, u, t, &shoot_for, &shoot)) {
+            stepped = om_tac_spot_step(w, u, t, 0.0, 0.0, -1.0);
+        }
         /* See also: om_tac_fire_pass, the same decision (and the first shot, R-084-01) after movement under
          * PURSUE_BY_STEERING (A178). PP baseline only (switch = 0): fire here; deleted with the two movement
          * switches at the end of Phase E (A140) */
         if (pursue) {
-            u->fire_pending = 1;
+            if (!stepped) u->fire_pending = 1;
         } else if (in_range && u->cooldown >= interval_ticks - OM_TIE_EPSILON
             && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
             om_tac_fire(w, u, t);
