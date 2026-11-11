@@ -70,6 +70,8 @@
 #define OM_GIVEUP_TICKS 20
 /* DRAFT-giveup-exclusion-ticks: a target a unit gave up is not eligible for it for this many base ticks, or until it has a clear line to it (spec F5, Westley's to change). */
 #define OM_GIVEUP_EXCLUSION_TICKS 100
+/* F6 (R-096-08) DRAFT-guard-radius: how far from its post a guard walks, wu; the attack-move leash of R-087-05, Westley's number to change. */
+#define OM_GUARD_RADIUS 200.0
 #define OM_UNIT_TYPE_COUNT 6
 
 #define OM_UT_RAIDER 0
@@ -1916,8 +1918,9 @@ static void om_tac_refresh_positions(om_world *w, om_tac_state *st) {
 }
 
 /* One step of unit.c-driven movement at the unit's effective speed
- * (0 during backswing or a Brace). Returns 1 once (tx, ty) is reached. */
-static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty) {
+ * (0 during backswing or a Brace). Returns 1 once (tx, ty) is reached.
+ * leash_r >= 0 (F6, R-096-08): the step is cut back onto the circle of that radius about (cx, cy), so the unit never ends a step outside it. */
+static int om_tac_step_leashed(om_world *w, om_unit_row *u, double tx, double ty, double cx, double cy, double leash_r) {
     double dx = tx - u->x, dy = ty - u->y;
     double d = sqrt(dx * dx + dy * dy);
     double step = om_unit_effective_speed(w, u->unit_id) / (double)OM_TACTICAL_TICK_RATE
@@ -1928,12 +1931,20 @@ static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty)
         /* F1 (R-207-06, R-207-07): the step goes through the move side's commit, so a flinch or a seen-step cannot leave the canvas or enter a
          * blocked cell. A step the commit cut short ends the movement (the unit stands at the face), as arriving would. */
         double nx = d <= step ? tx : u->x + dx / d * step, ny = d <= step ? ty : u->y + dy / d * step;
+        if (leash_r >= 0.0 && !om_tac_dist_le(nx - cx, ny - cy, leash_r)) {
+            const double ex = nx - cx, ey = ny - cy, k = leash_r / sqrt(ex * ex + ey * ey);
+            nx = cx + ex * k; ny = cy + ey * k;
+        }
         const int cut = om_move_commit(w, u->unit_id, u->x, u->y, &nx, &ny, OM_COMMIT_FLINCH) & (OM_COMMIT_CLAMPED | OM_COMMIT_SLID | OM_COMMIT_HELD);
         u->x = nx; u->y = ny;
         om_grid_move(om_tac(w), u->unit_id - 1);
         om_unit_set_pos(w, u->unit_id, u->x, u->y);
         return d <= step || cut;
     }
+}
+
+static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty) {
+    return om_tac_step_leashed(w, u, tx, ty, 0.0, 0.0, -1.0);
 }
 
 /* See also: om_tac_move_resume in tactical_move.c, which clears the held flag and keeps the group */
@@ -2066,6 +2077,178 @@ static om_unit_row *om_tac_nearest_actable(om_world *w, om_tac_state *st, const 
     om_unit_row *best = om_tac_nearest_hostile(st, self, radius);
     if (!best || om_tac_may_act_on(w, self, best)) return best;
     return om_tac_nearest_visible(w, st, self, radius);
+}
+
+/* ---- F5/F6: R-087-09 give-up and firing spot, R-096-08 guard ---- */
+
+/* F5 (R-087-09): the run is over, or never began. */
+static void om_tac_giveup_clear(om_unit_row *u) {
+    u->giveup_target = 0; u->giveup_ticks = 0; u->giveup_ref = 0.0;
+    u->spot_set = 0; u->spot_x = 0.0; u->spot_y = 0.0;
+}
+
+/* F5 (R-087-09): the unit holds t and `shootable` says whether it can shoot it. A target that cannot be shot and that the unit does not close in on
+ * (by more than 1 wu from where the run began; the F0 checker's own test, scripts/skilllab/invariants.py R-087-09) for OM_GIVEUP_TICKS is given up:
+ * the unit may not take it again for OM_GIVEUP_EXCLUSION_TICKS, or until it has a clear line to it (om_tac_excl_refresh). Returns 1 on the give-up. */
+static int om_tac_giveup(om_unit_row *u, const om_unit_row *t, int shootable, uint32_t period, uint64_t tick) {
+    double dx = t->x - u->x, dy = t->y - u->y, dist;
+    if (shootable) { om_tac_giveup_clear(u); return 0; }
+    dist = sqrt(dx * dx + dy * dy);
+    if (u->giveup_target != t->unit_id || dist < u->giveup_ref - 1.0) {
+        u->giveup_target = t->unit_id; u->giveup_ref = dist; u->giveup_ticks = 0; u->spot_set = 0;
+    }
+    u->giveup_ticks += period;
+    if (u->giveup_ticks < OM_GIVEUP_TICKS) return 0;
+    u->excl_id = t->unit_id;
+    u->excl_until = tick + OM_GIVEUP_EXCLUSION_TICKS;
+    om_tac_giveup_clear(u);
+    return 1;
+}
+
+/* F5: the exclusion ends with its time, with the target, or with a clear line to it. */
+static void om_tac_excl_refresh(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
+    const om_unit_row *ex;
+    if (u->excl_id == 0) return;
+    ex = om_registry_find_in(st, u->excl_id);
+    if (!ex || ex->hp <= 0.0 || tick >= u->excl_until || om_combat_can_shoot(w, u->unit_id, ex->unit_id)) {
+        u->excl_id = 0;
+        u->excl_until = 0;
+    }
+}
+
+/* F5/F6: whether the unit is shooting t is asked once a tick: `known_for` is the target the cached `val` answers. */
+static int om_tac_shootable(om_world *w, const om_unit_row *u, const om_unit_row *t, uint32_t *known_for, int *val) {
+    if (*known_for != t->unit_id) { *val = om_combat_can_shoot(w, u->unit_id, t->unit_id); *known_for = t->unit_id; }
+    return *val;
+}
+
+/* The sixteen compass directions (multiples of 22.5 degrees) the firing-spot search looks along; literals, so no libm. */
+static const double OM_SPOT_DIRS[16][2] = {
+    { 1, 0 },
+    { 0.92387953251128674, 0.38268343236508978 },
+    { 0.70710678118654757, 0.70710678118654746 },
+    { 0.38268343236508984, 0.92387953251128674 },
+    { 6.123233995736766e-17, 1 },
+    { -0.38268343236508973, 0.92387953251128674 },
+    { -0.70710678118654746, 0.70710678118654757 },
+    { -0.92387953251128674, 0.38268343236508989 },
+    { -1, 1.2246467991473532e-16 },
+    { -0.92387953251128685, -0.38268343236508967 },
+    { -0.70710678118654768, -0.70710678118654746 },
+    { -0.3826834323650895, -0.92387953251128685 },
+    { -1.8369701987210297e-16, -1 },
+    { 0.38268343236509, -0.92387953251128663 },
+    { 0.70710678118654735, -0.70710678118654768 },
+    { 0.92387953251128685, -0.38268343236508956 }
+};
+
+/* F5 (R-087-09): a spot with a clear line to t, no farther than the unit can walk before the give-up and inside its attack range of t, reached by a
+ * straight walk the move commit lets through; the nearest such spot (rings of a tenth of that walk, the sixteen directions in order). leash_r >= 0
+ * (a guard): the spot lies inside that circle about (cx, cy) (R-096-08). Sets spot_x/y and spot_set; 0 when there is none. */
+static int om_tac_find_spot(om_world *w, om_unit_row *u, const om_unit_row *t, double cx, double cy, double leash_r) {
+    const double per_tick = om_unit_effective_speed(w, u->unit_id) / (double)OM_TACTICAL_TICK_RATE;
+    const double max_r = per_tick * (double)(OM_GIVEUP_TICKS > u->giveup_ticks ? OM_GIVEUP_TICKS - u->giveup_ticks : 0);
+    const double range = u->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, u, t);
+    int ring, dir;
+    if (max_r <= 0.0) return 0;
+    for (ring = 1; ring <= 10; ring++) {
+        const double r = max_r * (double)ring / 10.0;
+        for (dir = 0; dir < 16; dir++) {
+            const double sx = u->x + OM_SPOT_DIRS[dir][0] * r, sy = u->y + OM_SPOT_DIRS[dir][1] * r;
+            int n, k, ok = 1;
+            double px = u->x, py = u->y;
+            if (leash_r >= 0.0 && !om_tac_dist_le(sx - cx, sy - cy, leash_r)) continue;
+            if (!om_tac_dist_le(sx - t->x, sy - t->y, range)) continue;
+            if (!om_combat_can_shoot_from(w, u->unit_id, sx, sy, t->unit_id)) continue;
+            n = (int)(r / 10.0) + 1;
+            for (k = 1; k <= n && ok; k++) {
+                double qx = u->x + (sx - u->x) * (double)k / (double)n, qy = u->y + (sy - u->y) * (double)k / (double)n;
+                const double wx = qx, wy = qy;
+                if (om_move_commit(w, u->unit_id, px, py, &qx, &qy, OM_COMMIT_FLINCH) & (OM_COMMIT_CLAMPED | OM_COMMIT_SLID | OM_COMMIT_HELD)) ok = 0;
+                px = wx; py = wy;
+            }
+            if (!ok) continue;
+            u->spot_x = sx; u->spot_y = sy; u->spot_set = 1;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* F5/F6: one step toward the unit's firing spot (searched for first). Returns 1 when the unit moved: a unit that moved does not fire this tick (R-087-04). */
+static int om_tac_spot_step(om_world *w, om_unit_row *u, const om_unit_row *t, double cx, double cy, double leash_r) {
+    const double bx = u->x, by = u->y;
+    if (!u->spot_set && !om_tac_find_spot(w, u, t, cx, cy, leash_r)) return 0;
+    if (om_tac_step_leashed(w, u, u->spot_x, u->spot_y, cx, cy, leash_r)) u->spot_set = 0;   /* reached, or cut short: look again */
+    return u->x != bx || u->y != by;
+}
+
+/* F6 (R-096-08): a guard may engage t when it can shoot it from where it stands, or could from the edge of its radius about its post (px, py). */
+static int om_tac_guard_engageable(const om_world *w, const om_unit_row *u, const om_unit_row *t, double px, double py) {
+    return om_tac_in_reach(w, u, t)
+        && om_tac_dist_le(t->x - px, t->y - py, OM_GUARD_RADIUS + u->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, u, t));
+}
+
+/* F6 (R-096-08): the nearest enemy the guard's side sees that it can engage from its radius (lowest id on a tie), on its layer or another within reach. */
+static om_unit_row *om_tac_guard_seen(om_world *w, om_tac_state *st, const om_unit_row *u, double px, double py) {
+    om_unit_row *best = NULL;
+    double best_d2 = 0.0, widest = 1.0, m;
+    uint32_t id, n;
+    om_grid_iter it;
+    for (n = 1; n <= OM_REACH_MAX_OFFSET; n++) {
+        if ((m = om_tac_offset_param(w, OM_REACH_RANGE, 1, n)) > widest) widest = m;
+        if ((m = om_tac_offset_param(w, OM_REACH_RANGE, 0, n)) > widest) widest = m;
+    }
+    om_grid_iter_begin_other_st(&it, st, u->faction_id, px, py, OM_GUARD_RADIUS + u->attack_range * widest);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        om_unit_row *cand = &st->units[id - 1];
+        double dx = cand->x - u->x, dy = cand->y - u->y, d2 = dx * dx + dy * dy;
+        if (cand->hp <= 0.0 || cand->stealth || !om_tac_hostile(u, cand) || cand->unit_id == u->excl_id) continue;
+        if (best && (d2 > best_d2 || (d2 == best_d2 && id > best->unit_id))) continue;
+        if (!om_tac_guard_engageable(w, u, cand, px, py) || !om_tac_may_act_on(w, u, cand)) continue;
+        best = cand; best_d2 = d2;
+    }
+    return best;
+}
+
+/* F6: one step toward (tx, ty) inside the radius about the post; 1 when the guard moved. */
+static int om_tac_guard_step(om_world *w, om_unit_row *u, double tx, double ty, double px, double py) {
+    const double bx = u->x, by = u->y;
+    om_tac_step_leashed(w, u, tx, ty, px, py, OM_GUARD_RADIUS);
+    return u->x != bx || u->y != by;
+}
+
+/* F6 (R-096-08, R-208-01): a guard's tick under pursuit by steering. It engages what its side sees that it can reach from inside GUARD_RADIUS of its
+ * post (the post is anchor_x/y, set when the order was given), steps toward it no farther than the radius, fires when in range, and walks back to the
+ * post when it has no target. The lock is as any unit's (R-087-03): kept until the target dies, leaves sight or reach, or can no longer be engaged
+ * from the radius; R-087-09 applies to a guard as to any unit. A guard that moved this tick does not fire (R-087-04). */
+static void om_tac_guard_tick(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
+    const double px = u->anchor_x, py = u->anchor_y;
+    const uint32_t period = om_tac_period(st);
+    const int cohort_turn = (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT;
+    uint32_t shoot_for = 0;
+    int shoot = 0, stepped = 0;
+    om_unit_row *t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
+    if (u->target_id != 0) {
+        int drop = !t || t->hp <= 0.0 || !om_tac_hostile(u, t) || t->stealth || !om_tac_may_act_on(w, u, t)
+                   || !(om_tac_in_range(w, u, t) || om_tac_guard_engageable(w, u, t, px, py));
+        if (!drop && om_tac_giveup(u, t, om_tac_shootable(w, u, t, &shoot_for, &shoot), period, tick)) drop = 1;
+        if (drop) { u->target_id = 0; om_tac_giveup_clear(u); t = NULL; }
+    }
+    if (!t && cohort_turn && u->attack_range > 0.0) {
+        t = om_tac_most_damaged_for(w, u) ? om_tac_most_damaged_hostile(w, st, u, u->attack_range)
+                                          : om_tac_nearest_actable(w, st, u, u->attack_range);
+        t = om_tac_pick_across(w, st, u, t);
+        if (!t) t = om_tac_guard_seen(w, st, u, px, py);
+        if (t) u->target_id = t->unit_id;
+    }
+    if (t) {
+        if (!om_tac_in_range(w, u, t)) stepped = om_tac_guard_step(w, u, t->x, t->y, px, py);
+        else if (!om_tac_shootable(w, u, t, &shoot_for, &shoot)) stepped = om_tac_spot_step(w, u, t, px, py, OM_GUARD_RADIUS);
+        if (!stepped) u->fire_pending = 1;
+    } else if (!om_tac_dist_le(u->x - px, u->y - py, OM_TIE_EPSILON)) {
+        om_tac_step_toward(w, u, px, py);
+    }
 }
 
 static void om_tac_drop_orders(om_unit_row *u) {
