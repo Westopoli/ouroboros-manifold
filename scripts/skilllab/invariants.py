@@ -31,6 +31,8 @@ OWN_MOVE = 0.5
 BACKSWING_TICKS = 10
 HEAL_ONE = 0.075
 LEASH_SLACK = 25.0
+GUARD_RADIUS = 200.0         # R-096-08 (DRAFT-guard-radius, Westley's): how far from its post a guard may stand
+GUARD_SLACK = 1.0            # DRAFT-guard-leash-slack
 PUSH_ALLOWANCE = 2.0         # DRAFT-inv-push-allowance: a collision push explains at most this much of a displacement above the top step (continuity)
 TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
 NEAREST_TOL = 1.0            # DRAFT-inv-nearest-tol: an acquired target within this much of the nearest eligible enemy counts as the nearest (R-087-03)
@@ -43,7 +45,8 @@ class Rules:
     may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch};
     cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one)."""
 
-    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None):
+    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None):
+        self.guards = guards if guards is not None else {}     # {unit id: (post x, post y)}: R-096-08 judges these units only (the Monitor shares the engine's live dict)
         self.cohort = cohort or {}
         self.attack_range = attack_range or {}     # {unit id: wu}: R-087-09 judges a held target only inside it; no entry: always inside
         self.width, self.height = float(width), float(height)
@@ -80,6 +83,7 @@ class _Checker:
         self.last_shot = {}          # unit -> tick of its last shot (R-084-04)
         self.lock = {}               # unit -> (target, (x, y) where it took that lock) (R-087-03)
         self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09)
+        self.breached = set()        # guards outside their radius now (R-096-08: one violation per breach, not one per frame)
         self.hit_hist = collections.deque(maxlen=RETURN_FIRE_TICKS)   # the (attacker, victim) pairs of the last frames, this one included (R-087-06)
 
     # -- helpers
@@ -132,6 +136,14 @@ class _Checker:
                     if depth > DEPTH_TOL:
                         out.append(_violation("R-207-06", tick, u, "at (%.1f, %.1f), %s wu inside blocked cell (%d, %d) of layer %d" % (
                             r["x"], r["y"], "%.1f" % depth if depth < 1e8 else "far", cx, cy, r["layer"])))
+            if alive and "R-096-08" in on and u in rules.guards:
+                away = math.hypot(r["x"] - rules.guards[u][0], r["y"] - rules.guards[u][1])
+                if away > GUARD_RADIUS + GUARD_SLACK:
+                    if u not in self.breached:
+                        self.breached.add(u)
+                        out.append(_violation("R-096-08", tick, u, "guard ended the frame %.1f wu from its post (radius %.0f + %.0f)" % (away, GUARD_RADIUS, GUARD_SLACK)))
+                else:
+                    self.breached.discard(u)
             if p is not None and p["alive"] and alive:
                 moved = self._disp(p, r)
                 if "R-087-04" in on and u in shooters and moved > OWN_MOVE and not self._pushed(frame, u):
