@@ -1,4 +1,4 @@
-# Rule pins: R-207-06, R-207-07, R-087-04, R-084-04, R-087-03, R-087-09, R-083-03, R-093-02, R-004-06
+# Rule pins: R-207-06, R-207-07, R-087-04, R-084-04, R-087-03, R-087-09, R-083-03, R-093-02, R-004-06, R-207-07
 """Engine rules round 2, T3, check 5: the rule checker runs wherever the lab steps the engine.
 
 Where the lab steps the engine (read 2026-11-11): scripts/skilllab/arena/run.py::fight (already checked), scripts/skilllab/fight.py::_run (through
@@ -13,7 +13,7 @@ THE INTERFACE THIS FILE PINS (the smallest common one):
     SearchResult.violations / .invalid   the same two, for scripts/skilllab/search.py::run_search
     CellResult.invalid, ScanResult.invalid   True when any fight in them is invalid
     probe.survey(...)[(heads, seed)]["invalid"]   True when the base or the moved fight of that point is invalid
-    rows.fight_row(result)["invalid"]   1 or 0; sweep.run_family's CSV carries the column
+    sweep rows' `invalid` cell   1 or 0, "suspended" for a run nobody judged (rows.invalid_cell, passed by sweep as a label; rows.fight_row's own columns stay as pinned elsewhere)
 "INVALID" in this lab is the `invalid` flag; the arena's stdout line (`INVALID <layout> <rule> tick N unit U`, exit 2) stays arena/run.py's.
 The planted layout: a wrapper of Engine.step sets side 0's first unit down 900 wu away on step 5 of every world (a leap no unit can make; a continuity
 violation whatever else the checker knows). Real engine, no fakes; 2 against 2 Vanguards, 80 ticks.
@@ -28,19 +28,22 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.skilllab import fight, probe, rows, scan  # noqa: E402
-from scripts.skilllab.contract import Group, Setup, trim_series  # noqa: E402
+from scripts.skilllab import fight, probe, rows, scan, sweep  # noqa: E402
+from scripts.skilllab.contract import Group, Setup, Terrain, trim_series  # noqa: E402
 from scripts.skilllab.engine import Engine  # noqa: E402
 
 PLANT_STEP = 5
 LEAP = 900.0
 
 
-def build(enemy_heads=2, swap=False, max_ticks=80, settings=None):
+BOUNDED = Terrain(canvas=(4000.0, 4000.0))   # a lab fight that sets no terrain has an unbounded canvas and R-207-07 is suspended on it (tests/skilllab/test_invariants_unset_canvas.py)
+
+
+def build(enemy_heads=2, swap=False, max_ticks=80, settings=None, terrain=None):
     def side(s, n, x):
         return Group(side=s, unit="Vanguard", count=n, formation="blob", x=x, y=1000.0, facing_deg=0.0 if s == 0 else 180.0, layer=0,
                      order="attack_move", params={"radius": 60.0})
-    return Setup(groups=(side(0, 2, 1000.0), side(1, enemy_heads, 1700.0)), unit_types={}, max_ticks=max_ticks, settings=settings or {})
+    return Setup(groups=(side(0, 2, 1000.0), side(1, enemy_heads, 1700.0)), unit_types={}, max_ticks=max_ticks, settings=settings or {}, terrain=terrain)
 
 
 @pytest.fixture
@@ -75,7 +78,7 @@ def test_control_a_planted_fight_still_runs_and_returns_a_result(plant):
 
 def test_fight_result_of_a_clean_fight_is_valid():
     """Check 5: a fight through fight.fight carries `violations` ([]) and `invalid` (False) when no rule was broken."""
-    r = fight.fight(build(), 0, False)
+    r = fight.fight(build(terrain=BOUNDED), 0, False)    # bounded canvas: with none, R-207-07 is suspended (unset canvas) and `suspended` is not empty
     assert (r.violations, r.invalid, r.suspended) == ([], False, {})
 
 
@@ -87,7 +90,7 @@ def test_fight_result_of_a_planted_leap_is_invalid(plant):
 
 def test_fight_result_with_targeting_by_sight_off_reports_the_suspended_checks():
     """R-087-03 and R-093-02 with OM_TP_TARGET_BY_SIGHT 0 (Setup.settings): no verdict on them, `suspended` names the switch, never a silent pass."""
-    r = fight.fight(build(settings={"OM_TP_TARGET_BY_SIGHT": 0.0}), 0, False)
+    r = fight.fight(build(settings={"OM_TP_TARGET_BY_SIGHT": 0.0}, terrain=BOUNDED), 0, False)    # bounded canvas: R-207-07 stays judged
     assert r.suspended == {"R-087-03": "OM_TP_TARGET_BY_SIGHT", "R-093-02": "OM_TP_TARGET_BY_SIGHT"}
 
 
@@ -128,15 +131,27 @@ def test_probe_survey_of_clean_fights_is_valid():
     assert probe.survey(_bld, {"OM_TP_TARGET_BY_SIGHT": 1.0}, heads=[2], seeds=(0,))[(2, 0)]["invalid"] is False
 
 
+def _swept_invalid_cells():
+    """The `invalid` cell of every row sweep._control_rows writes for build() (2 against 2 Vanguards whatever headcount the sweep asks for, both spawn orders, 80 ticks, the real fight.fight;
+    not 16 Vanguards: 16 in one blob push each other 8 to 14 wu on tick 1 and the checker reports 9 continuity violations there, reported to the coordinator, not this test's business). The cell is
+    not a column of rows.fight_row (its column list is pinned by test_rows.py, test_reengage_rows.py and test_map_features.py): the sweep passes it as a label,
+    invalid=rows.invalid_cell(result), and this runs that code, not a copy of its expression."""
+    point = sweep.Point("entry_points", "OM_TP_RANGE_UP_1", 1.0, {}, {}, "control_null", "-")
+    out = []
+    sweep._control_rows(out, "entry_points", "p", "A", point, lambda heads, swap: build(2, swap), 1, None, None, 80)
+    return [r["invalid"] for r in out]
+
+
 def test_the_sweep_row_of_an_invalid_fight_says_so(plant):
-    """sweep rows (rows.fight_row, what sweep.run_family writes): `invalid` is 1 for the planted fight and 0 for a clean one."""
-    bad = rows.fight_row(fight.fight(build(), 0, False))["invalid"]
-    assert bad == 1
+    """sweep rows (sweep._control_rows, what sweep.run_family writes): `invalid` is 1 for every row of the planted fight (rows.fight_row does not carry the column; the sweep adds it)."""
+    cells = _swept_invalid_cells()
+    assert cells and set(cells) == {1}, cells
 
 
 def test_the_sweep_row_of_a_clean_fight_says_zero():
-    """sweep rows control: `invalid` 0."""
-    assert rows.fight_row(fight.fight(build(), 0, False))["invalid"] == 0
+    """sweep rows control: the same call without the plant gives `invalid` 0 on every row, and not "suspended" (so the planted test above fails for the plant, not for the call)."""
+    cells = _swept_invalid_cells()
+    assert cells and set(cells) == {0}, cells
 
 
 # ------------------------------------------------------------------ search.py (its own step loop)
