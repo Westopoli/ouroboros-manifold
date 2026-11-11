@@ -242,12 +242,14 @@ def _rows(out):
 def test_results_md_has_the_blocked_column_counting_the_frames_blocked_units(tmp_path):
     """Criterion 6, spec line 30: the header is `HEAD`, a fight with ground gets a final integer cell equal to the sum over its frames of `len(frame["blocked"])`
     (computed here from the fight file), a fight with no `blocked` key gets 0; the header is written once for two runs into one results.md.
-    The cover fixture stalls with blocked units (premise asserted: the sum is above 0, so a count of 0 would be a wrong cell and not a quiet fixture)."""
-    cover = fx.planar("cover", "L-9327")[0]
+    The ridge fixture stalls with blocked units (premise asserted: the sum is above 0, so a count of 0 would be a wrong cell and not a quiet fixture).
+    Test-defect (engine rule fixes F1 to F4, 2026-11-11): this was the cover fixture, which no longer stalls a targetless unit (its units hold a lock and fire; sum 0 on
+    every frame, cap 60 s); the ridge fixture still does (6 units on the frames at 300 and 400 ticks)."""
+    cover = fx.planar("ridge", "L-9327")[0]
     proc, doc = fx.fight(cover, tmp_path, 1, "--cap-seconds", "60")
     assert proc.returncode in (0,), proc.stdout + proc.stderr
     want = sum(len(f.get("blocked", [])) for f in doc["frames"])
-    assert want > 0, "fixture premise: the cover fight has blocked unit-frames"
+    assert want > 0, "fixture premise: the ridge fight has blocked unit-frames"
     proc, field_doc = fx.fight(open_field("L-9328"), tmp_path, 1, "--cap-seconds", "5")
     assert proc.returncode in (0,), proc.stdout + proc.stderr
     assert all("blocked" not in f for f in field_doc["frames"])
