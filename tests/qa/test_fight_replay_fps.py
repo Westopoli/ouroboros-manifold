@@ -65,8 +65,9 @@ def test_control_a_dense_hand_made_file_loads_with_its_frame_count(tmp_path, mon
 
 
 def test_fps4_a_closeup_file_loads_and_frame_count_is_the_files_frame_count(tmp_path, monkeypatch):
-    """FPS-4 ("a dense closeup file loads and `frame_count` equals the file's frame count"): `closeup` on the h088 open field (Raider vs Vanguard, sight on, 575 ticks) with K 10
-    writes 59 frames (0, 10 ... 570 and 575); the scene opens on it with `frame_count` 59 and `fight_id` the layout's."""
+    """FPS-4 ("a dense closeup file loads and `frame_count` equals the file's frame count"): `closeup` on the h088 open field (Raider vs Vanguard, sight on, 557 ticks since 2026-11-08, 575 before) with K 10
+    writes 57 frames (0, 10 ... 550 and 557; 59 before: 0, 10 ... 570 and 575); the scene opens on it with `frame_count` 57 and `fight_id` the layout's.
+    Test-defect (engine rule fixes F2, F3): the fight is 18 ticks shorter (a mover does not fire, the lock holds); the open field has 0 violations of any checked rule."""
     closeup = importlib.import_module("scripts.skilllab.arena.closeup")
     lay = f8.open_layout("L-9920", roles=("Raider", "Vanguard"))
     layout_path, out = fx.write(lay, tmp_path / "layouts"), tmp_path / "dense"
@@ -74,7 +75,7 @@ def test_fps4_a_closeup_file_loads_and_frame_count_is_the_files_frame_count(tmp_
     f = out / "L-9920-s1-every10.fight.json"
     doc = json.loads(f.read_text()) if f.exists() else {"frames": []}
     qa = _qa(monkeypatch, f, None) if f.exists() else {}
-    assert (code, len(doc["frames"]), qa.get("frame_count"), qa.get("fight_id")) == (0, 59, 59, "L-9920")
+    assert (code, len(doc["frames"]), qa.get("frame_count"), qa.get("fight_id")) == (0, 57, 57, "L-9920")
 
 
 # ---------------------------------------------------------------- FPS-1, FPS-2

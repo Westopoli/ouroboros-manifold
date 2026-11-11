@@ -78,6 +78,14 @@ def _first_seen(doc):
     return "<p>first seen A %s  B %s</p>" % (cell("A"), cell("B"))
 
 
+def _invalid(doc):
+    """F0: `INVALID: <rule> tick <N> unit <U>`, the first violation of a fight whose run broke a rule of scripts/skilllab/invariants.py; empty for a clean fight."""
+    if not doc.get("invalid"):
+        return ""
+    v = doc["violations"][0] if doc.get("violations") else {"rule": "?", "tick": 0, "unit": 0}
+    return "INVALID: %s tick %d unit %d" % (v["rule"], v["tick"], v["unit"])
+
+
 def _figure(src, tick, alive, height):
     return ('<figure><img src="%s" height="%d"><figcaption>tick %d A %d B %d</figcaption></figure>'
             % (html.escape(src), height, tick, alive[0], alive[1]))
@@ -93,15 +101,17 @@ def _row(path, control_dir=None, sentences=None):
     res = doc["result"]
     frames = doc["frames"]
     count = lambda side: sum(1 for u in frames[0]["units"] if u["side"] == side)
-    cls = "agree" if res["agree"] else "disagree"
+    bad = _invalid(doc)
+    cls = "none" if bad else "agree" if res["agree"] else "disagree"   # F0: an invalid fight is not ranked: no agree or disagree
+    verdict_cell = "invalid, not ranked" if bad else cls
     strip = "".join(_figure("%s/frame-%d.png" % (stem, i), f["tick"], f["alive"], STRIP_HEIGHT) for i, f in enumerate(frames))
     last = len(frames) - 1
     fall = _figure("%s/frame-%d.png" % (stem, last), frames[last]["tick"], frames[last]["alive"], FALL_HEIGHT)
     stall = bool(res.get("stall"))
-    return ('<tr%(rowcls)s><td><b>%(id)s</b><br>seed %(seed)d<br>pair: %(pair)s</td>'
+    return ('<tr%(rowcls)s><td><b>%(id)s</b><br>seed %(seed)d<br>pair: %(pair)s%(bad)s</td>'
             '<td>predict: %(predict)s<br>%(why)s</td>'
             '<td>winner: %(winner)s<br>survivors: %(surv)s<br>ticks: %(ticks)d%(capped)s<br>end: %(end)s (%(schema)s)%(flag)s</td>'
-            '<td class="%(cls)s">%(cls)s</td></tr>\n'
+            '<td class="%(cls)s">%(cell)s</td></tr>\n'
             '<tr><td colspan="4">verdict: %(verdict)s<br>%(feedback)s</td></tr>\n'
             '<tr><td colspan="4" class="strip">%(strip)s</td></tr>\n'
             '<tr><td colspan="4">fall map<br>%(fall)s</td></tr>\n'
@@ -109,7 +119,7 @@ def _row(path, control_dir=None, sentences=None):
             % {"id": html.escape(doc["layout_id"]), "seed": doc["seed"], "pair": "%d:%d" % (count("A"), count("B")),
                "predict": html.escape(res["predict"]), "why": html.escape(layout.get("predict_why", "")),
                "winner": html.escape(res["winner"]), "surv": "%d:%d" % tuple(res["survivors"]), "ticks": res["ticks"],
-               "capped": " (capped)" if res["capped"] else "", "cls": cls,
+               "capped": " (capped)" if res["capped"] else "", "cls": cls, "cell": verdict_cell, "bad": "<br><b>%s</b>" % html.escape(bad) if bad else "",
                "rowcls": ' class="stall"' if stall else "", "end": html.escape(res.get("end", "-")),
                "schema": html.escape(doc["schema"]), "flag": "<br><b>stall: bring to Westley</b>" if stall else "",
                "verdict": html.escape(layout.get("verdict") or "-"), "feedback": html.escape(layout.get("feedback", "")),
@@ -184,13 +194,15 @@ def _summary_cells(rate, docs, layout):
     stalls = "%d (%s)" % (rate["stalls"], " ".join(str(s) for s in rate["stall_seeds"]) or "-")
     fc = rate["firing_capable"]
     return [(rate["layout_id"], ""), (layout.get("situation", "-"), ""), (_roles(first, "A") if first else "-", ""), (_roles(first, "B") if first else "-", ""),
-            ("%.2f" % rate["predict_rate"], ""), ("%.2f" % rate["rate_a"], ""), _agree_cell(rate),
+            ("%.2f" % rate["predict_rate"], ""), ("%.2f" % rate["rate_a"], ""), _agree_cell(rate, docs),
             (stalls, "stall" if rate["stalls"] else ""), (" ".join(str(s) for s in rate["none_seeds"]) or "-", "none" if rate["none_seeds"] else ""),
             ("%s / %s" % (fc["A"], fc["B"]), ""), (str(rate["median_seed"]), "")]
 
 
-def _agree_cell(rate):
-    """The winner-guess verdict; an exact-mirror draw (`agree` null) is flagged, not scored (H-053 Scoring)."""
+def _agree_cell(rate, docs=None):
+    """The winner-guess verdict; an exact-mirror draw (`agree` null) is flagged, not scored (H-053 Scoring); a layout with an invalid seed is not ranked (F0)."""
+    if any(d.get("invalid") for d in (docs or {}).values()):
+        return ("invalid, not ranked", "none")
     if rate["agree"] is None:
         return ("mirror: not scored (check the winner for an engine asymmetry)", "")
     word = "agree" if rate["agree"] else "disagree"
@@ -247,7 +259,7 @@ def _layout_block(d, out_dir, rate, docs, layout, bad, control_dir=None, sentenc
             '<th>B mean survivors</th><th>A start</th><th>B start</th></tr>%s</table><p>median seed %d strip (first shot outlined)</p>'
             '<div class="strip">%s</div>%s<p>seeds: %s</p>%s'
             % (html.escape(rate["layout_id"]), _row_html([(h, "") for h in SUMMARY_HEAD], "th"), _row_html(cells), _gap_sentence(rate), words, survivors, rate["median_seed"], strip,
-               _control_strip(control_dir, rate["layout_id"], rate["median_seed"], median.get("sight") if median else None) if control_dir else "", " ".join(seeds), "".join("<p><b>%s</b></p>" % html.escape(m) for m in bad)))
+               _control_strip(control_dir, rate["layout_id"], rate["median_seed"], median.get("sight") if median else None) if control_dir else "", " ".join(seeds), "".join("<p><b>%s</b></p>" % html.escape(m) for m in bad + ["seed %d %s" % (s, _invalid(d)) for s, d in sorted(docs.items()) if d.get("invalid")])))
 
 
 def build(d, out, control_dir=None, stage=None, sentences=None):

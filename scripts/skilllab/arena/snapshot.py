@@ -27,6 +27,7 @@ _RESULT = {"winner": str, "survivors": list, "ticks": int, "capped": bool, "pred
 _ORDERS = {"mode": str, "point": list, "attacker": "side_or_null"}
 _ORDER_MODES = ("both_same_point", "hold_and_attack", "groups")   # "groups": the stage 4 fix F3 per-group orders (groups.py)
 _ENDS = ("wipe", "silence", "cap")
+_VIOLATION = {"rule": str, "tick": int, "unit": int, "detail": str}   # F0 (scripts/skilllab/invariants.py): one broken rule, written under `violations`
 
 
 def _kind_ok(value, kind) -> bool:
@@ -74,8 +75,14 @@ def validate(doc: dict) -> list[str]:
     if v2 and "ranges" in doc:
         top = dict(top, ranges=dict)   # H-053: optional {role: range wu}, om-fight-2 only
     if v2:
-        top = dict(top, **{k: t for k, t in (("landscape", str), ("movement_kind", int), ("sights", dict), ("built_features", list)) if k in doc})   # H-063, H-088 (sights), stage 4 fix F2 (built_features): optional, om-fight-2 only
+        top = dict(top, **{k: t for k, t in (("landscape", str), ("movement_kind", int), ("sights", dict), ("built_features", list), ("violations", list), ("invalid", bool)) if k in doc})   # H-063, H-088 (sights), stage 4 fix F2 (built_features), F0 2026-11-08 (violations, invalid): optional, om-fight-2 only
     _check_keys(doc, top, "", out)
+    if v2 and isinstance(doc.get("violations"), list):
+        for i, viol in enumerate(doc["violations"]):
+            if not isinstance(viol, dict):
+                out.append(f"bad type violations[{i}]")
+            else:
+                _check_keys(viol, _VIOLATION, f"violations[{i}]", out)
     if v2 and isinstance(doc.get("ranges"), dict):
         for role, rng in doc["ranges"].items():
             if not _kind_ok(rng, "num") or rng < 0:

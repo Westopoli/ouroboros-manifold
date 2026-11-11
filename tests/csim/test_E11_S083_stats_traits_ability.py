@@ -102,12 +102,12 @@ def test_R_083_03_that_unit_takes_10_percent(lib, world_factory):
     dmg_out = hp_before_out - lib.om_unit_hp(w, friendly_out)
     assert dmg_out == pytest.approx(base_hit, abs=1e-6)
 
-    # Multiple Wardens: Q-084-01 answered: diminishing reduction (first 0.10, second 0.05),
-    # healing stacks normally (2 * 0.075 = 0.150 HP/tick)
+    # Multiple Wardens: Q-084-01 closed 2026-10-20 "no stacking" (R-083-03): a second Warden changes neither the reduction (0.10) nor the heal (0.075 HP/tick)
+    # Test-defect, F4 engine rule fixes 2026-11-08: the pin was the old diminishing/stacking numbers (0.150 HP/tick); cause: R-083-03 and Q-084-01 say Wardens do not stack, the test was stale.
     # Test-defect, A163/A164: enemy stays in range -> enemy moved out of reach before the heal tick; cause: aligned targeting cohort (parity with the Python, Addendum 63): the enemy now fires within the tick and would mask the 0.150 heal delta.
     lib.om_unit_teleport(w, enemy, 5000.0, 5000.0, 0)
     warden2 = lib.om_unit_spawn(w, OMUnitType.WARDEN, 0, 50.0, 0.0, 0)
     hp_pre_multi = lib.om_unit_hp(w, friendly_in)
     lib.om_tactical_step(w)
-    assert lib.om_unit_hp(w, friendly_in) - hp_pre_multi == pytest.approx(0.150, abs=1e-6)
+    assert lib.om_unit_hp(w, friendly_in) - hp_pre_multi == pytest.approx(0.075, abs=1e-6)
 

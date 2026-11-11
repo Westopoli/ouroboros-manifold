@@ -7,12 +7,17 @@
  * cache (cm) and the per-cell edge tables built from them (which neighbours a step may take, and whether each rises, falls
  * or is flat) are rebuilt only when the cache key (world pointer, terrain gen_id, terrain_epoch, layer, cells_w, cells_h)
  * changes. The sim is single-threaded per world, so one scratch serves every call.
+ * F1 (R-097-01, R-207-05, R-190-07): a mapgen box, wall, building or dense obstacle cell is closed to the router on the unit's layer, with or
+ * without terrain, so a walker goes round it (before F1 the router saw only the walk mask, and no mask at all without terrain). The cells
+ * come from om_move_route_cell_blocked, the same definition the walker's step is held to (csrc/move_commit.c); any change to them bumps the
+ * epoch in the cache key.
  * See also: tests/csim/test_VG_W_w1_planner.py; csrc/tactical_move.c om_move_terrain_epoch, the epoch getter. */
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "move_commit.h"
 
 #ifndef OM_WALK_OPEN_CAP
 #define OM_WALK_OPEN_CAP 65536u /* provisional (2026-10-06): planner open-set cap, nodes */
@@ -68,6 +73,7 @@ static struct {
     int keyed;
     const om_world *key_w;
     uint32_t key_gen, key_epoch, key_cw, key_ch, count;
+    uint64_t key_serial;
     int key_layer;
 } wr_scr;
 
@@ -205,6 +211,7 @@ int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double
     int32_t off[WR_NEIGHBOURS];
     int terrain, layer;
     uint32_t cw = 0, ch = 0, gen, epoch;
+    uint64_t serial;
     int ret = -1;
 
     if (seconds) *seconds = 0.0;
@@ -224,17 +231,21 @@ int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double
     if (!wr_scratch_alloc()) return -1;
     gen = terrain ? ((const om_terrain_state *)w->terrain_state)->gen_id : 0;
     epoch = om_move_terrain_epoch((om_world *)w);
-    if (!(wr_scr.keyed && wr_scr.key_w == w && wr_scr.key_gen == gen && wr_scr.key_epoch == epoch && wr_scr.key_layer == layer &&
+    serial = om_move_world_serial((om_world *)w);
+    if (!(wr_scr.keyed && wr_scr.key_w == w && wr_scr.key_serial == serial && wr_scr.key_gen == gen && wr_scr.key_epoch == epoch && wr_scr.key_layer == layer &&
           wr_scr.key_cw == cw && wr_scr.key_ch == ch)) {
         wr_scr.keyed = 0;
         wr_scr.count = 0;
         if (terrain) {
             if (om_terrain_walk_mask(w, layer, wr_scr.mask, n_cells) != n_cells) return -1;
+            for (i = 0; i < n_cells; i++) wr_scr.mask[i] = (uint8_t)(wr_scr.mask[i] && !om_move_route_cell_blocked(w, (uint32_t)layer, (int32_t)(i % cw), (int32_t)(i / cw)));
             for (i = 0; i < n_cells; i++) wr_scr.count += wr_scr.mask[i] ? 1u : 0u;
             for (i = 0; i < n_cells; i++) wr_scr.hcm[i] = wr_height_fill(w, i, cw);
+        } else {
+            for (i = 0; i < n_cells; i++) wr_scr.mask[i] = (uint8_t)!om_move_route_cell_blocked(w, (uint32_t)layer, (int32_t)(i % cw), (int32_t)(i / cw));
         }
-        wr_edges_fill(cw, ch, terrain ? wr_scr.mask : NULL, terrain ? wr_scr.hcm : NULL);
-        wr_scr.key_w = w; wr_scr.key_gen = gen; wr_scr.key_epoch = epoch; wr_scr.key_layer = layer;
+        wr_edges_fill(cw, ch, wr_scr.mask, terrain ? wr_scr.hcm : NULL);
+        wr_scr.key_w = w; wr_scr.key_serial = serial; wr_scr.key_gen = gen; wr_scr.key_epoch = epoch; wr_scr.key_layer = layer;
         wr_scr.key_cw = cw; wr_scr.key_ch = ch;
         wr_scr.keyed = 1;
     }

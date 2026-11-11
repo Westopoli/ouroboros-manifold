@@ -49,6 +49,7 @@
 #include "ouroboros_sim.h"
 #include "om_internal.h"
 #include "om_constants.h"
+#include "move_commit.h"
 #include <math.h>
 #include <stddef.h>
 #include <string.h>
@@ -172,6 +173,7 @@ typedef struct {
     double   pushed_x, pushed_y;
     double   facing;
     double   prev_x, prev_y, prev_facing;
+    uint64_t moved_own_tick;             /* F2 (R-087-04): the last tick this unit's own movement step changed its position; not saved or hashed, rewritten every tick */
     int      has_dest;
     uint32_t giveup_near;
     double   dest_x, dest_y;
@@ -256,6 +258,7 @@ typedef struct {
 
     om_move_field        fields[OM_MOVE_FIELD_POOL];
     uint32_t             field_next, terrain_epoch;
+    uint64_t             serial; /* F1: which world this state belongs to, for the route cache key (walk_route.c); not saved or hashed, a loaded state gets a fresh one */
     uint32_t             *bfs_queue, *bfs_scratch; /* a cell per entry of the largest canvas, allocated by the first search */
     double               *density; /* OM_LAYER_COUNT * OM_MOVE_DENSITY_SIDE^2, allocated by the first set */
 
@@ -561,11 +564,14 @@ static const double OM_STEERING_SWEEP_ANGLES[OM_STEERING_SWEEP_COUNT] = {
 };
 
 static void om_move_set_save_hooks(om_world *w);
+static uint64_t om_move_next_serial; /* F1: the route cache identifies a world by this, not by its address, which a freed world's successor can reuse */
+
 static om_move_state *om_ms(om_world *w) {
     om_move_state *ms = (om_move_state *)w->move_state;
     if (!ms) {
         uint32_t k;
         ms = (om_move_state *)calloc(1, sizeof(om_move_state));
+        ms->serial = ++om_move_next_serial;
         for (k = 0; k < OM_STEERING_SWEEP_COUNT; k++) {
             om_move_sincos_approx(OM_STEERING_SWEEP_ANGLES[k], &ms->sweep_sin[k], &ms->sweep_cos[k]);
         }
@@ -648,6 +654,12 @@ void om_move_terrain_changed(om_world *w) {
  * See also: walk_route.c, the caller; om_move_terrain_changed above, the bump. */
 uint32_t om_move_terrain_epoch(om_world *w) {
     return w ? om_ms(w)->terrain_epoch : 0;
+}
+
+/* Internal, not in the header: the serial of the world's movement state (part of the planner's cache key with the epoch).
+ * See also: walk_route.c, the caller; F1 (the mask now depends on the mapgen cells, which a world at a reused address does not share). */
+uint64_t om_move_world_serial(om_world *w) {
+    return w ? om_ms(w)->serial : 0;
 }
 
 /* Internal, not in the header: the canvas only lives in the private mapgen state, so om_map_set_canvas and
@@ -1285,8 +1297,33 @@ static int om_move_is_walker(const om_world *w, uint32_t id) {
     return t >= 0 && om_unit_profile_movement_kind(w, t) == OM_MOVE_WALKING;
 }
 
+/* F1 (E-13 Invariants, R-207-06): one definition of "blocked for this unit". A box, a wall, a building or a dense obstacle cell blocks every
+ * unit; a walker on a terrain world is also blocked by the walk mask (before F1 it read the mask alone, which let it through a box). What the
+ * terrain's own ground wrote into the same bits (om_terrain_apply_ground: layers below a cell's band minus one are blocked) is not planar and
+ * stays with the walk mask, which lets a walker climb a slope cell on its way to the next layer.
+ * See also: om_move_blocked_for and om_move_route_cell_blocked below, which hand this to csrc/move_commit.c and csrc/walk_route.c. */
+static int om_move_planar_blocked(const om_world *w, om_move_state *ms, uint32_t layer, int32_t cx, int32_t cy) {
+    const om_terrain_state *st;
+    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return 0;
+    st = (const om_terrain_state *)w->terrain_state;
+    if (st && st->present && cx >= 0 && cy >= 0 && cx < (int32_t)st->cells_w && cy < (int32_t)st->cells_h
+        && (int)layer < (int)st->band[(size_t)cy * st->cells_w + (size_t)cx] - 1) return 0;
+    return 1;
+}
+
 static int om_move_cell_blocked_for(const om_world *w, om_move_state *ms, int walk, uint32_t layer, int32_t cx, int32_t cy) {
-    return walk ? om_move_walk_blocked(w, layer, cx, cy) : om_move_cell_blocked(w, ms, layer, cx, cy);
+    return walk ? (om_move_planar_blocked(w, ms, layer, cx, cy) || om_move_walk_blocked(w, layer, cx, cy)) : om_move_cell_blocked(w, ms, layer, cx, cy);
+}
+
+/* Internal (csrc/move_commit.h): cell (cx, cy) of the unit's own layer, blocked for that unit. Reads only (no om_move_touch, no sync). */
+int om_move_blocked_for(const om_world *w, uint32_t unit_id, int32_t cx, int32_t cy) {
+    int32_t layer = om_unit_get_layer(w, unit_id);
+    return om_move_cell_blocked_for(w, om_ms((om_world *)w), om_move_is_walker(w, unit_id), layer < 0 ? 0u : (uint32_t)layer, cx, cy);
+}
+
+/* Internal (csrc/move_commit.h): the planar part of "blocked" on a layer (box, wall, building, dense cell; not the terrain's ground), for the router (csrc/walk_route.c). */
+int om_move_route_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy) {
+    return om_move_planar_blocked(w, om_ms((om_world *)w), layer, cx, cy);
 }
 
 static double om_move_density_at_pos(om_move_state *ms, double x, double y, uint32_t layer) {
@@ -2143,20 +2180,15 @@ static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_
     om_move_grid_update(ms, mu);
 }
 
-/* A step that would end in a blocked cell of the unit's layer slides along one axis, else is dropped, and
- * the route is planned again (E-13: a unit never enters a blocked cell). */
-static void om_move_terrain_guard(const om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t layer, double *nx, double *ny) {
-    int32_t cx, cy;
-    om_move_cell_at(ms, *nx, *ny, &cx, &cy);
-    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return;
-    mu->plan_valid = 0;
-    om_move_route_drop(mu);
-    om_move_cell_at(ms, *nx, mu->y, &cx, &cy);
-    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) { *ny = mu->y; return; }
-    om_move_cell_at(ms, mu->x, *ny, &cx, &cy);
-    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) { *nx = mu->x; return; }
-    *nx = mu->x;
-    *ny = mu->y;
+/* F1 (R-207-06, R-207-07): a unit's own step is written through om_move_commit, which cuts it to the canvas and keeps it out of a blocked cell.
+ * Returns the OM_COMMIT_* flags; a step cut short (slid or held) drops the plan, so the route is planned again from where the unit stands.
+ * See also: csrc/move_commit.c. */
+static int om_move_commit_step(om_world *w, om_move_unit *mu, double nx, double ny, int reason) {
+    const int r = om_move_commit(w, mu->unit_id, mu->x, mu->y, &nx, &ny, reason);
+    mu->x = nx;
+    mu->y = ny;
+    if (r & (OM_COMMIT_SLID | OM_COMMIT_HELD)) { mu->plan_valid = 0; om_move_route_drop(mu); }
+    return r;
 }
 
 /* R-095-01, R-095-06 (Q-095-01; PURSUE_BY_STEERING): a group member moves at the group's slowest pace, except a unit
@@ -2165,7 +2197,8 @@ static double om_move_member_pace(om_world *w, const om_move_unit *mu, uint32_t 
     double eff = om_unit_effective_speed(w, id);
     if (mu->group_id == 0) return eff;
     if (om_tactical_get_param(w, OM_TP_PURSUE_BY_STEERING) != 0.0 && eff > om_unit_profile_speed(w, om_unit_get_unit_type(w, id))) return eff;
-    return mu->speed_cap;
+    /* F2 (R-084-04, ALG-60): a member also stops for the pause after a shot and obeys Brace and Fortify, as a lone unit does (eff is 0 or lower then). */
+    return eff < mu->speed_cap ? eff : mu->speed_cap;
 }
 
 /* PP-move P8, P7 (R-097-03, R-097-04, ALG-68, R-099-04): one unit's move under PURSUE_BY_STEERING, as the
@@ -2230,9 +2263,8 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     if (move_dist > 0.0) {
         double nx = om_move_clamp_axis(mu->x + steer_x * move_dist, ms->canvas_w);
         double ny = om_move_clamp_axis(mu->y + steer_y * move_dist, ms->canvas_h);
-        if (route) om_move_terrain_guard(w, ms, mu, (uint32_t)om_move_layer(w, id), &nx, &ny);
-        mu->x = nx;
-        mu->y = ny;
+        if (route) om_move_commit_step(w, mu, nx, ny, OM_COMMIT_STEER);
+        else { mu->x = nx; mu->y = ny; }
         om_move_grid_update(ms, mu);
     }
     if (mu->deflecting) {
@@ -2353,8 +2385,7 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
             if (mu->route_n > 1) { mu->route_i++; om_move_route_aim(ms, mu); }
             else mu->plan_valid = 0;
         } else if (d == 0.0 || v * left >= d) {
-            mu->x = mu->aim_x;
-            mu->y = mu->aim_y;
+            if (om_move_commit_step(w, mu, mu->aim_x, mu->aim_y, OM_COMMIT_WALK) & (OM_COMMIT_SLID | OM_COMMIT_HELD)) { om_move_grid_update(ms, mu); return; }
             if (d > 0.0) left -= d / v;
             if (mu->aim_is_waypoint && mu->route_n > 1) {
                 mu->route_i++;
@@ -2367,12 +2398,21 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
                 if (!mu->aim_is_waypoint) { mu->has_dest = 0; mu->deflecting = 0; }
             }
         } else {
-            mu->x += dx / d * v * left;
-            mu->y += dy / d * v * left;
+            const double wx = mu->x + dx / d * v * left, wy = mu->y + dy / d * v * left;
             left = 0.0;
+            if (om_move_commit_step(w, mu, wx, wy, OM_COMMIT_WALK) & (OM_COMMIT_SLID | OM_COMMIT_HELD)) { om_move_grid_update(ms, mu); return; }
         }
         om_move_grid_update(ms, mu);
     }
+}
+
+/* Internal, not in the header (om_internal.h): 1 when the unit's own movement step changed its position on tick `tick` (F2, R-087-04).
+ * A push by collision comes after the step and does not count. Reads through om_move_get, never om_move_touch.
+ * See also: om_tac_fire_pass in csrc/unit.c, which skips such a unit's shot. */
+int om_move_moved_own_power(const om_world *w, uint32_t unit_id, uint64_t tick) {
+    const om_move_state *ms = w ? (const om_move_state *)w->move_state : NULL;
+    const om_move_unit *mu = ms ? om_move_get((om_move_state *)ms, unit_id) : NULL;
+    return mu && mu->in_use && tick != 0 && mu->moved_own_tick == tick;
 }
 
 /* Internal, not in the header (om_internal.h): the stored walk route of a unit. Returns route_n (0 without a movement
@@ -2420,10 +2460,10 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
         speed = om_unit_effective_speed(w, id);
         step_dist = speed * (double)period / (double)OM_TACTICAL_TICK_RATE;
         if (step_dist >= dist_to_dest) {
-            mu->x = mu->dest_x; mu->y = mu->dest_y;
+            om_move_commit_step(w, mu, mu->dest_x, mu->dest_y, OM_COMMIT_KITE);
         } else if (step_dist > 0.0) {
-            mu->x += step_dist * om_cos(heading);
-            mu->y += step_dist * om_sin(heading);
+            const double kx = mu->x + step_dist * om_cos(heading), ky = mu->y + step_dist * om_sin(heading);
+            om_move_commit_step(w, mu, kx, ky, OM_COMMIT_KITE);
         }
         om_move_grid_update(ms, mu);
         return;
@@ -2678,7 +2718,10 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
         ms->probe_extra = 0.0;
     }
     for (id = 1; id <= ms->discovery_max; id++) {
+        om_move_unit *mu = om_move_get(ms, id);
+        const double bx = mu ? mu->x : 0.0, by = mu ? mu->y : 0.0;
         om_move_tick_unit(w, ms, id, period);
+        if (mu && mu->in_use && (mu->x != bx || mu->y != by)) mu->moved_own_tick = new_tick;
     }
     om_move_walker_tick(w);
     om_move_collision_pass_internal(w, ms);
@@ -3970,6 +4013,7 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         return 1;
     }
     if (w->move_state && w->move_state_free) w->move_state_free(w->move_state);
+    ms->serial = ++om_move_next_serial;
     w->move_state = ms;
     w->move_state_free = om_move_state_free_fn;
     return 0;

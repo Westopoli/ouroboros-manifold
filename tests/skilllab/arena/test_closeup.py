@@ -8,8 +8,8 @@ CL-3 `--from-tick A --to-tick B` keeps A <= tick <= B (tick 0 not forced).     C
 CL-5 K < 1 is an error (non-zero exit, stderr, no file).     CL-6 frames at ticks the normal file has equal the normal file's frames.
 CL-7 the existing path (`run.fight`, `run._document`, `run.main`) is byte for byte what it was.     CL-8 the module runs as `python -m` (one slow test).
 
-Fixtures: OPEN = h088 open field, side A Raider vs side B Vanguard, both_same_point, seed 1 (premises dumped on base 633ea3e4: sight off 585 ticks, on 575, control 575, all
-wipe; normal frames at 0, 100 .. 500, last). COVER = the h088 cover fixture with side A Raiders, hold:A, sight on (4490 ticks, wipe, snapshot_every 400, `built_features`,
+Fixtures: OPEN = h088 open field, side A Raider vs side B Vanguard, both_same_point, seed 1 (premises dumped on base 633ea3e4: sight off 585 ticks, on 575, control 575; re-dumped 2026-11-08: 576 / 557 / 557, all
+wipe; normal frames at 0, 100 .. 500, last). COVER = the h088 cover fixture with side A Raiders, hold:A, sight on (1941 ticks since 2026-11-11, 1285 from 2026-11-08 to then, 4490 before; wipe, snapshot_every 400, `built_features`,
 `blocked`). Both end by themselves, so nothing here needs `--cap-seconds` (closeup is not specified to take one).
 Controls (green today, must stay green): the CL-7 pins and signatures, the normal runs the closeup tests compare with."""
 import contextlib
@@ -31,14 +31,14 @@ from scripts.skilllab.arena import run as arena_run, snapshot
 from scripts.skilllab.fight import TICKS_PER_SECOND
 
 ROOT = Path(__file__).resolve().parents[3]
-OPEN_TICKS = {"off": 585, "on": 575, "control": 575}   # dumped 2026-11-07 on base 633ea3e4
-OPEN_NORMAL_FRAMES = {"off": [0, 100, 200, 300, 400, 500, 585], "on": [0, 100, 200, 300, 400, 500, 575]}
+OPEN_TICKS = {"off": 576, "on": 557, "control": 557}   # dumped 2026-11-07 on base 633ea3e4: 585 / 575 / 575; re-dumped 2026-11-08 (engine rule fixes F2, F3: a mover does not fire, the lock holds; Test-defect)
+OPEN_NORMAL_FRAMES = {"off": [0, 100, 200, 300, 400, 500, 576], "on": [0, 100, 200, 300, 400, 500, 557]}
 # CL-7 pins: sha256 of run.main's fight file (layout_path replaced by "layout_path_pinned", as h088_fixtures.sight_off_digests) and results.md, recorded on base 633ea3e4;
 # the fight-file shas re-recorded 2026-11-07 for the per-unit `fired` key (replay-firing-lines; the file minus every `fired` line has the old sha, results.md is unchanged).
 PINS = {
-    ("open", "off"): ("d8c84587cb4fae64e1aaeb8ff3e5ddadb10552ec0568c729c8201a2129666db9", "50b2ea2453446efa5e3b91eb9045509c0ed6ce6c147fdb14dc1d6798fc80f35f"),
-    ("open", "on"): ("699aedfa886c7403658bf2190ebb67593c6a24fb7390fec8fa09cff40974e70a", "0ce389e63a247e2fb1e07de00983a92d7f17ecbe3acae572a101912ce6f33d35"),
-    ("cover", "on"): ("5f6a5e120a6c170009d5af59c0d1a3c2c3926f6cf062356d08338e5017c5fd12", "481c4854124ad471f861c4b794b6fdce0545daa33a72ef4df064ccfc20ead75d"),
+    ("open", "off"): ("29edc69b5672a9e016377a206fe30d8afc05f1a96aab295fd7f26baf2f46a496", "82b05a22c96b1bd63181299a87b7a49d96a8571f2fe1340f8eee00ff04150c92"),
+    ("open", "on"): ("d6662e1d209a5b877ab0e1576e01c2cf87d6902a932757a1bfe028f5c400ec9c", "9bb793a3f096263bad6306eca371a573028a9d4169ada7fadcbbee527d94fb66"),
+    ("cover", "on"): ("c29bb91c7ab4835b25b0e63f660f41fb7056558169bba34c7574f2db0053afa7", "4a167ece705ae22251e0da5f1b7b33f4dc1afe38809bd7836778e830b83120e6"),   # re-recorded 2026-11-11 (F1 to F4 incl. 81be98cd: 1285 -> 1941 ticks; Test-defect); was 19af1d33.. / 3b0e95f1..
 }
 
 
@@ -128,14 +128,14 @@ def by_tick(doc):
 # ---------------------------------------------------------------- controls: the existing path
 
 def test_control_the_normal_runs_the_closeup_tests_compare_with_have_the_dumped_premises(lab):
-    """CONTROL (green today, must stay green), the premises of CL-1 to CL-6: the normal runner on OPEN gives 585 / 575 / 575 ticks (sight off / on / control), all wipes, normal
-    frames at 0, 100 ... and the last tick; on COVER 4490 ticks with `built_features` and per-frame `blocked`."""
+    """CONTROL (green today, must stay green), the premises of CL-1 to CL-6: the normal runner on OPEN gives 576 / 557 / 557 ticks (sight off / on / control), all wipes, normal
+    frames at 0, 100 ... and the last tick; on COVER 1941 ticks with `built_features` and per-frame `blocked`."""
     got = {s: lab.normal("open", s)[0] for s in ("off", "on", "control")}
     cover = lab.normal("cover", "on")[0]
     assert ({s: (d["result"]["ticks"], d["result"]["end"]) for s, d in got.items()},
             {s: [f["tick"] for f in d["frames"]] for s, d in got.items() if s != "control"},
             cover["result"]["ticks"], "built_features" in cover, all("blocked" in f for f in cover["frames"])) == (
-        {s: (t, "wipe") for s, t in OPEN_TICKS.items()}, OPEN_NORMAL_FRAMES, 4490, True, True)
+        {s: (t, "wipe") for s, t in OPEN_TICKS.items()}, OPEN_NORMAL_FRAMES, 1941, True, True)
 
 
 @pytest.mark.parametrize("case,sight", sorted(PINS))
@@ -181,17 +181,17 @@ def test_cl1_frames_are_at_0_k_2k_and_the_last_tick(lab, sight, k):
 
 
 def test_cl1_k_larger_than_the_fight_gives_tick_0_and_the_last_tick(lab):
-    """CL-1: with K 1000 (longer than the 575-tick fight) the frames are at ticks 0 and 575 and `snapshot_every` is 1000."""
+    """CL-1: with K 1000 (longer than the 557-tick fight) the frames are at ticks 0 and 557 and `snapshot_every` is 1000."""
     doc = lab.ok("open", "on", 1000)
-    assert ([f["tick"] for f in doc["frames"]], doc["snapshot_every"]) == ([0, 575], 1000)
+    assert ([f["tick"] for f in doc["frames"]], doc["snapshot_every"]) == ([0, 557], 1000)
 
 
 def test_cl1_cover_fight_keeps_a_frame_every_k_ticks_with_blocked_and_built_features(lab):
-    """CL-1 and "same per-frame/unit keys including ... built_features": on COVER (4490 ticks, ground fight) K 50 gives 0, 50 ... 4450 and 4490, every frame carries `blocked`,
+    """CL-1 and "same per-frame/unit keys including ... built_features": on COVER (1941 ticks, ground fight) K 50 gives 0, 50 ... 1900 and 1941, every frame carries `blocked`,
     and the document carries `built_features`, `sights`, `movement_kind`."""
     doc = lab.ok("cover", "on", 50)
     assert ([f["tick"] for f in doc["frames"]], all("blocked" in f for f in doc["frames"]), {"built_features", "sights", "movement_kind"} <= set(doc)) == (
-        expected_ticks(4490, 50), True, True)
+        expected_ticks(1941, 50), True, True)
 
 
 # ---------------------------------------------------------------- CL-2 result unchanged
@@ -207,7 +207,7 @@ def test_cl2_result_equals_the_normal_runners_for_every_k(lab, sight):
 
 
 def test_cl2_cover_result_equals_the_normal_runners(lab):
-    """CL-2 on the ground-fight fixture: COVER at K 50 and K 100 gives the normal runner's result (4490 ticks, first_seen included)."""
+    """CL-2 on the ground-fight fixture: COVER at K 50 and K 100 gives the normal runner's result (1941 ticks, first_seen included)."""
     normal = lab.normal("cover", "on")[0]["result"]
     assert [lab.ok("cover", "on", k)["result"] for k in (50, 100)] == [normal, normal]
 
@@ -244,13 +244,13 @@ def test_cl2_two_closeup_runs_are_byte_identical(tmp_path):
     (1, 20, 7, [7, 14]),                          # tick 0 is not forced when a window is given
     (0, 20, 7, [0, 7, 14]),
     (None, 40, 7, [0, 7, 14, 21, 28, 35]),        # only --to-tick: from the start, tick 0 included
-    (500, None, 10, list(range(500, 571, 10)) + [575]),   # only --from-tick: to the end, the last tick included
-    (500, 9999, 10, list(range(500, 571, 10)) + [575]),
-    (571, 575, 10, [575]),                        # nothing but the last tick lies in the window
+    (500, None, 10, list(range(500, 551, 10)) + [557]),   # only --from-tick: to the end, the last tick included
+    (500, 9999, 10, list(range(500, 551, 10)) + [557]),
+    (553, 557, 10, [557]),                        # nothing but the last tick lies in the window
 ])
 def test_cl3_window_keeps_only_frames_between_from_and_to(lab, a, b, k, want):
     """CL-3 ("If `--from-tick`/`--to-tick` are given, only frames with A <= tick <= B are written (tick 0 is not forced then)"): the frame ticks of the OPEN sight-on fight
-    (last tick 575) are the multiples of K (and the last tick) inside the window; `snapshot_every` stays K and `result` is the normal runner's."""
+    (last tick 557) are the multiples of K (and the last tick) inside the window; `snapshot_every` stays K and `result` is the normal runner's."""
     extra = (["--from-tick", a] if a is not None else []) + (["--to-tick", b] if b is not None else [])
     doc = lab.ok("open", "on", k, *extra)
     assert ([f["tick"] for f in doc["frames"]], doc["snapshot_every"], doc["result"]) == (want, k, lab.normal("open", "on")[0]["result"])
@@ -289,11 +289,11 @@ def test_cl5_every_ticks_below_one_is_an_error_and_writes_nothing(lab, k):
 def test_cl6_frames_at_ticks_the_normal_file_has_are_the_normal_frames(lab, case, sight, k):
     """CL-6 ("frames in the dense file at the ticks that the normal file also has are equal to the normal file's frames (same units, positions, target, seen)"): every frame
     of the normal file whose tick the dense file also has is equal, whole (units with `seen`, `blocked`, alive counts). For K that divides the normal spacing that is every
-    normal frame; for K 7 it is at least tick 0 (and the last tick, 575 not being a multiple of 7 but kept as the last)."""
+    normal frame; for K 7 it is at least tick 0 (and the last tick, 557 not being a multiple of 7 but kept as the last)."""
     normal, dense = by_tick(lab.normal(case, sight)[0]), by_tick(lab.ok(case, sight, k))
     common = sorted(set(normal) & set(dense))
     unfired = lambda f: dict(f, units=[{key: v for key, v in u.items() if key != "fired"} for u in f["units"]])   # `fired` is the window since the previous frame, which differs (test_replay_firing_record RF-4)
-    assert (all(unfired(normal[t]) == unfired(dense[t]) for t in common), set(common) >= (set(normal) if k != 7 else {0, 575}), len(common) >= 2) == (True, True, True)
+    assert (all(unfired(normal[t]) == unfired(dense[t]) for t in common), set(common) >= (set(normal) if k != 7 else {0, 557}), len(common) >= 2) == (True, True, True)
 
 
 # ---------------------------------------------------------------- CL-8 the module runs as a CLI

@@ -92,17 +92,21 @@ def test_a_second_run_is_byte_identical(tmp_path):
 
 def test_a_layout_without_group_keys_writes_no_groups_and_the_old_stage3_fight_reproduces_byte_for_byte(tmp_path):
     """The new keys are additive: a both_same_point fight has no `orders.groups`, and the committed stage 3 cover fight (L-0039 seed 1, `--sight off`) is reproduced
-    byte for byte by today's runner (the stage 3 determinism line; the conversion for `--sight off` is untouched)."""
+    byte for byte by today's runner (the stage 3 determinism line; the conversion for `--sight off` is untouched). Since 2026-11-11 the byte pin is the sha256 of the engine's
+    current L-0039 seed 1 file, not the committed stage 3 file (see the Test-defect note below)."""
     lay = fx.layout("L-9833", "open_field", "small_flat", None)
     lay["defender"] = ""
     proc, doc = fx.fight(lay, tmp_path / "plain", 1, "--sight", "on", "--cap-seconds", "5")
     assert proc.returncode == 0 and "groups" not in doc["orders"]
-    committed = ROOT / "docs/northstar/research/layer_dynamics/arena/stage3/L-0039-s1.fight.json"
     out = tmp_path / "s3"
     proc = fx.run(ROOT / "docs/northstar/research/layer_dynamics/catalogue/L-0039.toml", out, 1, "--sight", "off", "--control-dir", tmp_path / "s3c")
     assert proc.returncode == 0, proc.stdout
-    # replay-firing-lines: the runner now writes `fired` on every unit row, which the committed file (written before the key) lacks; every other byte is the same.
-    assert re.sub(rb'\n\s*"fired": (true|false),(?=\n)', b"", (out / "L-0039-s1.fight.json").read_bytes()) == committed.read_bytes()
+    # replay-firing-lines: the runner now writes `fired` on every unit row, which the pin lacks; every other byte is the same.
+    # Test-defect (engine rule fixes F1 to F4 incl. 81be98cd, 2026-11-11): this compared with the committed stage 3 file (docs/northstar/research/layer_dynamics/arena/stage3/
+    # L-0039-s1.fight.json, 12000 ticks, capped), which the engine no longer reproduces: the fight now ends in a wipe at tick 2254 and the checker finds no violation in it.
+    # The committed file stays as the stage 3 record; the determinism line is pinned by the sha256 of today's file (minus `fired`), recorded 2026-11-11.
+    stripped = re.sub(rb'\n\s*"fired": (true|false),(?=\n)', b"", (out / "L-0039-s1.fight.json").read_bytes())
+    assert hashlib.sha256(stripped).hexdigest() == "4aae51eae07ecdd84e4e5e6558365b47f7a605652442cfbf1394138993945f79"
 
 
 def test_a_unit_without_a_group_or_a_group_without_a_unit_is_rejected(tmp_path):

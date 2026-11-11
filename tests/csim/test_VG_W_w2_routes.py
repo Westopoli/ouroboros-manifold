@@ -316,12 +316,13 @@ def _dig_ditch(lib, w):
     assert lib.om_move_terrain_epoch(w) == e0 + 1, "the terrain change must bump the epoch"
 
 
-def test_T0_block_rect_bumps_the_epoch_but_the_planner_does_not_see_it(lib, world_factory):
-    """Premise of case T, dumped (the brief named om_map_block_rect; the dump shows it cannot make walkers go around).
-    om_map_block_rect writes the mapgen blocked bits and bumps the epoch (om_move_terrain_changed), but om_walk_route reads
-    only om_terrain_walk_mask (csrc/walk_route.c:232, csrc/terrain.c:1251), derived at generate and by
-    om_terrain_apply_ground: a rectangle across the walkers' path leaves every planned route byte-equal. So a block_rect
-    replan produces the same route, and T uses a change the planner sees. Green today."""
+def test_T0_block_rect_bumps_the_epoch_and_the_planner_goes_round_it(lib, world_factory):
+    """Premise of case T, dumped. Test-defect, F1 engine rule fixes 2026-11-08 (R-097-01, R-207-05, R-190-07): this test was
+    test_T0_block_rect_bumps_the_epoch_but_the_planner_does_not_see_it and pinned that om_walk_route read only
+    om_terrain_walk_mask, so a rectangle across the walkers' path left every planned route byte-equal ("an obstacle is a
+    full stop" for a walker: the F1 defect). The router now closes the mapgen blocked cells too (csrc/walk_route.c,
+    om_move_route_cell_blocked): om_map_block_rect writes the mapgen blocked bits and bumps the epoch, and the route replanned
+    after it differs and passes none of the rectangle's cells. Case T below keeps its terrain-change premise unchanged."""
     _bind(lib)
     w, ids = _world_at(lib, world_factory, SAVE_TICK)
     before = _plan(lib, w, ids[0], w1.WALK_GOAL)
@@ -331,11 +332,12 @@ def test_T0_block_rect_bumps_the_epoch_but_the_planner_does_not_see_it(lib, worl
     assert lib.om_map_block_rect(w, cx0 * CELL, cy0 * CELL, (cx1 + 1) * CELL, (cy1 + 1) * CELL, 0, 0) == 0
     after = _plan(lib, w, ids[0], w1.WALK_GOAL)
     through = _cells(before[1]) & set(_ditch_cells())
-    print("T0 premise: epoch %d -> %d; the planned route (%d points) passes %d of the rectangle's cells, identical after: %s" % (
-        e0, lib.om_move_terrain_epoch(w), before[0], len(through), before == after))
+    still = _cells(after[1]) & set(_ditch_cells())
+    print("T0 premise: epoch %d -> %d; the planned route (%d points) passes %d of the rectangle's cells before, %d after" % (
+        e0, lib.om_move_terrain_epoch(w), before[0], len(through), len(still)))
     assert lib.om_move_terrain_epoch(w) == e0 + 1
     assert through, "premise: the rectangle is not on walker %d's path" % ids[0]
-    assert before == after, "om_map_block_rect changed the planner's route: case T could use it"
+    assert before != after and not still, "om_map_block_rect did not change the planner's route round the rectangle (%d cells still on it)" % len(still)
 
 
 def test_T_a_terrain_change_across_the_path_makes_the_walkers_go_around(lib, world_factory):

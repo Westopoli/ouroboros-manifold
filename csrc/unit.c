@@ -34,6 +34,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "move_commit.h"
 #include "economy_internal.h"
 #include "om_constants.h"
 #include <math.h>
@@ -149,10 +150,6 @@
  * OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9: no ALG/config source; kept local. */
 #define OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION 0.5
 #define OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9
-/* Q-084-01 (c): each further Warden adds half the previous one's reduction
- * (0.10, 0.05, then 0.025 ...); no ALG/config source for the halving. */
-#define OM_WARDEN_AURA_DIMINISH_FACTOR 0.5
-
 /* ALG-60: "after firing the unit's movement pauses ATTACK_BACKSWING_SEC =
  * 0.5" -- OM_ATTACK_BACKSWING_SEC/OM_TACTICAL_TICK_RATE are both already
  * declared in om_constants.h. */
@@ -1066,23 +1063,15 @@ static int om_tactical_multiple_factions_alive(const om_tac_state *st) {
     return 0;
 }
 
-/* R-083-03/Q-084-01: n Wardens in range give diminishing reduction: the first
- * 0.10, each additional Warden half the previous one's contribution (two
- * Wardens 0.15). Summed term by term, no libm pow(). */
+/* R-083-03/R-084-01, Q-084-01 closed 2026-10-20 "no stacking": one Warden in
+ * range gives the reduction 0.10; two or more give the same 0.10. */
 static double om_warden_aura_reduction_for(om_tac_state *st, const om_unit_row *target) {
-    int n;
-    double total = 0.0, term = OM_WARDEN_AURA_DAMAGE_REDUCTION;
     if (st->n_wardens == 0) {
         if (!st->grid.built) om_grid_rebuild(st);
         return 0.0;
     }
-    n = (int)om_grid_kind_scan(st, 0, target->faction_id, -1, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS);
-    if (n <= 0) return 0.0;
-    while (n-- > 0) {
-        total += term;
-        term *= OM_WARDEN_AURA_DIMINISH_FACTOR;
-    }
-    return total;
+    return om_grid_kind_scan(st, 0, target->faction_id, -1, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS) > 0
+        ? OM_WARDEN_AURA_DAMAGE_REDUCTION : 0.0;
 }
 
 /* Each Warden counts the same-faction living units in its circle. The counts are
@@ -1130,7 +1119,7 @@ static int om_aura_flatten(om_tac_state *st) {
     return 1;
 }
 
-/* R-083-03: healing stacks linearly, unlike the damage reduction above. */
+/* R-083-03: the heal does not stack either: one Warden in range heals 0.075 a tick, a second adds nothing (Q-084-01). */
 static void om_tactical_apply_aura_regen(om_world *w) {
     om_tac_state *st = om_tac(w);
     uint32_t i, k;
@@ -1160,7 +1149,7 @@ static void om_tactical_apply_aura_regen(om_world *w) {
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (st->aura_count[i] > 0) {
-            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)st->aura_count[i] * (double)om_tac_period(st);
+            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)om_tac_period(st);
             if (u->hp > u->max_hp) u->hp = u->max_hp;
         }
     }
@@ -1918,15 +1907,16 @@ static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty)
                   * (double)om_tac_period(om_tac(w));
     if (d <= OM_TIE_EPSILON) return 1;
     if (step <= 0.0) return 0;
-    if (d <= step) {
-        u->x = tx; u->y = ty;
-    } else {
-        u->x += dx / d * step;
-        u->y += dy / d * step;
+    {
+        /* F1 (R-207-06, R-207-07): the step goes through the move side's commit, so a flinch or a seen-step cannot leave the canvas or enter a
+         * blocked cell. A step the commit cut short ends the movement (the unit stands at the face), as arriving would. */
+        double nx = d <= step ? tx : u->x + dx / d * step, ny = d <= step ? ty : u->y + dy / d * step;
+        const int cut = om_move_commit(w, u->unit_id, u->x, u->y, &nx, &ny, OM_COMMIT_FLINCH) & (OM_COMMIT_CLAMPED | OM_COMMIT_SLID | OM_COMMIT_HELD);
+        u->x = nx; u->y = ny;
+        om_grid_move(om_tac(w), u->unit_id - 1);
+        om_unit_set_pos(w, u->unit_id, u->x, u->y);
+        return d <= step || cut;
     }
-    om_grid_move(om_tac(w), u->unit_id - 1);
-    om_unit_set_pos(w, u->unit_id, u->x, u->y);
-    return d <= step;
 }
 
 /* See also: om_tac_move_resume in tactical_move.c, which clears the held flag and keeps the group */
@@ -2240,7 +2230,10 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     most_damaged = om_tac_most_damaged_for(w, u);
     cohort_turn = (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT;
-    if ((u->target_id == 0 || most_damaged || (pursue && t && !om_tac_in_range(w, u, t))) && u->order != OM_ORDER_ATTACK_TARGET
+    /* F3 (R-087-03, R-087-08 as rewritten 2026-11-08): acquisition runs only while the unit has no lock (or under the lab-only
+     * most_damaged policy, Q-008-05). A locked target that stepped out of attack range is walked to (R-087-04), not swapped
+     * for the nearest; it leaves the lock only by dying, leaving the side's sight, the leash or a new order. */
+    if ((u->target_id == 0 || most_damaged) && u->order != OM_ORDER_ATTACK_TARGET
         && cohort_turn) {
         /* H-057: an idle or attack-moving unit looks as far as it can be led, the type's leash; a guard, and a unit on
          * its way back to its anchor, only as far as it can shoot */
@@ -2352,6 +2345,8 @@ static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
         int pending = u->fire_pending;
         u->fire_pending = 0;
         if (!pending || !u->in_use || u->hp <= 0.0 || u->target_id == 0) continue;
+        /* F2 (R-087-04, R-096-02): a unit that walked this tick does not fire; it fires on the next, when halted. */
+        if (om_move_moved_own_power(w, u->unit_id, om_tactical_tick(w))) continue;
         t = om_registry_find_in(st, u->target_id);
         if (t && t->hp > 0.0 && om_tac_in_range(w, u, t)
             && (u->cooldown >= u->attack_interval * (double)OM_TACTICAL_TICK_RATE - OM_TIE_EPSILON || !u->fired)
@@ -2374,8 +2369,11 @@ static void om_tactical_ai_tick(om_world *w, om_tac_state *st) {
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use || u->hp <= 0.0) continue;
-        if (om_tac_pursuing(w, u)) {
-            /* arrival at the attacker's place ends the pursuit too */
+        if (u->target_id == 0 && om_tac_pursuing(w, u)) {
+            /* arrival at the attacker's place ends the pursuit too. Only while the unit holds no target: a unit that
+             * halted to fire at, or has just been sent after, a locked target has no route, which is not arrival, and
+             * ending the pursuit here cleared a live, seen lock (R-087-03, R-087-08). See also: om_tac_unit_ai, which
+             * ends the pursuit itself once the target is gone. */
             double px, py;
             if (!om_unit_get_destination(w, u->unit_id, &px, &py) || om_tac_dist_le(px - u->x, py - u->y, OM_TIE_EPSILON)) {
                 om_tac_end_pursuit(w, u);
@@ -2770,8 +2768,8 @@ void om_unit_attack(om_world *w, uint32_t attacker, uint32_t target) {
 
 /* ALG-60: Brace 0.50 (self, while its bonus is granted) + Fortify 0.20
  * (any friendly within OM_FORTIFY_RADIUS of an active Bastion) + Warden
- * aura (om_warden_aura_reduction_for, already diminishing per extra
- * Warden), capped at OM_ABILITY_DAMAGE_REDUCTION_CAP. Brace/Fortify/Warden
+ * aura 0.10 (om_warden_aura_reduction_for, once however many Wardens
+ * are in range: R-083-03), capped at OM_ABILITY_DAMAGE_REDUCTION_CAP. Brace/Fortify/Warden
  * each also have a force_*_reduction flag (om_unit_set_brace_active,
  * om_unit_set_fortify_active, om_unit_set_warden_aura_active) that a test
  * can set directly on any unit type, independent of the real Vanguard

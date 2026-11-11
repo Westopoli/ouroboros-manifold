@@ -55,16 +55,16 @@
   "checkpoints": [
    "f82caf018d644382",
    "9fddc624492d09da",
-   "5b66060b26f84f75",
-   "d77060a625b39c66",
-   "89207b115d0e4792",
-   "eaf16e8279f627f5",
-   "3730730435df2235",
-   "7665ed3cdba5cd26",
-   "d245a66d45056730",
-   "8a8b0971deb862ff"
+   "97edeeef7241c3ab",
+   "c6f14fab38023b93",
+   "d1f6b303373b2315",
+   "6e2ebc3abdab7006",
+   "b4182a1cfa6a6f9b",
+   "5640cabfb98d577f",
+   "b471a49c7048c7cd",
+   "35bfea012cc1808b"
   ],
-  "final": "8a8b0971deb862ffb83e34e954df4c2cd5bcb8653cac41c3aa86920db20a9731",
+  "final": "35bfea012cc1808bc3de4f9a123e9e67be448771e5d90204e04eb9b057c13771",
   "ticks": 1000
  },
  "fixture_wall_gap": {

@@ -23,6 +23,7 @@ from test_PP_unit_support import attack_move, pos, spawn, step
 RAIDER, VANGUARD, BASTION = 0, 2, 5
 FRIEND, ENEMY = 0, 1
 TICKS = 40
+BACKSWING_TICKS = 11      # the pause set by om_unit_deal_damage (0.5 s, 10 ticks) is still on for 11 steps in this scene (measured)
 DIST = 600.0
 MARGIN = 0.90
 ENEMY_AT = (-6000.0, 3000.0)
@@ -45,6 +46,9 @@ def _group_move(lib, w, ids):
 
 def _check(lib, w, ids, types, cap_type):
     base = lib.om_unit_profile_speed(w, cap_type)
+    # Test-defect (F2 engine rule fixes, 2026-11-08): a member in backswing at order time now waits out the 0.5 s pause (R-084-04, ALG-60; group
+    # members used to ignore it), so the 40 ticks are measured after the pause, which is what this test is about (the cap is the base speed, not 0).
+    step(lib, w, BACKSWING_TICKS)
     for u in ids:
         assert lib.om_unit_get_current_speed(w, u) == pytest.approx(base, abs=1e-9), \
             f"unit {u}: group cap is {lib.om_unit_get_current_speed(w, u)}, base speed of the slowest member is {base}"
