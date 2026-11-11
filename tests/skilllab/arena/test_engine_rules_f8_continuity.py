@@ -12,10 +12,19 @@ spec's reading (gap reported). Bound: every living unit moves at most speed x ma
 
 Measured on the Round 1 tip (94c2fb5d, seed 1, sight on, each fight to its end), unit-ticks that change layer and move more than the bound, NO push excuse:
   L-0061 574 of 2552 layer changes (worst 78.1 wu, a 4.4 wu/tick Vanguard)   L-0063 1788 of 3407 (worst 92.0)   L-0080 276 of 548 (worst 30.6)   L-0083 14 of 27 (the fight has 338 unit-ticks over the
-  bound in all, worst 75.4 wu)
+  bound in all, worst 75.4 wu)   L-0084 1596 of 2473 (measured 2026-11-11 on the same tip, seed 1, sight on)
   the F0 checker's `continuity` over the same four fights: 0, 0, 0, 0. It excuses every unit that has another unit within 40 wu before or after the tick (_pushed), and a
   hill march is dense. On an open field (L-0050, 24 walkers, 103,000 unit-ticks) no unit-tick exceeds the bound by more than 2 wu, so a push is not what moves a unit 78 wu.
 The checker's blind spot is reported as a gap; these tests are the proof, the checker test below is the control the brief asked for.
+
+L-0080 replaced by L-0084 (2026-11-11, Test-defect: the control below required 20 layer changes of L-0080, a fight that no longer has them). Layer-change unit-ticks
+(a unit whose layer differs before and after the step), seed 1, sight on, each fight to its end, measured on the Round 2 tree `2c38b0aa` / on the Round 1 tip 94c2fb5d:
+  L-0061 3933 (24 units) / 2552     L-0063 9380 (48 units) / 3407     L-0083 25 (17 units) / 27     L-0080 7 (7 units, 12000 ticks) / 548     L-0084 7142 (53 units) / 2473
+L-0080 fell from 548 to 7 (the Round 2 fixes: per the brief, units on its hill now hold and shoot down instead of walking; not traced here); its jump test still judges 7 changes,
+too few to call the fight a ramp crossed by many units. L-0084 is the catalogue's `slope` layout (40:56, hold:A, small_tiered): the whole defence is spread over a ramp,
+53 of its 96 units change layer, and the jump test over it is red on the Round 1 tip (1596 unit-ticks over the bound) and green on Round 2 (0). Candidates measured
+on Round 2 (layer-change unit-ticks): L-0062 9353, L-0064 993, L-0065 3161, L-0066 5903, L-0079 77, L-0081 8, L-0082 260, L-0084 7142; the flank_route layouts
+L-0067, L-0069 and L-0071 have none.
 """
 import collections
 import tomllib
@@ -25,7 +34,7 @@ import pytest
 import engine_rules_oracle as oracle
 import engine_rules_r2_probe as probe
 
-HILLS = ["L-0061", "L-0063", "L-0080", "L-0083"]
+HILLS = ["L-0061", "L-0063", "L-0083", "L-0084"]
 SLACK = probe.STEP_SLACK
 _CACHE = {}
 
@@ -78,7 +87,7 @@ def test_R_004_06_the_checkers_continuity_check_reports_zero(name):
 @pytest.mark.parametrize("name", HILLS)
 def test_R_004_08_no_unit_jumps_on_the_tick_it_changes_layer(name):
     """R-004-06 / R-004-08 (the spec's reading: the layer flips, the position does not jump), every tick of the whole fight, no push excuse: a unit that changes layer on a
-    tick moves at most its top step + 1.3 wu that tick. Red today: 574 / 1788 / 276 / 14 unit-ticks over the bound (worst 78 wu)."""
+    tick moves at most its top step + 1.3 wu that tick. Red on the Round 1 tip: 574 / 1788 / 14 / 1596 unit-ticks over the bound for L-0061 / L-0063 / L-0083 / L-0084 (worst 78 wu)."""
     run, _ = _fight(name)
     bad = _jumps(run, only_layer_change=True)
     assert not bad, "%s: %d layer-change unit-ticks over speed x max(1, down mult) / 20 + %.1f (%d units), first (tick, unit, wu, top step, layer from, to) %s" % (

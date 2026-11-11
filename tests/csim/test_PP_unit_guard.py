@@ -1,9 +1,19 @@
-"""PP-unit: the guard stance (E-13 S-096, R-096-05; Architect A170, Addendum 62; contract
+"""PP-unit: the guard stance (E-13 S-096 R-096-08, S-208 R-208-01; Architect A170, Addendum 62; contract
 docs/northstar/plans/push/pp_contract.md section 6 "The guard call").
 
-R-096-05 (the builder writes it into E-13 with the landing): a unit ordered to guard holds its
-position, fires at any target it can shoot in range, never pursues, and resumes nothing; a move,
-attack-move or layer order ends the guard. Westley, in the record: "Yes a guard stance is fine".
+Rule words proved (docs/bible/epics/E-13-movement-and-command.md; the rule was R-096-05 when this file was written, renumbered since):
+  R-096-08  "Given a guard order, When issued to a selection, Then each unit takes its position as its post and engages any target its side can
+            see (E-12 R-093-02), stepping toward it no farther than `GUARD_RADIUS` = 200 wu from the post (DRAFT-guard-radius ...; the radius
+            bounds the guard's own walk, measured post to the guard's centre ...), firing whenever the target is in range, returning to the post
+            when the target dies or when engaging it would take the guard past the radius; it never crosses the radius and never marches ...;
+            a move, attack-move, attack-target or layer order ends the guard; return fire (R-087-06) is untouched."
+  R-208-01  "Given selected units, When the player gives the guard order at a post, Then the units hold the post and engage what their side can
+            see (E-12 R-093-02) within `GUARD_RADIUS` of it, returning to the post when the target dies or leaves the radius, never chasing
+            past it (R-096-08)."
+The tests below named test_R_096_05_* are the guard tests written before the renumbering and before 2026-11-08, when the guard held and never
+stepped; their ids are kept so the history reads, and each cites R-096-08 or R-208-01 in its docstring. Westley, in the record: "Yes a guard
+stance is fine". The step-and-return and the radius are proved in tests/csim/test_E13_R096_08_guard_steps_and_returns.py; the scenes here are the
+original ones (a Vanguard against a Supply at 450, 500 and 650 wu, and a choke) read against the rule as it stands.
 Engine call: om_command_guard(w, ids, n) (ABI 4, PP-contract). Until it lands every test below
 fails naming the missing symbol (a failure, not a skip).
 
@@ -16,6 +26,7 @@ Scene unit: Vanguard (range 300, sensor 700, speed 80 = 4 wu per tick). Targets 
 fire), so only what the test delivers hurts or draws a unit. The choke scenario uses Vanguards on both
 sides. Not tested, and flagged in the report: facing after a hit (no getter pinned), a guard order on a
 unit with a pending layer transfer (the contract leaves it to the builder).
+Detector bounds (not rules; Westley's to change): LEASH_SLACK 1 wu (DRAFT-guard-leash-slack, as in the E-13 file), STEP_MIN 20 wu.
 """
 import ctypes
 
@@ -26,6 +37,9 @@ from test_PP_unit_support import (SUPPLY, VANGUARD, attack_move, dest, hp, kill,
                                   step, target)
 
 CYCLE = 4  # one full cohort cycle
+GUARD_RADIUS = 200.0   # R-096-08 (DRAFT-guard-radius, Westley's)
+LEASH_SLACK = 1.0      # DRAFT-guard-leash-slack, detector bound
+STEP_MIN = 20.0        # detector bound: a step toward the enemy is at least this many wu
 
 
 # ---- the contract call, resolved at call time so a missing symbol fails by name ----
@@ -89,43 +103,83 @@ def vanguard_with_far_friend(lib, w):
     return spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
 
 
-# ---- hold: no walk without a target in reach ----
+# ---- step: a guard walks toward what it sees and can engage from within the radius, and no farther ----
 
-def test_R_096_05_guard_holds_while_an_enemy_stands_beyond_range(lib, world_factory):
-    """Enemy 500 wu away (sensor 700 sees it, range 300 does not reach it). The guard stays exactly
-    where it is, and holds nothing as a destination, for 60 ticks."""
+def _watch(lib, w, u, post, ticks):
+    """Per tick after the step: the guard's position and its distance from the post."""
+    out = []
+    for _ in range(ticks):
+        step(lib, w)
+        p = pos(lib, w, u)
+        out.append((p, dist(p, post)))
+    return out
+
+
+def test_R_096_08_guard_steps_toward_a_seen_enemy_it_can_reach_from_the_radius_and_stays_within_it(lib, world_factory):
+    """R-096-08 'engages any target its side can see ... stepping toward it no farther than GUARD_RADIUS = 200 wu from the post': the enemy 500 wu
+    east is seen (sensor 700) and 200 wu out of range (300), which is exactly the radius: over 60 ticks the guard closes at least STEP_MIN wu on it
+    and no tick ends more than 200 wu (+ LEASH_SLACK) from the post. Then the enemy moves to 800 wu east (seen, and 500 wu out of range: out of the radius's
+    reach) and for 120 more ticks the guard does not follow it past the radius ('never chasing past it'). (Written as 'holds while an enemy
+    stands beyond range', R-096-05, which asserted the guard never steps; that contradicts the rule as ruled 2026-11-08.) Fails against a guard that
+    holds (no step) and against one that steps without the radius (breaks named in the report)."""
     w = world_factory(n_regions=1)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
-    spawn(lib, w, SUPPLY, 1, 500.0, 0.0)
+    e = spawn(lib, w, SUPPLY, 1, 500.0, 0.0)
     assert guard(lib, w, [u]) == 0
-    step(lib, w, 60)
-    assert pos(lib, w, u) == (0.0, 0.0), f"guard walked to {pos(lib, w, u)}"
-    assert dest(lib, w, u)[0] == 0
+    rows = _watch(lib, w, u, (0.0, 0.0), 60)
+    closest = min(dist(p, (500.0, 0.0)) for p, _ in rows)
+    assert 500.0 - closest >= STEP_MIN, f"the guard did not step toward a seen enemy: {500.0 - closest:.1f} wu closer, at {rows[-1][0]}"
+    lib.om_unit_teleport(w, e, 800.0, 0.0, 0)
+    rows += _watch(lib, w, u, (0.0, 0.0), 120)
+    over = [(n + 1, tuple(round(v, 1) for v in p), round(d, 1)) for n, (p, d) in enumerate(rows) if d > GUARD_RADIUS + LEASH_SLACK]
+    assert not over, f"{len(over)} ticks beyond {GUARD_RADIUS:.0f} wu from the post, first {over[:3]}"
 
 
-def test_control_R_096_05_attack_moving_unit_walks_toward_the_same_enemy(lib, world_factory):
-    """Positive control for the hold test (green today): the same scene with an attack-move order
-    closes on the enemy 500 wu away. The distance test would pass for a unit that cannot walk at all
-    without this."""
+def test_R_096_08_guard_leaves_a_seen_enemy_it_cannot_engage_even_from_the_radius_edge_alone(lib, world_factory):
+    """R-096-08 'returning to the post ... when engaging it would take the guard past the radius; it never crosses the radius and never marches':
+    the enemy 650 wu east is seen (sensor 700) but would need the guard 350 wu out to be in range 300, 150 wu past the radius. For 120 ticks the
+    guard stays at its post (0, 0), holds no destination, and the enemy takes no damage. (Rule decision taken by the Architect's brief
+    2026-11-11: R-096-08 does not say whether the guard walks to the radius edge first; the brief reads 'leaves it at its post'.) Fails against a
+    guard that walks toward any seen enemy."""
     w = world_factory(n_regions=1)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
-    spawn(lib, w, SUPPLY, 1, 500.0, 0.0)
+    enemy = spawn(lib, w, SUPPLY, 1, 650.0, 0.0)
+    before = hp(lib, w, enemy)
+    assert guard(lib, w, [u]) == 0
+    rows = _watch(lib, w, u, (0.0, 0.0), 120)
+    assert all(p == (0.0, 0.0) for p, _ in rows), f"the guard left its post for an enemy it cannot engage from within the radius: at {rows[-1][0]}"
+    assert dest(lib, w, u)[0] == 0
+    assert hp(lib, w, enemy) == before
+
+
+def test_control_R_096_08_attack_moving_unit_walks_toward_the_same_enemy(lib, world_factory):
+    """Positive control for the test above (green today): the same scene (enemy at 650) with an attack-move order closes on the enemy. The
+    distance test would pass for a unit that cannot walk at all without this."""
+    w = world_factory(n_regions=1)
+    u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
+    spawn(lib, w, SUPPLY, 1, 650.0, 0.0)
     attack_move(lib, w, [u], 0.0, -3000.0)
     step(lib, w, 60)
     assert pos(lib, w, u) != (0.0, 0.0), "an attack-moving unit with an enemy in sight should walk"
 
 
-def test_R_096_05_guard_does_not_step_toward_an_enemy_that_stays_out_of_range(lib, world_factory):
-    """The enemy stays 450 wu off for 120 ticks (two sensor-and-cohort cycles over): no step toward it,
-    no change in the distance, and the enemy takes no damage."""
+def test_R_096_08_guard_steps_toward_and_fires_at_an_enemy_450_wu_off_and_never_passes_the_radius(lib, world_factory):
+    """R-096-08 'stepping toward it no farther than GUARD_RADIUS ... firing whenever the target is in range ... it never crosses the radius': the
+    enemy 450 wu east is seen and 150 wu out of range, reachable inside the radius. Over 120 ticks the guard closes on it, the enemy loses hit
+    points, and no tick ends more than 200 wu (+ LEASH_SLACK) from the post. (Written as 'does not step toward an enemy that stays out of range',
+    R-096-05, which asserted no step and no damage; the scene is reachable by the rule as ruled 2026-11-08.) Fails against a guard that holds
+    (no step, no damage) and against one that marches past the radius."""
     w = world_factory(n_regions=1)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
     enemy = spawn(lib, w, SUPPLY, 1, 450.0, 0.0)
     before = hp(lib, w, enemy)
     assert guard(lib, w, [u]) == 0
-    step(lib, w, 120)
-    assert pos(lib, w, u) == (0.0, 0.0)
-    assert hp(lib, w, enemy) == before
+    rows = _watch(lib, w, u, (0.0, 0.0), 120)
+    closest = min(dist(p, (450.0, 0.0)) for p, _ in rows)
+    assert 450.0 - closest >= STEP_MIN, f"the guard did not step toward a seen enemy it can reach: {450.0 - closest:.1f} wu closer"
+    assert hp(lib, w, enemy) < before, "the guard stepped into range and never fired"
+    over = [(n + 1, tuple(round(v, 1) for v in p), round(d, 1)) for n, (p, d) in enumerate(rows) if d > GUARD_RADIUS + LEASH_SLACK]
+    assert not over, f"{len(over)} ticks beyond {GUARD_RADIUS:.0f} wu from the post, first {over[:3]}"
 
 
 # ---- fire: a guard shoots what it can reach ----
@@ -338,20 +392,25 @@ def _choke(lib, w):
     return defenders, attackers
 
 
-def test_R_096_05_choke_guard_holds_the_gap_against_a_larger_line(lib, world_factory):
-    """Two defenders in the gap, guarding, against four attackers marching through it: after 150 ticks the
-    defenders have not moved, are alive, hold no goal, no attacker is south of the wall, and the attackers
-    took damage (the guard fired)."""
+def test_R_096_08_choke_defenders_stay_within_200_wu_of_their_posts_and_the_gap_holds(lib, world_factory):
+    """R-096-08 / R-208-01 'the units hold the post and engage what their side can see within GUARD_RADIUS of it ... never chasing past it', and S-208's
+    purpose, 'hold a choke ... without the units running out through it': two defenders guard the gap against four attackers marching through it. On every
+    tick of 150 no defender ends more than 200 wu (+ LEASH_SLACK) from its post, no attacker is past the wall (y < 1100) at any tick, and at the end the
+    defenders are alive and the attackers took damage (the guard fired). (Written as 'holds the gap against a larger line', R-096-05, which asserted
+    the defenders never moved and held no goal; a guard steps within the radius now, and may hold a goal while it does.) Fails against a guard
+    that marches out of the gap (past 200 wu: the control below shows an attack-moving defender walks through the wall)."""
     w = world_factory(n_regions=1)
     defenders, attackers = _choke(lib, w)
-    starts = [pos(lib, w, d) for d in defenders]
+    posts = [pos(lib, w, d) for d in defenders]
     assert guard(lib, w, defenders) == 0
-    step(lib, w, 150)
-    for d, p in zip(defenders, starts):
-        assert pos(lib, w, d) == p, f"defender {d} left the gap: {pos(lib, w, d)}"
-        assert dest(lib, w, d)[0] == 0
+    for k in range(150):
+        step(lib, w)
+        for d, p in zip(defenders, posts):
+            away = dist(pos(lib, w, d), p)
+            assert away <= GUARD_RADIUS + LEASH_SLACK, f"tick {k + 1}: defender {d} is {away:.1f} wu from its post, at {pos(lib, w, d)}"
+        assert all(pos(lib, w, a)[1] >= 1100.0 for a in attackers if hp(lib, w, a) > 0.0), f"tick {k + 1}: an attacker got through the gap"
+    for d in defenders:
         assert hp(lib, w, d) > 0.0
-    assert all(pos(lib, w, a)[1] >= 1100.0 for a in attackers), "an attacker got through the gap"
     assert min(hp(lib, w, a) for a in attackers) < 500.0, "the guard should have fired on the line"
 
 

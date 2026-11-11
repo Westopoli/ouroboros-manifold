@@ -1,13 +1,16 @@
-# Rule pins: R-087-10, R-098-02, R-008-04, R-190-04
-"""Engine rule fixes 2026-11-08, F7, whole fights: every range test is spherical, and sight and fire agree.
+# Rule pins: R-087-10, R-098-02, R-008-04, R-190-04, R-005-09, R-087-05
+"""Engine rule fixes 2026-11-08, F7, whole fights: weapon reach is spherical (narrowed 2026-11-11), and sight and fire agree.
 
 Spec: docs/northstar/plans/engine-rules-2026-11-08/spec.md "F7" and "Test architecture". Evidence: docs/reports/2026-11-07-rule-enforcement/appendix-c-invariant-sweep.md
 (I11nl: L-0061 ticks 59 to 61, Wardens 2 and 26). The pair geometry is tests/csim/test_E11_R087_10_spherical_distance.py. The probe is engine_rules_r2_probe.py in this directory
 (per tick, from engine state; it does not import the F0 checker).
 
-Rule words (docs/bible/epics/E-11-units-and-combat.md R-087-10 as written 2026-11-08):
-  R-087-10  "Given any range or radius test between two units (attack range, sensor radius, leash, area radius), When it is evaluated, Then the distance is spherical:
-             the horizontal distance and the height difference between the two units' layers (E-17 R-190-04 band heights, a unit mid-slope at its slope height) taken together."
+Rule words (docs/bible/epics/E-11-units-and-combat.md R-087-10 as ruled 2026-11-11, DEC-slant-is-weapon-reach-2026-11-11):
+  R-087-10  "Given a test of whether a weapon reaches (a unit's attack range to its target, an area attack's radius to each unit it would hit), When it is evaluated,
+             Then the distance is spherical: the horizontal distance and the height difference between the two units' layers (E-17 R-190-04 band heights) taken together
+             (...). Sight is not measured this way: a sensor radius stays horizontal, so that high ground sees as far along the ground as low ground and further by its
+             height rules (E-01 R-005-09 ...), and the leash (R-087-05) stays the horizontal distance the unit itself has walked from its anchor (...)."
+             The shots below are weapon reach; sight and the leash are proved horizontal in tests/csim/test_E11_R087_10_spherical_distance.py.
   R-098-02  "Given a blocked cell ... or a cover obstacle between them on the layers involved, When it fires, Then the shot is blocked exactly as vision is."
   R-008-04  "a unit never fires at a target its side cannot see ... a target seen by any friendly unit or revealed by a ping may be fired at."
 
