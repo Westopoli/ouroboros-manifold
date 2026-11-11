@@ -484,7 +484,9 @@ class Blind:
     def new_order(self, ids):
         pass
 
-    verdict = Monitor.verdict
+    def verdict(self):
+        """invalid is None, not False: nothing was judged, so the run is neither broken nor clean (read `suspended`, never treat None as clean)."""
+        return {"violations": [], "invalid": None, "suspended": dict(self.suspended)}
 
 
 def watch(engine, world, width=float("inf"), height=float("inf")):

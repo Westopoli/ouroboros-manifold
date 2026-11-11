@@ -484,7 +484,7 @@ def _scan_rows(rows, family, play, layout, point, baseline, build, replicates, f
             rows.append(rows_mod.fight_row(f, knob=point.knob, knob_value=float(point.value), baseline=baseline,
                                            ceiling_hit=0 if cut else int(result.ceiling_hit),
                                            prefight=applied.prefight.get(c.enemy_heads, "ok"), baseline_no_fit=int(cut),
-                                           blind_post=int(f.blind_cap), invalid=int(getattr(f, "invalid", False)), family=family, play=play, layout=layout,
+                                           blind_post=int(f.blind_cap), invalid=rows_mod.invalid_cell(f), family=family, play=play, layout=layout,
                                            kind=point.kind, point=point_label(point), enemy_heads=c.enemy_heads))
     return result
 
@@ -494,7 +494,7 @@ def _control_rows(rows, family, play, layout, point, build, replicates, fight_fn
     cell = scan_mod.cell(applied, SIZE, replicates, fight_fn=fight_fn, map_fn=map_fn)
     for f in cell.fights:
         rows.append(rows_mod.fight_row(f, knob=point.knob, knob_value=float(point.value), prefight=applied.prefight.get(SIZE, "ok"),
-                                       baseline_no_fit=0, blind_post=int(f.blind_cap), invalid=int(getattr(f, "invalid", False)), family=family, play=play,
+                                       baseline_no_fit=0, blind_post=int(f.blind_cap), invalid=rows_mod.invalid_cell(f), family=family, play=play,
                                        layout=layout, kind=point.kind, point=point_label(point), enemy_heads=SIZE))
     return cell.fights
 
@@ -737,7 +737,7 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
         for name, heads in SMOKE_CONTROLS:
             applied = Applied(control_set[name], dataclasses.replace(point, settings={}, kind="control_smoke"))
             for f in scan_mod.cell(applied, heads, replicates, fight_fn=more.get("fight_fn"), map_fn=more.get("map_fn")).fights:
-                rows.append(rows_mod.fight_row(f, baseline_no_fit=0, blind_post=int(f.blind_cap), invalid=int(getattr(f, "invalid", False)), family="controls", play=name,
+                rows.append(rows_mod.fight_row(f, baseline_no_fit=0, blind_post=int(f.blind_cap), invalid=rows_mod.invalid_cell(f), family="controls", play=name,
                                                layout="none", kind="control_smoke", point="-", enemy_heads=heads))
             words["ok"] += 1
         rows_mod.write_rows(rows, out / "smoke.csv")

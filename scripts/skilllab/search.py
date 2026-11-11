@@ -63,7 +63,7 @@ class SearchResult:
     contact_tick: int | None
     ended: str
     violations: list = field(default_factory=list)   # the rule checker (scripts/skilllab/invariants.py): first 20 by (tick, rule, unit); [] when clean
-    invalid: bool = False
+    invalid: bool | None = False   # None: nothing was judged (checker off, engine unreadable), not clean; see `suspended`
     suspended: dict = field(default_factory=dict)
 
 
