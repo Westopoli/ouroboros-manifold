@@ -471,6 +471,8 @@ uint64_t om_move_world_serial(om_world *w);
 uint32_t om_move_route_get(const om_world *w, uint32_t unit_id, uint32_t *route_i, double *pts, uint32_t cap);
 /* F2 (R-087-04): 1 when the unit's own movement step changed its position on that tick (a push does not count); body in csrc/tactical_move.c. */
 int om_move_moved_own_power(const om_world *w, uint32_t unit_id, uint64_t tick);
+/* F7 (R-087-10): height difference of two layers, wu (band floors from om_terrain_band_heights); 0 with no terrain or on one layer. Body in csrc/terrain.c. */
+double om_terrain_layer_dz(const om_world *w, uint32_t layer_a, uint32_t layer_b);
 /* F5 (R-087-09): om_combat_can_shoot as if unit p0 stood at (x0, y0) on its own layer; body in csrc/tactical_move.c, caller csrc/unit.c (firing-spot search). */
 int om_combat_can_shoot_from(const om_world *w, uint32_t p0, double x0, double y0, uint32_t p1);
 /* H-041, defined in csrc/tactical_move.c beside om_roster_set_collision_radius. om_move_largest_radius: the roster's largest per-type

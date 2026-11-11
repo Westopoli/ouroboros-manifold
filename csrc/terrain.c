@@ -1053,6 +1053,15 @@ uint32_t om_terrain_band_heights(const om_world *w, double *out, uint32_t cap) {
     return i;
 }
 
+/* F7 (R-087-10): the height difference of two layers in wu, from om_terrain_band_heights: each layer is read at its band floor (DRAFT-slant-height-band-floor;
+ * a unit mid-slope is not read at its slope height). 0 in a world with no terrain, on one layer, and for a layer beyond the five bands: those measure flat.
+ * Internal (om_internal.h), used by the range and radius tests in csrc/unit.c and csrc/fog.c. */
+double om_terrain_layer_dz(const om_world *w, uint32_t layer_a, uint32_t layer_b) {
+    const om_terrain_state *st = ts_ro(w);
+    if (!st || layer_a == layer_b || layer_a >= OM_TERRAIN_BANDS || layer_b >= OM_TERRAIN_BANDS) return 0.0;
+    return (double)st->band_floor_cm[layer_b] / (double)TG_CM_PER_WU - (double)st->band_floor_cm[layer_a] / (double)TG_CM_PER_WU;
+}
+
 uint32_t om_terrain_slope_count(const om_world *w) {
     const om_terrain_state *st = ts_ro(w);
     return st ? st->slope_count : 0;
