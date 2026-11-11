@@ -260,6 +260,8 @@ typedef struct {
     int      guard;
     int      anchor_set;
     double   anchor_x, anchor_y;
+    /* 0 not moving away from fire; 1 an idle unit's move (R-087-01); 2 an attack-mover's move that goes back to its order point when it ends; 3 an
+     * attack-mover that had arrived: it holds where the move ends. The value is hashed and saved as before (the field is an int). */
     int      flinching;
     double   flinch_x, flinch_y;
     uint32_t last_attacker;
@@ -2058,11 +2060,11 @@ static void om_tac_fire(om_world *w, om_unit_row *u, om_unit_row *t) {
     }
 }
 
-static void om_tac_start_flinch(om_unit_row *u, const om_unit_row *from) {
+static void om_tac_start_flinch(om_unit_row *u, const om_unit_row *from, int kind) {
     double dx = u->x - from->x, dy = u->y - from->y;
     double d = sqrt(dx * dx + dy * dy);
     if (d <= OM_TIE_EPSILON) { dx = 1.0; dy = 0.0; d = 1.0; }
-    u->flinching = 1;
+    u->flinching = kind;
     u->flinch_x = u->x + dx / d * OM_RETURN_FIRE_FLEE_DIST;
     u->flinch_y = u->y + dy / d * OM_RETURN_FIRE_FLEE_DIST;
 }
@@ -2381,10 +2383,15 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     }
 
     if (u->flinching) {
-        if (u->order != OM_ORDER_NONE) {
+        if (u->order != OM_ORDER_NONE && u->order != OM_ORDER_ATTACK_MOVE) {
             u->flinching = 0;
         } else {
-            if (om_tac_step_toward(w, u, u->flinch_x, u->flinch_y)) u->flinching = 0;
+            const int resume = u->flinching == 2;
+            if (om_tac_step_toward(w, u, u->flinch_x, u->flinch_y)) {
+                u->flinching = 0;
+                /* R-087-01: an attack-mover then resumes toward its original point (R-096-02); one that had arrived holds where the move ended */
+                if (resume) om_tac_end_pursuit(w, u);
+            }
             u->last_attacker = 0;
             u->suppress_auto = 1;
             return;
@@ -2401,7 +2408,21 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                 /* R-096-08: a guard answers only what it can shoot, and never flees or walks */
                 if (!noncombat && om_tac_in_reach(w, u, atk) && !atk->stealth && om_tac_in_range(w, u, atk)) u->target_id = atk->unit_id;
             } else if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
-                if (u->order == OM_ORDER_NONE) om_tac_start_flinch(u, atk);
+                if (u->order == OM_ORDER_NONE) {
+                    om_tac_start_flinch(u, atk, 1);
+                } else {
+                    /* R-087-01: an attack-mover leaves the fire as an idle unit does. Its route is dropped (a group member keeps its slot as the point
+                     * to go back to, as om_tac_chase does); it holds where the move ends when it had arrived, else it resumes toward its point. */
+                    const int resume = has_dest && !arrived;
+                    if (resume && u->am_gid != 0 && om_unit_get_group_id(w, u->unit_id) == u->am_gid) {
+                        u->order_x = dest_x; u->order_y = dest_y;
+                    }
+                    u->am_gid = 0;
+                    u->halted = 0;
+                    om_unit_clear_orders(w, u->unit_id);
+                    om_tac_unbrace_for_walk(st, u);
+                    om_tac_start_flinch(u, atk, resume ? 2 : 3);
+                }
             } else if (om_tac_in_range(w, u, atk)) {
                 u->target_id = atk->unit_id;
             } else {
