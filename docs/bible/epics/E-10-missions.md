@@ -32,13 +32,21 @@ As a commander, I want my missions to come from real trouble in the galaxy, weig
 
 Rules
 - R-072-01  Given the player's regions and every region adjacent to them, When the candidate pool is built, Then each (region, archetype) pair whose trigger condition holds enters the pool; a region with no trigger produces nothing.
+  Proof: MISSING
 - R-072-02  Given a candidate, When urgency is computed, Then urgency = clamp(0.4 · deficit + 0.4 · conflict + 0.2 · chain, 0, 1), where deficit = mean of (100 − military, 100 − economy, 100 − stability)/100, conflict = clamp(min(1, max hostile neighbor military/70) + 0.5 · min(1, 0.5 · recent attacks + Σ attack budget/600) + 0.3 · min(1, 0.5 · adjacent regions lost), 0, 1), chain = min(1, 0.3 · recent revolt events in the region).
+  Proof: MISSING
 - R-072-03  Given a candidate, When relevance is computed, Then relevance = clamp(0.4 · lineage + 0.3 · proximity + 0.3 · fit, 0, 1), lineage = 1.0 if a lineage member lives in the region, 0.5 if the lineage ever operated there, else 0; proximity = 1 − hops from the lineage home/5 (capped at 5 hops); fit = min(1, times the lineage has run this archetype/3).
+  Proof: MISSING
 - R-072-04  Given a candidate, When preference is computed, Then it is 0.1 for an archetype the player marked rare, else the player's weight, default 0.5.
+  Proof: MISSING
 - R-072-05  Given scored candidates, When one is selected, Then score = 0.5 · urgency + 0.3 · relevance + 0.2 · preference, the top 5 by score form the draw pool, and one weighted draw proportional to score picks the mission.
+  Proof: MISSING
 - R-072-06  Given a region with stability 15 and an active revolt chain (two revolt events) under attack by a neighbor at military 80, When scored, Then urgency ≥ 0.8 and it beats any quiet region regardless of relevance and preference (Q-072-02, Architect 2026-10-19).
+  Proof: MISSING
 - R-072-07  Given no candidate in the pool, When selection runs, Then the sim runs another 20-tick jump and rebuilds the pool, up to 5 times; if the pool is still empty, the mission is a Defensive Stand on the player's weakest region: the player region with the lowest stability composite (ALG-09, the value E-10 reads everywhere as "stability"), ties to the lowest region index. (Q-072-01, Westley 2026-09-13 and 2026-09-30.)
+  Proof: MISSING
 - R-072-08  Given the fallback of R-072-07, When its forces are composed, Then the enemy is the non-player faction nearest the region by connection hops (ties to the faction with the highest total military across its regions, then the lowest faction id); its power P is that faction's strongest region's military × 2000 (the R-074-01 default form), raised if needed so the enemy fields at least one unit; the player's force is P · parity as in R-074-04; and the fallback being reached at all is a simulation-health warning (`quiet_world` in the mission frame), because a tuned galaxy always has an attack somewhere. (Westley 2026-09-30: "this situation should never happen if we tune the simulation right.")
+  Proof: MISSING
 
 Inputs: world; registry; event, action, conquest logs; ledger; onboarding preferences.
 Outputs: mission setup record (region, archetype, trigger context, scores) in the save file and T1 trace.
@@ -51,6 +59,7 @@ As a commander, I want every mission to be a recognizable military situation wit
 
 Rules
 - R-073-01  Given the launch library, When loaded, Then it contains exactly these archetypes with these triggers, base canvas, objective types, and transfer outcomes, and a contract test checks the table:
+  Proof: MISSING
 
 | Archetype | Trigger | Canvas | Primary objective | Region transfers to player on |
 |---|---|---|---|---|
@@ -66,8 +75,11 @@ Rules
 | Counterinsurgency | player region with an active revolt chain | small | eliminate_force without destroying the region | never |
 
 - R-073-02  Given an archetype, When its forces are allocated, Then its asset profile (ratio per unit type) is read from the library, not hard-coded.
+  Proof: MISSING
 - R-073-03  Given an archetype, When its map is generated, Then its compatibility filters select layouts from the shared library (E-17).
+  Proof: MISSING
 - R-073-04  Given "inheritance" framing, When the ledger finds a lineage connection to the mission region, Then the briefing notes it and nothing mechanical changes.
+  Proof: MISSING
 
 Inputs: library tables.
 Outputs: loaded archetype table; contract test.
@@ -79,11 +91,17 @@ As a commander, I want my force sized to the enemy and shaved by how weak my civ
 
 Rules
 - R-074-01  Given an archetype driven by an attack, When enemy power is set, Then it is the attacker's committed budget × 300; given an insurgent archetype (suppression, counterinsurgency), Then it is a rolled insurgent military × 2000, where the roll is uniform in a range interpolated by population from [20, 50] at population ≤ 25 to [40, 70] at ≥ 70; otherwise it is the region's military × 2000.
+  Proof: MISSING
 - R-074-02  Given the mission region's capacity c in [0, 1], When parity is computed, Then base parity is piecewise linear through (0, 0.80), (0.3, 0.85), (0.5, 0.90), (0.7, 0.95), (1.0, 1.00).
+  Proof: MISSING
 - R-074-03  Given difficulty easy, When parity is computed, Then it is max(base, 0.95); hard: min(base, 0.85); medium: base; and never below 0.75.
+  Proof: MISSING
 - R-074-04  Given the enemy force total power P, When the player's force is filled, Then its budget is P · parity, filled per unit type in descending profile ratio, adding units while a unit's power ≤ 1.15 × remaining budget.
+  Proof: MISSING
 - R-074-05  Given capacity below 0.4, When shortfall applies, Then 20 percent of the player's units are removed, spread across types from the most numerous, never below 1 unit, and the briefing names what could not be spared.
+  Proof: MISSING
 - R-074-06  Given a unit's power, When read, Then it comes from the interim total-strength measure [Q-074-01].
+  Proof: MISSING
 
 Inputs: trigger context; region fields; difficulty; unit roster.
 Outputs: force compositions (both sides) in the mission setup; briefing assets section.
@@ -96,12 +114,19 @@ As a commander, I want a mission to have one primary objective I can see progres
 
 Rules
 - R-075-01  Given a mission, When objectives are built, Then there is exactly one primary objective and 0 to 3 secondary ones, weights summing to 1.0, the primary carrying at least 0.6.
+  Proof: MISSING
 - R-075-02  Given hold_zone, When evaluated per tick, Then the hold timer advances only while no enemy unit is inside the zone radius; required = 10 minutes of battle time (12,000 base ticks, Westley 2026-09-30; it was the whole time limit, so the zone could only complete on the final tick); completion = elapsed/required, and the mission ends on completion (R-075-07).
+  Proof: MISSING
 - R-075-03  Given destroy_targets, When evaluated, Then completion = destroyed designated targets/total.
+  Proof: MISSING
 - R-075-04  Given escort_to_extraction, When evaluated, Then completion = escort units that reached the extraction point alive/total escort units.
+  Proof: MISSING
 - R-075-05  Given survive_duration, When evaluated, Then completion = elapsed/required, and 0 if every player unit is dead before the time.
+  Proof: MISSING
 - R-075-06  Given eliminate_force, When evaluated, Then completion = enemy HP destroyed/initial enemy HP.
+  Proof: MISSING
 - R-075-07  Given the mission, When it ends, Then it ends on the first of: every primary objective complete or failed; the time limit reached; the player's force eliminated.
+  Proof: MISSING
 
 Inputs: objective specs; tactical state per tick.
 Outputs: per-objective completion in the tick delta; HUD objective list; mission result.
@@ -112,8 +137,11 @@ As a commander, I want a deadline that tightens when the situation is urgent, so
 
 Rules
 - R-076-01  Given an archetype base time B in tactical ticks and urgency u, When the limit is set, Then limit = max(B · (1 − 0.2 · u), 0.6 · B).
+  Proof: MISSING
 - R-076-02  Given base times, When read, Then B by archetype is: siege breaking 60, multi-front defense 60, assault 52.5, containment 52.5, reconquest 45, defensive stand 37.5, interception 37.5, counterinsurgency 37.5, suppression 30, rear guard/evacuation 30 minutes of battle time (Q-076-01 and Q-076-02, Westley 2026-09-29); the R-076-01 floor of 0.6·B stands, so the shortest possible mission is 18 minutes.
+  Proof: MISSING
 - R-076-03  Given the deadline passes, When the mission ends, Then the current objective completion values are final; finishing early never raises the score.
+  Proof: MISSING
 
 Inputs: archetype; urgency.
 Outputs: time limit in the mission setup; HUD clock.
@@ -126,10 +154,15 @@ As a commander, I want the result to be a spectrum weighing what I achieved and 
 
 Rules
 - R-077-01  Given objective score o (weighted completion, failed objectives count 0) and retention r (surviving unit power/deployed power, capped at 1, with damaged units counted by HP fraction), When the final score is computed, Then final = 0.75 · o + 0.25 · r.
+  Proof: MISSING
 - R-077-02  Given the archetype's thresholds [t1, t2, t3, t4], When classified, Then final < t1 is total_failure, < t2 partial_failure, < t3 partial_success, < t4 strong_success, else total_success; thresholds: defensive_stand, siege_breaking, suppression, interception, containment, counterinsurgency [0.20, 0.40, 0.60, 0.80]; reconquest and assault [0.25, 0.45, 0.65, 0.82]; multi_front_defense [0.15, 0.35, 0.55, 0.75]; evacuation [0.30, 0.50, 0.65, 0.80].
+  Proof: MISSING
 - R-077-03  Given the mission ends, When the commander's unit is dead, Then commander fate is killed; when the commander's unit ended alive but below 30 percent HP, Then fate is wounded (cosmetic and chronicle only, no mechanical impact); else fate is survived.
+  Proof: MISSING
 - R-077-04  Given the result, When shown, Then the band is revealed only at mission end, never during play.
+  Proof: MISSING
 - R-077-05  Given a mission starts, When the player's force is spawned, Then the player assigns the commander to one of their deployed units and may reassign them to another unit during the mission; the assigned unit's id is held in mission state for the whole mission; R-077-03 reads commander fate from this unit. The commander's chance-based fate — probability of being wounded or killed rising with fire the assigned unit takes, not the unit's own survival — is to be determined after the MVP.
+  Proof: MISSING
 
 Inputs: objectives; unit store; initial power; commander unit id.
 Outputs: mission result (band, objective score, retention, per-objective, commander fate, ticks elapsed) in the save file and debrief.
@@ -141,12 +174,19 @@ As a commander, I want the outcome to change the region in proportion to how it 
 
 Rules
 - R-078-01  Given the archetype's consequence table row for the band, When applied, Then each delta is either deficit form, (100 − current) · pct/100, or current form, current · pct/100, applied to the named target regions and clamped to [0, 100].
+  Proof: MISSING
 - R-078-02  Given defensive_stand total_success on a region with military 20 and tension 50, When applied, Then military +12.0, tension −5.0, economy −2 percent of current.
+  Proof: MISSING
 - R-078-03  Given the same band on military 80, When applied, Then military +3.0.
+  Proof: MISSING
 - R-078-04  Given a transfer band for the archetype (S-073 table), When applied, Then the region's owner becomes the player's faction with held-since reset and edges updated (E-03 R-024-03).
+  Proof: MISSING
 - R-078-05  Given the player refuses the mission, When resolved, Then the band is refusal, no force is deployed, and the region's tension rises by 8 percent of its deficit.
+  Proof: MISSING
 - R-078-06  Given the applied deltas, When the time jump starts, Then the resulting events carry the mission-consequence flag for the chronicle (E-09).
+  Proof: tests/csim/test_E10_S078_a_battle_becomes_history.py::test_R_078_06_resulting_events_carry_mission_consequence | scenario | verified 53f6b053 2026-11-11
 - R-078-07  Given a target of `adjacent_player`, When applied, Then the delta applies to every player-owned neighbor of the mission region.
+  Proof: MISSING
 
 Inputs: mission result; consequence tables; world.
 Outputs: applied deltas in the T1 trace; region fields; ownership.
@@ -157,9 +197,13 @@ As a commander, I want to receive my orders as a superior officer would give the
 
 Rules
 - R-079-01  Given a mission setup, When the briefing is assembled, Then it has exactly Situation, Objective, and Assets, in that order, each from authored fragments with slots filled from the trigger context, ledger, and force composition; Assets states parity in prose and names shortfall types.
+  Proof: MISSING
 - R-079-02  Given the briefing, When shown, Then the only controls are Accept and Refuse; there is no loadout or force editing.
+  Proof: MISSING
 - R-079-03  Given the mission ends, When the debrief is shown, Then it shows the band, the objectives with completion, force retention, and commander fate.
+  Proof: MISSING
 - R-079-04  Given any briefing or debrief text, When rendered, Then it contains no raw field numbers.
+  Proof: MISSING
 
 Inputs: mission setup; result.
 Outputs: briefing and debrief screens.
@@ -170,9 +214,13 @@ As a commander, I want hard mode to give me less to work with, never to give the
 
 Rules
 - R-080-01  Given any difficulty, When forces are generated, Then both sides draw from the same unit profiles; no stat differs by difficulty.
+  Proof: MISSING
 - R-080-02  Given easy, medium, hard, When a mission is generated, Then difficulty sets parity (R-074-03), time width, resource generosity, and the complication odds, and how fast those compress across generations [Q-080-03: the values].
+  Proof: MISSING
 - R-080-04  Given a mission is generated, When the complication roll fires (about 1 percent of missions, a celebrated rarity), Then one complication is fixed at generation and never live: a report, a status, or an expected friendly asset turns out false mid-mission (Crossed Signals); it never changes an enemy stat, is never foreshadowed, and at most one fires per mission; the debrief names it apart from the tallies and the chronicle gives it one entry when it changed the region's fate.
+  Proof: unbuilt
 - R-080-03  Given a mission preference marked rare, When the world has no other viable candidate, Then the rare archetype can still be chosen (preference 0.1, never 0).
+  Proof: MISSING
 
 Inputs: difficulty; onboarding.
 Outputs: parity; candidate scores.
@@ -186,7 +234,9 @@ Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-210-01  Given a mission, When its setup is built, Then each side is given one base of operations at the start, and the kind of base is decided by the mission archetype (S-073) alone, from the table below; it does not change with how far into foreign ground the mission lies (Westley, 2026-10-06).
+  Proof: unbuilt
 - R-210-02  Given an archetype, When its entry is read, Then it carries a base kind for each side, read from the library as the asset profile is (R-073-02) and not hard-coded. The approach is decided (Westley, 2026-10-02: "B1+2") and the table below, taken from `docs/northstar/research/economy_design/base_and_objective_options.md` part B1, stands as written (Westley, 2026-10-02: "looks good, no changes needed").
+  Proof: unbuilt
 
 | Archetype | Player's base | Enemy's base |
 |---|---|---|
@@ -198,7 +248,9 @@ Rules
 | Rear Guard / Evacuation | the place being left | pursuing forward base |
 
 - R-210-03  Given a side that the archetype makes the attacker, When its base is given, Then it is a forward base from which the side produces; supply lines, the shipments of E-22 S-176, are not an attacker-only rule and either side may have them (Westley, 2026-10-07) [Q-210-03: which side attacks in each archetype; Westley, 2026-10-07: named per mission type by him].
+  Proof: unbuilt
 - R-210-04  Given the base a side is given at the start, When the mission runs, Then that base is the side's original main base for S-212, and a forward base given to an attacker by R-210-03 is its original main base (Westley, 2026-10-02: "attackers get a *forward* base from which they produce and recieve resources from supply lines"); expansions and forward works built later are not for the beta only mission types in which the sides start with a base launch, and there the base a side starts with is its original main base (Westley, 2026-10-07; which types launch is Q-210-07).
+  Proof: unbuilt
 
 Inputs: archetype library; the mission's region.
 Outputs: each side's base kind and original main base in the mission setup.
@@ -211,9 +263,13 @@ Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-211-01  Given a mission, When its resources are set, Then they are limited or abundant consistent with the situation the simulation gives the mission's region, and slanted by it (a defender has the better position); the richness is derived from the simulation's existing region fields and composites (Westley, 2026-10-06).
+  Proof: unbuilt
 - R-211-02  Given any mission, When it is generated, Then the player has the means to accomplish it even when it is hard (Westley, 2026-10-02: "the player always has the means to do the mission") [Q-211-02: how the means are guaranteed; Westley wants option (a), a generator check, written up before deciding].
+  Proof: unbuilt
 - R-211-03  Given a mission, When base, objective and significant resources are placed, Then they are usually three separate places and not always, and the significant resources sit opposite the objective, so a side picks one or fights for both (E-22 S-177 holds the rule; E-17 places them) (left to the generator, Westley, 2026-10-07).
+  Proof: unbuilt
 - R-211-04  Given the final score, When the result is classified (S-077), Then the resources are not scored separately: a side that ignores them is overrun unless it rushes and finishes fast.
+  Proof: unbuilt
 
 Inputs: the region's simulation situation; the archetype; difficulty.
 Outputs: the resource situation in the mission setup, for the briefing to state inside Situation.
@@ -226,12 +282,19 @@ Status: design decided 2026-10-02, not scheduled for building. Occupying and ret
 
 Rules
 - R-212-01  Given the player's side has lost its original main base (S-210), When the result is classified (R-077-02), Then the best band it can get is partial_failure: a final score that would classify higher is classified partial_failure (Westley, 2026-10-02: "at the point they've lost their original main base it's partial failure at maximum"). The cap concerns a forward base only when it is the side's original main base (R-210-04), never forward works.
+  Proof: unbuilt
 - R-212-02  Given a side loses its base of operations while it holds an expansion or forward works, When the loss is applied, Then that expansion or forward works becomes its base of operations and the mission goes on (E-22 S-178, S-175).
+  Proof: unbuilt
 - R-212-03  Given a side loses its base of operations and holds no expansion and no forward works, When the loss is applied, Then the mission ends for that side and is scored (Westley, 2026-10-06; to be checked archetype by archetype against R-075-07 and S-077).
+  Proof: unbuilt
 - R-212-04  Given a side has lost its original main base and retakes it before the mission ends, When the result is classified, Then the cap of R-212-01 lifts (Westley, 2026-10-06).
+  Proof: unbuilt
 - R-212-05  Given the mission ends while a base is held by the other side, When the region's ownership is set (R-078-04), Then the region follows the side that holds the base at the end (Westley, 2026-10-06); the transfer column of R-073-01 and R-078-04 are superseded and are to be rewritten to follow base ownership.
+  Proof: unbuilt
 - R-212-06  Given the end conditions of R-075-07, When the player's force is judged eliminated, Then it is eliminated when no units remain; buildings do not keep a side alive and any unit that remains does (Westley, 2026-10-07).
+  Proof: MISSING
 - R-212-07  Given workers and units made during the mission, When retention is computed (R-077-01), Then every unit made counts in both deployed power and surviving power (Westley, 2026-10-07).
+  Proof: unbuilt
 
 Inputs: base ownership during the mission (E-22 S-178); the result of S-077.
 Outputs: the band cap and the mission end in the mission result.
@@ -244,8 +307,11 @@ Status: design decided in part 2026-10-02, not scheduled for building. What tech
 
 Rules
 - R-213-01  Given a mission, When its setup is built, Then each side's starting technology level is derived from the simulation's technology level (E-06 S-045), and only slightly [Q-173-01: how slight, and how the faction's 0 to 100 number maps to the era's levels].
+  Proof: unbuilt
 - R-213-02  Given an era with a wide range of technology levels (for example 1 to 5), When a normal timed single match is played, Then there is time to go up one or two levels, as in a StarCraft 2 tech-up (Westley, 2026-10-02), so the starting level shifts a mission only a little.
+  Proof: unbuilt
 - R-213-03  Given a technology level, When a mission uses it, Then what it does is E-22 S-173 and nothing in this story decides it.
+  Proof: unbuilt
 
 Inputs: the faction's technology level (E-06 S-045); the era pack's range of levels.
 Outputs: each side's starting technology level in the mission setup.
@@ -258,9 +324,13 @@ Status: design decided 2026-10-02, not scheduled for building. The team sizes an
 
 Rules
 - R-214-01  Given a mission with 4 to 6 players, When the canvas is chosen (E-17 S-116), Then its dimension is 64,000 wu (Westley, 2026-10-02: "64k if there's 4-6 players").
+  Proof: unbuilt
 - R-214-02  Given a mission with fewer than 4 players, When the canvas is chosen, Then it keeps the sizes of the S-073 table.
+  Proof: unbuilt
 - R-214-03  Given more players on a team, When the mission is built, Then there are more enemies and more to do, and the player units rise with the players and are never fewer than in single player (E-19 R-141-02) Enemy force and the amount to do scale in step with the number of pairs (Westley, 2026-10-06) the team has one shared objective and parity, and the enemies scale (Westley, 2026-10-07).
+  Proof: unbuilt
 - R-214-04  Given more players on a team, When the resources are set (S-211), Then there are more of them, in step with the number of pairs (Westley, 2026-10-06).
+  Proof: unbuilt
 
 Inputs: the team's player count (E-19 S-159).
 Outputs: canvas size, enemy forces and resources in the mission setup.
@@ -294,13 +364,21 @@ Open flags: none.
 ## Invariants
 
 - A mission is generated only from a fired trigger.
+  Proof: MISSING
 - Parity never below 0.75.
+  Proof: MISSING
 - Exactly one primary objective; weights sum to 1.0.
+  Proof: MISSING
 - Band determined once, at mission end.
+  Proof: MISSING
 - Consequence deltas never leave [0, 100].
+  Proof: MISSING
 - Same seed, same mission and forces.
+  Proof: MISSING
 - Every side has exactly one base of operations at the start, and it is that side's original main base.
+  Proof: unbuilt
 - A player's side that has lost its original main base never classifies above partial failure.
+  Proof: unbuilt
 
 ## Scale requirements
 

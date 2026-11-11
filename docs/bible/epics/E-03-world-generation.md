@@ -30,15 +30,25 @@ As a commander starting a campaign, I want a galaxy that is small enough to lear
 
 Rules
 - R-021-01  Given a seed, When the world is generated, Then the region count is an integer drawn uniformly from [250, 400] and the faction count is 15.
+  Proof: MISSING
 - R-021-02  Given generation, When factions are placed, Then faction 0 is the player civilization and factions 1 through 14 cycle conqueror, fortifier, opportunist in that order.
+  Proof: MISSING
 - R-021-03  Given a faction, When its template is rolled, Then it draws independently from Isolated, Twin Colony, Archipelago with equal weight by default; the player faction's weights are swayed toward their chosen preference (R-021-04) and every NPC faction always uses equal weight.
+  Proof: MISSING
 - R-021-04  Given the player, When they set a template preference before generation, Then it is one of Isolated, Twin Colony, Archipelago, or no preference; a set preference gives that template probability `WORLD_PLAYER_PREFERENCE_WEIGHT`, default 0.50, and the other two templates split the remainder equally (default 0.25 each), in the player faction's own roll only — configurable for playtesting, never locking the outcome, never affecting any NPC faction's roll.
+  Proof: MISSING
 - R-021-05  Given a faction's rolled template, When its regions are placed, Then: Isolated is one home region plus two frontier regions, both adjacent to the home; Twin Colony is two home regions adjacent to each other, each with its own count of 1 or 2 frontier regions (drawn uniformly per home) adjacent to that home; Archipelago is one home region plus three frontier regions, arranged so at least one frontier is not adjacent to the home or to another frontier (reached only through a chain of frontiers). Every region outside a faction's template is empty with no owner and no fields.
+  Proof: MISSING
 - R-021-06  Given a faction's template is placed, When corridors are laid, Then its highest-numbered frontier region (Isolated/Archipelago: numbered in placement order; Twin Colony: the second home's highest-numbered frontier) links to a chain of exactly 1 empty region, and the 15 factions' corridor ends are linked in faction order into one chain.
+  Proof: MISSING
 - R-021-07  Given generation, When the remaining empties are attached, Then each links to one already-connected region chosen uniformly at random, re-rolling up to 20 times to avoid a home region.
+  Proof: MISSING
 - R-021-08  Given a world of N regions, When extra edges are added, Then exactly max(1, floor(0.12 · N)) extra edges are attempted between distinct non-adjacent regions, never between two home regions, with at most 10 times that many draws.
+  Proof: MISSING
 - R-021-09  Given any generated world, When connectivity is checked, Then every region is reachable from every other.
+  Proof: MISSING
 - R-021-10  Given the same seed, When generated twice, Then every faction's template roll, the region ids, adjacency lists, edge types, and starting fields are identical.
+  Proof: MISSING
 
 Inputs: seed (64-bit integer); config ranges; player template preference (optional).
 Outputs: world graph in the strategic snapshot; galaxy view (E-16); each faction's rolled template (T1 trace, save file).
@@ -49,10 +59,15 @@ As a commander, I want my home region to feel established and my frontier to fee
 
 Rules
 - R-022-01  Given a home region, When its fields are rolled, Then population is uniform in [55, 75]; Given a frontier region, Then population is uniform in [25, 50].
+  Proof: MISSING
 - R-022-02  Given population p, When the other fields derive, Then economy = clamp(p · 1.1 + j₁), military = clamp(p · 0.7 + j₂), tension = clamp(p · 0.3 + j₃), each jᵢ an independent uniform draw in [−5, 5], clamp to [0, 100].
+  Proof: MISSING
 - R-022-03  Given a region, When phase offsets are drawn, Then economy phase and tension phase are independent uniform draws in [0, 2π).
+  Proof: MISSING
 - R-022-04  Given the draw order population, j₁, j₂, j₃, economy phase, tension phase, When a region is generated, Then the RNG is consumed in exactly that order (determinism contract).
+  Proof: MISSING
 - R-022-05  Given a home region, When its military and economy are rolled, Then the archetype's own range replaces R-022-02's general clamp targets: Conqueror military 50–65, economy 40–55; Fortifier military 40–50, economy 50–65; Opportunist military 45–55, economy 45–55; the player faction and tension/population keep R-022-01/R-022-02's general ranges. Frontier regions keep R-022-01's newly-settled ranges regardless of archetype. Starting tech = average starting population of its regions · 0.25.
+  Proof: MISSING
 
 Inputs: tier, RNG, faction archetype.
 Outputs: starting fields per region; starting tech per faction.
@@ -63,9 +78,13 @@ As a commander, I want a connection between two regions to be a military route, 
 
 Rules
 - R-023-01  Given generation is complete, When edge types are assigned, Then an edge between two regions of the same faction is `both` and every other edge (including any edge touching an empty region) is `border`.
+  Proof: MISSING
 - R-023-02  Given a query for neighbors of type `border`, When evaluated, Then it returns neighbors whose edge is `border` or `both`; a query for `trade` returns `trade` or `both`; a query with no type returns all.
+  Proof: MISSING
 - R-023-03  Given every "nearby" or "adjacent" read in the sim (drift adjacency, border friction, faction targeting, event propagation, character selector), When it runs, Then it names an edge type; drift adjacency reads `trade`, border friction reads `border`, faction targeting reads all.
+  Proof: MISSING
 - R-023-04  Given an edge set to a type, When read from either endpoint, Then both directions report the same type.
+  Proof: MISSING
 
 Inputs: edge type per edge (`border`, `trade`, `both`).
 Outputs: neighbor query results; edge type in the strategic snapshot; drawn as distinct filament styles in the galaxy view (E-16).
@@ -76,10 +95,15 @@ As a commander, I want peace to open trade and betrayal or conquest to close it,
 
 Rules
 - R-024-01  Given two factions form a cooperative peace, When it resolves, Then every edge between their regions becomes `both`.
+  Proof: MISSING
 - R-024-02  Given one faction betrays another, When it resolves, Then every edge between their regions becomes `border`.
+  Proof: MISSING
 - R-024-03  Given a region is conquered, When ownership changes, Then its edges to the conqueror's own regions become `both`, its edges to the former owner's regions become `border`, and its edges to regions of the conqueror's cooperative partners become `both`.
+  Proof: MISSING
 - R-024-04  Given a region is colonized, When ownership is set, Then its edges to the colonizer's regions and to its cooperative partners' regions become `both`.
+  Proof: MISSING
 - R-024-05  Given no diplomatic or ownership change on a tick, When the tick ends, Then no edge type changed.
+  Proof: MISSING
 
 Inputs: peace, betrayal, conquest, colonization events (E-05, E-06).
 Outputs: edge types in the strategic snapshot.
@@ -90,9 +114,13 @@ As a commander, I want empty space between me and every other faction at the sta
 
 Rules
 - R-025-01  Given generation is complete, When the player's inhabited regions and any NPC faction's inhabited regions are checked, Then they are not adjacent. NPC-to-NPC inhabited regions may be adjacent.
+  Proof: MISSING
 - R-025-02  Given generation is complete, When the player's home region and any NPC faction's home region are checked, Then they are not adjacent. NPC-to-NPC home regions may be adjacent.
+  Proof: MISSING
 - R-025-03  Given generation is complete, When the shortest path from the player's inhabited regions to any NPC faction's inhabited regions is computed, Then it passes through at least one empty region.
+  Proof: MISSING
 - R-025-04  Given an extra edge would be drawn between the player's home or frontier and any NPC faction's home or frontier during generation, Then that draw is rejected and re-rolled (R-021-08's re-roll budget applies); this check does not apply between two NPC factions.
+  Proof: MISSING
 
 Inputs: generated graph.
 Outputs: adjacency; a generation-time check that rejects and re-rolls a violating extra edge (R-025-04).
@@ -105,7 +133,9 @@ Design decided 2026-10-02 (Westley, 2026-10-02: "keep"). Since 2026-10-06 (Westl
 
 Rules
 - R-223-01  Given any two regions, When a distance between them is read, Then the only measure the simulation defines is the number of hops along the graph's edges of any type, as E-08 R-057-01 and E-10 R-072-08 use it.
+  Proof: unbuilt
 - R-223-02  Given a distance to the civilization's ground is wanted, When the supply distance is read, Then it is the number of regions between the mission's region and the nearest region the civilization owns.
+  Proof: unbuilt
 
 Inputs: the graph (S-021, S-023); region ownership.
 Outputs: the supply distance, which no rule reads today.
@@ -116,6 +146,7 @@ As the build, I want generation held to a time budget at the top of the region r
 
 Rules
 - R-224-01  Given a world of 400 regions (the top of R-021-01's range), When it is generated, Then generation is O(N + E) and completes within [Q-224-01: the generation budget at 400 regions; 5 ms was confirmed at 110 regions when the range was [60, 110]].
+  Proof: MISSING
 
 Inputs: seed; the region range.
 Outputs: generation time in the scale test.
@@ -146,10 +177,15 @@ A region's climate, landform and environmental trouble are not outputs of this e
 ## Invariants
 
 - Every region reachable from every other.
+  Proof: MISSING
 - The player's home is never adjacent to any NPC's home; the player's inhabited regions are never adjacent to any NPC's inhabited regions at generation (NPC-to-NPC may be).
+  Proof: MISSING
 - Each faction owns exactly the regions its rolled template defines at tick 0: 3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago.
+  Proof: MISSING
 - Same seed, same world (including every faction's template roll), all platforms.
+  Proof: MISSING
 - Empty regions carry no fields and no owner until colonized.
+  Proof: MISSING
 
 ## Scale requirements
 

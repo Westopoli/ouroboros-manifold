@@ -31,11 +31,17 @@ As a commander, I want the map revealed only around my units, so that scouting i
 
 Rules
 - R-089-01  Given an observer with sensor radius r at interference i, When visibility is computed, Then its effective radius is r × (1 − i), and an enemy on the same layer is visible if its distance ≤ that radius and no cover (E-01 S-007) or blocked cell (E-13 R-097-01) blocks the line.
+  Proof: MISSING
 - R-089-02  Given every friendly unit's visible set, When the player's view is built, Then the player-visible enemy list is their union.
+  Proof: MISSING
 - R-089-03  Given an enemy not in the union, When drawn, Then it is not drawn, its HP bar is not drawn, and its position is not in the client's data; the live game loads every mission with the fog filter on (the pipe's own default is off, and the briefing turns it on); a QA probe may turn it off for a test through the daemon's set_fog_filter verb, which never runs in play (Architect, 2026-10-09).
+  Proof: MISSING
 - R-089-04  Given visibility, When computed, Then it is recomputed every tick from current positions; there is no memory of last-seen positions [Q-089-01].
+  Proof: MISSING
 - R-089-05  Given a friendly unit, When visibility is computed, Then friendly units are always visible to the player regardless of distance.
+  Proof: MISSING
 - R-089-06  Given visibility A sees B, When B's set is computed, Then B seeing A is computed independently (asymmetric sensors are normal).
+  Proof: MISSING
 
 Inputs: unit positions, layers, sensor radii; interference at each position; cover geometry.
 Outputs: per-unit visible set and player-visible list in the tick delta; fog render.
@@ -48,10 +54,15 @@ As a commander, I want a zone of interference to shrink what units inside it can
 
 Rules
 - R-090-01  Given a zone source with intensity 0.6 at its center and linear falloff to 0 at its radius, When sampled at half radius, Then interference is 0.3.
+  Proof: tests/csim/test_E12_S090_hiding_in_the_storm.py::test_R_090_01_interference_0_3 | scenario | verified 53f6b053 2026-11-11
 - R-090-02  Given overlapping zones, When sampled, Then the combined interference is clamped to [0, 1] [Q-090-01: sum vs max].
+  Proof: MISSING
 - R-090-03  Given an observer outside a zone looking at a target inside it, When visibility is computed, Then only the observer's own interference applies [Q-090-01: the bible says outsiders "can't see as far into the zone"; code samples the observer's position only].
+  Proof: MISSING
 - R-090-04  Given a zone source that moves over the mission, When ticks pass, Then interference at a fixed point changes as the source moves.
+  Proof: MISSING
 - R-090-05  Given a zone that varies by layer, When sampled, Then the value is per layer.
+  Proof: MISSING
 
 Inputs: gradient sources (position, radius, intensity, falloff, layer, motion).
 Outputs: interference field; fog render density.
@@ -63,8 +74,11 @@ As a commander, I want an elevated position to see farther, so that vantage is w
 
 Rules
 - R-091-01  Given a space era (vantage nodes are retired for ground eras, where high ground sees down, E-01 R-005-09; Westley, 2026-10-05) and a unit within a vantage node's radius (default 100 wu), When visibility is computed, Then cross-layer factors double and extend one layer (E-01 R-005-06).
+  Proof: MISSING
 - R-091-02  Given a space era (the elevation bonus is retired for ground eras, replaced by E-01 R-005-09; Westley, 2026-10-05) and an elevation tier difference of d between observer and target, When the era enables elevation sensor bonus, Then the observer's effective radius is multiplied by 1 + 0.15 · d (built: the tier is read in csrc/fog.c; a sensor of 800 at a tier difference of 2 reaches 1040; Q-092-01 closed, Westley 2026-09-13; no spawn path sets a tier yet, positioning audit 2026-10-19).
+  Proof: MISSING
 - R-091-03  Given the Settled Reach, When elevation is read, Then it affects sensors only, never damage (E-11 R-084-06).
+  Proof: MISSING
 
 Inputs: vantage nodes; elevation gradient.
 Outputs: effective radius.
@@ -75,9 +89,13 @@ As a commander, I want to study the whole map before I commit and then lose sigh
 
 Rules
 - R-092-01  Given the recon phase, When the map is shown, Then every obstacle, cover cluster, hazard zone, spine node type, layer accessibility, and elevation contour is visible, and no enemy unit, structure ownership, or spawn point is.
+  Proof: MISSING
 - R-092-02  Given the recon phase, When the mission clock is read, Then it has not started, and no unit moves.
+  Proof: MISSING
 - R-092-03  Given the player presses Begin Mission, When the first tactical tick runs, Then fog applies per S-089 and terrain stays visible.
+  Proof: MISSING
 - R-092-04  Given any mission, When recon runs, Then terrain visibility is complete regardless of world state.
+  Proof: MISSING
 
 Inputs: map; player input.
 Outputs: recon render; mission start.
@@ -88,8 +106,11 @@ As a commander, I want fog to bind my units and the enemy's by one rule, so that
 
 Rules
 - R-093-01  Given two identical battles differing only in which side the player commands or in what the client draws, When resolved, Then the traces are identical.
+  Proof: MISSING
 - R-093-02  Given any unit of any side, When it acquires, pursues or fires at a target, Then the target is in its side's visible set: the union of what that side's living units see (R-089-01, E-01 S-005) and what its pings reveal (E-01 S-162); the rule is the same for the player's units and the enemy's (Westley, 2026-10-02). A unit whose sensor is shorter than its range (Bombard, Bastion: sensor 300) fires beyond its sensor only at what another friendly unit or a ping sees.
+  Proof: MISSING
 - R-093-03  Given the strategic sim, When faction agents decide, Then they read every neighbor region's fields without fog (E-05).
+  Proof: MISSING
 
 Inputs: none.
 Outputs: determinism trace.
@@ -101,7 +122,9 @@ As a commander, I want unexplored space, interference, and revealed ground to re
 
 Rules
 - R-094-01  Given a T2 screenshot, When inspected, Then revealed area, fogged area, and interference zones are three distinguishable treatments.
+  Proof: MISSING
 - R-094-02  Given a unit inside interference, When drawn, Then its own sight disc is visibly smaller.
+  Proof: MISSING
 
 Inputs: visibility; interference field.
 Outputs: screen.
@@ -114,9 +137,13 @@ Design decided 2026-10-02, not scheduled for building. Walls, gates and towers a
 
 Rules
 - R-205-01  Given an enemy structure (E-11 S-204), When visibility is computed, Then it is in a side's visible set when it lies within the effective radius of one of that side's units and no cover or blocked cell blocks the line (R-089-01), as an enemy unit is; it occupies its own layer and some layers above it (E-11 R-204-01).
+  Proof: MISSING
 - R-205-02  Given an enemy structure not in the side's visible set, When drawn, Then a building the side has seen stays on its map as last seen, with no activity shown (Westley, 2026-10-07: "#6: B"), and only that last-seen record is in the client's data; a building never seen is not drawn and its state is not in the client's data (R-089-03).
+  Proof: MISSING
 - R-205-03  Given an enemy production building in the visible set, When the player looks at it, Then he can see its focus family, which is what it is doing since production buildings are split by family (E-22 S-170, S-172; Westley, 2026-10-07).
+  Proof: unbuilt
 - R-205-04  Given a building that is disguised or hidden, When an enemy sees it, Then what the enemy reads is what the disguise allows (E-22 S-172) [Q-159-09: how disguising or hiding works and what it costs].
+  Proof: unbuilt
 
 Inputs: structure positions, layers and owners (E-11 S-204); each side's visible set.
 Outputs: the structures in each side's visible set; what each seen production building shows.
@@ -129,9 +156,13 @@ Design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-206-01  Given an enemy unit in a side's visible set, When visibility is computed, Then the side's record of enemy unit types seen includes that unit's type The record keeps no counts and never forgets, and the player is not shown it (Westley, 2026-10-07: "#7: Nothing recorded, players need to remember."); only the economy rules read it (R-206-03, R-206-04), and no side keeps a persistent view of the other (Westley, 2026-10-07: "persistent vision on the player is prohibited").
+  Proof: unbuilt
 - R-206-02  Given the record, When it is read, Then it holds types and nothing about where they were: there is still no memory of last-seen positions (R-089-04) and no marker on screen.
+  Proof: unbuilt
 - R-206-03  Given a side whose economy runs without a human in the seat, When the rules shift production toward what counters the enemy units that side has seen, Then they read this record and nothing else about the enemy (E-22 S-179, S-180).
+  Proof: unbuilt
 - R-206-04  Given an enemy economy that scouts and counters (E-22 S-181), When it chooses what to build, Then it reads only its own side's record, built from its own side's visible set, never the real state of the player's side (Westley, 2026-10-07).
+  Proof: unbuilt
 
 Inputs: each side's visible set (R-093-02).
 Outputs: the per-side record of enemy unit types seen, read by E-22 S-179 to S-181.
@@ -161,9 +192,13 @@ Open flags: none.
 ## Invariants
 
 - Player-visible list ⊆ enemy units on the map.
+  Proof: MISSING
 - Friendly units always visible.
+  Proof: MISSING
 - What the player is shown never changes combat resolution; each side's own visible set does (R-093-02).
+  Proof: MISSING
 - Same seed, same visibility, all platforms.
+  Proof: MISSING
 
 ## Scale requirements
 

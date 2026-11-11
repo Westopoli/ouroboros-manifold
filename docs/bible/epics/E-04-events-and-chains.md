@@ -30,12 +30,19 @@ As a commander reading the chronicle, I want every crisis to have a cause I can 
 
 Rules
 - R-026-01  Given a region and a threshold template with field F, direction `above`, threshold T, When the region's F was ≤ T + offset last tick and is > T + offset this tick, Then the template fires once on this tick; for direction `below` the mirror holds with <.
+  Proof: MISSING
 - R-026-02  Given F stays on the far side of the threshold for any number of ticks after firing, When ticks pass, Then the template does not fire again.
+  Proof: tests/csim/test_E04_S026_crises_start_when_a_line_is_crossed.py::test_R_026_02_template_does_not_fire_again | scenario | verified 53f6b053 2026-11-11
 - R-026-03  Given F returns across the threshold and later crosses it again, When the second crossing happens, Then the template fires again as a new chain with a new chain tag.
+  Proof: MISSING
 - R-026-04  Given a time jump starts, When noise offsets are rolled, Then each (region, threshold template) pair gets one uniform offset in [−10, 10] that persists for the whole jump.
+  Proof: tests/csim/test_E04_S026_crises_start_when_a_line_is_crossed.py::test_R_026_04_each_region_threshold_template_pair | scenario | verified 53f6b053 2026-11-11
 - R-026-05  Given ticks 1 through 3 of a run, When triggers are evaluated, Then nothing fires; the trigger state is primed from the current fields so that a field already past its threshold at tick 3 does not fire at tick 4.
+  Proof: tests/csim/test_E04_S026_crises_start_when_a_line_is_crossed.py::test_R_026_05_nothing_fires_trigger_state_primed | scenario | verified 53f6b053 2026-11-11
 - R-026-06  Given a threshold template fires, When its effects apply, Then each field delta applies with floors economy 8.0, tension 12.0, others 0, ceiling 100, and composites recompute, through the same per-region delta sum as S-028 R-028-01.
+  Proof: MISSING
 - R-026-07  Given regions A and B both cross a threshold on tick t, When triggers are evaluated, Then both are judged against the tick-start fields (A's effects never change what B's crossing reads, in either region order), both fire on tick t, and each region's fired deltas are summed with that region's due-queue deltas and applied once; a region that crosses only because a same-tick event moved its field fires on tick t + 1, not t.
+  Proof: MISSING
 
 Inputs: fields; template table; noise offsets; tick.
 Outputs: fired event records with chain tag in the tick log; field changes.
@@ -46,12 +53,19 @@ As a commander, I want a crisis to spawn follow-ups that may or may not come, de
 
 Rules
 - R-027-01  Given a fired event with a chain spawn (template X, delay range [a, b], probability p, condition C), When it fires on tick t, Then one delay d = clamp(round(triangular(a, b, mode (a + b)/2)), a, b) is drawn (one uniform draw, the contract in `ouroboros_sim.h`) and X is queued for tick t + d with probability p, condition C, and the parent's chain tag.
+  Proof: MISSING
 - R-027-02  Given a queued event whose tick arrives and whose condition is not met (for `above` v: field ≤ v; for `below` v: field ≥ v), When resolved, Then it is dropped without firing and without a probability roll.
+  Proof: tests/csim/test_E04_S027_one_thing_leads_to_another.py::test_R_027_02_it_dropped_without_firing_without | scenario | verified 53f6b053 2026-11-11
 - R-027-03  Given a queued event whose condition is met, When resolved, Then one RNG draw r is made and it fires only if r ≤ p.
+  Proof: MISSING
 - R-027-04  Given "Famine" fires on tick 50 in a region, When tick 53 to 56 arrives with tension above 40, Then "Regional Revolt" may fire with probability 0.5 carrying Famine's chain tag.
+  Proof: MISSING
 - R-027-05  Given an admin-revolt chain of length L in [3, 8] (E-05 R-040-03), When each event fires, Then the next queues with probability 1.0 and no condition, at a delay of 1 tick plus one surplus tick for the earliest gaps until the surplus L minus the step count is spent, so the Breakaway fires exactly L ticks after the roll; the short chain skips Political Crisis and Popular Support, the medium chain skips Popular Support.
+  Proof: MISSING
 - R-027-06  Given any spawned event, When it is read from the log, Then its chain tag equals the root event's tag, and the tag is unique per chain start (`chain_NNNN`, sequential).
+  Proof: MISSING
 - R-027-07  Given a queued event dropped by R-027-02, When the tick log is read, Then it holds a `pruned` record with the template, region, tick, chain tag, and the condition that failed, so the chronicle (E-09) can tell the revolt that almost happened.
+  Proof: MISSING
 
 Inputs: template chain spawns; region fields at resolution time.
 Outputs: pending queue; fired records; pruned records.
@@ -62,10 +76,15 @@ As a commander, I want two blows landing the same day to hurt together, but a re
 
 Rules
 - R-028-01  Given two queued events due the same tick in the same region, both passing conditions and probability, When they resolve, Then each delta is computed against the tick-start fields, the deltas sum, and the sum applies once with floors and ceilings.
+  Proof: MISSING
 - R-028-02  Given "Revolt Crushed" (p 0.45) and "Revolt Entrenched" (p 0.55) both due the same tick in the same region, When resolved, Then Entrenched is kept and Crushed is re-queued for tick + 1 or tick + 2 (one draw).
+  Proof: tests/csim/test_E04_S028_disasters_stack_contradictions_do_not.py::test_R_028_02_entrenched_kept_crushed_re_queued | scenario | verified 53f6b053 2026-11-11
 - R-028-03  Given two mutually exclusive events with equal probability, When resolved, Then one uniform draw decides: below 0.5 the earlier-queued one is kept, otherwise the later one; the other is re-queued as in R-028-02.
+  Proof: MISSING
 - R-028-04  Given two same-tick events with no shared exclusion tag, When resolved, Then both fire and neither is delayed.
+  Proof: MISSING
 - R-028-05  Given exclusion tags are evaluated, When multiple tags are present, Then they are processed in sorted tag order, and an event removed by one tag is not considered for later tags.
+  Proof: MISSING
 
 Inputs: queued events due this tick; exclusion tags.
 Outputs: fired and delayed records.
@@ -76,10 +95,15 @@ As a commander, I want a tense region to face a rising chance of revolt every ti
 
 Rules
 - R-029-01  Given a region with tension 64, When the regional revolt roll runs, Then p = 0.007 · 0.64^0.8, within 1e-6 of 0.004898.
+  Proof: MISSING
 - R-029-02  Given tension 0, When the roll runs, Then p = 0 and the revolt never fires.
+  Proof: MISSING
 - R-029-03  Given a revolt fired on tick t in a region, When ticks t + 1 through t + 11 run, Then no revolt roll is made for that region; the roll resumes on tick t + 12.
+  Proof: MISSING
 - R-029-04  Given a revolt fires, When effects apply, Then military −2, economy −2, tension +4, and follow-ups "Revolt Crushed" [2, 5] at 0.45 if military above 35 and "Revolt Entrenched" [3, 8] at 0.55 if tension above 40 are queued.
+  Proof: MISSING
 - R-029-05  Given "Revolt Entrenched" fires, When resolved, Then it marks the region for faction creation (E-07 decides whether a breakaway forms).
+  Proof: MISSING
 
 Inputs: tension; cooldown state; RNG.
 Outputs: fired revolt records; cooldown in trigger state.
@@ -90,8 +114,11 @@ As a commander, I want the galaxy's crises and booms to come from a fixed, autho
 
 Rules
 - R-030-01  Given a new campaign, When its world is created (the pipe's `set_seed`), Then the launch library is loaded into that world, and it contains exactly the 26 templates in the table below with these triggers, effects, spawns, and exclusion tags, and a contract test compares the loaded library to the table field by field.
+  Proof: MISSING
 - R-030-02  Given a template with no trigger, When triggers are evaluated, Then it never starts a chain; it fires only as a spawn.
+  Proof: MISSING
 - R-030-03  Given every template's effects, When summed, Then every value is an integer in [−4, 6]; no launch event moves a field by more than 6 in one firing.
+  Proof: MISSING
 
 | Template | Trigger | Effects (m, e, t, p) | Spawns (template, delay, p, condition) | Exclusion |
 |---|---|---|---|---|
@@ -131,9 +158,13 @@ As a commander watching the chronicle scroll, I want the galaxy to have changed 
 
 Rules
 - R-031-01  Given a 5,000-tick run with the launch config and any seed, When every 30-tick window is scored, Then attacks resolve in at least as many windows as the Python reference sim's measured rate, recorded in `docs/northstar/e2e/E-04.md` from ten seeds before this story's tests are written (Q-031-01: measure first).
+  Proof: unbuilt
 - R-031-02  Given the same run, When windows are scored, Then conquests or colonizations occur in at least as many windows as the measured reference rate, recorded the same way.
+  Proof: unbuilt
 - R-031-03  Given the same run, When counted, Then at least one faction is created and at least one faction is absorbed or removed over the run.
+  Proof: MISSING
 - R-031-04  Given any 30-tick window, When the chronicle distiller runs on it, Then it finds at least 5 candidate entries.
+  Proof: MISSING
 
 Inputs: full sim run.
 Outputs: window statistics in the T1 trace; trajectory invariants.
@@ -146,7 +177,9 @@ Direction decided in part 2026-10-02 (E-15 S-219; E-17 R-166-03; E-02 S-221 deri
 
 Rules
 - R-225-01  Given a region has an environmental trouble (E-02 S-221), When the strategic sim runs, Then [Q-225-01: whether the trouble has any strategic effect, as an event template or a trigger, or is tactical only]; until it is decided the library stays the 26 templates of R-030-01 and no template reads a climate or trouble.
+  Proof: unbuilt
 - R-225-02  Given the growth of a settlement comes "in waves tied to events" (E-17 R-166-03), When "events" is read, Then [Q-225-02: whether it means the events of this epic, one chain per region-year in the strategic sim, or events inside a mission (a shipment arrives, an expansion is founded, a season turns)].
+  Proof: unbuilt
 
 Inputs: the region's trouble (E-02 S-221); the template table.
 Outputs: none until Q-225-01 is answered.
@@ -175,11 +208,17 @@ Open flags: none. Q-225-01 and Q-225-02 closed 2026-10-21 (register: tactical on
 ## Invariants
 
 - A threshold template fires at most once per crossing.
+  Proof: MISSING
 - Every fired event has a chain tag; spawns share the root's tag.
+  Proof: MISSING
 - No event ever pushes a field outside [floor, 100].
+  Proof: MISSING
 - Queue entries are consumed exactly once.
+  Proof: MISSING
 - Same seed, same event log, all platforms.
+  Proof: MISSING
 - Over 5,000 ticks with 60 regions, the pending queue never exceeds 2,000 entries (guards runaway chains).
+  Proof: MISSING
 
 ## Scale requirements
 
