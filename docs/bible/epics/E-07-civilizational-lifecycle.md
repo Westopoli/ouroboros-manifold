@@ -31,12 +31,19 @@ As a commander, I want a revolt that takes hold to create a new faction from the
 
 Rules
 - R-049-01  Given Revolt Entrenched fires in an owned region, When resolved, Then one draw sets the success rate uniform in [0.50, 0.95] and a second draw must be ≤ that rate, else no faction forms.
+  Proof: MISSING
 - R-049-02  Given the success draw passes but the region's population is below 25, When resolved, Then no faction forms.
+  Proof: MISSING
 - R-049-03  Given a breakaway forms, When the region is split, Then the region keeps military · 0.40 and economy · 0.60 (the revolt takes 60 percent of the army and 40 percent of the economy), then tension is capped at 40, population floored at 25, economy floored at 20.
+  Proof: MISSING
 - R-049-04  Given a breakaway forms, When the faction is created, Then its id is `breakaway_<tick>_<region>`, archetype `breakaway`, budget 0, growth rate 0.025, attack confidence uniform in [2, 5], tech equal to the parent's, stance hostile with every faction both ways, and a color distinct from every existing faction's hue by more than 0.08.
+  Proof: MISSING
 - R-049-05  Given Admin Breakaway fires (E-05 S-040), When resolved, Then the success rate is 1.0 with no population check, and the archetype is one draw from conqueror, fortifier, warlord, opportunist, schism.
+  Proof: MISSING
 - R-049-06  Given an admin chain whose region changed owner after the chain started, When Admin Breakaway fires, Then nothing happens (the chain is pruned).
+  Proof: MISSING
 - R-049-07  Given the region's edges, When ownership changes to the breakaway, Then every edge touching it becomes `border`.
+  Proof: MISSING
 
 Inputs: fired faction-creating event; region fields; RNG.
 Outputs: revolt record in the tick log; new faction entry; region owner.
@@ -47,10 +54,15 @@ As a commander, I want a region I took recently to be able to go back to its old
 
 Rules
 - R-050-01  Given a region conquered from B 15 ticks ago and B still exists, When a revolt succeeds there, Then with probability 0.5 (one draw) the region reverts to B instead of forming a breakaway.
+  Proof: MISSING
 - R-050-02  Given the conquest was 21 or more ticks ago, When a revolt succeeds, Then it never reverts.
+  Proof: MISSING
 - R-050-03  Given B no longer exists, When a revolt succeeds, Then it never reverts.
+  Proof: MISSING
 - R-050-04  Given a reversion, When applied, Then the region's owner is B, held-since is the current tick, previous owner is cleared, and the same split and floors as R-049-03 apply.
+  Proof: MISSING
 - R-050-05  Given a reversion, When the log is read, Then it records the original and restored factions and the stolen amounts.
+  Proof: MISSING
 
 Inputs: previous owner; held-since; registry; RNG.
 Outputs: reversion record; ownership. Reversion on a revolt is the only allegiance change this epic has; where a populace contested in a mission ends up is Q-220-02 (E-02 S-220).
@@ -62,11 +74,17 @@ As a commander, I want a breakaway that never grows to be absorbed by its strong
 
 Rules
 - R-051-01  Given a breakaway faction with zero regions, When 5 or more ticks have passed since its creation tick, Then it is removed from the registry and every faction's stance table.
+  Proof: MISSING
 - R-051-02  Given a breakaway with exactly one region, created 50 or more ticks ago, with budget below 20, When cleanup runs, Then its region passes to the bordering faction with the most regions, held-since resets, previous owner is the breakaway, and the breakaway is removed.
+  Proof: MISSING
 - R-051-03  Given the same breakaway with budget 20 or more, or with two or more regions, or created fewer than 50 ticks ago, When cleanup runs, Then nothing happens.
+  Proof: MISSING
 - R-051-04  Given a breakaway that conquered a region this tick, When cleanup runs, Then it is skipped this tick.
+  Proof: MISSING
 - R-051-05  Given a non-breakaway faction (starting faction) with zero regions, When cleanup runs, Then it is never removed.
+  Proof: MISSING
 - R-051-06  Given a removed faction still owned regions, When removal happens, Then those regions become unowned with held-since cleared.
+  Proof: MISSING
 
 Inputs: registry; region ownership; conquest list this tick.
 Outputs: absorption records in the tick log; registry and ownership changes.
@@ -77,7 +95,9 @@ As a commander, I want my own civilization to be able to fall, so that the stake
 
 Rules
 - R-052-01  Given the player civilization loses its last region, When the tick ends, Then it has zero regions, its budget still accumulates as 0, and the generational structure (E-08) handles the player's next chapter.
+  Proof: MISSING
 - R-052-02  Given any faction, When attacked, revolted, or absorbed, Then no rule anywhere checks whether it is the player's.
+  Proof: MISSING
 
 Inputs: none beyond E-05 and this epic.
 Outputs: faction region count in the strategic snapshot.
@@ -88,12 +108,19 @@ As a commander, I want the sim to know whether my civilization is expanding, con
 
 Rules
 - R-053-01  Given a faction's recent event window, When the revolt-and-reversion share of events is at least 0.02, Then its phase is fragmentation.
+  Proof: MISSING
 - R-053-02  Given not fragmentation, When maintenance (regions · 8) divided by total economy exceeds 0.4, Then its phase is overextension.
+  Proof: MISSING
 - R-053-03  Given neither, When the share of attack events is at least 0.05, Then conflict.
+  Proof: MISSING
 - R-053-04  Given none of the above, When empty regions bordering the faction number at least 30 percent of all inhabited regions, Then expansion.
+  Proof: MISSING
 - R-053-05  Given none of the above, When the window holds colonizations and no attacks, Then consolidation.
+  Proof: MISSING
 - R-053-06  Given none of the above, or a faction with no regions, Then equilibrium.
+  Proof: MISSING
 - R-053-07  Given the six checks, When evaluated, Then they are evaluated in exactly this order and the first match wins.
+  Proof: MISSING
 
 Inputs: recent event window; owned regions; world.
 Outputs: phase label in the faction entry; consumed by E-09 and E-10. It does not feed the density of self-built settlements for now (E-02 S-222).
@@ -105,6 +132,7 @@ As a commander, I want a civilization's story to be able to end in survival, esc
 
 Rules
 - R-054-01  Deferred with the feature. No rule until Q-054-01 is answered.
+  Proof: unbuilt
 
 Inputs: none yet.
 Outputs: none yet.
@@ -131,10 +159,15 @@ Open flags: none. Interim: history loops back to the first owned era after the l
 ## Invariants
 
 - A region has at most one owner; a removed faction owns nothing.
+  Proof: MISSING
 - A breakaway's tech at creation equals its parent's.
+  Proof: MISSING
 - Breakaway stances are hostile everywhere at creation.
+  Proof: MISSING
 - Same seed, same births and deaths, all platforms.
+  Proof: MISSING
 - Faction count never exceeds 15 plus the number of revolt and admin events that fired.
+  Proof: MISSING
 
 ## Scale requirements
 

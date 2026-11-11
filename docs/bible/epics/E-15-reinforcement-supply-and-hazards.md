@@ -32,11 +32,17 @@ As a commander, I want reinforcements to come from the region's own garrisons th
 
 Rules
 - R-126-01  Given a mission, When structures are placed, Then count = clamp(floor(region military × 0.06), small [2, 4], medium [3, 6], large [4, 8]) and the archetype's split assigns player, enemy, and neutral owners (defensive stand 50/25/25, siege 33/33/34, reconquest and assault 25/50/25, suppression and counterinsurgency 40/30/30, multi-front 40/35/25, interception and containment 33/34/33, evacuation 50/25/25), player at least 1.
+  Proof: MISSING
 - R-126-02  Given a held structure with a chosen unit type, When its production timer reaches 30 s × (that type's power / 100), Then one unit of that type spawns at the first free slot of the structure's spawn lattice (a grid at twice the unit collision radius centred on the structure, scanned ring by ring outward in a fixed order, within half the capture radius; a slot is free when no live unit stands within one spacing of it; no free slot delays production one tick) on the structure's layer, with no random draw, and the timer subtracts the interval (Westley 2026-10-12, TD-VG-E-29).
+  Proof: MISSING
 - R-126-03  Given the player clicks a held structure, When they pick a type, Then production switches to it at once and the current timer continues.
+  Proof: MISSING
 - R-126-04  Given a mission's expected full force F (E-10 force sizing), When forces are allocated, Then the starting force is the fraction of F that R-218-06 gives by the player's share of the contested strongpoints at the start, and the reinforcement structures on the map can together produce the remainder (F minus the starting force) over the mission's time limit when all are held from the start; a player who holds every structure the whole mission fields at least F, and one who holds none fields the starting force only (rewritten Architect 2026-10-20 to follow R-218-06; Westley to confirm with that row).
+  Proof: MISSING
 - R-126-05  Given a structure, When its production is read on the HUD, Then the player sees the timer bar, next unit, and HP (E-16 R-104-06).
+  Proof: MISSING
 - R-126-06  Given any mission, When production is read, Then units have no cost, and a player holding zero structures receives no trickle; the only reinforcement is R-126-02's structure production.
+  Proof: MISSING
 
 Inputs: region military; archetype; player type choice.
 Outputs: structures (owner, HP, timer, type) in the tick delta; spawns.
@@ -47,10 +53,15 @@ As a commander, I want to capture a structure by holding it unopposed, and to be
 
 Rules
 - R-127-01  Given units of exactly one non-owner faction inside a structure's 300 wu radius and no owner units, When ticks pass, Then capture progress rises by dt / 10 s; at 1.0 the owner flips and progress resets.
+  Proof: MISSING
 - R-127-02  Given units of two or more non-owner factions inside, or the owner also present, When ticks pass, Then progress resets to 0.
+  Proof: MISSING
 - R-127-03  Given a structure at HP 3,000, When attacked, Then it takes damage like a unit with no matchup multiplier; at 0 HP it is destroyed and stays listed as rubble, and the place command at its cell refounds it for the placer at full HP (R-218-05, Westley 2026-10-06).
+  Proof: MISSING
 - R-127-04  Given a structure changes owner, When the ticker runs, Then "structure captured" or "structure lost" appears (E-16 R-104-01).
+  Proof: MISSING
 - R-127-05  Given a structure's HP, When read, Then it is 3,000 (ALG-75) with no category multiplier applied to structures; a single Bombard at 70 per attack needs about 43 attacks, so splash alone does not destroy it in one engagement.
+  Proof: MISSING
 
 Inputs: unit positions and factions; damage.
 Outputs: ownership, progress, HP in the delta; ticker.
@@ -63,8 +74,11 @@ As a commander, I want the enemy to build toward a composition I can read and ad
 
 Rules
 - R-128-01  Given the enemy's target ratio (per archetype script), When a structure's timer fires, Then it produces the category most below its target share.
+  Proof: MISSING
 - R-128-02  Given the player's composition has a category at 70 percent or more, When the target is computed, Then 15 percent of the target shifts to the counter category (Strike counters Siege, Line counters Strike, Siege counters Line), taken proportionally from the others, then renormalized.
+  Proof: MISSING
 - R-128-03  Given the enemy, When it produces, Then it never deviates from the ratio otherwise.
+  Proof: MISSING
 
 Inputs: target ratio; both compositions.
 Outputs: enemy production choices in the T1 trace.
@@ -76,12 +90,18 @@ As a commander, I want convoys and evacuees to be real units that die, so that p
 
 Rules
 - R-129-01  Given a non-combat unit, When the decision loop runs, Then it never acquires a target, never returns fire, flinches from damage, and otherwise holds or follows its move order.
+  Proof: MISSING
 - R-129-02  Given an escort or evacuation objective, When a non-combat unit reaches the extraction point alive (within 200 wu), Then it counts toward completion (E-10 R-075-04).
+  Proof: MISSING
 - R-129-03  Given a non-combat unit, When drawn, Then it reads as non-combat at a glance.
+  Proof: MISSING
 - R-129-04  Given the asset categories of the hub (science units, intelligence operatives, cultural missions), When a mission includes them, Then [Q-129-01: only convoys and evacuees exist in code; the others are undefined; cultural missions have an onboarding opt-out per A-074].
+  Proof: MISSING
 
 - R-129-05  Given a worker (E-22 S-167), When the decision loop runs, Then it is a non-combat unit under R-129-01: it never acquires a target, never returns fire and flinches from damage, and besides move orders it follows the gather orders of E-22 S-167; it is a unit, counted in the one population cap (E-22 S-169) and in the unit budgets.
+  Proof: unbuilt
 - R-129-06  Given a shipment on the map (E-22 S-176 owns its rule), When it is raided along a lane (E-22 S-174), Then it never fights back (R-129-01) and, to a side that can see it, it reads as non-combat (R-129-03).
+  Proof: unbuilt
 
 Inputs: unit type flags; objectives.
 Outputs: objective progress; screen.
@@ -92,10 +112,15 @@ As a commander, I want objectives and garrisons that drift and hazards that trav
 
 Rules
 - R-130-01  Given a spine node of type objective or reinforcement_structure with waypoints, a period in ticks, and a mode, When ticks pass, Then its position is the interpolation along its waypoints, ping-pong (out and back) or loop, at tick mod period.
+  Proof: MISSING
 - R-130-02  Given a drifting objective, When it moves, Then the hold zone moves with it and progress continues only while no enemy is inside the moved zone.
+  Proof: MISSING
 - R-130-03  Given a drifting structure, When it moves, Then its capture radius and spawn position move with it.
+  Proof: MISSING
 - R-130-04  Given a sensor interference source with motion, When ticks pass, Then interference at any point follows the source (E-12 R-090-04).
+  Proof: MISSING
 - R-130-05  Given a battle in transit (convoy moving), When engaged, Then the convoy keeps its move order and the fight happens around it.
+  Proof: MISSING
 
 Inputs: drift specs from the map seed.
 Outputs: positions per tick in the delta.
@@ -108,7 +133,9 @@ As a commander, I want a nebula to look like a place I cannot see into and a gar
 
 Rules
 - R-131-01  Given a T2 screenshot, When inspected, Then structures are distinguishable by owner color and from every unit silhouette; interference zones read as obscuring volumes; convoys read as non-combat.
+  Proof: MISSING
 - R-131-02  Given the launch hazard list, When read, Then it is exactly one type, sensor interference; drag, damage, boost, and disruption zones are future gradient tags with no engine change.
+  Proof: MISSING
 
 Inputs: map seed; ownership.
 Outputs: screen.
@@ -121,13 +148,21 @@ Status: design decided 2026-10-02; partly built (E7, VG-CONTRACT-E7, 7e463db3, 2
 
 Rules
 - R-218-01  Given a land map whose ground has height bands fitted to it (E-17 R-166-04 and R-166-06) and slopes that join layers (E-01 R-001-07), When strongpoints are placed, Then they stand at the slopes between height bands, each strongpoint at its slope's midpoint. The count is R-126-01's, capped by the slopes there are, placed on the best slopes, with its archetype owner split (Westley, 2026-10-06; E-17 R-192-01; midpoint, Architect 2026-10-10).
+  Proof: MISSING
 - R-218-02  Given a strongpoint, When a side holds it, Then it holds the way up or down at that slope (Westley, 2026-10-02, option D4: "Holding one holds the way up or down, and gives production on that band") Holding does nothing to passage beyond a position to fight from and production (Westley, 2026-10-06).
+  Proof: MISSING
 - R-218-03  Given a held strongpoint, When it produces, Then the units appear on the strongpoint's band, and the production is paid for by the holder's economy (E-22 S-167 and S-170), not free.
+  Proof: MISSING
 - R-218-04  Given a held strongpoint, When what it makes is chosen, Then the economy rules choose it on the schedule of E-22 S-170, changing what it makes takes a while, and when nobody holds the economy seat the rules and the commander's override of E-22 S-179 and S-180 decide.
+  Proof: unbuilt
 - R-218-05  Given a strongpoint, When it is attacked or taken, Then it is captured as S-127 says, and when destroyed it falls to rubble; a strongpoint at 0 HP stays listed as rubble, and the place command at its cell refounds it for the placer at full HP (Westley, 2026-10-06, this replaces R-127-03's "never rebuilt"; listing and refounding, Architect 2026-10-10).
+  Proof: MISSING
 - R-218-06  Given the starting force and the strongpoints' production, When a mission's forces are allocated (E-10 S-074), Then the split of R-126-04 (a fifth at the start, the rest from structures) is dropped and the situation (E-10 S-211) decides; until S-211 the player starts with a quarter of F when they hold half of the contested strongpoints at the start, sliding down to a fifth when they hold none and up to four fifths when they hold them all, and the structures can produce the rest (Westley, 2026-10-11 and 2026-10-21; curve DRAFT-e7-curve-2).
+  Proof: MISSING
 - R-218-07  Given a strongpoint on a slope, When drift specs are read (S-130), Then a strongpoint does not drift: it is fixed at its slope for now (Westley, 2026-10-07).
+  Proof: MISSING
 - R-218-08  Given a T2 screenshot, When inspected, Then a strongpoint is distinguishable by owner color from every unit silhouette and from a base, an expansion and forward works The mechanic is called "strongpoint", with an era-skinned visual, so it does not clash with "settlement" for the neutral populace and for self-built cities (Westley, 2026-10-06).
+  Proof: unbuilt
 
 Inputs: the fitted height bands and slopes (E-17); the holder's economy (E-22).
 Outputs: strongpoints (owner, HP, progress, band, position) in the tick delta; production on the band; HUD panel and minimap.
@@ -140,11 +175,17 @@ Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-219-01  Given a mission in a region, When its map is set up, Then the region's own environmental trouble is the one that travels the map, and different regions have different troubles; the trouble comes from the region's record, the same one that gives its climate and landform, derived from the seed for now (E-17 R-166-03; Westley, 2026-10-02) The troubles are a small fixed list (Westley, 2026-10-06).
+  Proof: unbuilt
 - R-219-02  Given a trouble, When ticks pass, Then it travels across the map. Its path and speed are to be designed [Q-219-02]; Westley, 2026-10-06: it would be good if the player did not see it coming.
+  Proof: unbuilt
 - R-219-03  Given a trouble on the map, When either side looks, Then both sides can see it.
+  Proof: unbuilt
 - R-219-04  Given a unit, worker, shipment, building or production site that the trouble passes over, When it is under the trouble, Then it is shut down while the trouble is over it What shut down means differs per trouble (Westley, 2026-10-06).
+  Proof: unbuilt
 - R-219-05  Given the sensor interference zone of S-130 and E-12 R-090-04, When troubles are listed, Then (whether interference is one of the troubles or a separate hazard that stays; parked; Q-219-04 closed 2026-10-18, Architect, implementation).
+  Proof: unbuilt
 - R-219-06  Given a T2 screenshot, When inspected, Then a trouble reads as a distinct moving thing on the map, apart from the interference zone and from every unit.
+  Proof: unbuilt
 
 Inputs: the region's trouble (seed, E-17); the trouble's path.
 Outputs: the trouble's position per tick in the delta; which things it has shut down; screen.
@@ -177,11 +218,17 @@ Open flags: Q-219-02 (to be designed).
 ## Invariants
 
 - A structure has exactly one owner or is neutral.
+  Proof: MISSING
 - Capture progress in [0, 1]; resets on contest.
+  Proof: MISSING
 - A structure at 0 HP stays listed as rubble (R-127-03, R-218-05) and the place command at its cell refounds it at full HP (R-218-05, Architect 2026-10-10).
+  Proof: MISSING
 - A strongpoint stands at a slope between height bands on land maps.
+  Proof: MISSING
 - A trouble shuts down only what it is passing over, and both sides can see it.
+  Proof: unbuilt
 - Same seed, same spawns and drift, all platforms (every draw comes from the world stream; production placement draws nothing, R-126-02).
+  Proof: MISSING
 
 ## Scale requirements
 

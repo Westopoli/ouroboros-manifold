@@ -38,12 +38,19 @@ As a commander reading the galaxy, I want each region's condition to be four pla
 
 Rules
 - R-012-01  Given any inhabited region at any tick, When its state is read, Then it has exactly military, economy, tension, population, each in [0, 100], and stability and capacity, each rounded to 2 decimals.
+  Proof: MISSING
 - R-012-02  Given military 40, tension 20, population 60, When stability is computed, Then it is 40·0.40 + 80·0.35 + 60·0.25 = 59.00.
+  Proof: MISSING
 - R-012-03  Given military 8, tension 20, population 60, When stability is computed, Then it is (8·0.40 + 80·0.35 + 60·0.25) · 0.70 = 32.34.
+  Proof: MISSING
 - R-012-04  Given military 8, tension 20, population 15, When stability is computed, Then both penalties apply: (3.2 + 28 + 3.75) · 0.70 · 0.75 = 18.35.
+  Proof: MISSING
 - R-012-05  Given economy 60, population 50, military 30, When capacity is computed, Then it is 60·0.50 + 50·0.35 + 30·0.15 = 52.00.
+  Proof: MISSING
 - R-012-06  Given economy 15, population 10, military 30, When capacity is computed, Then it is (7.5 + 3.5 + 4.5) · 0.65 · 0.70 = 7.05.
+  Proof: MISSING
 - R-012-07  Given an empty-tier region, When its state is read, Then all four fields are 0, composites are 0, and no drift is ever applied to it.
+  Proof: MISSING
 
 Inputs: the four fields.
 Outputs: composites, recomputed after every field change, in the region entry of the strategic snapshot.
@@ -54,11 +61,17 @@ As a commander, I want a region's military to decay when its economy cannot feed
 
 Rules
 - R-013-01  Given military 50 and economy 0, When one tick of drift runs with recruitment disabled, Then Δmilitary = −50 · 0.006 · 1 = −0.300.
+  Proof: MISSING
 - R-013-02  Given military 50 and economy 100, When one tick runs with recruitment disabled, Then decay is exactly 0.
+  Proof: MISSING
 - R-013-03  Given military 50, economy 60, population 50, tension 20, When one tick of recruitment runs, Then Δmilitary_recruit = (0.1 · 0.5 + 12 · 0.6 · 0.5 · 0.8^0.3) · (1 − 50/90), within 1e-3 of 1.5186.
+  Proof: MISSING
 - R-013-04  Given economy 20.0 exactly, When recruitment runs, Then the economy-scaled term is 0 (threshold is strictly greater than 20).
+  Proof: MISSING
 - R-013-05  Given military 90 or above, When recruitment runs, Then recruitment is 0; drift alone never pushes military past 90.
+  Proof: MISSING
 - R-013-06  Given a conqueror faction owns the region, When drift runs, Then an extra +0.05 · headroom is added to military (faction modifier).
+  Proof: MISSING
 
 Inputs: military, economy, population, tension, faction modifiers.
 Outputs: Δmilitary in the drift log; military field.
@@ -69,9 +82,13 @@ As a commander, I want a region's economy to grow with its population, shrink un
 
 Rules
 - R-014-01  Given population 50, tension 20, economy 30, When one tick runs with oscillation and adjacency off, Then Δeconomy = 2.0·0.5 − 0.2·0.40 − 0 = 0.920.
+  Proof: MISSING
 - R-014-02  Given population 50 and economy 60 (capacity 42.5), When one tick runs, Then overcapacity decay = 15 · (60 − 42.5)/100 = 2.625 and Δeconomy = 1.0 − drag − 2.625.
+  Proof: MISSING
 - R-014-03  Given economy exactly at capacity, When one tick runs, Then overcapacity decay is 0.
+  Proof: MISSING
 - R-014-04  Given any drift result that would take economy below 8.0, When it is applied, Then economy is 8.0.
+  Proof: MISSING
 
 Inputs: population, tension trend, economy trend.
 Outputs: Δeconomy in the drift log; economy field.
@@ -82,9 +99,13 @@ As a commander, I want a region next to a booming friendly region to develop fas
 
 Rules
 - R-015-01  Given a region with two same-faction inhabited neighbors at economy 80 and 40, When one tick runs, Then adjacency bonus = 0.05·0.8 + 0.05·0.4 = 0.060 added to Δeconomy, regardless of the edge types joining them.
+  Proof: MISSING
 - R-015-02  Given a same-faction inhabited neighbor across a border-only edge at economy 40, When one tick runs, Then it contributes 0.05·0.4 = 0.020; edge type does not gate the bonus. Whether a neighbor contributes is decided by the relationship (R-015-03), not the edge type.
+  Proof: MISSING
 - R-015-03  Given a neighbor owned by a faction this region's owner holds a cooperative stance toward, When one tick runs, Then it contributes as a friendly neighbor; a neighbor with no such relationship contributes nothing.
+  Proof: MISSING
 - R-015-04  Given an empty-tier neighbor, When one tick runs, Then it contributes nothing.
+  Proof: MISSING
 
 Inputs: neighbor economy (raw, not de-oscillated), edge types (recorded but not a filter), stances.
 Outputs: adjacency term in the drift log.
@@ -95,10 +116,15 @@ As a commander, I want tension to rise when a region is poor, unstable, or starv
 
 Rules
 - R-016-01  Given economy 30, population 50, stability 60, tension 20, When one tick runs with oscillation off, Then Δtension = (20/100)·0.5·0.5 + 0 + 0 − 0.20·0.2 = 0.050 − 0.040 = 0.010.
+  Proof: MISSING
 - R-016-02  Given stability 30, When one tick runs, Then stress pressure = (40 − 30) · 0.008 = 0.080.
+  Proof: MISSING
 - R-016-03  Given economy 9.5 and population 50, When one tick runs, Then subsistence severity = (11 − 9.5)/3 = 0.5 and subsistence pressure = 0.15 · 0.5 · 0.5 = 0.0375.
+  Proof: MISSING
 - R-016-04  Given economy 11.0 or above, When one tick runs, Then subsistence pressure is 0.
+  Proof: MISSING
 - R-016-05  Given economy 70 and population 50, When one tick runs, Then economic pressure is negative (−0.050), so prosperity calms tension.
+  Proof: MISSING
 
 Inputs: economy trend, population, de-oscillated stability, tension trend.
 Outputs: Δtension in the drift log; tension field.
@@ -109,9 +135,13 @@ As a commander, I want population to be the slowest field, so that a collapse fe
 
 Rules
 - R-017-01  Given economy 66 and population 60, When one tick runs, Then Δpopulation = 2.0 · (51/85) · 0.4 = 0.480.
+  Proof: MISSING
 - R-017-02  Given economy 10 and population 60, When one tick runs, Then Δpopulation = −(15 − 10) · 0.2 − 0.08 · (1/3) = −1.0267 (subsistence severity (11 − 10)/3).
+  Proof: MISSING
 - R-017-03  Given economy 15.0 exactly, When one tick runs, Then the growth branch is not taken and decline is −0 · 0.2 = 0.
+  Proof: MISSING
 - R-017-04  Given population 100, When one tick runs at any economy above 15, Then growth is 0.
+  Proof: MISSING
 
 Inputs: economy trend, population.
 Outputs: Δpopulation in the drift log; population field.
@@ -122,10 +152,15 @@ As a commander, I want economy and tension to swell and dip on their own cycles,
 
 Rules
 - R-018-01  Given a region with economy phase φ, When tick n runs (n ≥ 2), Then the economy delta includes 6.0·(sin(2πn/15 + φ) − sin(2π(n−1)/15 + φ)) and the tension delta includes 2.0·(sin(2πn/18 + φ_t) − sin(2π(n−1)/18 + φ_t)).
+  Proof: MISSING
 - R-018-02  Given tick 1, When drift runs, Then the previous oscillator value is taken as 0.
+  Proof: MISSING
 - R-018-03  Given any tick, When military decay, recruitment threshold, economy drag, and tension pressure are computed, Then they read economy minus the previous economy oscillator value and tension minus the previous tension oscillator value, never the raw field.
+  Proof: MISSING
 - R-018-04  Given a region run for 150 ticks with all other drift terms zeroed, When the economy trace is summed over any 15 consecutive ticks, Then the oscillator's net contribution is within 1e-6 of 0.
+  Proof: MISSING
 - R-018-05  Given two regions with different phase offsets, When run together, Then their economy peaks fall on different ticks.
+  Proof: MISSING
 
 Inputs: tick, per-region phase offsets (drawn at generation, uniform [0, 2π)).
 Outputs: oscillator delta in the drift log.
@@ -136,10 +171,15 @@ As a commander, I want an economy that has hit bottom to stay just barely alive 
 
 Rules
 - R-019-01  Given economy 8.0, When any drift, border friction, or standard event would lower it, Then it stays 8.0.
+  Proof: MISSING
 - R-019-02  Given economy 8.0, When a conquest applies its damage, Then economy may fall below 8.0, down to 0.
+  Proof: MISSING
 - R-019-03  Given economy 8.0 and population 50, When one tick runs, Then tension gains 0.15 · 1.0 · 0.5 = 0.075 from subsistence and population loses 0.08 from subsistence on top of the normal decline.
+  Proof: MISSING
 - R-019-04  Given tension 5.0, When an event effect would lower it further, Then it stays at 12.0 or above (event floor 12.0); and Given tension 5.0, When drift alone lowers it, Then it may fall below 12.0.
+  Proof: MISSING
 - R-019-05  Given military or population at 0, When drift runs, Then it never goes negative.
+  Proof: MISSING
 
 Inputs: field values, source of the change (drift, friction, event, conquest).
 Outputs: clamped field values.
@@ -150,8 +190,11 @@ As a player in a multiplayer match, I want the simulation to produce the identic
 
 Rules
 - R-020-01  Given a world seed and a tick count, When the sim runs twice on one machine, Then the per-tick field traces are byte-identical.
+  Proof: MISSING
 - R-020-02  Given the same seed, When the sim runs on Linux, Windows, and macOS builds, Then the per-tick state checksums match at every checkpoint.
+  Proof: MISSING
 - R-020-03  Given a checkpoint cadence of 10 ticks, When the sim runs, Then a checksum of all fields and composites is emitted every 10 ticks.
+  Proof: MISSING
 
 Inputs: seed, tick count, platform.
 Outputs: trace, checksums.
@@ -163,9 +206,13 @@ As the C rewrite's test harness, I want the drift step to obey its own feature s
 
 Rules
 - R-160-01  Given `OM_FEAT_DRIFT` switched off, When one tick runs, Then all four fields on every region are byte-identical to their pre-tick values; the drift step does not execute at all.
+  Proof: MISSING
 - R-160-02  Given a world made by `om_world_new`, When its feature switches are read before anything else touches them, Then `OM_FEAT_DRIFT` is on; every other feature switch is off (E-05 through E-07's own defaults are that epic's open flag, A4).
+  Proof: MISSING
 - R-160-03  Given `OM_FEAT_FACTIONS` and `OM_FEAT_DRIFT` both on, When one tick runs, Then the faction budget step (ALG-17, tick sequence step 3b) reads each region's economy as it stood before this tick's drift, matching `tick.py`'s step order (drift is step 5, after faction agents at step 3).
+  Proof: MISSING
 - R-160-04  Given trace recording is enabled, When one tick runs, Then trace-row and checksum emission execute only as part of the (now-gated) drift step: `OM_FEAT_DRIFT` off emits no trace row at all for that tick; `OM_FEAT_DRIFT` on emits a row per region with a checksum exactly every `om_checksum_cadence()` ticks, unchanged from before this story.
+  Proof: MISSING
 
 Inputs: the `OM_FEAT_DRIFT` switch; tick sequence position; trace-enable state.
 Outputs: whether the drift step executed; which economy value the same-tick budget step saw; whether a trace row (and its checksum) was emitted for the tick.
@@ -178,10 +225,15 @@ Direction decided in part 2026-10-02 (E-22 S-177, E-22 S-178); the rest is open,
 
 Rules
 - R-220-01  Given a mission resolves, When the outcome resolver applies its consequence bundle (E-10 R-078-01), Then the region's four fields change by the bundle's deltas and, for a transfer band, its owner changes (E-10 R-078-04); these are the only changes a mission makes to a region today.
+  Proof: MISSING
 - R-220-02  Given a side's base of operations was occupied in the mission, or a side lost its original main base (E-22 S-178), When the mission ends, Then [Q-220-01: what, if anything, the simulation records in or about the region].
+  Proof: unbuilt
 - R-220-03  Given a neutral populace was contested in the mission (E-22 S-177), When the mission ends, Then [Q-220-02: where the populace ended up, in the region's population or tension, in its ownership, or nowhere].
+  Proof: unbuilt
 - R-220-04  Given a base was damaged in the mission and a time jump follows, When the jump ends, Then [Q-159-13: whether the damage persists and how fast it is rebuilt; decided by Westley as "depends on the situation", simulation work to do].
+  Proof: unbuilt
 - R-220-05  Given any state R-220-02 to R-220-04 adds to a region, When memory per region is counted, Then it counts against the budget under Scale requirements.
+  Proof: unbuilt
 
 Inputs: the consequence bundle and the mission's end state (E-10).
 Outputs: the region record, if any of the flags above add to it; the chronicle (E-09).
@@ -194,10 +246,15 @@ Decided 2026-10-02 (DECISIONS H9): derived from the seed for now, with no change
 
 Rules
 - R-221-01  Given any region, When its climate, landform or environmental trouble is needed (E-17 R-166-03, E-15 S-219), Then it is derived from the world seed, and the region record keeps exactly the fields of R-012-01 and gains none for them.
+  Proof: unbuilt
 - R-221-02  Given the same seed, When a region's climate, landform and trouble are derived twice, Then they are identical, on every platform.
+  Proof: unbuilt
 - R-221-03  Given the derivation is made, When it runs, Then it is derived on its own from the seed and draws nothing from the world generation's random stream, so R-022-04's draw order and R-021-10 are untouched (Westley, 2026-10-03).
+  Proof: unbuilt
 - R-221-04  Given an empty-tier region, When its climate, landform or trouble is needed, Then it has them: every region has a climate, landform and trouble, empty or not (Westley, 2026-10-03).
+  Proof: unbuilt
 - R-221-05  Given the derivation is later replaced by stored fields, When that is decided, Then it is a contract change to `csrc/ouroboros_sim.h` that lands first as its own piece.
+  Proof: unbuilt
 
 Inputs: the world seed.
 Outputs: climate, landform and environmental trouble to the map generator (E-17 S-166); not part of the strategic snapshot's region entry.
@@ -210,8 +267,11 @@ Decided in part 2026-10-02 (E-17 R-166-03, `docs/northstar/research/economy_desi
 
 Rules
 - R-222-01  Given a mission region, When the density target of its self-built settlements is set, Then it comes from the region's economy and the mission clock.
+  Proof: MISSING
 - R-222-02  Given the region's population, or the age of the owning faction (the phase label of E-07 S-053), When the density target is set, Then they do not feed it for now: the target comes from the economy and the mission clock only (Westley, 2026-10-06).
+  Proof: MISSING
 - R-222-03  Given the density field, When it is read, Then it is in the simulation: dense districts slow units and give cover, and a settlement always has natural paths through it for armies and units (E-17 S-193). How much they slow units and how much cover they give are E-17 Q-193-04 and Q-193-05, parked until fights have been run in the simulation; the paths are E-17 R-193-09.
+  Proof: MISSING
 
 Inputs: the region's economy; the mission clock; the flagged inputs above.
 Outputs: the density target to the settlement generator (E-17 S-166).
@@ -245,11 +305,17 @@ No player input reaches this epic directly. Missions change fields through the o
 ## Invariants
 
 - Fields always in [0, 100]; economy ≥ 8.0 except after conquest.
+  Proof: MISSING
 - Composites are a pure function of the four fields.
+  Proof: MISSING
 - Empty regions never drift.
+  Proof: MISSING
 - Drift reads de-oscillated trend values for cross-field coupling; only the oscillator delta is added.
+  Proof: MISSING
 - Same seed, same trace, all platforms.
+  Proof: MISSING
 - Over 5,000 ticks with no events and no factions, no field of a home region leaves [8, 100] and none diverges to a corner (the ~70 trajectory invariants in `simulation/invariants.py` port to this epic; their thresholds are not loosened).
+  Proof: MISSING
 
 ## Scale requirements
 

@@ -63,7 +63,7 @@ A test qualifies as proof when all six hold:
 
 A `Test-defect:` commit that touches a proof test updates the `verified` sha, and never weakens a per-tick check to a final-state check without naming the invariant test that replaces it. The weekly check of rules and proofs is `requirement_audit.md`.
 
-Backfill: all 22 epics receive Proof lines in one pass before further stage work (Westley, 2026-11-09; H-090).
+Backfill: done 2026-11-11 (H-090). All 1,314 rules and Invariants of the 22 epics carry a Proof line: 15 name a test, 920 are MISSING, 379 unbuilt. The reading behind each line (candidate test, the qualifications it fails) is `docs/reports/2026-11-11-proof-backfill/all.csv`.
 
 ## Status
 
