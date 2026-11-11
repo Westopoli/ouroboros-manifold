@@ -20,7 +20,7 @@ import collections
 import ctypes
 import math
 
-RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02")
+RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02", "R-096-08", "R-087-10")
 
 CELL = 100.0                 # the engine's cell, wu (OM_NAVMESH_CELL_SIZE)
 DEPTH_TOL = 1.0              # DRAFT-inv-cell-depth
