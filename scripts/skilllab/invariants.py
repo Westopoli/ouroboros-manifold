@@ -44,6 +44,9 @@ RETURN_FIRE_TICKS = 4        # DRAFT-inv-return-fire-ticks: a hit by the target 
 COHORT_SLOTS = 4             # R-087-08: a unit acquires at its cohort turn on every 4th tick
 
 
+UNBOUNDED_CANVAS = "canvas unbounded (no terrain)"    # the reason R-207-07 is suspended on an inf x inf canvas
+
+
 class Rules:
     """What the checks need to know about the world. blocked_cell(cx, cy, layer) -> bool; max_step {unit id: wu a tick}; sensor_radius {unit id: wu}, the radius a unit
     may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch};
@@ -84,6 +87,9 @@ class _Checker:
         wanted = set(RULES if only is None else only)
         self.on = {r for r in wanted if r not in rules.suspended}
         self.suspended = {r: rules.suspended[r] for r in sorted(wanted) if r in rules.suspended}
+        if "R-207-07" in self.on and not (math.isfinite(rules.width) and math.isfinite(rules.height)):
+            self.on.discard("R-207-07")       # no terrain, no map to be outside of: a lab fight hands the checker inf x inf (see `watch`)
+            self.suspended["R-207-07"] = UNBOUNDED_CANVAS
         self.prev = None
         self.last_shot = {}          # unit -> tick of its last shot (R-084-04)
         self.lock = {}               # unit -> (target, (x, y) where it took that lock) (R-087-03)
@@ -491,7 +497,7 @@ class Blind:
 
 def watch(engine, world, width=float("inf"), height=float("inf")):
     """The checker for a lab fight that is stepped by `engine` on `world` (fight.fight, search.run_search): a Monitor, or a Blind one when the engine has no library to read.
-    Targeting by sight is read from the world (OM_TP_TARGET_BY_SIGHT, 1 by default); a canvas the lab never set is as wide as the world (R-207-07 cannot fire)."""
+    Targeting by sight is read from the world (OM_TP_TARGET_BY_SIGHT, 1 by default); a canvas the lab never set is inf x inf, and R-207-07 is then suspended with the reason UNBOUNDED_CANVAS (no map, nothing to be outside of)."""
     if getattr(engine, "_lib", None) is None or not hasattr(engine, "_own"):
         return Blind()
     off = engine.get_param(world, engine.param_id(SWITCH_TARGET_BY_SIGHT)) == 0
