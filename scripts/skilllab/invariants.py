@@ -164,7 +164,7 @@ class _Checker:
                 self._lock(frame, u, r, p, tick, out)
                 if u in rules.cohort:
                     self._acquire(frame, u, r, p, tick, out)
-            if "R-087-09" in on:
+            if "R-087-09" in on or "R-087-03" in on:
                 self._held(units, u, r, tick, out)
         if "R-087-10" in on:
             self._slant(frame, tick, out)
@@ -200,7 +200,9 @@ class _Checker:
             out_of_reach = reach is not None and any(not self._in_reach(reach, a["layer"], o["layer"]) for a, o in ((p, o_prev), (r, o_now)) if o)
             if (o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not out_of_reach
                     and not (leash is not None and walked > leash - LEASH_SLACK)):
-                out.append(_violation("R-087-03", tick, u, "target %d -> %d while %d was alive and seen" % (old, tgt, old)))
+                why = self._gave_up(u, old, o_prev, o_now)
+                if why is None:
+                    out.append(_violation("R-087-03", tick, u, "target %d -> %d while %d was alive and seen" % (old, tgt, old)))
         if p is not None and p.get("order") != r.get("order"):
             held = None                      # a new order starts a new anchor
             self.lock.pop(u, None)
@@ -234,6 +236,20 @@ class _Checker:
             t = units.get(r["target"]) if r["alive"] and r["target"] else None
             if t is not None and t["alive"] and u not in said and r["target"] not in visible.get(r["side"], ()):
                 out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % r["target"]))
+
+    def _gave_up(self, u, old, o_prev, o_now):
+        """The rule that excuses the end of a lock, or None. R-087-09: the target was held unshootable and not closed in on for the checker's own window (STUCK_TICKS; one
+        frame less is counted here because the engine drops the lock on the tick that completes the window, which is the swap frame itself). R-096-08: a guard's target
+        stood so far beyond the guard's radius that no spot inside it reaches it with the unit's attack range (an engaged guard that would leave the radius lets go)."""
+        run = self.stuck.get(u)
+        if run is not None and run[0] == old and run[1] >= STUCK_TICKS - 1:
+            return "R-087-09"
+        post = self.rules.guards.get(u)
+        if post is not None:
+            reach = self.rules.attack_range.get(u, 0.0)
+            if any(math.hypot(o["x"] - post[0], o["y"] - post[1]) - GUARD_RADIUS - GUARD_SLACK > reach for o in (o_prev, o_now)):
+                return "R-096-08"
+        return None
 
     def _acquire(self, frame, u, r, p, tick, out):
         """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
@@ -283,7 +299,7 @@ class _Checker:
         if run is None or run[0] != tgt or dist < run[2] - 1.0:
             run = self.stuck[u] = [tgt, 0, dist, False]
         run[1] += 1
-        if run[1] > STUCK_TICKS and not run[3]:
+        if run[1] > STUCK_TICKS and not run[3] and "R-087-09" in self.on:
             run[3] = True
             out.append(_violation("R-087-09", tick, u, "held target %d unshootable for %d ticks without closing in (%.0f wu away)" % (tgt, run[1], dist)))
 
