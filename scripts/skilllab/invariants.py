@@ -31,6 +31,7 @@ OWN_MOVE = 0.5
 BACKSWING_TICKS = 10
 HEAL_ONE = 0.075
 LEASH_SLACK = 25.0
+PUSH_ALLOWANCE = 2.0         # DRAFT-inv-push-allowance: a collision push explains at most this much of a displacement above the top step (continuity)
 TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
 NEAREST_TOL = 1.0            # DRAFT-inv-nearest-tol: an acquired target within this much of the nearest eligible enemy counts as the nearest (R-087-03)
 RETURN_FIRE_TICKS = 4        # DRAFT-inv-return-fire-ticks: a hit by the target in the frame of the acquisition or the 3 before it is return fire (R-087-06)
@@ -141,7 +142,8 @@ class _Checker:
                 if "R-083-03" in on and u not in hit and r["hp"] - p["hp"] > HEAL_ONE + 1e-6:
                     out.append(_violation("R-083-03", tick, u, "hp rose %.4f in a tick nothing hit it (one Warden heals %.3f)" % (r["hp"] - p["hp"], HEAL_ONE)))
                 step = rules.max_step.get(u)
-                if "continuity" in on and step is not None and moved > step + STEP_SLACK and not self._pushed(frame, u):
+                if ("continuity" in on and step is not None and moved > step + STEP_SLACK
+                        and (moved > step + STEP_SLACK + PUSH_ALLOWANCE or not self._pushed(frame, u))):
                     out.append(_violation("continuity", tick, u, "moved %.2f wu in a tick (at most %.2f + %.1f), layer %d to %d" % (
                         moved, step, STEP_SLACK, p["layer"], r["layer"])))
             if "R-087-03" in on:
