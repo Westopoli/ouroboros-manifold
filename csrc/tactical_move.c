@@ -2829,7 +2829,9 @@ static int om_combat_cover_blocks(const om_world *w, uint32_t p0, uint32_t p1, d
     return 0;
 }
 
-int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
+/* The fire test from a given place: unit p0 as if it stood at (x0, y0) on its own layer, unit p1 where it stands. om_combat_can_shoot is this at p0's
+ * own position; F5 (R-087-09) asks it of candidate firing spots. Body below. See also: om_combat_can_shoot. */
+int om_combat_can_shoot_from(const om_world *w, uint32_t p0, double x0, double y0, uint32_t p1) {
     /* R-098-01: units never block fire, so no unit is consulted between the
      * endpoints. R-098-02: terrain (this module's density cells) and the
      * cover/obstacle discs tactical_mapgen.c records block the line the same
@@ -2838,12 +2840,10 @@ int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
      * strictly between the two units are sampled, at one-wu resolution. */
     om_world *ww = (om_world *)w;
     om_move_state *ms;
-    double x0, y0, dx, dy, dist;
+    double dx, dy, dist;
     int steps, i;
     if (!w) return 0;
     ms = om_ms(ww);
-    x0 = om_unit_position_x(ww, p0);
-    y0 = om_unit_position_y(ww, p0);
     dx = om_unit_position_x(ww, p1) - x0;
     dy = om_unit_position_y(ww, p1) - y0;
     dist = sqrt(dx * dx + dy * dy);
@@ -2868,6 +2868,11 @@ int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
         if ((g.cover_density > 0.0 && !om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN)) || g.obstacle_density > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
     }
     return 1;
+}
+
+int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
+    if (!w) return 0;
+    return om_combat_can_shoot_from(w, p0, om_unit_position_x((om_world *)w, p0), om_unit_position_y((om_world *)w, p0), p1);
 }
 
 void om_command_attack_target_kiting(om_world *w, uint32_t unit, uint32_t target, double retreat_x, double retreat_y) {
