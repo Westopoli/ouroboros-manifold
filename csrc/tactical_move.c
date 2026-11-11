@@ -2715,6 +2715,35 @@ static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
     }
 }
 
+/* F8 (R-004-06, R-004-08): a walker on a slope may change layer at the midline, but its position is its own step each tick. The layer flip (om_move_walker_tick) puts
+ * it among the units of the new layer, which it overlapped without colliding on the old one; the collision pass then resolved the whole overlap in one tick, a jump of
+ * 10 to 20 wu (the I5tL jumps, the I23 flicker). A walker standing on a slope at the start or the end of the tick is brought back along its tick's displacement to the
+ * most its pace allows (om_move_member_pace, and the slope's down multiplier); the rest of the overlap is resolved on the next ticks, a step at a time.
+ * Only with PURSUE_BY_STEERING on (start_x/start_y are the start-of-tick positions). See also: om_move_walker_tick, om_move_collision_pass_internal. */
+static void om_move_slope_clamp(om_world *w, om_move_state *ms, uint32_t period) {
+    const double down = om_tactical_get_param(w, OM_TP_SLOPE_DOWN_MULT);
+    uint32_t id;
+    if (!om_terrain_present(w)) return;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        om_move_unit *mu = &ms->units[id];
+        om_slope sl;
+        double dx, dy, d, bound, eff, nominal;
+        if (!mu->in_use || !ms->grid_in[id] || !om_unit_alive(w, id) || !om_move_is_walker(w, id)) continue;
+        dx = mu->x - ms->start_x[id];
+        dy = mu->y - ms->start_y[id];
+        if (dx == 0.0 && dy == 0.0) continue;
+        if (om_terrain_slope_at(w, mu->x, mu->y, &sl) < 0 && om_terrain_slope_at(w, ms->start_x[id], ms->start_y[id], &sl) < 0) continue;
+        eff = om_unit_effective_speed(w, id);
+        nominal = om_unit_profile_speed(w, om_unit_get_unit_type(w, id));
+        bound = (eff > nominal ? eff : nominal) * (down > 1.0 ? down : 1.0) * (double)period / (double)OM_TACTICAL_TICK_RATE;
+        d = sqrt(dx * dx + dy * dy);
+        if (d <= bound) continue;
+        mu->x = ms->start_x[id] + dx * (bound / d);
+        mu->y = ms->start_y[id] + dy * (bound / d);
+        om_move_grid_update(ms, mu);
+    }
+}
+
 static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick, uint32_t period) {
     uint32_t id;
     om_move_discover(w, ms);
@@ -2743,6 +2772,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     }
     om_move_walker_tick(w);
     om_move_collision_pass_internal(w, ms);
+    if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_slope_clamp(w, ms, period);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_face_pass(w, ms, period);
     om_move_groups_check_arrival(ms);
 }
