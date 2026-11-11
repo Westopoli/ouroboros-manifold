@@ -189,7 +189,7 @@ class Engine:
         self._fast_forget(w)
         for k in [k for k in self._own if k[0] == w.value]:
             del self._own[k]
-        self.order_log.pop(w.value, None)
+        self.__dict__.get("order_log", {}).pop(w.value, None)
         self._lib.om_world_free(w)
 
     @_bumps

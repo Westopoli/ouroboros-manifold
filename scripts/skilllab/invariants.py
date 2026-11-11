@@ -10,9 +10,12 @@ Two layers:
                                                  fight of 12,000 ticks is not re-scanned every tick
   Monitor(engine, world, width, height, sight)  the online wrapper `run.fight` uses: reads the engine after each step, builds the frame, feeds `_Checker`
 
-A violation is {"rule", "tick", "unit", "detail"}. The cell test of R-207-06 is the engine's own `om_navmesh_is_cell_blocked` (the Monitor binds it),
+Round 2 (engine rules, 2026-11-11) adds: R-087-03 acquisitions (nearest seen enemy, cohort turn, return fire), R-093-02 (fire only at the side's visible set of the previous
+frame), R-087-09 only within attack range, continuity with a PUSH_ALLOWANCE, R-096-08 (guard leash) and R-087-10 (spherical range of a shot). `watch` is the entry the lab
+fights use (fight.fight, search.run_search); `Blind` stands in for an engine the checker cannot read. A violation is {"rule", "tick", "unit", "detail"}. The cell test of R-207-06 is the engine's own `om_navmesh_is_cell_blocked` (the Monitor binds it),
 never a Python re-derivation. Every number below is a DRAFT constant, Westley's to change:
   DRAFT-inv-cell-depth 1 wu     DRAFT-inv-push-radius 40 wu     DRAFT-inv-stuck-ticks 20     DRAFT-inv-step-slack 1.3 wu
+and, Round 2: DRAFT-inv-nearest-tol 1 wu  DRAFT-inv-return-fire-ticks 4  DRAFT-inv-push-allowance 2 wu  DRAFT-guard-radius 200 wu  DRAFT-guard-leash-slack 1 wu  DRAFT-f7-slant-slack 1 wu
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
 (R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
@@ -353,7 +356,7 @@ class Monitor:
         self._max_step, self._sensor, self._reach, self._range, self._aoe, cohort = {}, {}, {}, {}, {}, {}
         down = engine.get_param(world, engine.param_id("OM_TP_SLOPE_DOWN_MULT"))
         for u in self._ids:
-            t = engine.unit_type(world, u)
+            t = engine._fast_unit_type(world, u)       # read once per unit and world, shared with firing.py (the lab's read-count budget)
             st = stats.get(t) or stats.setdefault(t, engine.type_stats(world, t))
             self._max_step[u] = st["speed"] * max(1.0, down) / TICK_RATE
             self._sensor[u] = max(st["sensor_radius"], st["attack_range"])   # the leash, om_tac_leash in csrc/unit.c
@@ -422,19 +425,21 @@ class Monitor:
         ordered = e.__dict__.get("order_log", {}).pop(w.value, {})     # {unit id: "guard" | "order"}: ordered since the last frame (those before frame 0 included)
         self._ordered |= set(ordered)
         units = {}
+        see_unit = e._lib.om_unit_can_see
         for u in self._ids:
-            alive = e.unit_alive(w, u)
+            hp = e.unit_hp(w, u)
+            alive = hp > 0                       # hp only falls to 0, and the lab counts om_unit_alive reads (fight._run does the same)
             x, y = e.unit_pos(w, u)
             tgt = e.unit_target(w, u) if alive else 0
             if tgt < 0 or tgt > 0xFFFFFF00:
                 tgt = 0
-            row = {"x": x, "y": y, "layer": max(0, int(e.unit_layer(w, u))), "alive": alive, "hp": e.unit_hp(w, u), "side": self._side[u], "target": tgt}
+            row = {"x": x, "y": y, "layer": max(0, int(e.unit_layer(w, u))), "alive": alive, "hp": hp, "side": self._side[u], "target": tgt}
             token = self._token[u] + (1 if u in self._ordered else 0)
             self._token[u] = token
             row["order"] = token
             p = prev.get(u)
             if alive and p is not None and p["alive"] and p["target"] and tgt and tgt != p["target"]:
-                row["prev_seen"] = bool(e.seen_by_sight(w, self._side[u], [p["target"]]))   # the engine's own test (om_tac_faction_sees): any living unit of the side sees it
+                row["prev_seen"] = any(see_unit(w, o, p["target"]) for o in self._ids if self._side[o] == self._side[u] and prev[o]["alive"])   # the engine's own test (om_tac_faction_sees): any living unit of the side sees it
             if alive and tgt:
                 row["shootable"] = bool(self._can_shoot(w, u, tgt))
             units[u] = row
@@ -470,8 +475,8 @@ class Blind:
     violations = []
     tick = 0
 
-    def __init__(self):
-        self.suspended = {r: "engine not readable by the checker" for r in RULES}
+    def __init__(self, reason="engine not readable by the checker"):
+        self.suspended = {r: reason for r in RULES}
 
     def after_step(self):
         pass
