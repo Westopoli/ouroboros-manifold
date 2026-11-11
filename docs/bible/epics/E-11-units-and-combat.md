@@ -137,6 +137,8 @@ Open flags: none.
 ### S-087 — Every unit thinks the same way
 As a commander, I want every unit on both sides to flinch from what it cannot fight, obey my orders, and otherwise shoot the nearest enemy in range, so that my skill is direction, not babysitting.
 
+Reference model: movement and targeting follow StarCraft 2's rules. Where a rule here is silent, or two readings of it exist, what StarCraft 2 does is the answer; a deliberate difference from it is written as a rule with Westley's words beside it. Westley, 2026-10-20: "starcraft 2 movement mechanics are the reference, when stuck on blocked refer to them and use their rules"; on the engage rules the same day: "We're just copying Starcraft 2 rules here, easy quick-reference"; 2026-11-06: "We're following sc2's movement model"; 2026-11-11: "It should be documented that we're using starcraft 2 rules for movement/targeting."
+
 Direction changed 2026-10-02, rewrite pending: an idle or attack-moving unit engages the nearest enemy within its type's reach, on its own layer or another (E-01 S-164, R-008-04). The rules below are what the game does today, including that acquiring, pursuing and firing use the side's visible set (E-12 R-093-02, Westley 2026-10-02; A185); only the cross-layer reach is pending.
 
 Rules
