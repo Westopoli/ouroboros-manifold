@@ -349,10 +349,9 @@ class Monitor:
         self._enemies = {s: [u for u in self._ids if self._side[u] != s] for s in set(self._side.values())}
         self._cache = {}
         self._terrain = bool(engine._lib.om_terrain_band_at(world, 0.0, 0.0) > 0)   # a world with no terrain reads band 0 everywhere
-        self._order_log = engine.order_log
-        self._order_log.pop(world.value, None)      # orders given before frame 0 are part of frame 0
+        self._posts = {}            # {guard id: (x, y)} where each stood when the lab ordered it to guard; the checker's Rules.guards
         self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach, cohort, self._range,
-                                   engine.guard_posts.setdefault(world.value, {}), heights))
+                                   self._posts, heights))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
         self.tick = 0
@@ -404,7 +403,8 @@ class Monitor:
     def _read(self, tick, fires):
         e, w = self.engine, self.w
         prev = self._frame["units"] if getattr(self, "_frame", None) else {}
-        self._ordered |= self._order_log.pop(w.value, set())
+        ordered = e.__dict__.get("order_log", {}).pop(w.value, {})     # {unit id: "guard" | "order"}: ordered since the last frame (those before frame 0 included)
+        self._ordered |= set(ordered)
         units = {}
         for u in self._ids:
             alive = e.unit_alive(w, u)
@@ -422,6 +422,11 @@ class Monitor:
             if alive and tgt:
                 row["shootable"] = bool(self._can_shoot(w, u, tgt))
             units[u] = row
+        for u, kind in ordered.items():
+            if kind == "guard":
+                self._posts[u] = (prev[u]["x"], prev[u]["y"]) if u in prev else (units[u]["x"], units[u]["y"])    # an order moves nobody: the post is where it stood
+            else:
+                self._posts.pop(u, None)
         self._ordered = set()
         see = self.engine._lib.om_player_can_see          # the side's visible set: what its living units see and what its pings reveal (E-12 R-093-02)
         visible = {s: {e for e in es if units[e]["alive"] and see(w, s, e)} for s, es in self._enemies.items()}

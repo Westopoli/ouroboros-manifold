@@ -88,7 +88,7 @@ class Engine:
         self._px, self._py = ctypes.c_double(), ctypes.c_double()
         self._pbx, self._pby = ctypes.byref(self._px), ctypes.byref(self._py)
         self._own = {}      # (world address, faction) -> unit ids spawned through this wrapper
-        self.order_log, self.guard_posts = {}, {}    # per world address, filled by the order_* methods for the rule checker (see _ordered)
+        self.order_log = {}  # per world address, filled by the order_* methods for the rule checker (see _ordered)
 
     def _bind(self):
         c, V, u32, u64, d, i = (ctypes, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_double,
@@ -190,7 +190,6 @@ class Engine:
         for k in [k for k in self._own if k[0] == w.value]:
             del self._own[k]
         self.order_log.pop(w.value, None)
-        self.guard_posts.pop(w.value, None)
         self._lib.om_world_free(w)
 
     @_bumps
@@ -276,18 +275,13 @@ class Engine:
             if v is not None:
                 self.set_param(w, self.param_id(name), v)
 
-    def _ordered(self, w, unit_ids, guard=False):
-        """The rule checker (scripts/skilllab/invariants.py Monitor) reads these: `order_log` {world address: unit ids given an order since the checker last looked}
-        (R-087-03 forgives a retarget that follows an order), `guard_posts` {world address: {unit id: (x, y) where it stood when ordered to guard}} (R-096-08).
-        A guard order sets a post, any other order clears it."""
-        ids = [int(u) for u in unit_ids]
-        self.order_log.setdefault(w.value, set()).update(ids)
-        posts = self.guard_posts.setdefault(w.value, {})
-        for u in ids:
-            if guard:
-                posts[u] = self.unit_pos(w, u)
-            else:
-                posts.pop(u, None)
+    def _ordered(self, w, unit_ids, kind="order"):
+        """Tell the rule checker (scripts/skilllab/invariants.py Monitor) which units were ordered: `order_log` {world address: {unit id: kind of its last order since the
+        checker looked}}, kind "guard" for order_guard (R-096-08 takes the guard's post from where it stood), "order" otherwise (R-087-03 forgives a retarget that follows one)."""
+        log = self.__dict__.setdefault("order_log", {}).setdefault(getattr(w, "value", w), {})
+        for u in unit_ids:
+            log.pop(int(u), None)
+            log[int(u)] = kind
 
     @_bumps
     def order_attack_move(self, w, unit_ids, x, y):
@@ -308,7 +302,7 @@ class Engine:
 
     @_bumps
     def order_guard(self, w, unit_ids):
-        self._ordered(w, unit_ids, guard=True)
+        self._ordered(w, unit_ids, "guard")
         ids = [int(u) for u in unit_ids]
         rc = self._lib.om_command_guard(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids))
         if rc != 0:
