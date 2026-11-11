@@ -6998,7 +6998,8 @@
         11
       ],
       "blocked": [
-        32
+        32,
+        38
       ],
       "tick": 1100,
       "units": [
@@ -7368,7 +7369,7 @@
         },
         {
           "alive": true,
-          "facing": -0.295,
+          "facing": -0.292,
           "fired": true,
           "hp": 103.8,
           "id": 29,
@@ -7376,8 +7377,8 @@
           "role": "Raider",
           "side": "B",
           "target": 6,
-          "x": 1205.24,
-          "y": 2079.12
+          "x": 1202.5,
+          "y": 2079.28
         },
         {
           "alive": false,
@@ -7407,7 +7408,7 @@
         },
         {
           "alive": true,
-          "facing": -0.492,
+          "facing": -0.501,
           "fired": false,
           "hp": 250.0,
           "id": 32,
@@ -7415,8 +7416,8 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1196.83,
-          "y": 2134.32
+          "x": 1199.82,
+          "y": 2135.68
         },
         {
           "alive": false,
@@ -7485,7 +7486,7 @@
         },
         {
           "alive": true,
-          "facing": -0.295,
+          "facing": -0.3,
           "fired": false,
           "hp": 250.0,
           "id": 38,
@@ -7493,8 +7494,8 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1199.67,
-          "y": 2104.45
+          "x": 1199.03,
+          "y": 2105.69
         },
         {
           "alive": false,
@@ -7633,7 +7634,10 @@
         20,
         9
       ],
-      "blocked": [],
+      "blocked": [
+        32,
+        38
+      ],
       "tick": 1200,
       "units": [
         {
@@ -7703,14 +7707,14 @@
         },
         {
           "alive": true,
-          "facing": 2.844,
+          "facing": 3.388,
           "fired": true,
-          "hp": 295.2,
+          "hp": 301.3,
           "id": 6,
           "layer": 1,
           "role": "Warden",
           "side": "A",
-          "target": 29,
+          "target": 45,
           "x": 1399.33,
           "y": 2020.0
         },
@@ -8002,16 +8006,16 @@
         },
         {
           "alive": true,
-          "facing": -0.298,
-          "fired": true,
+          "facing": -0.292,
+          "fired": false,
           "hp": 103.8,
           "id": 29,
           "layer": 1,
           "role": "Raider",
           "side": "B",
           "target": 6,
-          "x": 1213.5,
-          "y": 2077.05
+          "x": 1202.5,
+          "y": 2079.28
         },
         {
           "alive": false,
@@ -8041,7 +8045,7 @@
         },
         {
           "alive": true,
-          "facing": -0.496,
+          "facing": -0.501,
           "fired": false,
           "hp": 250.0,
           "id": 32,
@@ -8049,8 +8053,8 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1199.06,
-          "y": 2134.46
+          "x": 1199.86,
+          "y": 2135.68
         },
         {
           "alive": false,
@@ -8119,7 +8123,7 @@
         },
         {
           "alive": true,
-          "facing": 0.527,
+          "facing": -0.3,
           "fired": false,
           "hp": 250.0,
           "id": 38,
@@ -8127,8 +8131,8 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1198.78,
-          "y": 2104.46
+          "x": 1199.03,
+          "y": 2105.69
         },
         {
           "alive": false,
@@ -8268,6 +8272,7 @@
         7
       ],
       "blocked": [
+        32,
         38
       ],
       "tick": 1300,
@@ -8339,14 +8344,14 @@
         },
         {
           "alive": true,
-          "facing": 2.844,
+          "facing": 3.137,
           "fired": true,
-          "hp": 219.7,
+          "hp": 268.3,
           "id": 6,
           "layer": 1,
           "role": "Warden",
           "side": "A",
-          "target": 29,
+          "target": 27,
           "x": 1399.33,
           "y": 2020.0
         },
@@ -8614,7 +8619,7 @@
           "alive": true,
           "facing": -0.004,
           "fired": true,
-          "hp": 325.0,
+          "hp": 313.8,
           "id": 27,
           "layer": 1,
           "role": "Interceptor",
@@ -8638,16 +8643,16 @@
         },
         {
           "alive": true,
-          "facing": -0.298,
-          "fired": true,
-          "hp": 85.8,
+          "facing": -0.292,
+          "fired": false,
+          "hp": 103.8,
           "id": 29,
           "layer": 1,
           "role": "Raider",
           "side": "B",
           "target": 6,
-          "x": 1213.5,
-          "y": 2077.05
+          "x": 1202.5,
+          "y": 2079.28
         },
         {
           "alive": false,
@@ -8677,16 +8682,16 @@
         },
         {
           "alive": true,
-          "facing": -0.495,
+          "facing": -0.501,
           "fired": false,
           "hp": 250.0,
           "id": 32,
-          "layer": 1,
+          "layer": 0,
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1197.81,
-          "y": 2134.9
+          "x": 1199.86,
+          "y": 2135.68
         },
         {
           "alive": false,
@@ -8755,16 +8760,16 @@
         },
         {
           "alive": true,
-          "facing": -0.29,
+          "facing": -0.3,
           "fired": false,
           "hp": 250.0,
           "id": 38,
-          "layer": 1,
+          "layer": 0,
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1199.39,
-          "y": 2103.53
+          "x": 1199.03,
+          "y": 2105.69
         },
         {
           "alive": false,
@@ -8904,6 +8909,7 @@
         7
       ],
       "blocked": [
+        32,
         38
       ],
       "tick": 1400,
@@ -8975,14 +8981,14 @@
         },
         {
           "alive": true,
-          "facing": 2.844,
+          "facing": 3.137,
           "fired": true,
-          "hp": 150.2,
+          "hp": 235.3,
           "id": 6,
           "layer": 1,
           "role": "Warden",
           "side": "A",
-          "target": 29,
+          "target": 27,
           "x": 1399.33,
           "y": 2020.0
         },
@@ -9250,7 +9256,7 @@
           "alive": true,
           "facing": -0.004,
           "fired": true,
-          "hp": 119.5,
+          "hp": 84.2,
           "id": 27,
           "layer": 1,
           "role": "Interceptor",
@@ -9274,16 +9280,16 @@
         },
         {
           "alive": true,
-          "facing": -0.298,
-          "fired": true,
-          "hp": 61.8,
+          "facing": -0.292,
+          "fired": false,
+          "hp": 103.8,
           "id": 29,
           "layer": 1,
           "role": "Raider",
           "side": "B",
           "target": 6,
-          "x": 1213.5,
-          "y": 2077.05
+          "x": 1202.5,
+          "y": 2079.28
         },
         {
           "alive": false,
@@ -9313,16 +9319,16 @@
         },
         {
           "alive": true,
-          "facing": -0.499,
+          "facing": -0.501,
           "fired": false,
           "hp": 250.0,
           "id": 32,
-          "layer": 1,
+          "layer": 0,
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1198.68,
-          "y": 2136.39
+          "x": 1199.86,
+          "y": 2135.68
         },
         {
           "alive": false,
@@ -9391,16 +9397,16 @@
         },
         {
           "alive": true,
-          "facing": -0.29,
+          "facing": -0.3,
           "fired": false,
           "hp": 250.0,
           "id": 38,
-          "layer": 1,
+          "layer": 0,
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1199.39,
-          "y": 2103.53
+          "x": 1199.03,
+          "y": 2105.69
         },
         {
           "alive": false,
@@ -9536,10 +9542,13 @@
     },
     {
       "alive": [
-        18,
-        4
+        19,
+        5
       ],
-      "blocked": [],
+      "blocked": [
+        32,
+        38
+      ],
       "tick": 1500,
       "units": [
         {
@@ -9611,7 +9620,7 @@
           "alive": true,
           "facing": 2.993,
           "fired": true,
-          "hp": 109.1,
+          "hp": 218.5,
           "id": 6,
           "layer": 1,
           "role": "Warden",
@@ -9752,7 +9761,7 @@
         },
         {
           "alive": true,
-          "facing": 2.705,
+          "facing": 2.706,
           "fired": true,
           "hp": 500.0,
           "id": 17,
@@ -9778,7 +9787,7 @@
         },
         {
           "alive": true,
-          "facing": -3.248,
+          "facing": -3.251,
           "fired": true,
           "hp": 500.0,
           "id": 19,
@@ -9791,7 +9800,7 @@
         },
         {
           "alive": true,
-          "facing": -3.051,
+          "facing": -3.057,
           "fired": true,
           "hp": 375.0,
           "id": 20,
@@ -9804,7 +9813,7 @@
         },
         {
           "alive": true,
-          "facing": -2.839,
+          "facing": -2.848,
           "fired": true,
           "hp": 500.0,
           "id": 21,
@@ -9816,10 +9825,10 @@
           "y": 2171.8
         },
         {
-          "alive": false,
+          "alive": true,
           "facing": -2.621,
-          "fired": false,
-          "hp": 0.0,
+          "fired": true,
+          "hp": 9.5,
           "id": 22,
           "layer": 1,
           "role": "Warden",
@@ -9907,17 +9916,17 @@
           "y": 2049.53
         },
         {
-          "alive": false,
-          "facing": -0.298,
+          "alive": true,
+          "facing": -0.292,
           "fired": false,
-          "hp": 0.0,
+          "hp": 103.8,
           "id": 29,
           "layer": 1,
           "role": "Raider",
           "side": "B",
           "target": 6,
-          "x": 1213.5,
-          "y": 2077.05
+          "x": 1202.5,
+          "y": 2079.28
         },
         {
           "alive": false,
@@ -9947,16 +9956,16 @@
         },
         {
           "alive": true,
-          "facing": -0.475,
+          "facing": -0.501,
           "fired": false,
           "hp": 250.0,
           "id": 32,
-          "layer": 1,
+          "layer": 0,
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1197.88,
-          "y": 2128.56
+          "x": 1199.86,
+          "y": 2135.68
         },
         {
           "alive": false,
@@ -10025,16 +10034,16 @@
         },
         {
           "alive": true,
-          "facing": 0.248,
-          "fired": true,
+          "facing": -0.3,
+          "fired": false,
           "hp": 250.0,
           "id": 38,
-          "layer": 1,
+          "layer": 0,
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1201.25,
-          "y": 2097.91
+          "x": 1199.03,
+          "y": 2105.69
         },
         {
           "alive": false,
@@ -10079,7 +10088,7 @@
           "alive": true,
           "facing": -0.149,
           "fired": true,
-          "hp": 85.8,
+          "hp": 51.2,
           "id": 42,
           "layer": 1,
           "role": "Interceptor",
@@ -10090,16 +10099,16 @@
         },
         {
           "alive": true,
-          "facing": -0.436,
+          "facing": 0.521,
           "fired": true,
-          "hp": 101.0,
+          "hp": 82.0,
           "id": 43,
           "layer": 1,
           "role": "Vanguard",
           "side": "B",
-          "target": 17,
-          "x": 1226.52,
-          "y": 2119.63
+          "target": 22,
+          "x": 1224.13,
+          "y": 2120.5
         },
         {
           "alive": false,
@@ -10178,14 +10187,14 @@
       "units": [
         {
           "alive": true,
-          "facing": 2.048,
+          "facing": 2.098,
           "fired": true,
           "hp": 277.9,
           "id": 1,
           "layer": 1,
           "role": "Vanguard",
           "side": "A",
-          "target": 38,
+          "target": null,
           "x": 1347.53,
           "y": 1830.5
         },
@@ -10204,7 +10213,7 @@
         },
         {
           "alive": true,
-          "facing": 2.304,
+          "facing": 2.275,
           "fired": true,
           "hp": 467.4,
           "id": 3,
@@ -10217,7 +10226,7 @@
         },
         {
           "alive": true,
-          "facing": 2.442,
+          "facing": 2.404,
           "fired": true,
           "hp": 165.9,
           "id": 4,
@@ -10230,7 +10239,7 @@
         },
         {
           "alive": true,
-          "facing": 2.598,
+          "facing": 2.549,
           "fired": true,
           "hp": 500.0,
           "id": 5,
@@ -10243,9 +10252,9 @@
         },
         {
           "alive": true,
-          "facing": 2.768,
+          "facing": 2.708,
           "fired": true,
-          "hp": 112.6,
+          "hp": 221.9,
           "id": 6,
           "layer": 1,
           "role": "Warden",
@@ -10321,7 +10330,7 @@
         },
         {
           "alive": true,
-          "facing": 2.173,
+          "facing": 2.154,
           "fired": true,
           "hp": 375.0,
           "id": 12,
@@ -10347,7 +10356,7 @@
         },
         {
           "alive": true,
-          "facing": 2.408,
+          "facing": 2.378,
           "fired": true,
           "hp": 375.0,
           "id": 14,
@@ -10360,7 +10369,7 @@
         },
         {
           "alive": true,
-          "facing": 2.54,
+          "facing": 2.501,
           "fired": true,
           "hp": 500.0,
           "id": 15,
@@ -10373,7 +10382,7 @@
         },
         {
           "alive": true,
-          "facing": 2.68,
+          "facing": 2.634,
           "fired": true,
           "hp": 375.0,
           "id": 16,
@@ -10386,9 +10395,9 @@
         },
         {
           "alive": true,
-          "facing": 2.829,
+          "facing": 2.776,
           "fired": true,
-          "hp": 485.9,
+          "hp": 500.0,
           "id": 17,
           "layer": 1,
           "role": "Vanguard",
@@ -10399,7 +10408,7 @@
         },
         {
           "alive": true,
-          "facing": -3.295,
+          "facing": -3.356,
           "fired": true,
           "hp": 375.0,
           "id": 18,
@@ -10412,7 +10421,7 @@
         },
         {
           "alive": true,
-          "facing": -3.12,
+          "facing": -3.19,
           "fired": true,
           "hp": 500.0,
           "id": 19,
@@ -10425,22 +10434,22 @@
         },
         {
           "alive": true,
-          "facing": -3.201,
+          "facing": -3.007,
           "fired": true,
           "hp": 375.0,
           "id": 20,
           "layer": 1,
           "role": "Warden",
           "side": "A",
-          "target": 32,
+          "target": 38,
           "x": 1411.55,
           "y": 2136.15
         },
         {
           "alive": true,
-          "facing": -3.004,
+          "facing": -2.967,
           "fired": true,
-          "hp": 433.9,
+          "hp": 455.4,
           "id": 21,
           "layer": 1,
           "role": "Vanguard",
@@ -10464,20 +10473,20 @@
         },
         {
           "alive": true,
-          "facing": -3.542,
+          "facing": -3.485,
           "fired": true,
           "hp": 500.0,
           "id": 23,
           "layer": 1,
           "role": "Vanguard",
           "side": "A",
-          "target": 38,
+          "target": null,
           "x": 1479.47,
           "y": 1980.0
         },
         {
           "alive": true,
-          "facing": 2.872,
+          "facing": 2.826,
           "fired": true,
           "hp": 375.0,
           "id": 24,
@@ -10542,7 +10551,7 @@
         },
         {
           "alive": false,
-          "facing": -0.298,
+          "facing": -0.292,
           "fired": false,
           "hp": 0.0,
           "id": 29,
@@ -10550,8 +10559,8 @@
           "role": "Raider",
           "side": "B",
           "target": 6,
-          "x": 1213.5,
-          "y": 2077.05
+          "x": 1202.5,
+          "y": 2079.28
         },
         {
           "alive": false,
@@ -10581,16 +10590,16 @@
         },
         {
           "alive": true,
-          "facing": 0.137,
+          "facing": 0.174,
           "fired": true,
-          "hp": 232.8,
+          "hp": 227.5,
           "id": 32,
           "layer": 1,
           "role": "Raider",
           "side": "B",
           "target": 21,
-          "x": 1215.43,
-          "y": 2147.51
+          "x": 1203.2,
+          "y": 2138.53
         },
         {
           "alive": false,
@@ -10659,16 +10668,16 @@
         },
         {
           "alive": true,
-          "facing": 0.401,
+          "facing": 0.326,
           "fired": true,
-          "hp": 10.0,
+          "hp": 134.5,
           "id": 38,
           "layer": 1,
           "role": "Raider",
           "side": "B",
           "target": 21,
-          "x": 1210.74,
-          "y": 2094.12
+          "x": 1208.03,
+          "y": 2108.92
         },
         {
           "alive": false,
@@ -10724,16 +10733,16 @@
         },
         {
           "alive": false,
-          "facing": -0.436,
+          "facing": 0.321,
           "fired": false,
           "hp": 0.0,
           "id": 43,
           "layer": 1,
           "role": "Vanguard",
           "side": "B",
-          "target": 17,
-          "x": 1226.52,
-          "y": 2119.63
+          "target": null,
+          "x": 1226.26,
+          "y": 2121.54
         },
         {
           "alive": false,
@@ -10808,13 +10817,13 @@
         0
       ],
       "blocked": [],
-      "tick": 1663,
+      "tick": 1693,
       "units": [
         {
           "alive": true,
-          "facing": 2.048,
+          "facing": 2.098,
           "fired": false,
-          "hp": 282.6,
+          "hp": 284.9,
           "id": 1,
           "layer": 1,
           "role": "Vanguard",
@@ -10838,9 +10847,9 @@
         },
         {
           "alive": true,
-          "facing": 2.171,
+          "facing": 2.222,
           "fired": true,
-          "hp": 472.1,
+          "hp": 474.3,
           "id": 3,
           "layer": 1,
           "role": "Vanguard",
@@ -10851,9 +10860,9 @@
         },
         {
           "alive": true,
-          "facing": 2.284,
+          "facing": 2.338,
           "fired": true,
-          "hp": 170.6,
+          "hp": 172.9,
           "id": 4,
           "layer": 1,
           "role": "Warden",
@@ -10864,7 +10873,7 @@
         },
         {
           "alive": true,
-          "facing": 2.401,
+          "facing": 2.461,
           "fired": true,
           "hp": 500.0,
           "id": 5,
@@ -10877,9 +10886,9 @@
         },
         {
           "alive": true,
-          "facing": 2.535,
+          "facing": 2.599,
           "fired": true,
-          "hp": 117.3,
+          "hp": 228.9,
           "id": 6,
           "layer": 1,
           "role": "Warden",
@@ -10955,8 +10964,8 @@
         },
         {
           "alive": true,
-          "facing": 2.173,
-          "fired": false,
+          "facing": 2.154,
+          "fired": true,
           "hp": 375.0,
           "id": 12,
           "layer": 1,
@@ -10981,7 +10990,7 @@
         },
         {
           "alive": true,
-          "facing": 2.279,
+          "facing": 2.325,
           "fired": true,
           "hp": 375.0,
           "id": 14,
@@ -10994,8 +11003,8 @@
         },
         {
           "alive": true,
-          "facing": 2.54,
-          "fired": false,
+          "facing": 2.501,
+          "fired": true,
           "hp": 500.0,
           "id": 15,
           "layer": 1,
@@ -11007,7 +11016,7 @@
         },
         {
           "alive": true,
-          "facing": 2.499,
+          "facing": 2.551,
           "fired": true,
           "hp": 375.0,
           "id": 16,
@@ -11020,9 +11029,9 @@
         },
         {
           "alive": true,
-          "facing": 2.625,
+          "facing": 2.678,
           "fired": true,
-          "hp": 490.6,
+          "hp": 500.0,
           "id": 17,
           "layer": 1,
           "role": "Vanguard",
@@ -11033,7 +11042,7 @@
         },
         {
           "alive": true,
-          "facing": -3.521,
+          "facing": -3.469,
           "fired": true,
           "hp": 375.0,
           "id": 18,
@@ -11046,7 +11055,7 @@
         },
         {
           "alive": true,
-          "facing": -3.371,
+          "facing": -3.32,
           "fired": true,
           "hp": 500.0,
           "id": 19,
@@ -11059,7 +11068,7 @@
         },
         {
           "alive": true,
-          "facing": -3.201,
+          "facing": -3.153,
           "fired": true,
           "hp": 375.0,
           "id": 20,
@@ -11072,9 +11081,9 @@
         },
         {
           "alive": true,
-          "facing": -3.004,
+          "facing": -2.967,
           "fired": true,
-          "hp": 414.3,
+          "hp": 413.8,
           "id": 21,
           "layer": 1,
           "role": "Vanguard",
@@ -11098,7 +11107,7 @@
         },
         {
           "alive": true,
-          "facing": -3.542,
+          "facing": -3.485,
           "fired": false,
           "hp": 500.0,
           "id": 23,
@@ -11111,7 +11120,7 @@
         },
         {
           "alive": true,
-          "facing": 2.693,
+          "facing": 2.738,
           "fired": true,
           "hp": 375.0,
           "id": 24,
@@ -11176,7 +11185,7 @@
         },
         {
           "alive": false,
-          "facing": -0.298,
+          "facing": -0.292,
           "fired": false,
           "hp": 0.0,
           "id": 29,
@@ -11184,8 +11193,8 @@
           "role": "Raider",
           "side": "B",
           "target": 6,
-          "x": 1213.5,
-          "y": 2077.05
+          "x": 1202.5,
+          "y": 2079.28
         },
         {
           "alive": false,
@@ -11215,7 +11224,7 @@
         },
         {
           "alive": false,
-          "facing": 0.137,
+          "facing": 0.174,
           "fired": false,
           "hp": 0.0,
           "id": 32,
@@ -11223,8 +11232,8 @@
           "role": "Raider",
           "side": "B",
           "target": 21,
-          "x": 1215.43,
-          "y": 2147.51
+          "x": 1203.2,
+          "y": 2138.53
         },
         {
           "alive": false,
@@ -11293,7 +11302,7 @@
         },
         {
           "alive": false,
-          "facing": 0.401,
+          "facing": 0.326,
           "fired": false,
           "hp": 0.0,
           "id": 38,
@@ -11301,8 +11310,8 @@
           "role": "Raider",
           "side": "B",
           "target": 21,
-          "x": 1210.74,
-          "y": 2094.12
+          "x": 1208.03,
+          "y": 2108.92
         },
         {
           "alive": false,
@@ -11358,16 +11367,16 @@
         },
         {
           "alive": false,
-          "facing": -0.436,
+          "facing": 0.321,
           "fired": false,
           "hp": 0.0,
           "id": 43,
           "layer": 1,
           "role": "Vanguard",
           "side": "B",
-          "target": 17,
-          "x": 1226.52,
-          "y": 2119.63
+          "target": null,
+          "x": 1226.26,
+          "y": 2121.54
         },
         {
           "alive": false,
@@ -11466,7 +11475,7 @@
       18,
       0
     ],
-    "ticks": 1663,
+    "ticks": 1693,
     "winner": "A"
   },
   "schema": "om-fight-2",
