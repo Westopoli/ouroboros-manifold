@@ -70,6 +70,8 @@
 #define OM_GIVEUP_TICKS 20
 /* DRAFT-giveup-exclusion-ticks: a target a unit gave up is not eligible for it for this many base ticks, or until it has a clear line to it (spec F5, Westley's to change). */
 #define OM_GIVEUP_EXCLUSION_TICKS 100
+/* DRAFT-giveup-exclusion-slots: how many given-up targets a unit remembers at once (R-087-09: a dropped target stays ineligible for that unit); the oldest is replaced first. */
+#define OM_GIVEUP_EXCL_SLOTS 4
 /* F6 (R-096-08) DRAFT-guard-radius: how far from its post a guard walks, wu; the attack-move leash of R-087-05, Westley's number to change. */
 #define OM_GUARD_RADIUS 200.0
 #define OM_UNIT_TYPE_COUNT 6
@@ -288,14 +290,15 @@ typedef struct {
     int      kill_logged;
     /* F5 (R-087-09): the give-up run. giveup_target is the target held while it could not be shot, giveup_ticks the base ticks of that run,
      * giveup_ref the distance to it when the run began (a run restarts when the unit closes in on it by more than 1 wu: the F0 checker's own
-     * test). excl_id is the target the unit gave up, ineligible for it until excl_until (base tick) or until the unit has a clear line to it.
+     * test). excl_id[] are the targets the unit gave up (0 = empty slot), each ineligible for it until its excl_until[] (base tick) or until the unit has
+     * a clear line to it; a full list drops the entry that expires first.
      * spot_x/y is the firing spot an idle unit or a guard is walking to (spot_set). All zero at rest; hashed while any is set; not saved
      * (saving them needs OM_SAVE_FORMAT_VERSION and the pipe sidecar bumped, a contract step): a loaded game starts a fresh run. */
     uint32_t giveup_target;
     uint32_t giveup_ticks;
     double   giveup_ref;
-    uint32_t excl_id;
-    uint64_t excl_until;
+    uint32_t excl_id[OM_GIVEUP_EXCL_SLOTS];
+    uint64_t excl_until[OM_GIVEUP_EXCL_SLOTS];
     int      spot_set;
     double   spot_x, spot_y;
 } om_unit_row;
@@ -1720,6 +1723,12 @@ static int om_tac_hostile(const om_unit_row *a, const om_unit_row *b) {
     return a->faction_id >= 0 && b->faction_id >= 0 && a->faction_id != b->faction_id;
 }
 
+/* F5 (R-087-09): whether `id` is a target the unit gave up and may not take yet. */
+static int om_tac_excluded(const om_unit_row *u, uint32_t id) {
+    for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS; i++) if (u->excl_id[i] && u->excl_id[i] == id) return 1;
+    return 0;
+}
+
 static int om_tac_noncombat(const om_unit_row *u) {
     return u->faction_id < 0 || u->unit_type == OM_UT_SUPPLY || u->unit_type == OM_UT_EVACUATION;
 }
@@ -1769,7 +1778,7 @@ static om_unit_row *om_tac_pick_across(om_world *w, om_tac_state *st, const om_u
         om_unit_row *cand = &st->units[id - 1];
         double dx = cand->x - self->x, dy = cand->y - self->y, d2 = dx * dx + dy * dy;
         double frac = cand->max_hp > 0.0 ? cand->hp / cand->max_hp : 1.0;
-        if (cand->hp <= 0.0 || cand->stealth || cand->layer == self->layer || !om_tac_hostile(self, cand) || cand->unit_id == self->excl_id) continue;
+        if (cand->hp <= 0.0 || cand->stealth || cand->layer == self->layer || !om_tac_hostile(self, cand) || om_tac_excluded(self, cand->unit_id)) continue;
         if (!om_tac_in_range(w, self, cand)) continue;
         if (!om_tac_may_act_on(w, self, cand)) continue;
         if (best) {
@@ -1802,7 +1811,7 @@ static om_unit_row *om_tac_nearest_hostile_ordered(om_tac_state *st, const om_un
         om_unit_row *cand = &st->units[ids[j] - 1];
         double dx, dy, d2;
         if (cand->hp <= 0.0 || cand->stealth) continue;
-        if (!om_tac_hostile(self, cand) || cand->layer != self->layer || cand->unit_id == self->excl_id) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer || om_tac_excluded(self, cand->unit_id)) continue;
         dx = cand->x - self->x; dy = cand->y - self->y; d2 = dx * dx + dy * dy;
         if (!best || d2 < best_d2 - OM_TIE_EPSILON) { best = cand; best_d2 = d2; }
     }
@@ -1824,7 +1833,7 @@ static void om_tac_nearest_scan_cell(om_tac_state *st, const om_unit_row *self, 
         double dx = cand->x - self->x, dy = cand->y - self->y, d2;
         if (cand->hp <= 0.0 || cand->stealth) continue;
         if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
-        if (cand->unit_id == self->excl_id) continue;   /* F5: a target the unit gave up (R-087-09) */
+        if (om_tac_excluded(self, cand->unit_id)) continue;   /* F5: a target the unit gave up (R-087-09) */
         if (!om_tac_dist_le(dx, dy, radius)) continue;
         d2 = dx * dx + dy * dy;
         if (!acc->best) {
@@ -1883,7 +1892,7 @@ static om_unit_row *om_tac_most_damaged_hostile(om_world *w, om_tac_state *st, c
         double dx = cand->x - self->x, dy = cand->y - self->y, d2 = dx * dx + dy * dy;
         double frac = cand->max_hp > 0.0 ? cand->hp / cand->max_hp : 1.0;
         if (cand->hp <= 0.0 || cand->stealth) continue;
-        if (!om_tac_hostile(self, cand) || cand->layer != self->layer || cand->unit_id == self->excl_id) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer || om_tac_excluded(self, cand->unit_id)) continue;
         if (!om_tac_may_act_on(w, self, cand)) continue;
         if (!best || frac < best_frac - OM_TIE_EPSILON
             || (frac <= best_frac + OM_TIE_EPSILON && (d2 < best_d2 - OM_TIE_EPSILON
@@ -2064,7 +2073,7 @@ static om_unit_row *om_tac_nearest_visible(om_world *w, om_tac_state *st, const 
         om_unit_row *cand = &st->units[id - 1];
         double dx = cand->x - self->x, dy = cand->y - self->y, d2 = dx * dx + dy * dy;
         if (cand->hp <= 0.0 || cand->stealth) continue;
-        if (!om_tac_hostile(self, cand) || cand->layer != self->layer || cand->unit_id == self->excl_id) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer || om_tac_excluded(self, cand->unit_id)) continue;
         if (best && (d2 > best_d2 || (d2 == best_d2 && id > best->unit_id))) continue;
         if (by_sight ? !om_tac_faction_sees(w, self, cand) : !om_unit_can_see(w, self->unit_id, id)) continue;
         best = cand; best_d2 = d2;
@@ -2101,20 +2110,31 @@ static int om_tac_giveup(om_unit_row *u, const om_unit_row *t, int shootable, ui
     }
     u->giveup_ticks += period;
     if (u->giveup_ticks < OM_GIVEUP_TICKS) return 0;
-    u->excl_id = t->unit_id;
-    u->excl_until = tick + OM_GIVEUP_EXCLUSION_TICKS;
+    {   /* the target's own slot, else an empty one, else the entry that expires first (the oldest) */
+        int slot = -1;
+        for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS && slot < 0; i++) if (u->excl_id[i] == t->unit_id) slot = i;
+        for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS && slot < 0; i++) if (u->excl_id[i] == 0) slot = i;
+        if (slot < 0) {
+            slot = 0;
+            for (int i = 1; i < OM_GIVEUP_EXCL_SLOTS; i++) if (u->excl_until[i] < u->excl_until[slot]) slot = i;
+        }
+        u->excl_id[slot] = t->unit_id;
+        u->excl_until[slot] = tick + OM_GIVEUP_EXCLUSION_TICKS;
+    }
     om_tac_giveup_clear(u);
     return 1;
 }
 
 /* F5: the exclusion ends with its time, with the target, or with a clear line to it. */
 static void om_tac_excl_refresh(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
-    const om_unit_row *ex;
-    if (u->excl_id == 0) return;
-    ex = om_registry_find_in(st, u->excl_id);
-    if (!ex || ex->hp <= 0.0 || tick >= u->excl_until || om_combat_can_shoot(w, u->unit_id, ex->unit_id)) {
-        u->excl_id = 0;
-        u->excl_until = 0;
+    for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS; i++) {
+        const om_unit_row *ex;
+        if (u->excl_id[i] == 0) continue;
+        ex = om_registry_find_in(st, u->excl_id[i]);
+        if (!ex || ex->hp <= 0.0 || tick >= u->excl_until[i] || om_combat_can_shoot(w, u->unit_id, ex->unit_id)) {
+            u->excl_id[i] = 0;
+            u->excl_until[i] = 0;
+        }
     }
 }
 
@@ -2218,7 +2238,7 @@ static om_unit_row *om_tac_guard_seen(om_world *w, om_tac_state *st, const om_un
     while ((id = om_grid_iter_next(&it)) != 0) {
         om_unit_row *cand = &st->units[id - 1];
         double dx = cand->x - u->x, dy = cand->y - u->y, d2 = dx * dx + dy * dy;
-        if (cand->hp <= 0.0 || cand->stealth || !om_tac_hostile(u, cand) || cand->unit_id == u->excl_id) continue;
+        if (cand->hp <= 0.0 || cand->stealth || !om_tac_hostile(u, cand) || om_tac_excluded(u, cand->unit_id)) continue;
         if (best && (d2 > best_d2 || (d2 == best_d2 && id > best->unit_id))) continue;
         if (!om_tac_guard_engageable(w, u, cand, px, py) || !om_tac_may_act_on(w, u, cand)) continue;
         best = cand; best_d2 = d2;
@@ -3475,8 +3495,13 @@ static uint64_t om_unit_ck_row(const om_unit_row *r) {
     W(stealth); W(suppress_auto); W(brace_auto); W(fortify_auto);
     D(last_seen_x); D(last_seen_y); W(fired);
     /* F5: mixed only while a give-up run, an exclusion or a firing spot is live, so a world that never blocks hashes as it did */
-    if (r->giveup_target || r->excl_id || r->spot_set) {
-        W(giveup_target); W(giveup_ticks); D(giveup_ref); W(excl_id); W(excl_until); W(spot_set); D(spot_x); D(spot_y);
+    {
+        int excl_live = 0;
+        for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS; i++) excl_live |= r->excl_id[i] != 0;
+        if (r->giveup_target || excl_live || r->spot_set) {
+            W(giveup_target); W(giveup_ticks); D(giveup_ref); W(spot_set); D(spot_x); D(spot_y);
+            for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS; i++) { W(excl_id[i]); W(excl_until[i]); }
+        }
     }
 #undef W
 #undef D
@@ -3628,7 +3653,7 @@ static void om_unit_sr_row(om_unit_sr *s, om_unit_row *r) {
 #undef I
 #undef D
     /* F5: the give-up run, the exclusion and the firing spot are not saved; a loaded unit starts with none (the row memory is not zeroed here) */
-    r->giveup_target = 0; r->giveup_ticks = 0; r->giveup_ref = 0.0; r->excl_id = 0; r->excl_until = 0; r->spot_set = 0; r->spot_x = 0.0; r->spot_y = 0.0;
+    r->giveup_target = 0; r->giveup_ticks = 0; r->giveup_ref = 0.0; for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS; i++) { r->excl_id[i] = 0; r->excl_until[i] = 0; } r->spot_set = 0; r->spot_x = 0.0; r->spot_y = 0.0;
 }
 
 static void om_unit_sw_state(om_unit_sw *s, const om_tac_state *st) {
