@@ -23,7 +23,7 @@
     20
   ],
   "wins_a": 0,
-  "wins_b": 0,
+  "wins_b": 20,
   "stalls": 0,
   "stall_seeds": [],
   "none_seeds": [],
@@ -32,9 +32,9 @@
   "band": 0.1,
   "band_gap": 25.0,
   "mirror": false,
-  "agree": false,
+  "agree": true,
   "firing_capable": {
-    "A": 5.0,
+    "A": 8.0,
     "B": 8.0
   },
   "median_seed": 10
