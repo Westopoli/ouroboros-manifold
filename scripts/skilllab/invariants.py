@@ -33,6 +33,7 @@ HEAL_ONE = 0.075
 LEASH_SLACK = 25.0
 GUARD_RADIUS = 200.0         # R-096-08 (DRAFT-guard-radius, Westley's): how far from its post a guard may stand
 GUARD_SLACK = 1.0            # DRAFT-guard-leash-slack
+SLANT_SLACK = 1.0            # DRAFT-f7-slant-slack: a shot may exceed the attacker's range by this much (the same tick's push pass moves a unit by under 1 wu)
 PUSH_ALLOWANCE = 2.0         # DRAFT-inv-push-allowance: a collision push explains at most this much of a displacement above the top step (continuity)
 TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
 NEAREST_TOL = 1.0            # DRAFT-inv-nearest-tol: an acquired target within this much of the nearest eligible enemy counts as the nearest (R-087-03)
@@ -45,8 +46,9 @@ class Rules:
     may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch};
     cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one)."""
 
-    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None):
+    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None, layer_heights=None):
         self.guards = guards if guards is not None else {}     # {unit id: (post x, post y)}: R-096-08 judges these units only (the Monitor shares the engine's live dict)
+        self.layer_heights = layer_heights or []              # band floor height of each layer, wu (om_terrain_band_heights); empty: a flat world
         self.cohort = cohort or {}
         self.attack_range = attack_range or {}     # {unit id: wu}: R-087-09 judges a held target only inside it; no entry: always inside
         self.width, self.height = float(width), float(height)
@@ -164,6 +166,8 @@ class _Checker:
                     self._acquire(frame, u, r, p, tick, out)
             if "R-087-09" in on:
                 self._held(units, u, r, tick, out)
+        if "R-087-10" in on:
+            self._slant(frame, tick, out)
         if "R-093-02" in on and prev is not None and "visible" in prev:
             self._sight(frame, prev["visible"], tick, out)
         for a in shooters:
@@ -202,6 +206,20 @@ class _Checker:
             self.lock.pop(u, None)
         if tgt and (not held or held[0] != tgt):
             self.lock[u] = (tgt, held[1] if held else (r["x"], r["y"]))   # the anchor stays through a pause with no target: an attack-mover keeps it while it pursues
+
+    def _slant(self, frame, tick, out):
+        """R-087-10. A shot's distance is spherical: the horizontal distance and the band-height difference of the two layers together. No shot is fired at a target
+        beyond the attacker's attack range by that measure (plus SLANT_SLACK). Both ends are read in the frame the shot was reported in."""
+        units, heights = frame["units"], self.rules.layer_heights
+        for a, b in frame.get("fires", []):
+            reach = self.rules.attack_range.get(a)
+            if reach is None or a not in units or b not in units:
+                continue
+            ra, rb = units[a], units[b]
+            dz = heights[rb["layer"]] - heights[ra["layer"]] if ra["layer"] < len(heights) and rb["layer"] < len(heights) else 0.0
+            slant = math.hypot(self._disp(ra, rb), dz)
+            if slant > reach + SLANT_SLACK:
+                out.append(_violation("R-087-10", tick, a, "fired at %d, %.1f wu away by slant (%.1f horizontal, %.0f in height), range %.0f" % (b, slant, self._disp(ra, rb), dz, reach)))
 
     @staticmethod
     def _sight(frame, visible, tick, out):
