@@ -432,8 +432,39 @@ class Monitor:
         self._frame = self._read(self.tick, self._fires())
         self.violations += self._chk.feed(self._frame)
 
+    def verdict(self):
+        """What a lab result carries (FightResult, SearchResult): the first KEEP violations by (tick, rule, unit), whether any rule was broken, the suspended rules."""
+        return {"violations": sorted(self.violations, key=lambda v: (v["tick"], v["rule"], v["unit"]))[:KEEP], "invalid": bool(self.violations),
+                "suspended": dict(self.suspended)}
+
     def document_keys(self):
         """What a fight document carries (spec F0): `violations` (the first KEEP, by (tick, rule, unit)) and `invalid`, only when a rule was broken."""
         if not self.violations:
             return {}
         return {"violations": sorted(self.violations, key=lambda v: (v["tick"], v["rule"], v["unit"]))[:KEEP], "invalid": True}
+
+
+class Blind:
+    """Stands in for the Monitor on an engine the checker cannot read (a test double with no library): every rule reports suspended, nothing is judged."""
+    violations = []
+    tick = 0
+
+    def __init__(self):
+        self.suspended = {r: "engine not readable by the checker" for r in RULES}
+
+    def after_step(self):
+        pass
+
+    def new_order(self, ids):
+        pass
+
+    verdict = Monitor.verdict
+
+
+def watch(engine, world, width=float("inf"), height=float("inf")):
+    """The checker for a lab fight that is stepped by `engine` on `world` (fight.fight, search.run_search): a Monitor, or a Blind one when the engine has no library to read.
+    Targeting by sight is read from the world (OM_TP_TARGET_BY_SIGHT, 1 by default); a canvas the lab never set is as wide as the world (R-207-07 cannot fire)."""
+    if getattr(engine, "_lib", None) is None or not hasattr(engine, "_own"):
+        return Blind()
+    off = engine.get_param(world, engine.param_id(SWITCH_TARGET_BY_SIGHT)) == 0
+    return Monitor(engine, world, width, height, "off" if off else "on")
