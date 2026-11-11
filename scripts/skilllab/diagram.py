@@ -35,6 +35,8 @@ def read_rows(path) -> list:
             for k, v in raw.items():
                 if v == "":
                     row[k] = None
+                elif k == "invalid" and v == "suspended":
+                    row[k] = None   # not judged (rows.invalid_cell): not 0
                 elif k in _INT:
                     row[k] = int(v)
                 elif k in _FLOAT:
