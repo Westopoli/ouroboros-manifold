@@ -1387,11 +1387,24 @@ static void om_move_cell_at(const om_move_state *ms, double x, double y, int32_t
     if (*cy >= ny && y <= ms->canvas_h) *cy = ny - 1;
 }
 
+/* Whether the walk of om_move_los_walk counts cell (cx, cy) as blocking. With `as_sight` it counts it as fog.c om_fog_grid_blocks does (R-098-02: fire is blocked
+ * exactly as vision is): the cells holding the two ends are exempt (a unit stands in its cell), and so is the ground of a hill, a cell whose terrain
+ * band is above the layer walked (a unit on a hill's layer stands over those cells; the ground itself is om_terrain_sight_blocks' business). */
+static int om_move_los_cell_blocked(const om_world *w, om_move_state *ms, uint32_t layer, int32_t cx, int32_t cy, int as_sight,
+                                    int32_t sx, int32_t sy, int32_t ex, int32_t ey) {
+    if (as_sight) {
+        if ((cx == sx && cy == sy) || (cx == ex && cy == ey)) return 0;
+        if (om_era_kind(w) == 1 && om_terrain_present(w) &&
+            om_terrain_band_at(w, ((double)cx + 0.5) * OM_NAVMESH_CELL_SIZE, ((double)cy + 0.5) * OM_NAVMESH_CELL_SIZE) - 1 > (int)layer) return 0;
+    }
+    return om_move_cell_blocked(w, ms, layer, cx, cy);
+}
+
 /* Exact grid walk (Amanatides and Woo) from (x0, y0) to (x1, y1) through the 100 wu cells: 1 when no cell it
- * touches is blocked on the layer. A line through a cell corner needs both side cells open. */
-static int om_move_los_clear(const om_world *w, om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer) {
+ * touches is blocked on the layer. A line through a cell corner needs both side cells open. `as_sight`: see om_move_los_cell_blocked. */
+static int om_move_los_walk(const om_world *w, om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer, int as_sight) {
     const double inf = OM_MOVE_GRID_FAR;
-    int32_t cx, cy, ex, ey;
+    int32_t cx, cy, ex, ey, c0x, c0y;
     const double dx = x1 - x0, dy = y1 - y0;
     const int32_t sx = dx > 0.0 ? 1 : -1, sy = dy > 0.0 ? 1 : -1;
     double tx, ty;
@@ -1400,19 +1413,24 @@ static int om_move_los_clear(const om_world *w, om_move_state *ms, double x0, do
     int32_t left;
     om_move_cell_at(ms, x0, y0, &cx, &cy);
     om_move_cell_at(ms, x1, y1, &ex, &ey);
+    c0x = cx; c0y = cy;
     tx = dx != 0.0 ? ((double)(sx > 0 ? cx + 1 : cx) * OM_NAVMESH_CELL_SIZE - x0) / dx : inf;
     ty = dy != 0.0 ? ((double)(sy > 0 ? cy + 1 : cy) * OM_NAVMESH_CELL_SIZE - y0) / dy : inf;
     left = (ex > cx ? ex - cx : cx - ex) + (ey > cy ? ey - cy : cy - ey) + 1;
     for (;;) {
-        if (om_move_cell_blocked(w, ms, layer, cx, cy)) return 0;
+        if (om_move_los_cell_blocked(w, ms, layer, cx, cy, as_sight, c0x, c0y, ex, ey)) return 0;
         if ((cx == ex && cy == ey) || left-- <= 0) return 1;
         if (tx < ty) { cx += sx; tx += ddx; }
         else if (ty < tx) { cy += sy; ty += ddy; }
         else {
-            if (om_move_cell_blocked(w, ms, layer, cx + sx, cy) || om_move_cell_blocked(w, ms, layer, cx, cy + sy)) return 0;
+            if (om_move_los_cell_blocked(w, ms, layer, cx + sx, cy, as_sight, c0x, c0y, ex, ey) || om_move_los_cell_blocked(w, ms, layer, cx, cy + sy, as_sight, c0x, c0y, ex, ey)) return 0;
             cx += sx; cy += sy; tx += ddx; ty += ddy;
         }
     }
+}
+
+static int om_move_los_clear(const om_world *w, om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer) {
+    return om_move_los_walk(w, ms, x0, y0, x1, y1, layer, 0);
 }
 
 /* Breadth-first fill from one cell over open cells (4 neighbours, +x -x +y -y), O(cells), ties settled by the
@@ -2852,7 +2870,8 @@ int om_combat_can_shoot_from(const om_world *w, uint32_t p0, double x0, double y
         /* R-098-02: a blocked cell on the lower of the two layers blocks the line, as the cover test does.
          * See also: fog.c, the sight side. */
         if (om_combat_cover_blocks(w, p0, p1, x0, y0, x0 + dx, y0 + dy)) return 0;
-        if (!om_move_los_clear(w, ms, x0, y0, x0 + dx, y0 + dy, (uint32_t)om_move_layer(w, p0) < (uint32_t)om_move_layer(w, p1) ? (uint32_t)om_move_layer(w, p0) : (uint32_t)om_move_layer(w, p1))) return 0;
+        /* R-098-02, I11nl: the walk reads the cells as the sight side does (om_move_los_cell_blocked), so a unit that sees a target can shoot it. */
+        if (!om_move_los_walk(w, ms, x0, y0, x0 + dx, y0 + dy, (uint32_t)om_move_layer(w, p0) < (uint32_t)om_move_layer(w, p1) ? (uint32_t)om_move_layer(w, p0) : (uint32_t)om_move_layer(w, p1), 1)) return 0;
     }
     /* Terrain stage 2: in a ground era the ground between the two stands in the line, the same test as fog.c's. See also: om_fog_can_see_at. */
     if (om_era_kind(w) == 1 && om_terrain_present(w) && om_terrain_sight_blocks(w, om_move_layer(w, p0), x0, y0, om_move_layer(w, p1), x0 + dx, y0 + dy)) return 0;
