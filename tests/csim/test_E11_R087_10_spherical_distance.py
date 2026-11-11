@@ -1,14 +1,22 @@
-# Rule pins: R-087-10, R-087-05, R-084-03, R-098-02, R-190-04
-"""E-11 R-087-10 (engine rule fixes 2026-11-08, F7): every range and radius test is spherical, layer height included.
+# Rule pins: R-087-10, R-087-05, R-005-09, R-084-03, R-098-02, R-190-04
+"""E-11 R-087-10 (engine rule fixes 2026-11-08, F7; narrowed 2026-11-11): weapon reach is spherical, layer height included; sight and the leash are horizontal.
 
-Rule words proved (docs/bible/epics/E-11-units-and-combat.md, as written 2026-11-08):
-  R-087-10  "Given any range or radius test between two units (attack range, sensor radius, leash, area radius), When it is evaluated, Then
-             the distance is spherical: the horizontal distance and the height difference between the two units' layers (E-17 R-190-04 band
-             heights, a unit mid-slope at its slope height) taken together ... The engine measures flat today."
+Rule words proved (docs/bible/epics/E-11-units-and-combat.md, as ruled 2026-11-11, DEC-slant-is-weapon-reach-2026-11-11):
+  R-087-10  "Given a test of whether a weapon reaches (a unit's attack range to its target, an area attack's radius to each unit it would hit), When it is
+             evaluated, Then the distance is spherical: the horizontal distance and the height difference between the two units' layers (E-17 R-190-04 band
+             heights) taken together (Westley, 2026-11-08: "include layer height, range should be spherical"). Sight is not measured this way: a sensor radius
+             stays horizontal, so that high ground sees as far along the ground as low ground and further by its height rules (E-01 R-005-09; Westley on
+             H-088: "vantage sees further"), and the leash (R-087-05) stays the horizontal distance the unit itself has walked from its anchor (...)."
+  E-01 R-005-09  "Given a ground era, an observer and an enemy within the observer's sensor radius, When the enemy is on a lower layer than the observer,
+             Then the enemy is visible (high ground sees down); and When the enemy is on a higher layer, Then it is never visible by passive detection at any
+             distance (...)."
+  R-087-05  "... if the unit itself pursues farther from the anchor than its own type's sensor radius it drops the target and resumes its attack-move or
+             holds (R-096-03). The leash measures the pursuer's own distance from its anchor, never the target's (...)."
   R-098-02  "Given a blocked cell (R-097-01) or a cover obstacle between them on the layers involved, When it fires, Then the shot is blocked
              exactly as vision is": a line that sight sees along and that crosses no obstacle is not blocked for fire (the I11nl case below).
   E-17 R-190-04  "the five band heights are output, and E-01 R-010-01 reads them to draw a unit at its layer's height."
-Spec: docs/northstar/plans/engine-rules-2026-11-08/spec.md "F7". Evidence: docs/reports/2026-11-07-rule-enforcement/appendix-c-invariant-sweep.md I11nl.
+Spec: docs/northstar/plans/engine-rules-2026-11-08/spec.md "F7" (its sensor-radius and leash parts are withdrawn by the ruling above). Evidence:
+docs/reports/2026-11-07-rule-enforcement/appendix-c-invariant-sweep.md I11nl.
 
 Scene S (isolates the metric; the one switch that differs from the shipped configuration is that the units are flyers on an AIR layer, and why):
 a canvas 4000 x 4000, era kind 1 (ground), generated terrain whose heights are replaced by `om_terrain_set_heights` with one flat plane at 7000 cm and
@@ -136,25 +144,47 @@ def test_R_087_10_attack_range_control_a_world_with_no_terrain_measures_flat(lib
     assert hp(lib, w, b) < FULL, "scene broken: no shot landed at 299 wu in a world with no terrain"
 
 
-# ------------------------------------------------------------------ sensor radius
+# ------------------------------------------------------------------ sensor radius: horizontal (R-005-09)
 
-def test_R_087_10_sensor_radius_a_unit_outside_sensor_radius_by_slant_does_not_see(lib, world_factory):
-    """R-087-10 'sensor radius': an observer (sensor 300, range 100) on layer 1 and an enemy on layer 0, 297 wu apart on the ground, 303.0 through the
-    air: it does not see it. Red today: om_unit_can_see is true to 300 flat (measured: true at 280 to 299, false at 301)."""
-    w = _world(lib, world_factory)
-    slant = _premise(lib, w, 297.0, RANGE, inside_flat=True, inside_slant=False)
-    a = spawn(lib, w, SEER, 0, 1000, 2000, 1)
-    b = spawn(lib, w, TARGET, 1, 1297, 2000, 0)
-    assert not lib.om_unit_can_see(w, a, b), "sees an enemy %.1f wu away through the air (sensor radius %.0f)" % (slant, RANGE)
+def _sight_scene(lib, wf, dx):
+    """The shipped configuration (walkers, a hill, ground era, sight on, as `_hill_world` builds it): an observer (SEER, sensor 300, speed 0) on the hill
+    (layer 1, x 950) and an enemy (TARGET) on the flat below (layer 0) `dx` wu east on the same row. Layer 1 stands 60 wu above layer 0 here, so a
+    shot at 297 wu on the ground is 303.0 through the air: outside 300 by slant, inside by the ground."""
+    w = _hill_world(lib, wf)
+    _reg(lib, w, SEER, FULL, 1.0, 1.0, 100.0, 0.0, RANGE, kind=WALKING)
+    a = spawn(lib, w, SEER, 0, 950, 2000, 1)
+    b = spawn(lib, w, TARGET, 1, 950 + dx, 2000, 0)
+    assert (lib.om_unit_get_layer(w, a), lib.om_unit_get_layer(w, b)) == (1, 0), "premise: layers"
+    h = _heights(lib, w)
+    assert h[:2] == [70.0, 130.0], "band heights %s, the scene assumes 70 and 130" % h
+    return w, a, b
 
 
-def test_R_087_10_sensor_radius_control_a_unit_inside_sensor_radius_by_slant_sees(lib, world_factory):
-    """R-087-10 control (green today and after): 290 wu on the ground, 296.2 through the air, inside 300: it sees the enemy."""
-    w = _world(lib, world_factory)
-    _premise(lib, w, 290.0, RANGE, inside_flat=True, inside_slant=True)
-    a = spawn(lib, w, SEER, 0, 1000, 2000, 1)
-    b = spawn(lib, w, TARGET, 1, 1290, 2000, 0)
-    assert lib.om_unit_can_see(w, a, b), "scene broken: no sight at 290 wu"
+def test_R_087_10_sensor_radius_a_unit_on_a_hill_sees_an_enemy_below_at_its_full_horizontal_sensor_radius(lib, world_factory):
+    """R-087-10 'a sensor radius stays horizontal' with E-01 R-005-09 'high ground sees down': an observer (sensor radius 300) on the hill (layer 1) and an
+    enemy on the flat below (layer 0), 297 wu apart on the ground (303.0 through the air, 60 wu of layer height): it sees the enemy. Premises dumped
+    from the built tree (2026-11-11): layers (1, 0); band heights [70.0, 130.0, ...]; om_unit_can_see is true at 250, 280 and 297 wu on the ground by the
+    horizontal rule (measured on the Round 1 tip: true to 299, false at 301). Red when the sensor radius is measured through the air (the Architect's
+    2026-11-08 extension, withdrawn 2026-11-11), which cuts the sight of a unit on a hill to 294.0 wu on the ground."""
+    w, a, b = _sight_scene(lib, world_factory, 297.0)
+    slant = _slant(297.0, _heights(lib, w), 1, 0)
+    assert slant > RANGE > 297.0, "premise: slant %.1f must be over the sensor radius %.0f and the ground distance under it" % (slant, RANGE)
+    assert lib.om_unit_can_see(w, a, b), "does not see an enemy %.1f wu away on the ground below it (sensor radius %.0f; %.1f through the air)" % (297.0, RANGE, slant)
+
+
+def test_R_087_10_sensor_radius_control_a_unit_on_a_hill_sees_an_enemy_below_well_inside_the_radius(lib, world_factory):
+    """R-087-10 control (green today and after): the same pair 250 wu apart on the ground (257.0 through the air, inside 300 either way): it sees the
+    enemy. Proves the scene sees at all, so the test above is red for the metric and not for a blind observer."""
+    w, a, b = _sight_scene(lib, world_factory, 250.0)
+    assert lib.om_unit_can_see(w, a, b), "scene broken: no sight at 250 wu"
+
+
+def test_R_087_10_sensor_radius_control_a_unit_on_a_hill_does_not_see_an_enemy_below_beyond_the_horizontal_radius(lib, world_factory):
+    """R-087-10 / R-005-09 control (green today and after): the same pair 303 wu apart on the ground, beyond the sensor radius 300 whatever the layers:
+    it does not see the enemy ('an enemy within the observer's sensor radius'). Proves the radius still bounds sight, so the test above is not red
+    for a metric that sees to any distance."""
+    w, a, b = _sight_scene(lib, world_factory, 303.0)
+    assert not lib.om_unit_can_see(w, a, b), "sees an enemy 303 wu away on the ground, beyond its sensor radius %.0f" % RANGE
 
 
 # ------------------------------------------------------------------ area radius
@@ -220,11 +250,12 @@ def _leash_world(lib, wf):
     return w
 
 
-def test_R_087_10_leash_a_pursuer_drops_its_target_at_the_spherical_distance_from_its_anchor(lib, world_factory):
-    """R-087-10 'leash' (R-087-05 'the leash measures the pursuer's own distance from its anchor'): P anchors on the plateau (layer 1, 170 wu) and chases
-    a fleeing enemy down onto the low plane (layer 0, 70 wu): 100 wu lower. With a leash of 310 the target must be dropped once sqrt(h^2 + 100^2) > 310,
-    h = 293.4 wu of ground distance, so P's ground distance from the anchor on the tick before the drop is at most 293.4 + one step (5.5) = 299. Red today:
-    the leash is flat, P chases to 310 + (measured on the built tree: drops at 310 to 315)."""
+def test_R_087_10_leash_a_pursuer_drops_its_target_at_the_horizontal_distance_from_its_anchor_whatever_the_layers(lib, world_factory):
+    """R-087-10 'the leash (R-087-05) stays the horizontal distance the unit itself has walked from its anchor' and R-087-05 'the leash measures the pursuer's
+    own distance from its anchor': P anchors on the plateau (layer 1, 170 wu) and chases a fleeing enemy down onto the low plane (layer 0, 70 wu): 100 wu
+    lower. With a leash of 310 (its sensor radius) the target is dropped once the ground distance from the anchor passes 310, within one step (5.5 wu)
+    of it: not at the 293.4 wu that a leash through the air would give. Premises dumped from the built tree (2026-11-11): band heights [70.0, 170.0, ...];
+    on a flat plane (the control below) the same chase drops at 310 to 315. Red when the leash is measured through the air."""
     w = _leash_world(lib, world_factory)
     h = _heights(lib, w)
     assert h[:2] == [70.0, 170.0], "band heights %s, the scene assumes 70 and 170" % h
@@ -245,8 +276,8 @@ def test_R_087_10_leash_a_pursuer_drops_its_target_at_the_spherical_distance_fro
             break
     assert held, "scene broken: the pursuer never took the target"
     assert drop_h is not None, "never dropped the target in 400 ticks (leash %.0f)" % LEASH
-    bound = math.sqrt(LEASH ** 2 - DZ_LEASH ** 2) + 6.0
-    assert drop_h <= bound, "dropped at %.1f wu of ground distance from its anchor; the spherical leash breaks at %.1f (flat: %.0f)" % (drop_h, bound - 6.0, LEASH)
+    sph = math.sqrt(LEASH ** 2 - DZ_LEASH ** 2)
+    assert LEASH - 6.0 <= drop_h <= LEASH + 6.0, "dropped at %.1f wu of ground distance from its anchor; the horizontal leash breaks at %.0f (through the air it would break at %.1f)" % (drop_h, LEASH, sph)
 
 
 def test_R_087_10_leash_control_the_target_is_held_to_the_flat_limit_on_one_layer(lib, world_factory):
