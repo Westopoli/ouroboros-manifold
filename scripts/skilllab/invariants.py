@@ -42,8 +42,9 @@ class Rules:
     may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch};
     cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one)."""
 
-    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None):
+    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None):
         self.cohort = cohort or {}
+        self.attack_range = attack_range or {}     # {unit id: wu}: R-087-09 judges a held target only inside it; no entry: always inside
         self.width, self.height = float(width), float(height)
         self.reach = reach or {}      # {unit id: (layers up, layers down)}: a locked target that moves beyond it is dropped by the engine (R-164-02), not swapped
         self.blocked_cell = blocked_cell
@@ -242,6 +243,10 @@ class _Checker:
             self.stuck.pop(u, None)
             return
         dist = math.hypot(t["x"] - r["x"], t["y"] - r["y"])
+        reach = self.rules.attack_range.get(u)
+        if reach is not None and dist > reach:
+            self.stuck.pop(u, None)          # R-087-09 is about a target within attack range; the 20 ticks are consecutive in-range ticks
+            return
         run = self.stuck.get(u)
         if run is None or run[0] != tgt or dist < run[2] - 1.0:
             run = self.stuck[u] = [tgt, 0, dist, False]
