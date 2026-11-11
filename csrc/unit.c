@@ -66,6 +66,10 @@
  * nearest hands the choice back to the ordered reference scan. */
 #define OM_TIE_SCAN_WINDOW (4.0 * OM_TIE_EPSILON)
 #define OM_MAX_CUSTOM_TYPES 64
+/* F5 (R-087-09, Westley 2026-10-07: "a unit gives up ... if it can't find a firing spot within 1 second"): the run, in base ticks. */
+#define OM_GIVEUP_TICKS 20
+/* DRAFT-giveup-exclusion-ticks: a target a unit gave up is not eligible for it for this many base ticks, or until it has a clear line to it (spec F5, Westley's to change). */
+#define OM_GIVEUP_EXCLUSION_TICKS 100
 #define OM_UNIT_TYPE_COUNT 6
 
 #define OM_UT_RAIDER 0
@@ -279,6 +283,18 @@ typedef struct {
     uint32_t tier;
     uint64_t fired_tick;
     int      kill_logged;
+    /* F5 (R-087-09): the give-up run. giveup_target is the target held while it could not be shot, giveup_ticks the base ticks of that run,
+     * giveup_ref the distance to it when the run began (a run restarts when the unit closes in on it by more than 1 wu: the F0 checker's own
+     * test). excl_id is the target the unit gave up, ineligible for it until excl_until (base tick) or until the unit has a clear line to it.
+     * spot_x/y is the firing spot an idle unit or a guard is walking to (spot_set). All zero at rest; hashed while any is set; not saved
+     * (saving them needs OM_SAVE_FORMAT_VERSION and the pipe sidecar bumped, a contract step): a loaded game starts a fresh run. */
+    uint32_t giveup_target;
+    uint32_t giveup_ticks;
+    double   giveup_ref;
+    uint32_t excl_id;
+    uint64_t excl_until;
+    int      spot_set;
+    double   spot_x, spot_y;
 } om_unit_row;
 
 /* VG K-a tactical event ring: fire, ability and kill events of one om_tactical_step call. */
@@ -1750,7 +1766,7 @@ static om_unit_row *om_tac_pick_across(om_world *w, om_tac_state *st, const om_u
         om_unit_row *cand = &st->units[id - 1];
         double dx = cand->x - self->x, dy = cand->y - self->y, d2 = dx * dx + dy * dy;
         double frac = cand->max_hp > 0.0 ? cand->hp / cand->max_hp : 1.0;
-        if (cand->hp <= 0.0 || cand->stealth || cand->layer == self->layer || !om_tac_hostile(self, cand)) continue;
+        if (cand->hp <= 0.0 || cand->stealth || cand->layer == self->layer || !om_tac_hostile(self, cand) || cand->unit_id == self->excl_id) continue;
         if (!om_tac_in_range(w, self, cand)) continue;
         if (!om_tac_may_act_on(w, self, cand)) continue;
         if (best) {
@@ -1783,7 +1799,7 @@ static om_unit_row *om_tac_nearest_hostile_ordered(om_tac_state *st, const om_un
         om_unit_row *cand = &st->units[ids[j] - 1];
         double dx, dy, d2;
         if (cand->hp <= 0.0 || cand->stealth) continue;
-        if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer || cand->unit_id == self->excl_id) continue;
         dx = cand->x - self->x; dy = cand->y - self->y; d2 = dx * dx + dy * dy;
         if (!best || d2 < best_d2 - OM_TIE_EPSILON) { best = cand; best_d2 = d2; }
     }
@@ -1805,6 +1821,7 @@ static void om_tac_nearest_scan_cell(om_tac_state *st, const om_unit_row *self, 
         double dx = cand->x - self->x, dy = cand->y - self->y, d2;
         if (cand->hp <= 0.0 || cand->stealth) continue;
         if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        if (cand->unit_id == self->excl_id) continue;   /* F5: a target the unit gave up (R-087-09) */
         if (!om_tac_dist_le(dx, dy, radius)) continue;
         d2 = dx * dx + dy * dy;
         if (!acc->best) {
@@ -1863,7 +1880,7 @@ static om_unit_row *om_tac_most_damaged_hostile(om_world *w, om_tac_state *st, c
         double dx = cand->x - self->x, dy = cand->y - self->y, d2 = dx * dx + dy * dy;
         double frac = cand->max_hp > 0.0 ? cand->hp / cand->max_hp : 1.0;
         if (cand->hp <= 0.0 || cand->stealth) continue;
-        if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer || cand->unit_id == self->excl_id) continue;
         if (!om_tac_may_act_on(w, self, cand)) continue;
         if (!best || frac < best_frac - OM_TIE_EPSILON
             || (frac <= best_frac + OM_TIE_EPSILON && (d2 < best_d2 - OM_TIE_EPSILON
@@ -2035,7 +2052,7 @@ static om_unit_row *om_tac_nearest_visible(om_world *w, om_tac_state *st, const 
         om_unit_row *cand = &st->units[id - 1];
         double dx = cand->x - self->x, dy = cand->y - self->y, d2 = dx * dx + dy * dy;
         if (cand->hp <= 0.0 || cand->stealth) continue;
-        if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer || cand->unit_id == self->excl_id) continue;
         if (best && (d2 > best_d2 || (d2 == best_d2 && id > best->unit_id))) continue;
         if (by_sight ? !om_tac_faction_sees(w, self, cand) : !om_unit_can_see(w, self->unit_id, id)) continue;
         best = cand; best_d2 = d2;
@@ -3241,6 +3258,10 @@ static uint64_t om_unit_ck_row(const om_unit_row *r) {
     W(flinching); D(flinch_x); D(flinch_y); W(last_attacker); W(fire_pending);
     W(stealth); W(suppress_auto); W(brace_auto); W(fortify_auto);
     D(last_seen_x); D(last_seen_y); W(fired);
+    /* F5: mixed only while a give-up run, an exclusion or a firing spot is live, so a world that never blocks hashes as it did */
+    if (r->giveup_target || r->excl_id || r->spot_set) {
+        W(giveup_target); W(giveup_ticks); D(giveup_ref); W(excl_id); W(excl_until); W(spot_set); D(spot_x); D(spot_y);
+    }
 #undef W
 #undef D
     return h;
