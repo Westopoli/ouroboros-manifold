@@ -98,6 +98,7 @@ class _Checker:
         self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09), a target inside attack range: the violation check
         self.unshot = {}             # the same run for a target at any distance: the engine's give-up window (csrc/unit.c om_tac_giveup), which the swap excuse reads
         self.gave_up = {}            # (unit, target) -> tick of the give-up the checker excused: the target is not eligible for that unit for GIVEUP_EXCLUSION_TICKS (R-087-09)
+        self.unseen = {}             # unit -> (target, consecutive frames it was held while its side's previous visible set lacked it) (R-093-02)
         self.breached = set()        # guards outside their radius now (R-096-08: one violation per breach, not one per frame)
         self.hit_hist = collections.deque(maxlen=RETURN_FIRE_TICKS)   # the (attacker, victim) pairs of the last frames, this one included (R-087-06)
 
@@ -248,19 +249,28 @@ class _Checker:
             if slant > reach + SLANT_SLACK:
                 out.append(_violation("R-087-10", tick, a, "fired at %d, %.1f wu away by slant (%.1f horizontal, %.0f in height), range %.0f" % (b, slant, self._disp(ra, rb), dz, reach)))
 
-    @staticmethod
-    def _sight(frame, visible, tick, out):
+    def _sight(self, frame, visible, tick, out):
         """R-093-02. A unit that fires at, or holds, a living target has it in its side's visible set of the previous frame (the state before the step that decided
-        it; a shot that kills the target takes it out of the set of its own frame). One violation per unit and frame."""
-        units, said = frame["units"], set()
+        it; a shot that kills the target takes it out of the set of its own frame). One violation per unit and frame. The engine validates a lock against sight at the start of
+        its tick and drops an unseen target on the next one, so a unit that already held the target in the previous frame is excused the first frame in which the previous
+        frame's set lacks it; an acquisition of an unseen target, a shot at one, and a second such frame are violations at once."""
+        units, said, prev = frame["units"], set(), self.prev["units"]
         for a, b in frame.get("fires", []):
             if a in units and b not in visible.get(units[a]["side"], ()):
                 said.add(a)
                 out.append(_violation("R-093-02", tick, a, "fired at %d, which its side did not see before the step" % b))
         for u, r in units.items():
-            t = units.get(r["target"]) if r["alive"] and r["target"] else None
-            if t is not None and t["alive"] and u not in said and r["target"] not in visible.get(r["side"], ()):
-                out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % r["target"]))
+            tgt = r["target"] if r["alive"] else 0
+            t = units.get(tgt) if tgt else None
+            if t is None or not t["alive"] or tgt in visible.get(r["side"], ()):
+                self.unseen.pop(u, None)
+                continue
+            run = self.unseen.get(u)
+            n = run[1] + 1 if run is not None and run[0] == tgt else 1
+            self.unseen[u] = (tgt, n)
+            held_before = u in prev and prev[u]["alive"] and prev[u]["target"] == tgt
+            if u not in said and not (held_before and n == 1):
+                out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % tgt))
 
     def _gave_up(self, u, old, p, o_prev):
         """The rule that excuses the end of a lock, or None. R-087-09: the target was held unshootable and not closed in on for the engine's window (STUCK_TICKS, inside attack range
