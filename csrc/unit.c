@@ -2672,11 +2672,13 @@ static void om_tactical_ai_tick(om_world *w, om_tac_state *st) {
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use || u->hp <= 0.0) continue;
-        if (u->target_id == 0 && om_tac_pursuing(w, u)) {
+        if (u->target_id == 0 && !u->flinching && om_tac_pursuing(w, u)) {
             /* arrival at the attacker's place ends the pursuit too. Only while the unit holds no target: a unit that
              * halted to fire at, or has just been sent after, a locked target has no route, which is not arrival, and
              * ending the pursuit here cleared a live, seen lock (R-087-03, R-087-08). See also: om_tac_unit_ai, which
-             * ends the pursuit itself once the target is gone. */
+             * ends the pursuit itself once the target is gone. Not while the unit is in its move away from unseen fire
+             * (flinching): the walk back this orders cancels the step away exactly (R-087-01); om_tac_unit_ai ends the
+             * pursuit (kind 2) or holds the unit (kind 3) when the move away ends. */
             double px, py;
             if (!om_unit_get_destination(w, u->unit_id, &px, &py) || om_tac_dist_le(px - u->x, py - u->y, OM_TIE_EPSILON)) {
                 om_tac_end_pursuit(w, u);
