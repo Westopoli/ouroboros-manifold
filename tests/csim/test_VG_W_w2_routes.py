@@ -824,11 +824,15 @@ def test_N3_a_walker_that_arrived_saves_and_hashes_no_route(lib, world_factory):
     plan_valid = 0 or has_dest = 0 event (arrival, relocation, terrain guard, transit) the saved and hashed state carries
     route_n 0 and route_i 0. Event here: the arrival. One walker is ordered to the sixth point of its own planned route (a
     reachable cell, about 550 wu away) and stepped until it stops; a second walker keeps walking the long route (the control).
-    Expected green on the build: the arrival branch clears the route."""
+    Expected green on the build: the arrival branch clears the route.
+    Test-defect (engine rules Round 4, R-097-10): the second walker used to start one spacing to the east of the first and walk
+    through the spot where the first one stopped; an idle unit now steps aside for a walker of its own side, so the first one was
+    pushed 63 wu off its goal at tick 500 (premise 'the walker arrived' false). The second walker now starts one spacing AHEAD on
+    the route (same x, y + 40) and is gone when the first one stops: the first stands exactly on its goal at tick 500."""
     _bind(lib)
     w = w1._world(lib, world_factory, w1.WALK_SEED)
     a = lib.om_unit_spawn(w, w1.VANGUARD, 0, w1.WALK_ORIGIN[0], w1.WALK_ORIGIN[1], w1.WALK_LAYER)
-    b = lib.om_unit_spawn(w, w1.VANGUARD, 0, w1.WALK_ORIGIN[0] + w1.WALK_SPACING, w1.WALK_ORIGIN[1], w1.WALK_LAYER)
+    b = lib.om_unit_spawn(w, w1.VANGUARD, 0, w1.WALK_ORIGIN[0], w1.WALK_ORIGIN[1] + w1.WALK_SPACING, w1.WALK_LAYER)   # one spacing AHEAD of a on the route
     assert a and b
     n, pts = _plan(lib, w, a, w1.WALK_GOAL)
     near = pts[6]
@@ -850,10 +854,13 @@ def test_N3_a_walker_stopped_by_an_order_saves_and_hashes_no_route(lib, world_fa
     route_n 0 and route_i 0. Event here: om_unit_clear_orders (csrc/tactical_move.c:3039, which om_command_guard calls) on one of
     two walkers 30 ticks into a 317-point walk; one step later the stopped walker is still where it stopped (premise: it has no
     order) and must hold no route; the other walker keeps its stored route (control). Red if the stop leaves the stale route_n
-    of the order it ended."""
+    of the order it ended.
+    Test-defect (engine rules Round 4, R-097-10): the walker stopped was the west one of the pair and the other walked through
+    its spot, so an idle unit stepping aside moved it 2.6 wu on the next step (premise 'it has no order' false). The east one is
+    stopped now; the other walks away from it. Premise measured: it is where it was one step later."""
     _bind(lib)
     w, ids = _small_walker_world(lib, world_factory, 30, n=2)
-    a, b = ids
+    b, a = ids      # the stopped walker is the EAST one: the other walks away from it (R-097-10: an idle unit steps aside for a walker of its own side)
     before = _route_read(lib, w, a)
     print("N3 premise: walker %d route_n %d route_i %d before the stop" % (a, before[0], before[1]))
     assert before[0] > 2, "premise: the walk stores no route"
