@@ -51,7 +51,9 @@ class Rules:
     may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch};
     cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one)."""
 
-    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None, layer_heights=None):
+    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None, layer_heights=None,
+                 range_mult=None):
+        self.range_mult = range_mult or (lambda la, lb: 1.0)   # (shooter layer, target layer) -> the reach table's range multiplier (OM_TP_RANGE_UP_n / DOWN_n); 1.0 on one layer
         self.guards = guards if guards is not None else {}     # {unit id: (post x, post y)}: R-096-08 judges these units only (the Monitor shares the engine's live dict)
         self.layer_heights = layer_heights or []              # band floor height of each layer, wu (om_terrain_band_heights); empty: a flat world
         self.cohort = cohort or {}
@@ -217,7 +219,7 @@ class _Checker:
             out_of_reach = reach is not None and any(not self._in_reach(reach, a["layer"], o["layer"]) for a, o in ((p, o_prev), (r, o_now)) if o)
             if (o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not out_of_reach
                     and not (leash is not None and walked > leash - LEASH_SLACK)):
-                why = self._gave_up(u, old, o_prev, o_now)
+                why = self._gave_up(u, old, p, o_prev)
                 if why is None:
                     out.append(_violation("R-087-03", tick, u, "target %d -> %d while %d was alive and seen" % (old, tgt, old)))
         if p is not None and p.get("order") != r.get("order"):
@@ -254,19 +256,27 @@ class _Checker:
             if t is not None and t["alive"] and u not in said and r["target"] not in visible.get(r["side"], ()):
                 out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % r["target"]))
 
-    def _gave_up(self, u, old, o_prev, o_now):
+    def _gave_up(self, u, old, p, o_prev):
         """The rule that excuses the end of a lock, or None. R-087-09: the target was held unshootable and not closed in on for the checker's own window (STUCK_TICKS; one
         frame less is counted here because the engine drops the lock on the tick that completes the window, which is the swap frame itself). R-096-08: a guard's target
-        stood so far beyond the guard's radius that no spot inside it reaches it with the unit's attack range (an engaged guard that would leave the radius lets go)."""
+        stood so far from its post (by slant, `_beyond_post`) that no spot inside the radius reaches it with the unit's attack range (an engaged guard that would leave the radius lets go)."""
         run = self.stuck.get(u)
         if run is not None and run[0] == old and run[1] >= STUCK_TICKS - 1:
             return "R-087-09"
         post = self.rules.guards.get(u)
-        if post is not None:
-            reach = self.rules.attack_range.get(u, 0.0)
-            if any(math.hypot(o["x"] - post[0], o["y"] - post[1]) - GUARD_RADIUS - GUARD_SLACK > reach for o in (o_prev, o_now)):
-                return "R-096-08"
+        if post is not None and self._beyond_post(u, p, post, o_prev):
+            return "R-096-08"
         return None
+
+    def _beyond_post(self, u, p, post, o_prev):
+        """R-096-08 (csrc/unit.c om_tac_guard_engageable): the engine drops a guard's target when it is out of the guard's range and the SLANT distance from the post to the target (horizontal
+        distance and the layers' height difference) exceeds GUARD_RADIUS plus the guard's attack range times the layer-offset multiplier. Exact, no slack; judged on the state before the
+        step, the previous frame (the guard's layer and the target's layer in it)."""
+        heights = self.rules.layer_heights
+        la, lb = p["layer"], o_prev["layer"]
+        dz = heights[lb] - heights[la] if la < len(heights) and lb < len(heights) else 0.0
+        limit = GUARD_RADIUS + self.rules.attack_range.get(u, 0.0) * self.rules.range_mult(la, lb)
+        return math.hypot(math.hypot(o_prev["x"] - post[0], o_prev["y"] - post[1]), dz) > limit
 
     def _acquire(self, frame, u, r, p, tick, out):
         """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
@@ -379,12 +389,15 @@ class Monitor:
             cohort[u] = lib.om_unit_targeting_cohort(world, u)
         buf = (ctypes.c_double * 8)()
         heights = list(buf)[:lib.om_terrain_band_heights(world, buf, 8)]
+        up = [1.0] + [engine.get_param(world, engine.param_id("OM_TP_RANGE_UP_%d" % n)) for n in range(1, 5)]       # csrc/unit.c om_tac_offset_mult, OM_REACH_MAX_OFFSET 4
+        dn = [1.0] + [engine.get_param(world, engine.param_id("OM_TP_RANGE_DOWN_%d" % n)) for n in range(1, 5)]
+        self._range_mult = lambda la, lb: 1.0 if la == lb else ((up if lb > la else dn)[abs(lb - la)] if abs(lb - la) <= 4 else 1.0)
         self._enemies = {s: [u for u in self._ids if self._side[u] != s] for s in set(self._side.values())}
         self._cache = {}
         self._terrain = bool(engine._lib.om_terrain_band_at(world, 0.0, 0.0) > 0)   # a world with no terrain reads band 0 everywhere
         self._posts = {}            # {guard id: (x, y)} where each stood when the lab ordered it to guard; the checker's Rules.guards
         self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach, cohort, self._range,
-                                   self._posts, heights))
+                                   self._posts, heights, self._range_mult))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
         self.tick = 0
