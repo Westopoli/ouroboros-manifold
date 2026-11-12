@@ -24,6 +24,7 @@ import pytest
 from conftest import OMFeature
 
 RAIDER, INTERCEPTOR, VANGUARD, WARDEN, BOMBARD, BASTION = 0, 1, 2, 3, 4, 5
+SUPPLY = 6  # never fires: an idle ENEMY of the mover that stays idle (R-097-10: only an enemy idle unit takes 0 from a mover)
 FRIEND, ENEMY = 0, 1
 POS_TOL = 0.05
 COLLISION_DIAMETER = 30.0  # 2 x radius 15
@@ -70,11 +71,14 @@ def test_R_097_05_two_moving_units_split_the_push_to_30_apart(lib, tw):
 
 
 def test_R_097_10_stationary_unit_takes_no_push_mover_takes_all(lib, tw):
-    """R-097-10 (one stationary): a unit with no move target takes 0 and the mover takes the full displacement.
-    M (id 1, the lower id so it starts the pair check) at (100,0) goes -x, 7.5 wu to (92.5,0), 17.5 from the idle
-    S at (110,0); it is pushed back to 30 from S, i.e. to (80,0), and S has not moved at all."""
+    """R-097-10 (one stationary): "... Then it moves 0 and the other takes the full displacement, except that an idle unit (no move target, not engaged) takes the full displacement from a mover of its own side and
+    none from an enemy mover, which takes all of it". A unit with no move target takes 0 from an ENEMY mover, which takes the full displacement.
+    M (id 1, the lower id so it starts the pair check) at (100,0) goes -x, 7.5 wu to (92.5,0), 17.5 from the idle ENEMY
+    S (a Supply, which never fires) at (110,0); it is pushed back to 30 from S, i.e. to (80,0), and S has not moved at all.
+    Test-defect (engine rules round 4, T10): S was a unit of M's own side, the reading R-097-10's rewrite replaced (an idle own unit now takes the push); the own-side twin is
+    tests/csim/test_E13_R097_10_idle_own_units_yield.py."""
     m = lib.om_unit_spawn(tw, RAIDER, FRIEND, 100.0, 0.0, 0)
-    s = lib.om_unit_spawn(tw, RAIDER, FRIEND, 110.0, 0.0, 0)
+    s = lib.om_unit_spawn(tw, SUPPLY, ENEMY, 110.0, 0.0, 0)
     lib.om_command_move(tw, m, -1000.0, 0.0)
     lib.om_tactical_step(tw)
     assert lib.om_unit_get_pos(tw, s) == (110.0, 0.0), "a stationary unit was pushed"
@@ -203,11 +207,13 @@ def test_P3_clamp_positive_control_inside_the_canvas_is_untouched(lib, tw):
 
 def test_P3_collision_push_is_clamped_to_the_canvas(lib, tw):
     """P3 (Python _resolve_collisions, clamps new_ax/new_bx to the map): a push never carries a unit off the
-    map. Idle S at (510,15); M at (500,3) goes +x to (507.5,3), 12.3 from S, and is pushed along the line from S,
-    mostly toward -y, which is off the map: it is clamped to y = 0 (without the clamp it ends near y = -14)."""
+    map. Idle ENEMY S (a Supply) at (510,15); M at (500,3) goes +x to (507.5,3), 12.3 from S, and is pushed along the line from S,
+    mostly toward -y, which is off the map: it is clamped to y = 0 (without the clamp it ends near y = -14).
+    Test-defect (engine rules round 4, T10): S was a unit of M's own side; R-097-10 now gives the push to an idle own unit, so the mover would not be pushed at all. An enemy idle unit takes none,
+    as the scene needs."""
     assert lib.om_map_set_canvas(tw, CANVAS_W, CANVAS_H) == 0
     m = lib.om_unit_spawn(tw, RAIDER, FRIEND, 500.0, 3.0, 0)
-    lib.om_unit_spawn(tw, RAIDER, FRIEND, 510.0, 15.0, 0)
+    lib.om_unit_spawn(tw, SUPPLY, ENEMY, 510.0, 15.0, 0)
     lib.om_command_move(tw, m, 1000.0, 3.0)
     lib.om_tactical_step(tw)
     x, y = lib.om_unit_get_pos(tw, m)
