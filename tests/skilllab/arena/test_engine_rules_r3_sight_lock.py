@@ -27,6 +27,11 @@ give-up 162, guard post 468, and 12 unexplained, all at tick 1776: units 29 to 4
 tick, the other nine to none. Side A sees 71 (`om_player_can_see(0, 71)`) 1 at the end of tick 1775, 1 at the end of 1776, 0 at the end of 1777.
 
 Red today: the 12 unexplained drops. After the engine fix the guards drop 71 at tick 1778 (the tick after the side stops seeing it), not 1776.
+
+Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47; Test-defect: the control's premises were the fight before the fix): L-0084 seed 1 sight on is 3,923 ticks (fix 1, d70c8d47, moves it from 3,718;
+fixes 2 and 3 leave it). The episode is one tick later: side A sees 71 at the end of ticks 1776 and 1777 and not at the end of 1778; guards 29 to 40 hold it through the end of 1778 and drop it
+at 1779 (29, 33 and 37 to none, 40 to 95). Drops of a target seen at both ends of the tick: 748, of which reach 118, give-up 157, guard post 473, unexplained 0. The lab checker reports no violation
+of any rule on the fight.
 """
 import contextlib
 import ctypes
@@ -144,20 +149,20 @@ def unexplained(r):
 # ------------------------------------------------------------------ green first: the premises
 
 def test_control_the_fight_and_the_trace_premises_hold():
-    """Control (green today, the premise of the red test below): the recorded fight is the one traced. 3,718 ticks; side A (the guards 1 to 40) sees enemy 71 at the end of tick 1775 and of tick 1776
-    and not at the end of tick 1777; guards 29 to 40 all hold 71 at the end of tick 1775; the oracle finds drops of a seen target for each of its three excuses (so a red below is not a
-    detector that excuses nothing)."""
+    """Control (green after the fix, the premise of the red test below): the recorded fight is the one traced (re-dumped on the Round 3 tip; the premise before the fix was 3,718 ticks and tick 1775
+    to 1777). 3,923 ticks; side A (the guards 1 to 40) sees enemy 71 at the end of ticks 1776 and 1777 and not at the end of tick 1778; guards 29 to 40 all hold 71 at the end of tick 1777; the oracle finds
+    drops of a seen target for each of its three excuses and none unexplained (so a red below is not a detector that excuses nothing: a fix that dropped a lock early would add an unexplained one)."""
     r = played()
     rec = r.rec
-    assert len(rec.ticks) == 3718, len(rec.ticks)
-    assert [rec.ticks[n - 1]["vis_post"][(SIDE_A, 71)] for n in (1775, 1776, 1777)] == [True, True, False]
-    assert all(rec.ticks[1774]["post"][u]["tgt"] == 71 for u in range(29, 41)), {u: rec.ticks[1774]["post"][u]["tgt"] for u in range(29, 41)}
+    assert len(rec.ticks) == 3923, len(rec.ticks)
+    assert [rec.ticks[n - 1]["vis_post"][(SIDE_A, 71)] for n in (1776, 1777, 1778)] == [True, True, False]
+    assert all(rec.ticks[1776]["post"][u]["tgt"] == 71 for u in range(29, 41)), {u: rec.ticks[1776]["post"][u]["tgt"] for u in range(29, 41)}
     assert [rec.side[u] for u in range(1, 41)] == [SIDE_A] * 40
     reasons = {}
     for d in drops_of_a_seen_target(r):
         reasons[d[4]] = reasons.get(d[4], 0) + 1
-    assert set(reasons) == {"reach", "give-up", "guard post", None}, reasons
-    assert reasons == {"reach": 118, "give-up": 162, "guard post": 468, None: 12}, reasons
+    assert set(reasons) == {"reach", "give-up", "guard post"}, reasons
+    assert reasons == {"reach": 118, "give-up": 157, "guard post": 473}, reasons
 
 
 def held_after_sight_loss(r, lag):
