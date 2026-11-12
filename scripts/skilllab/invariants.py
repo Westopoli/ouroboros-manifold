@@ -419,7 +419,8 @@ class Monitor:
                 self._flyers.add(u)
             cohort[u] = lib.om_unit_targeting_cohort(world, u)
         buf = (ctypes.c_double * 8)()
-        heights = list(buf)[:lib.om_terrain_band_heights(world, buf, 8)]
+        n_bands = lib.om_terrain_band_heights(world, buf, 8)     # filled by the call: read the buffer after it, not in the same expression (it read zeros, so the slant was always flat)
+        heights = list(buf)[:n_bands]
         up = [1.0] + [engine.get_param(world, engine.param_id("OM_TP_RANGE_UP_%d" % n)) for n in range(1, 5)]       # csrc/unit.c om_tac_offset_mult, OM_REACH_MAX_OFFSET 4
         dn = [1.0] + [engine.get_param(world, engine.param_id("OM_TP_RANGE_DOWN_%d" % n)) for n in range(1, 5)]
         self._range_mult = lambda la, lb: 1.0 if la == lb else ((up if lb > la else dn)[abs(lb - la)] if abs(lb - la) <= 4 else 1.0)
