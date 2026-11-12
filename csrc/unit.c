@@ -2343,6 +2343,21 @@ void om_tac_unit_set_guard(om_world *w, uint32_t unit_id, int on) {
     if (!om_unit_get_pos(w, unit_id, &u->anchor_x, &u->anchor_y)) { u->anchor_x = u->x; u->anchor_y = u->y; }
 }
 
+/* R-097-10: a guard is not idle and does not step aside for a mover. */
+int om_tac_unit_is_guard(const om_world *w, uint32_t unit_id) {
+    const om_tac_state *ro = om_tac_ro(w);
+    const om_unit_row *u = ro ? om_registry_find_in((om_tac_state *)ro, unit_id) : NULL;
+    return u && u->guard;
+}
+
+/* R-097-10: a unit in its move away from unseen fire (R-087-01) walks by a direct step here, not by a destination of the movement side; the collision
+ * pass must not take it for an idle unit. See also: om_move_collision_pass_internal in csrc/tactical_move.c. */
+int om_tac_unit_is_flinching(const om_world *w, uint32_t unit_id) {
+    const om_tac_state *ro = om_tac_ro(w);
+    const om_unit_row *u = ro ? om_registry_find_in((om_tac_state *)ro, unit_id) : NULL;
+    return u && u->flinching;
+}
+
 /* R-096-08: a guard never crosses its radius. The collision pass pushes a guard pressed against its neighbours past the circle (measured 2026-11-11, L-0084
  * seed 1: 0.4 to 1.7 wu a tick, guards standing in a row on it, in a backswing too, when a step is 0); it asks here, once per unit it has moved, and a guard
  * outside is put back onto the circle straight toward its post, so the frame ends inside. Returns 1 when (*x, *y) were changed. Only under pursuit by steering,

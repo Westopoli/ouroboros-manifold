@@ -292,6 +292,7 @@ typedef struct {
     uint8_t  grid_in[OM_MOVE_MAX_UNITS];
     double   sweep_cos[OM_STEERING_SWEEP_COUNT], sweep_sin[OM_STEERING_SWEEP_COUNT];
     uint8_t  stat[OM_MOVE_MAX_UNITS];
+    uint8_t  idle[OM_MOVE_MAX_UNITS]; /* stationary, holds no target, not a guard, not in a move away: steps aside for a mover of its own side (R-097-10) */
 uint8_t  col_need[OM_MOVE_MAX_UNITS];
 uint32_t col_marks;
 uint8_t  col_all;
@@ -365,6 +366,8 @@ void om_tac_unit_set_layer(om_world *w, uint32_t unit_id, uint32_t layer);
 void om_tac_unit_set_guard(om_world *w, uint32_t unit_id, int on);
 /* See also: om_tac_guard_clamp in unit.c, which owns the guard's post and radius (R-096-08); called by the collision pass */
 int om_tac_guard_clamp(om_world *w, uint32_t unit_id, double *x, double *y);
+int om_tac_unit_is_guard(const om_world *w, uint32_t unit_id);
+int om_tac_unit_is_flinching(const om_world *w, uint32_t unit_id);
 
 /* A new move order ends a routed transfer that has not begun; one in flight finishes (R-002-04: a user's transfer
  * is never cleared by a move order). */
@@ -1741,6 +1744,13 @@ static void om_move_slide(om_world *w, om_move_state *ms, int walk, uint32_t lay
     else { *nx = ox; *ny = oy; }
 }
 
+/* R-097-10: the stationary unit `idle_id` takes the whole push from the mover `mover_id` when it is idle (ms->idle: no move target, not
+ * engaged, holds no target, not a guard, not in a move away) and the mover is of its own side; an enemy mover takes it all. Reads only the
+ * pair's flags, so the settle fixpoint below stays valid (a settled state has no overlapping pair). */
+static int om_move_yields(const om_world *w, const om_move_state *ms, uint32_t idle_id, uint32_t mover_id) {
+    return ms->idle[idle_id] && om_unit_get_faction(w, idle_id) == om_unit_get_faction(w, mover_id);
+}
+
 /* One colliding pair, a's id below b's; returns 1 when a position was
  * written. d2 >= target^2 implies sqrt(d2) >= target (sqrt is monotonic and
  * exact at target^2), so that early return matches the sqrt compare. */
@@ -1774,10 +1784,12 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
              * Both fixed: neither takes a push. Under PURSUE_BY_STEERING two stationary units split it (R-097-10). */
             return 0;
         } else if (a_stat && !b_stat) {
-            bx += ux * overlap; by += uy * overlap;
+            if (om_move_yields(w, ms, ia, ib)) { ax -= ux * overlap; ay -= uy * overlap; }
+            else { bx += ux * overlap; by += uy * overlap; }
             changed = 1;
         } else if (b_stat && !a_stat) {
-            ax -= ux * overlap; ay -= uy * overlap;
+            if (om_move_yields(w, ms, ib, ia)) { bx += ux * overlap; by += uy * overlap; }
+            else { ax -= ux * overlap; ay -= uy * overlap; }
             changed = 1;
         } else {
             ax -= ux * overlap * 0.5; ay -= uy * overlap * 0.5;
@@ -1974,6 +1986,10 @@ static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     ms->col_all = 0;
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
         ms->stat[id] = (uint8_t)om_move_is_stationary(&ms->units[id]);
+        /* engaged is not set for a unit that holds a target and fires, so the held target is read as well; a unit in its move away from unseen fire
+         * (R-087-01) walks by a direct step, not a destination, and is no idle unit */
+        ms->idle[id] = (uint8_t)(ms->stat[id] && ms->grid_in[id] && !ms->units[id].engaged && om_unit_get_target(w, id) == 0
+                                 && !om_tac_unit_is_guard(w, id) && !om_tac_unit_is_flinching(w, id));
     }
     passes = ms->col_pursue ? OM_COLLISION_PASSES : OM_COLLISION_MAX_ITER;
     for (iter = 0; iter < passes; iter++) {
