@@ -12,7 +12,10 @@ enemy its side sees":
                1558/27 (89, 324.1, 297.8)                        1559/24 (89, 318.1, 314.8)           [guard cases: the nearer enemy was over 500 wu from the post by slant]
                1270/15 (90, 290.8, nearest 285.9)                1271/16 (90, 292.5, 288.6)           [slant cases: the nearer enemy was 327.6 and 330.0 wu away by slant against range 300]
 The other three reports of the fight (R-087-03, other wording) are not part of this item and are not asserted here.
-Red today: both tests below. Control (green): the fight runs to the measured end and the checker is the one that reported these eight.
+Red today: both tests below. Control (green): the fight runs to the measured end and the engine makes these eight picks.
+
+Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47): the fight is 3,923 ticks, side A wins with 37 left; the engine makes the eight picks at the same ticks for the same targets as before; the pre-fix checker
+(7ba38983/scripts/skilllab/invariants.py) reports exactly the eight on it, the checker as it is none, and no violation of any rule in all.
 """
 import sys
 from functools import lru_cache
@@ -38,9 +41,11 @@ def monitored(name="L-0084", seed=1):
             made.append(self)
     invariants.Monitor = Cap
     try:
-        run.fight(oracle.catalogue(name), seed, "on", CAP_SECONDS, 100000)
+        with oracle.recording() as recs:
+            frames, last, _, _ = run.fight(oracle.catalogue(name), seed, "on", CAP_SECONDS, 100000)
     finally:
         invariants.Monitor = orig
+    made[0].rec, made[0].survivors = oracle.only(recs), frames[last]["alive"]
     return made[0]
 
 
@@ -48,12 +53,19 @@ def nearest_reports(mon):
     return [(v["tick"], v["unit"], v["detail"]) for v in mon.violations if v["rule"] == "R-087-03" and NOT_NEAREST in v["detail"]]
 
 
-def test_control_the_monitor_runs_L0084_to_the_measured_end():
-    """Control (green today, the premise): L-0084 seed 1 sight on runs 3,718 ticks with nothing suspended, and today the Monitor says 'not the nearest' on exactly the eight (tick, unit) pairs of the
-    premise (so the tests below are red for these eight and nothing else of this kind)."""
+ACQUIRED = {(1083, 16): 78, (1086, 15): 78, (1556, 25): 89, (1557, 26): 89, (1558, 27): 89, (1559, 24): 89, (1270, 15): 90, (1271, 16): 90}   # from the premise above
+
+
+def test_control_the_monitor_runs_L0084_to_the_measured_end_and_the_engine_still_makes_the_eight_picks():
+    """Control (green before and after the checker fix; re-written 2026-11-12, Test-defect: it asserted the eight false reports, the defect the fix removes). Premise of the tests below: L-0084 seed 1 sight
+    on runs 3,923 ticks with nothing suspended (3,718 before Round 3 fix 1, d70c8d47), side A wins with 37 left, and the Monitor judged it (its verdict is True or False, not None as a stand-in's is);
+    the engine still makes the eight picks of the premise: at each (tick, unit) the unit takes the target named there (the tick before it held another or none). So the tests below stay about the
+    checker: with the pre-fix checker (7ba38983) the same fight still gets the eight 'not the nearest' reports; the checker as it is gets none."""
     mon = monitored()
-    assert (mon.tick, mon.suspended) == (3718, {})
-    assert sorted((t, u) for t, u, _ in nearest_reports(mon)) == sorted(PAIRS), nearest_reports(mon)
+    assert (mon.tick, mon.suspended, mon.survivors) == (3923, {}, [37, 0])
+    assert mon.verdict()["invalid"] is not None
+    got = {(n, u): mon.rec.ticks[n - 1]["post"][u]["tgt"] for n, u in ACQUIRED}
+    assert got == ACQUIRED and all(mon.rec.ticks[n - 1]["pre"][u]["tgt"] != t for (n, u), t in ACQUIRED.items()), got
 
 
 def test_R_087_03_the_eight_legal_picks_of_L0084_are_not_reported_as_not_the_nearest():
