@@ -300,10 +300,14 @@ def _visible_hash(lib, w):
 # Re-recorded day21 on push/pp-settle-gold (A184 collision settle epsilon 0.1 wu ends the push sequence early; was: day20 pp-c3-land recorded).
 # Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold recorded). TD-PP-A199-rerecord.
 # Re-recorded 2026-11-08 (engine rule fixes F2, F3, F4: a mover does not fire, a lock holds, Wardens do not stack; the new run has 0 R-207-06, R-087-04, R-084-04, R-087-03, R-083-03 violations by scripts/skilllab/invariants.py; was: day23 recorded: clash state e10663fd, spread state b98bdb02, spread visible 4b28a8fb). Test-defect.
+# Re-recorded 2026-11-12 (engine rules Round 4, R-097-10: an idle unit takes the push of a mover of its own side and steps aside; was: 2026-11-08 recorded: clash state d8f9a38d, spread state 26e1766f;
+# the visible[] hashes are unchanged). Built on the Round 3 tip e2dcee93 and on 6d3d7635 in lock step: the first step to differ is step 1 in both scenes. Clash: 29 idle enemy units
+# are moved on step 1 (unit 41 by 2.4 wu: unit 58, of its own side, takes a target that tick and walks 5.1 wu into it at 35 wu; 58 units differ in all). Spread: unit 284 is moved 24.5 wu by unit 98
+# of its own side, 10.6 wu away (2 units differ).
 GOLDEN = {
-    "clash": ("d8f9a38d1077e6414c79cdbc4515bead8fc3ab68a1b6c9e90e995a38e9a037af",
+    "clash": ("3782ccbaaa316d6c3b316ec6f37a7debaf342a56b030ca15fffc4a44dc6927f5",
               "740858b42c174da068bb0ad94b10fddef168a6b370c8b6d5f99b51e9e89b57df"),
-    "spread": ("26e1766f5e3f798861ebd59723143039424281d919890784692b78ed0439bfe4",
+    "spread": ("d0b7f912fef5d5d1f39ec1c9e62ddf60927cc819c0f8799ac6ae7e1f85633345",
                "4ba1758c6137483d99c707d0f1a69c36af48cc979dd58501d312a477bd489312"),
 }
 
