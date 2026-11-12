@@ -53,7 +53,8 @@ class Rules:
     cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one)."""
 
     def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None, layer_heights=None,
-                 range_mult=None):
+                 range_mult=None, flyers=None):
+        self.flyers = set(flyers or ())      # {unit id} whose type moves by flying (om_unit_profile_movement_kind 0): R-087-10 measures a shot with a flyer on either end flat (DRAFT-slant-ground-only)
         self.range_mult = range_mult or (lambda la, lb: 1.0)   # (shooter layer, target layer) -> the reach table's range multiplier (OM_TP_RANGE_UP_n / DOWN_n); 1.0 on one layer
         self.guards = guards if guards is not None else {}     # {unit id: (post x, post y)}: R-096-08 judges these units only (the Monitor shares the engine's live dict)
         self.layer_heights = layer_heights or []              # band floor height of each layer, wu (om_terrain_band_heights); empty: a flat world
@@ -236,7 +237,8 @@ class _Checker:
             self.lock[u] = (tgt, held[1] if held else (r["x"], r["y"]))   # the anchor stays through a pause with no target: an attack-mover keeps it while it pursues
 
     def _slant(self, frame, tick, out):
-        """R-087-10. A shot's distance is spherical: the horizontal distance and the band-height difference of the two layers together. No shot is fired at a target
+        """R-087-10. A shot's distance is spherical: the horizontal distance and the band-height difference of the two layers together (both units walkers; a flyer on either
+        end is measured horizontally, DRAFT-slant-ground-only). No shot is fired at a target
         beyond the attacker's attack range by that measure (plus SLANT_SLACK). Both ends are read in the frame the shot was reported in."""
         units, heights = frame["units"], self.rules.layer_heights
         for a, b in frame.get("fires", []):
@@ -244,7 +246,8 @@ class _Checker:
             if reach is None or a not in units or b not in units:
                 continue
             ra, rb = units[a], units[b]
-            dz = heights[rb["layer"]] - heights[ra["layer"]] if ra["layer"] < len(heights) and rb["layer"] < len(heights) else 0.0
+            flat = a in self.rules.flyers or b in self.rules.flyers      # DRAFT-slant-ground-only: the slant is for two walkers; a flyer on either end is measured horizontally
+            dz = heights[rb["layer"]] - heights[ra["layer"]] if not flat and ra["layer"] < len(heights) and rb["layer"] < len(heights) else 0.0
             slant = math.hypot(self._disp(ra, rb), dz)
             if slant > reach + SLANT_SLACK:
                 out.append(_violation("R-087-10", tick, a, "fired at %d, %.1f wu away by slant (%.1f horizontal, %.0f in height), range %.0f" % (b, slant, self._disp(ra, rb), dz, reach)))
@@ -395,7 +398,7 @@ class Monitor:
         lib.om_unit_targeting_cohort.restype = ctypes.c_uint32
         lib.om_terrain_band_heights.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double), ctypes.c_uint32]
         lib.om_terrain_band_heights.restype = ctypes.c_uint32
-        self._ids, self._side = [], {}
+        self._ids, self._side, self._flyers = [], {}, set()
         for (wa, faction), us in engine._own.items():
             if wa == world.value:
                 for u in us:
@@ -412,6 +415,8 @@ class Monitor:
             self._sensor[u] = max(st["sensor_radius"], st["attack_range"])   # the leash, om_tac_leash in csrc/unit.c
             self._reach[u] = engine.profile_reach(world, t)
             self._range[u], self._aoe[u] = st["attack_range"], st["aoe_radius"]
+            if engine.movement_kind(world, t) == 0:      # OM_MOVE_FLYING
+                self._flyers.add(u)
             cohort[u] = lib.om_unit_targeting_cohort(world, u)
         buf = (ctypes.c_double * 8)()
         heights = list(buf)[:lib.om_terrain_band_heights(world, buf, 8)]
@@ -423,7 +428,7 @@ class Monitor:
         self._terrain = bool(engine._lib.om_terrain_band_at(world, 0.0, 0.0) > 0)   # a world with no terrain reads band 0 everywhere
         self._posts = {}            # {guard id: (x, y)} where each stood when the lab ordered it to guard; the checker's Rules.guards
         self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach, cohort, self._range,
-                                   self._posts, heights, self._range_mult))
+                                   self._posts, heights, self._range_mult, self._flyers))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
         self.tick = 0
