@@ -17,7 +17,7 @@ tests/skilllab/test_invariants_tightened.py (continuity) and test_invariants_vis
 
 2. A control fight is not judged on sight rules.
    `run.py --control sight` plays each stage 4 fight a second time with targeting by sight OFF (`fight(.., "control", ..)`, the Monitor's sight argument "control"). The runner
-   suspends the sight-dependent checks for `--sight off` (`suspended_for("off")`) and not for the control. Premise (seed 1, the whole fight): L-0039 control, 2858 ticks:
+   suspends the sight-dependent checks for `--sight off` (`suspended_for("off")`) and not for the control. Premise (seed 1, the whole fight): L-0039 control, 2858 ticks (2730 since the Round 3 chase fix 94da7493, 2026-11-12; the counts below are of the 2858-tick run, the sight rules are suspended on the 2730 one):
    R-087-03 12 violations and R-093-02 2657, the first at tick 14 for units 7 and 15 (they fire at what their side does not see, which a sight-off control does by design);
    L-0039 sight on, 2314 ticks: none of either.
    The pinned rule is the simpler one (both rules suspended, as for `--sight off`): `Rules.suspended` and `Report.suspended` are per rule, so judging the swap half of R-087-03
@@ -129,8 +129,8 @@ def test_R_093_02_the_control_run_of_l0039_lists_both_sight_rules_as_suspended()
 
 
 def test_R_093_02_the_control_run_of_l0039_reports_no_violation_of_either_sight_rule():
-    """R-093-02 / R-087-03: with targeting by sight off a unit fires at what its side does not see, by design: the control of L-0039 seed 1 (2858 ticks) reports no violation
+    """R-093-02 / R-087-03: with targeting by sight off a unit fires at what its side does not see, by design: the control of L-0039 seed 1 (2730 ticks; 2858 before the Round 3 chase fix 94da7493) reports no violation
     of either rule. Red today: R-087-03 12 and R-093-02 2657, the first at tick 14 for units 7 and 15."""
     mon, _ = played("L-0039", 1, "control")
     got = collections.Counter(v["rule"] for v in mon.violations if v["rule"] in SIGHT_RULES)
-    assert mon.tick == 2858 and dict(got) == {}, (dict(got), [(v["rule"], v["tick"], v["unit"]) for v in mon.violations if v["rule"] in SIGHT_RULES][:4])
+    assert mon.tick == 2730 and dict(got) == {}, (dict(got), [(v["rule"], v["tick"], v["unit"]) for v in mon.violations if v["rule"] in SIGHT_RULES][:4])
