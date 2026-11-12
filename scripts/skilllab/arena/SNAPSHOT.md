@@ -37,7 +37,7 @@ A dense file has more than `snapshot.MAX_FRAMES` frames, so `snapshot.validate` 
 
 ## Rule checks (F0, engine rule fixes 2026-11-08)
 
-`run.fight` runs `scripts/skilllab/invariants.py` after every engine step (rules R-207-06, R-207-07, R-087-04, R-084-04, R-087-03, R-087-09, R-083-03 and `continuity`; the numbers in it are DRAFT constants, Westley's). Two optional top-level keys on `om-fight-2` (`snapshot.validate` rejects both on `om-fight-1`, accepts both absent or present; a clean fight carries neither):
+`run.fight` runs `scripts/skilllab/invariants.py` after every engine step (rules R-207-06, R-207-07, R-087-04, R-084-04, R-087-03, R-087-09, R-083-03, `continuity`, R-093-02, R-096-08 and R-087-10; the numbers in it are DRAFT constants, Westley's). It does not report what the engine's rules make legal: a guard letting go of a target farther from its post than 200 wu plus its attack range (measured by slant, on the previous frame); a lock given up after 20 frames unshootable and not closed in on, inside attack range or not, and the next pick being the nearest other enemy for the 100 ticks the given-up target is excluded; a held target unseen for one frame (the engine's one-tick lag on sight); and a shot measured flat when either unit is a flyer (R-087-10 slant is for two walkers). Two optional top-level keys on `om-fight-2` (`snapshot.validate` rejects both on `om-fight-1`, accepts both absent or present; a clean fight carries neither):
 
 - `invalid`: `true` when any check found a violation.
 - `violations`: a list of at most 20 `{rule, tick, unit, detail}` (a string, an int tick of the run, an int unit id, a string), the earliest by (tick, rule, unit). `tick` counts steps from 1.

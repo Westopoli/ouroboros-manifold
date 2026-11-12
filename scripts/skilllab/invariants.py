@@ -16,6 +16,7 @@ fights use (fight.fight, search.run_search); `Blind` stands in for an engine the
 never a Python re-derivation. Every number below is a DRAFT constant, Westley's to change:
   DRAFT-inv-cell-depth 1 wu     DRAFT-inv-push-radius 40 wu     DRAFT-inv-stuck-ticks 20     DRAFT-inv-step-slack 1.3 wu
 and, Round 2: DRAFT-inv-nearest-tol 1 wu  DRAFT-inv-return-fire-ticks 4  DRAFT-guard-radius 200 wu  DRAFT-guard-leash-slack 1 wu  DRAFT-f7-slant-slack 1 wu
+and, Round 2b: DRAFT-giveup-exclusion-ticks 100 (a given-up target is not the nearest for that long), DRAFT-slant-ground-only (R-087-10 is measured flat when either unit is a flyer)
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
 (R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
@@ -40,6 +41,7 @@ SLANT_SLACK = 1.0            # DRAFT-f7-slant-slack: a shot may exceed the attac
 TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
 NEAREST_TOL = 1.0            # DRAFT-inv-nearest-tol: an acquired target within this much of the nearest eligible enemy counts as the nearest (R-087-03)
 RETURN_FIRE_TICKS = 4        # DRAFT-inv-return-fire-ticks: a hit by the target in the frame of the acquisition or the 3 before it is return fire (R-087-06)
+GIVEUP_EXCLUSION_TICKS = 100  # DRAFT-giveup-exclusion-ticks (csrc/unit.c OM_GIVEUP_EXCLUSION_TICKS): a target a unit gave up is not eligible for it for this long (R-087-09)
 COHORT_SLOTS = 4             # R-087-08: a unit acquires at its cohort turn on every 4th tick
 
 
@@ -51,7 +53,10 @@ class Rules:
     may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch};
     cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one)."""
 
-    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None, layer_heights=None):
+    def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None, layer_heights=None,
+                 range_mult=None, flyers=None):
+        self.flyers = set(flyers or ())      # {unit id} whose type moves by flying (om_unit_profile_movement_kind 0): R-087-10 measures a shot with a flyer on either end flat (DRAFT-slant-ground-only)
+        self.range_mult = range_mult or (lambda la, lb: 1.0)   # (shooter layer, target layer) -> the reach table's range multiplier (OM_TP_RANGE_UP_n / DOWN_n); 1.0 on one layer
         self.guards = guards if guards is not None else {}     # {unit id: (post x, post y)}: R-096-08 judges these units only (the Monitor shares the engine's live dict)
         self.layer_heights = layer_heights or []              # band floor height of each layer, wu (om_terrain_band_heights); empty: a flat world
         self.cohort = cohort or {}
@@ -92,7 +97,10 @@ class _Checker:
         self.prev = None
         self.last_shot = {}          # unit -> tick of its last shot (R-084-04)
         self.lock = {}               # unit -> (target, (x, y) where it took that lock) (R-087-03)
-        self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09)
+        self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09), a target inside attack range: the violation check
+        self.unshot = {}             # the same run for a target at any distance: the engine's give-up window (csrc/unit.c om_tac_giveup), which the swap excuse reads
+        self.gave_up = {}            # (unit, target) -> tick of the give-up the checker excused: the target is not eligible for that unit for GIVEUP_EXCLUSION_TICKS (R-087-09)
+        self.unseen = {}             # unit -> (target, consecutive frames it was held while its side's previous visible set lacked it) (R-093-02)
         self.breached = set()        # guards outside their radius now (R-096-08: one violation per breach, not one per frame)
         self.hit_hist = collections.deque(maxlen=RETURN_FIRE_TICKS)   # the (attacker, victim) pairs of the last frames, this one included (R-087-06)
 
@@ -205,6 +213,9 @@ class _Checker:
         began (a change of target, or a pause with no target, keeps it; a new order resets it), by max(sensor radius, weapon range)."""
         tgt = r["target"] if r["alive"] else 0
         held = self.lock.get(u)
+        run = self.unshot.get(u)
+        if p is not None and p["alive"] and p["target"] and tgt != p["target"] and run is not None and run[0] == p["target"] and run[1] >= STUCK_TICKS - 1:
+            self.gave_up[(u, p["target"])] = tick       # R-087-09: the engine gave the target up (dropped it or swapped it) after its window
         if p is not None and p["alive"] and r["alive"] and p["target"] and tgt and tgt != p["target"]:
             old = p["target"]
             o_prev, o_now = self.prev["units"].get(old), frame["units"].get(old)
@@ -217,7 +228,7 @@ class _Checker:
             out_of_reach = reach is not None and any(not self._in_reach(reach, a["layer"], o["layer"]) for a, o in ((p, o_prev), (r, o_now)) if o)
             if (o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not out_of_reach
                     and not (leash is not None and walked > leash - LEASH_SLACK)):
-                why = self._gave_up(u, old, o_prev, o_now)
+                why = self._gave_up(u, old, p, o_prev)
                 if why is None:
                     out.append(_violation("R-087-03", tick, u, "target %d -> %d while %d was alive and seen" % (old, tgt, old)))
         if p is not None and p.get("order") != r.get("order"):
@@ -227,7 +238,8 @@ class _Checker:
             self.lock[u] = (tgt, held[1] if held else (r["x"], r["y"]))   # the anchor stays through a pause with no target: an attack-mover keeps it while it pursues
 
     def _slant(self, frame, tick, out):
-        """R-087-10. A shot's distance is spherical: the horizontal distance and the band-height difference of the two layers together. No shot is fired at a target
+        """R-087-10. A shot's distance is spherical: the horizontal distance and the band-height difference of the two layers together (both units walkers; a flyer on either
+        end is measured horizontally, DRAFT-slant-ground-only). No shot is fired at a target
         beyond the attacker's attack range by that measure (plus SLANT_SLACK). Both ends are read in the frame the shot was reported in."""
         units, heights = frame["units"], self.rules.layer_heights
         for a, b in frame.get("fires", []):
@@ -235,43 +247,61 @@ class _Checker:
             if reach is None or a not in units or b not in units:
                 continue
             ra, rb = units[a], units[b]
-            dz = heights[rb["layer"]] - heights[ra["layer"]] if ra["layer"] < len(heights) and rb["layer"] < len(heights) else 0.0
+            flat = a in self.rules.flyers or b in self.rules.flyers      # DRAFT-slant-ground-only: the slant is for two walkers; a flyer on either end is measured horizontally
+            dz = heights[rb["layer"]] - heights[ra["layer"]] if not flat and ra["layer"] < len(heights) and rb["layer"] < len(heights) else 0.0
             slant = math.hypot(self._disp(ra, rb), dz)
             if slant > reach + SLANT_SLACK:
                 out.append(_violation("R-087-10", tick, a, "fired at %d, %.1f wu away by slant (%.1f horizontal, %.0f in height), range %.0f" % (b, slant, self._disp(ra, rb), dz, reach)))
 
-    @staticmethod
-    def _sight(frame, visible, tick, out):
+    def _sight(self, frame, visible, tick, out):
         """R-093-02. A unit that fires at, or holds, a living target has it in its side's visible set of the previous frame (the state before the step that decided
-        it; a shot that kills the target takes it out of the set of its own frame). One violation per unit and frame."""
-        units, said = frame["units"], set()
+        it; a shot that kills the target takes it out of the set of its own frame). One violation per unit and frame. The engine validates a lock against sight at the start of
+        its tick and drops an unseen target on the next one, so a unit that already held the target in the previous frame is excused the first frame in which the previous
+        frame's set lacks it; an acquisition of an unseen target, a shot at one, and a second such frame are violations at once."""
+        units, said, prev = frame["units"], set(), self.prev["units"]
         for a, b in frame.get("fires", []):
             if a in units and b not in visible.get(units[a]["side"], ()):
                 said.add(a)
                 out.append(_violation("R-093-02", tick, a, "fired at %d, which its side did not see before the step" % b))
         for u, r in units.items():
-            t = units.get(r["target"]) if r["alive"] and r["target"] else None
-            if t is not None and t["alive"] and u not in said and r["target"] not in visible.get(r["side"], ()):
-                out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % r["target"]))
+            tgt = r["target"] if r["alive"] else 0
+            t = units.get(tgt) if tgt else None
+            if t is None or not t["alive"] or tgt in visible.get(r["side"], ()):
+                self.unseen.pop(u, None)
+                continue
+            run = self.unseen.get(u)
+            n = run[1] + 1 if run is not None and run[0] == tgt else 1
+            self.unseen[u] = (tgt, n)
+            held_before = u in prev and prev[u]["alive"] and prev[u]["target"] == tgt
+            if u not in said and not (held_before and n == 1):
+                out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % tgt))
 
-    def _gave_up(self, u, old, o_prev, o_now):
-        """The rule that excuses the end of a lock, or None. R-087-09: the target was held unshootable and not closed in on for the checker's own window (STUCK_TICKS; one
-        frame less is counted here because the engine drops the lock on the tick that completes the window, which is the swap frame itself). R-096-08: a guard's target
-        stood so far beyond the guard's radius that no spot inside it reaches it with the unit's attack range (an engaged guard that would leave the radius lets go)."""
-        run = self.stuck.get(u)
+    def _gave_up(self, u, old, p, o_prev):
+        """The rule that excuses the end of a lock, or None. R-087-09: the target was held unshootable and not closed in on for the engine's window (STUCK_TICKS, inside attack range
+        or not: `om_tac_giveup` asks only whether the target can be shot; one frame less is counted here because the engine drops the lock on the tick that completes the window, which is the swap frame itself). R-096-08: a guard's target
+        stood so far from its post (by slant, `_beyond_post`) that no spot inside the radius reaches it with the unit's attack range (an engaged guard that would leave the radius lets go)."""
+        run = self.unshot.get(u)
         if run is not None and run[0] == old and run[1] >= STUCK_TICKS - 1:
             return "R-087-09"
         post = self.rules.guards.get(u)
-        if post is not None:
-            reach = self.rules.attack_range.get(u, 0.0)
-            if any(math.hypot(o["x"] - post[0], o["y"] - post[1]) - GUARD_RADIUS - GUARD_SLACK > reach for o in (o_prev, o_now)):
-                return "R-096-08"
+        if post is not None and self._beyond_post(u, p, post, o_prev):
+            return "R-096-08"
         return None
+
+    def _beyond_post(self, u, p, post, o_prev):
+        """R-096-08 (csrc/unit.c om_tac_guard_engageable): the engine drops a guard's target when it is out of the guard's range and the SLANT distance from the post to the target (horizontal
+        distance and the layers' height difference) exceeds GUARD_RADIUS plus the guard's attack range times the layer-offset multiplier. Exact, no slack; judged on the state before the
+        step, the previous frame (the guard's layer and the target's layer in it)."""
+        heights = self.rules.layer_heights
+        la, lb = p["layer"], o_prev["layer"]
+        dz = heights[lb] - heights[la] if la < len(heights) and lb < len(heights) else 0.0
+        limit = GUARD_RADIUS + self.rules.attack_range.get(u, 0.0) * self.rules.range_mult(la, lb)
+        return math.hypot(math.hypot(o_prev["x"] - post[0], o_prev["y"] - post[1]), dz) > limit
 
     def _acquire(self, frame, u, r, p, tick, out):
         """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
         judged on the previous frame (the state before the step): the target is the nearest enemy that frame's visible set of the unit's side holds (planar distance,
-        within the unit's layer reach), within NEAREST_TOL, and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
+        within the unit's layer reach), within NEAREST_TOL (a target the unit gave up in the last GIVEUP_EXCLUSION_TICKS frames is not a candidate), and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
         frame or the RETURN_FIRE_TICKS - 1 before it is return fire, which excuses both."""
         tgt = r["target"] if r["alive"] else 0
         prev = self.prev
@@ -293,29 +323,39 @@ class _Checker:
             d = self._disp(p, row)
             if e == tgt:
                 mine = d
+            if tick - self.gave_up.get((u, e), -GIVEUP_EXCLUSION_TICKS) < GIVEUP_EXCLUSION_TICKS:
+                continue                     # R-087-09: given up by this unit within the exclusion window, so not a candidate for "the nearest"
             if nearest is None or d < nearest:
                 nearest = d
-        if mine is None or mine > nearest + NEAREST_TOL:
+        if mine is None or (nearest is not None and mine > nearest + NEAREST_TOL):
             out.append(_violation("R-087-03", tick, u, "acquired %d, not the nearest enemy its side sees (%s; nearest %s wu)" % (
                 tgt, "unseen, dead or out of reach" if mine is None else "%.1f wu" % mine, "none" if nearest is None else "%.1f" % nearest)))
         elif tick % COHORT_SLOTS != self.rules.cohort[u]:
             out.append(_violation("R-087-03", tick, u, "acquired %d at tick %d, off its cohort turn (slot %d)" % (tgt, tick, self.rules.cohort[u])))
+
+    @staticmethod
+    def _advance(runs, u, tgt, dist):
+        """One frame of unit u's run of holding tgt unshootable: [target, frames, distance at the run's start, flagged]; it restarts on another target or when the unit closes in by more than 1 wu."""
+        run = runs.get(u)
+        if run is None or run[0] != tgt or dist < run[2] - 1.0:
+            run = runs[u] = [tgt, 0, dist, False]
+        run[1] += 1
+        return run
 
     def _held(self, units, u, r, tick, out):
         tgt = r["target"] if r["alive"] else 0
         t = units.get(tgt) if tgt else None
         if not t or not t["alive"] or r.get("shootable", True):
             self.stuck.pop(u, None)
+            self.unshot.pop(u, None)
             return
         dist = math.hypot(t["x"] - r["x"], t["y"] - r["y"])
+        self._advance(self.unshot, u, tgt, dist)     # R-087-09 as the engine counts it: whether or not the target is inside attack range (the swap excuse, `_gave_up`)
         reach = self.rules.attack_range.get(u)
         if reach is not None and dist > reach:
-            self.stuck.pop(u, None)          # R-087-09 is about a target within attack range; the 20 ticks are consecutive in-range ticks
+            self.stuck.pop(u, None)          # the R-087-09 violation is about a target within attack range; its 20 ticks are consecutive in-range ticks
             return
-        run = self.stuck.get(u)
-        if run is None or run[0] != tgt or dist < run[2] - 1.0:
-            run = self.stuck[u] = [tgt, 0, dist, False]
-        run[1] += 1
+        run = self._advance(self.stuck, u, tgt, dist)
         if run[1] > STUCK_TICKS and not run[3] and "R-087-09" in self.on:
             run[3] = True
             out.append(_violation("R-087-09", tick, u, "held target %d unshootable for %d ticks without closing in (%.0f wu away)" % (tgt, run[1], dist)))
@@ -359,7 +399,7 @@ class Monitor:
         lib.om_unit_targeting_cohort.restype = ctypes.c_uint32
         lib.om_terrain_band_heights.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double), ctypes.c_uint32]
         lib.om_terrain_band_heights.restype = ctypes.c_uint32
-        self._ids, self._side = [], {}
+        self._ids, self._side, self._flyers = [], {}, set()
         for (wa, faction), us in engine._own.items():
             if wa == world.value:
                 for u in us:
@@ -376,15 +416,21 @@ class Monitor:
             self._sensor[u] = max(st["sensor_radius"], st["attack_range"])   # the leash, om_tac_leash in csrc/unit.c
             self._reach[u] = engine.profile_reach(world, t)
             self._range[u], self._aoe[u] = st["attack_range"], st["aoe_radius"]
+            if engine.movement_kind(world, t) == 0:      # OM_MOVE_FLYING
+                self._flyers.add(u)
             cohort[u] = lib.om_unit_targeting_cohort(world, u)
         buf = (ctypes.c_double * 8)()
-        heights = list(buf)[:lib.om_terrain_band_heights(world, buf, 8)]
+        n_bands = lib.om_terrain_band_heights(world, buf, 8)     # filled by the call: read the buffer after it, not in the same expression (it read zeros, so the slant was always flat)
+        heights = list(buf)[:n_bands]
+        up = [1.0] + [engine.get_param(world, engine.param_id("OM_TP_RANGE_UP_%d" % n)) for n in range(1, 5)]       # csrc/unit.c om_tac_offset_mult, OM_REACH_MAX_OFFSET 4
+        dn = [1.0] + [engine.get_param(world, engine.param_id("OM_TP_RANGE_DOWN_%d" % n)) for n in range(1, 5)]
+        self._range_mult = lambda la, lb: 1.0 if la == lb else ((up if lb > la else dn)[abs(lb - la)] if abs(lb - la) <= 4 else 1.0)
         self._enemies = {s: [u for u in self._ids if self._side[u] != s] for s in set(self._side.values())}
         self._cache = {}
         self._terrain = bool(engine._lib.om_terrain_band_at(world, 0.0, 0.0) > 0)   # a world with no terrain reads band 0 everywhere
         self._posts = {}            # {guard id: (x, y)} where each stood when the lab ordered it to guard; the checker's Rules.guards
         self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach, cohort, self._range,
-                                   self._posts, heights))
+                                   self._posts, heights, self._range_mult, self._flyers))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
         self.tick = 0
