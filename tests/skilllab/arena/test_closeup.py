@@ -9,7 +9,7 @@ CL-5 K < 1 is an error (non-zero exit, stderr, no file).     CL-6 frames at tick
 CL-7 the existing path (`run.fight`, `run._document`, `run.main`) is byte for byte what it was.     CL-8 the module runs as `python -m` (one slow test).
 
 Fixtures: OPEN = h088 open field, side A Raider vs side B Vanguard, both_same_point, seed 1 (premises dumped on base 633ea3e4: sight off 585 ticks, on 575, control 575; re-dumped 2026-11-08: 576 / 557 / 557, all
-wipe; normal frames at 0, 100 .. 500, last). COVER = the h088 cover fixture with side A Raiders, hold:A, sight on (1941 ticks since 2026-11-11, 1285 from 2026-11-08 to then, 4490 before; wipe, snapshot_every 400, `built_features`,
+wipe; normal frames at 0, 100 .. 500, last). COVER = the h088 cover fixture with side A Raiders, hold:A, sight on (1086 ticks since 2026-11-11, 1941 from the F1 to F4 re-record to then, 1285 before that, 4490 before; the Round 2 give-up and guard wiring, F5 and F6, moved 1086 -> 1086 (the checker reports no violation on it); wipe, snapshot_every 400, `built_features`,
 `blocked`). Both end by themselves, so nothing here needs `--cap-seconds` (closeup is not specified to take one).
 Controls (green today, must stay green): the CL-7 pins and signatures, the normal runs the closeup tests compare with."""
 import contextlib
@@ -38,7 +38,7 @@ OPEN_NORMAL_FRAMES = {"off": [0, 100, 200, 300, 400, 500, 576], "on": [0, 100, 2
 PINS = {
     ("open", "off"): ("29edc69b5672a9e016377a206fe30d8afc05f1a96aab295fd7f26baf2f46a496", "82b05a22c96b1bd63181299a87b7a49d96a8571f2fe1340f8eee00ff04150c92"),
     ("open", "on"): ("d6662e1d209a5b877ab0e1576e01c2cf87d6902a932757a1bfe028f5c400ec9c", "9bb793a3f096263bad6306eca371a573028a9d4169ada7fadcbbee527d94fb66"),
-    ("cover", "on"): ("c29bb91c7ab4835b25b0e63f660f41fb7056558169bba34c7574f2db0053afa7", "4a167ece705ae22251e0da5f1b7b33f4dc1afe38809bd7836778e830b83120e6"),   # re-recorded 2026-11-11 (F1 to F4 incl. 81be98cd: 1285 -> 1941 ticks; Test-defect); was 19af1d33.. / 3b0e95f1..
+    ("cover", "on"): ("b4d527237ea96c1676d9f3d8e4f4e2a44d380626d6e67f25989a8c5ed49230fa", "b6fa72d338940860ea86a93165fcc73569c47fc2c287997d7c7d550b9bb4fa14"),   # re-recorded 2026-11-11 (Round 2 F5 give-up and F6 guard wiring: 1941 -> 1086 ticks, checker reports none; Test-defect); was c29bb91c.. / 4a167ece..
 }
 
 
@@ -129,13 +129,13 @@ def by_tick(doc):
 
 def test_control_the_normal_runs_the_closeup_tests_compare_with_have_the_dumped_premises(lab):
     """CONTROL (green today, must stay green), the premises of CL-1 to CL-6: the normal runner on OPEN gives 576 / 557 / 557 ticks (sight off / on / control), all wipes, normal
-    frames at 0, 100 ... and the last tick; on COVER 1941 ticks with `built_features` and per-frame `blocked`."""
+    frames at 0, 100 ... and the last tick; on COVER 1086 ticks with `built_features` and per-frame `blocked`."""
     got = {s: lab.normal("open", s)[0] for s in ("off", "on", "control")}
     cover = lab.normal("cover", "on")[0]
     assert ({s: (d["result"]["ticks"], d["result"]["end"]) for s, d in got.items()},
             {s: [f["tick"] for f in d["frames"]] for s, d in got.items() if s != "control"},
             cover["result"]["ticks"], "built_features" in cover, all("blocked" in f for f in cover["frames"])) == (
-        {s: (t, "wipe") for s, t in OPEN_TICKS.items()}, OPEN_NORMAL_FRAMES, 1941, True, True)
+        {s: (t, "wipe") for s, t in OPEN_TICKS.items()}, OPEN_NORMAL_FRAMES, 1086, True, True)
 
 
 @pytest.mark.parametrize("case,sight", sorted(PINS))
@@ -187,11 +187,11 @@ def test_cl1_k_larger_than_the_fight_gives_tick_0_and_the_last_tick(lab):
 
 
 def test_cl1_cover_fight_keeps_a_frame_every_k_ticks_with_blocked_and_built_features(lab):
-    """CL-1 and "same per-frame/unit keys including ... built_features": on COVER (1941 ticks, ground fight) K 50 gives 0, 50 ... 1900 and 1941, every frame carries `blocked`,
+    """CL-1 and "same per-frame/unit keys including ... built_features": on COVER (1086 ticks, ground fight) K 50 gives 0, 50 ... 1050 and 1086, every frame carries `blocked`,
     and the document carries `built_features`, `sights`, `movement_kind`."""
     doc = lab.ok("cover", "on", 50)
     assert ([f["tick"] for f in doc["frames"]], all("blocked" in f for f in doc["frames"]), {"built_features", "sights", "movement_kind"} <= set(doc)) == (
-        expected_ticks(1941, 50), True, True)
+        expected_ticks(1086, 50), True, True)
 
 
 # ---------------------------------------------------------------- CL-2 result unchanged
@@ -207,7 +207,7 @@ def test_cl2_result_equals_the_normal_runners_for_every_k(lab, sight):
 
 
 def test_cl2_cover_result_equals_the_normal_runners(lab):
-    """CL-2 on the ground-fight fixture: COVER at K 50 and K 100 gives the normal runner's result (1941 ticks, first_seen included)."""
+    """CL-2 on the ground-fight fixture: COVER at K 50 and K 100 gives the normal runner's result (1086 ticks, first_seen included)."""
     normal = lab.normal("cover", "on")[0]["result"]
     assert [lab.ok("cover", "on", k)["result"] for k in (50, 100)] == [normal, normal]
 
