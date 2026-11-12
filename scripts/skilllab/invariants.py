@@ -40,6 +40,7 @@ SLANT_SLACK = 1.0            # DRAFT-f7-slant-slack: a shot may exceed the attac
 TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
 NEAREST_TOL = 1.0            # DRAFT-inv-nearest-tol: an acquired target within this much of the nearest eligible enemy counts as the nearest (R-087-03)
 RETURN_FIRE_TICKS = 4        # DRAFT-inv-return-fire-ticks: a hit by the target in the frame of the acquisition or the 3 before it is return fire (R-087-06)
+GIVEUP_EXCLUSION_TICKS = 100  # DRAFT-giveup-exclusion-ticks (csrc/unit.c OM_GIVEUP_EXCLUSION_TICKS): a target a unit gave up is not eligible for it for this long (R-087-09)
 COHORT_SLOTS = 4             # R-087-08: a unit acquires at its cohort turn on every 4th tick
 
 
@@ -96,6 +97,7 @@ class _Checker:
         self.lock = {}               # unit -> (target, (x, y) where it took that lock) (R-087-03)
         self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09), a target inside attack range: the violation check
         self.unshot = {}             # the same run for a target at any distance: the engine's give-up window (csrc/unit.c om_tac_giveup), which the swap excuse reads
+        self.gave_up = {}            # (unit, target) -> tick of the give-up the checker excused: the target is not eligible for that unit for GIVEUP_EXCLUSION_TICKS (R-087-09)
         self.breached = set()        # guards outside their radius now (R-096-08: one violation per breach, not one per frame)
         self.hit_hist = collections.deque(maxlen=RETURN_FIRE_TICKS)   # the (attacker, victim) pairs of the last frames, this one included (R-087-06)
 
@@ -208,6 +210,9 @@ class _Checker:
         began (a change of target, or a pause with no target, keeps it; a new order resets it), by max(sensor radius, weapon range)."""
         tgt = r["target"] if r["alive"] else 0
         held = self.lock.get(u)
+        run = self.unshot.get(u)
+        if p is not None and p["alive"] and p["target"] and tgt != p["target"] and run is not None and run[0] == p["target"] and run[1] >= STUCK_TICKS - 1:
+            self.gave_up[(u, p["target"])] = tick       # R-087-09: the engine gave the target up (dropped it or swapped it) after its window
         if p is not None and p["alive"] and r["alive"] and p["target"] and tgt and tgt != p["target"]:
             old = p["target"]
             o_prev, o_now = self.prev["units"].get(old), frame["units"].get(old)
@@ -282,7 +287,7 @@ class _Checker:
     def _acquire(self, frame, u, r, p, tick, out):
         """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
         judged on the previous frame (the state before the step): the target is the nearest enemy that frame's visible set of the unit's side holds (planar distance,
-        within the unit's layer reach), within NEAREST_TOL, and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
+        within the unit's layer reach), within NEAREST_TOL (a target the unit gave up in the last GIVEUP_EXCLUSION_TICKS frames is not a candidate), and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
         frame or the RETURN_FIRE_TICKS - 1 before it is return fire, which excuses both."""
         tgt = r["target"] if r["alive"] else 0
         prev = self.prev
@@ -304,9 +309,11 @@ class _Checker:
             d = self._disp(p, row)
             if e == tgt:
                 mine = d
+            if tick - self.gave_up.get((u, e), -GIVEUP_EXCLUSION_TICKS) < GIVEUP_EXCLUSION_TICKS:
+                continue                     # R-087-09: given up by this unit within the exclusion window, so not a candidate for "the nearest"
             if nearest is None or d < nearest:
                 nearest = d
-        if mine is None or mine > nearest + NEAREST_TOL:
+        if mine is None or (nearest is not None and mine > nearest + NEAREST_TOL):
             out.append(_violation("R-087-03", tick, u, "acquired %d, not the nearest enemy its side sees (%s; nearest %s wu)" % (
                 tgt, "unseen, dead or out of reach" if mine is None else "%.1f wu" % mine, "none" if nearest is None else "%.1f" % nearest)))
         elif tick % COHORT_SLOTS != self.rules.cohort[u]:
