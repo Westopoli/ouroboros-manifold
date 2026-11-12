@@ -1,6 +1,6 @@
 # Rule pins: R-096-08@629328
-# spec: R-096-08 (the unit holds, fires in range, never walks) - guard order through the production library
-"""A guard unit never gets a destination, never walks, and fires once an enemy is in range."""
+# spec: R-096-08 (the guard holds its post, steps and fires inside GUARD_RADIUS, returns) - guard order through the production library
+"""A guard unit never gets a destination, steps toward an enemy no farther than its radius from its post (R-096-08), and fires once an enemy is in range."""
 import dataclasses
 import math
 import sys
@@ -60,11 +60,18 @@ def _watch(lib, setup, ticks):
         lib.free_world(w)
 
 
-def test_guard_unit_has_no_destination_and_stays_put(lib):
+GUARD_RADIUS = 200.0     # R-096-08 GUARD_RADIUS (DRAFT-guard-radius, Westley's number): how far from its post a guard may stand
+
+
+def test_guard_unit_has_no_destination_and_stays_inside_its_radius(lib):
+    """R-096-08 (as built since engine rules Round 2, F6): a guard never gets a destination, stays put while nothing is in its vision, and steps toward an enemy no farther than
+    GUARD_RADIUS from its post. Test-defect: this asserted the A170 hold (<= 1 wu from the post for 200 ticks); the walker comes into the guard's vision in this scene and the guard steps
+    toward it (measured: still for 127 ticks, then 96 wu from the post at tick 151 and there to tick 200, hits the walker from tick 161), which R-096-08 requires."""
     series, _ = _watch(lib, _setup(), 200)
     assert all(dest is None for _, dest, _, _ in series)
     x0, y0 = series[0][2]
-    assert all(math.hypot(x - x0, y - y0) <= 1.0 for _, _, (x, y), _ in series)
+    assert all(math.hypot(x - x0, y - y0) <= 1.0 for t, _, (x, y), _ in series if t <= 100), "the guard left its post before the walker was near"
+    assert all(math.hypot(x - x0, y - y0) <= GUARD_RADIUS for _, _, (x, y), _ in series), "the guard crossed its radius"
 
 
 def test_guard_unit_fires_when_the_enemy_walks_into_range(lib):
