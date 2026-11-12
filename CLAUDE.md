@@ -27,7 +27,7 @@ Claude designs and tests; agents build. The simulation is C with the stochastic 
 
 ## Tests are the spec
 
-Every story exists as failing tests before any code, each naming the `S-###`/`R-###-##` it proves. Builders never edit tests; a test changes only in a commit with a `Test-defect:` trailer naming why. Westley owns every threshold and tolerance.
+Every story exists as failing tests before any code, each naming the `S-###`/`R-###-##` it proves. Builders never edit tests; a test changes only in a commit with a `Test-defect:` trailer naming why. Westley owns every threshold and tolerance. A rule that code implements carries a `Proof:` line under it in its epic, naming the one test that enforces it (`docs/method/requirements.md` Proof); a weekly audit checks each rule against the bible and each proof against the current lab and beta (`docs/method/requirement_audit.md`).
 
 ## Code quality
 

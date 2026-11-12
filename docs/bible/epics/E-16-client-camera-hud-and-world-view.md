@@ -30,16 +30,27 @@ As a commander, I want a free camera I manage myself, so that attention is my sk
 
 Rules
 - R-103-01  Given a mission, When the player pans, zooms, or edge-scrolls, Then the camera moves freely with no forced follow; the classic view has one auto-anchor home the player returns to by key, and the designed views of R-103-05 and R-103-06 are the only camera modes.
+  Proof: MISSING
 - R-103-02  Given any zoom level, When the viewport is read, Then the mission canvas edges bound the camera; it never leaves the map.
+  Proof: MISSING
 - R-103-03  Given the launch build, When any battle scene is drawn, Then it is 3D, land and space alike, and 2D is for UI screens only (Q-STAGE3-01; Westley, 2026-10-07); and When the camera is read, Then the default is the classic RTS view with an auto-anchor home, the camera keeps its height above the ground under it through elevation changes (the Halo Wars floor), and the multi-perspective camera of R-103-05 and R-103-06 ships from launch; the classic view ships in every playtest round regardless of the designed views' state.
+  Proof: MISSING
 - R-103-05  Given the Angle Rack, When the player enters it, Then five fixed vantage angles (top-down, 45° overhead, horizontal, 45° upward, unit POV) are hopped between by hotkey with a short tween, pan, zoom, and edge-scroll work inside each, and a home key returns to the classic view; the Angle Rack is entered on a held key plus 1 to 5 (Westley, 2026-10-07).
+  Proof: unbuilt
 - R-103-06  Given the Layer Peel, When the player enables it (an option, off by default), Then the five layers fan apart around the focus point into translucent planes, scrolling walks focus between planes, the fan pans and zooms as one, and releasing closes the planes to true height; fog and cross-layer vision are untouched. The peel is a player option on a toggle, and its plane focus and the layer strip's focus are one control (Westley, 2026-10-07).
+  Proof: unbuilt
 - R-103-07  Given any view, When the player presses the flip key, Then the camera turns 180 degrees about a center, keeping its pitch and distance, so a 45° view facing south becomes a 45° view facing north; the flip is a modifier plus the anchor key and turns about the camera's ground target, and the height floor is shared across views (Westley, 2026-10-07).
+  Proof: unbuilt
 - R-103-08  Given a selection in the tactical view, When the player presses A and then left-clicks a point or a visible enemy, Then the selection attack-moves there; right-click alone is move (Westley 2026-10-01; the rest of the control scheme stays under Q-103-04).
+  Proof: MISSING
 - R-103-09  Given the player pans by keys or by edge-scroll, When the zoom changes, Then the pan speed stays the same on screen, so the ground covered per second grows in proportion as the camera zooms out; the Settings pan-speed slider (R-110-02) scales that speed.
+  Proof: MISSING
 - R-103-04  Given the camera, When it moves, Then it is never bound to a layer; the layer strip changes focus, not the camera.
+  Proof: MISSING
 - R-103-10  Idea only, not a decision (Q-103-07; Westley, 2026-10-07). Instead of the Angle Rack and Layer Peel above, the player could bind keys to camera angles of their own: each key puts the camera at an angle relative to the current forward direction of a unit, in a view that tracks the unit as it moves; a default mode that does not follow, reached by its own key, is the one the player switches back to; and the player may change as much about each view as we can give: its angle, whether it follows, its zoom distance. Nothing here is specified or scheduled.
+  Proof: unbuilt
 - R-103-11  Given a ground-era mission, When the battle screen draws it, Then every own unit and every seen enemy (R-089-04) has a 3D body on the terrain, and slope midlines are not marked on the land view: the midline is a sim position (R-004-06), told by sight and height (Westley 2026-10-22, DEC-S001-no-slope-markers); flyers stand above their layer floor once the terrain frame carries the floors (K-c6) (Architect, 2026-10-09; built by C6, C7 and VG-C-wire).
+  Proof: MISSING
 
 Inputs: mouse, keyboard, edge scroll.
 Outputs: viewport transform.
@@ -51,10 +62,15 @@ As a commander, I want to pull the camera back until the battle reads as a map, 
 
 Rules
 - R-161-01  Given the camera pulled back past the tactical band, When the map view opens, Then it replaces the minimap; there is no corner minimap [Q-103-05: whether an always-visible glance survives].
+  Proof: MISSING
 - R-161-02  Given the map view, When the player selects a group and clicks a point or a visible enemy, Then the orders are move and attack-move; a commander playing alone may also ask for things by pointing at the map from here (expand here, fortify this pass, siege at this gate; E-22 S-180, S-231), allowed and subject to change (Westley, 2026-10-02); every other command needs the tactical band.
+  Proof: MISSING
 - R-161-03  Given the map view, When groups are drawn, Then layers collapse into one icon per group carrying a mark for Upper (layers 4 and 5), Lower (1 and 2), or Expansive (1 to 5) [Q-103-06: a group entirely on layer 3, and indicators beyond pins].
+  Proof: unbuilt
 - R-161-04  Given the map view, When it is read, Then it shows the mission only, never the galaxy; the galaxy view lives outside missions.
+  Proof: MISSING
 - R-161-05  Given the map view, When it is drawn, Then the overlay moves with the terrain and fog applies as everywhere; the look is the Sand Table candidate, a shrunken three-dimensional model of the ground with groups as pins, with a 45° view of the same table in which the layers sit far enough apart that specific sets of units read; committed only after a prototype [Q-103-05: the prototype decides it, and with it whether this look is the zoomed-out end of the one continuous drawing of S-234 or a separate drawing (Westley, 2026-10-06)].
+  Proof: unbuilt
 
 Inputs: mouse, keyboard.
 Outputs: viewport transform; orders.
@@ -68,15 +84,25 @@ Direction changed 2026-10-02, rewrite pending: the ticker also carries economy e
 
 Rules
 - R-104-01  Given a mission, When the HUD is drawn, Then the player can always see the objective list with progress (top-left) and a quiet ticker of notable beats beneath it; the ticker names six beats: structure captured, structure lost, force routed, objective threshold crossed, the economy beat (base occupied, a side falling back to an expansion, an expansion founded, or a weather trouble arriving, R-235-03), and a strongpoint taken or lost (R-235-03).
+  Proof: MISSING
 - R-104-02  Given nothing mission-significant has happened, When the top-center is read, Then it is empty; Given a structure falls or an objective band threshold is crossed, Then a banner appears there and clears within 5 s.
+  Proof: MISSING
 - R-104-03  Given a mission, When the top-right is read, Then it shows elapsed mission time and a pause or menu button [Q-104-01: pause in a real-time multiplayer match].
+  Proof: MISSING
 - R-104-04  Given a selection, When the bottom-center is read, Then it shows the selected units' portraits, summed HP, and one ability slot per unit type with a cooldown ring, and no contextual prompt or "ready" notification.
+  Proof: MISSING
 - R-104-05  Given the map view (S-161) in place of a minimap, When the player pulls the camera back, Then friendly groups are bright, visible enemies dim, terrain reads as ground, objectives are marked, and reinforcement structures are colored by owner; the economy's places and the weather are drawn there too (S-235).
+  Proof: MISSING
 - R-104-06  Given player-owned reinforcement structures, When the structure panel is read, Then one row per owned structure shows the production timer bar, next unit icon, and structure HP; neutral and enemy structures do not appear.
+  Proof: MISSING
 - R-104-07  Given control groups 1 through 0, When the tabs are read, Then each bound group shows its unit-type icon and count.
+  Proof: MISSING
 - R-104-08  Given a mission, When the bottom-right is read, Then it shows the commander's portrait, name, and lineage marker; the economy player's screen skips this place in the beta (Westley, 2026-10-07) [Q-230-02: parked].
+  Proof: unbuilt
 - R-104-09  Given the right sidebar, When read, Then it holds the layer strip and nothing else at launch; where the solo commander's dial, doctrine switch and unit-mix switches sit is the Architect's choice, with Westley's feedback after the beta (Q-231-01).
+  Proof: MISSING
 - R-104-10  Given the in-world chrome, When read, Then every unit has a thin HP bar above it and a layer-color ring beneath it in the space era only (on land there is no ring; the height step and sight tell the layer, Westley 2026-10-22, DEC-S001-no-layer-ring-land), and selected units have a selection ring, and every force set to emit carries the emit mark of S-232; there is no enemy composition readout anywhere [Q-230-03: where the line falls between that and what a player infers from the world, such as heavy gathering of one resource showing which role a side is making more of, E-22 S-171].
+  Proof: MISSING
 
 Inputs: tick delta; selection; control groups.
 Outputs: HUD panels, T2-checkable.
@@ -87,13 +113,21 @@ As a commander, I want to click, box-select, and bind groups, and never to have 
 
 Rules
 - R-105-01  Given the player clicks a friendly unit, When released, Then it is the selection; Given a drag box, Then every friendly unit inside it on every layer is the selection.
+  Proof: MISSING
 - R-105-06  Given a selection, When the player presses Alt plus a layer number (Cmd on macOS), Then a layer transfer to that layer is armed for the whole selection and the next map click places it (E-01 R-002-08); plain digits stay with control groups, and the layer strip's focus is unchanged by this. Narrowing a selection to one layer is not in the beta (Westley 2026-10-13, overturning 2026-10-07: "Alt + number remove this ruling, I'm overturning it now. Alt + number queues up alt + number + click for the entire selection to be clicked somewhere. Skip narrowing selection for now, we'll get into that after beta."); it comes after the beta.
+  Proof: unbuilt
 - R-105-02  Given a selection and Ctrl plus a digit, When pressed, Then the group is bound to that digit and the units leave any other group (exclusive membership); pressing the digit recalls the group; pressing it twice centers the camera on it.
+  Proof: MISSING
 - R-105-03  Given the player presses Tab, When the layer strip has focus, Then focus cycles to the next layer.
+  Proof: MISSING
 - R-105-04  Given the client, When any input is checked, Then no select-all, select-all-army, or select-all-of-type command exists (Principle 4; A-300 killed the hotkey).
+  Proof: MISSING
 - R-105-05  Given Shift plus click, When pressed, Then the unit is added to or removed from the current selection.
+  Proof: unbuilt
 - R-105-07  Given a bound group that spans layers, When the player holds its digit, Then the layer strip blooms into one bar per layer the group occupies, sized by unit count; dragging across one or more bars and releasing makes those layers the selection, and releasing the digit collapses the strip (the Comb). Tap-to-recall stays the default for control groups and multi-layer movement; narrowing by layer hotkey is after the beta (R-105-06); the comb is how individual layers inside a group are moved.
+  Proof: MISSING
 - R-105-08  Given a selection and a right-click move, When issued, Then every unit stays on its own layer; a layer change is a deliberate act on a manual selection.
+  Proof: MISSING
 
 Inputs: mouse, keyboard.
 Outputs: selection set; control group state.
@@ -105,11 +139,17 @@ As a player, I want to orbit a 3D star map where territory glows, borders touch,
 
 Rules
 - R-106-01  Given the world view, When drawn, Then each system is a luminous point sized by significance, brightest for the player's core, dim neutral for uncolonized.
+  Proof: MISSING
 - R-106-02  Given faction territory, When drawn, Then adjacent same-faction systems are joined by faction-colored luminous filament arcs in 3D (border and both edges solid and bright, trade edges thinner and dimmer), and each faction's systems share one translucent shell; rival shells keep a visible gap with a bright seam where they nearly meet.
+  Proof: MISSING
 - R-106-03  Given camera distance d, When d ≥ 37.5 (Overview), Then shells render at 40 to 60 percent opacity, filaments dim, nodes shrink, faction names float at shell centers; When 20 ≤ d < 32.5 (Regional, default), Then filaments dominate, shells at 8 to 15 percent, border seams are the accent; When d < 12.5 (Local), Then the focused system brightens, its filaments thicken, shells fade to ground fog, distant systems desaturate; between bands properties interpolate continuously, inside a band they are locked.
+  Proof: MISSING
 - R-106-04  Given attack, conquest, and revolt events in the jump log, When the map animates, Then a flash pulses at the involved systems (attack and conquest between attacker and defender, revolt at the region) for each event; the sim supplies occurrence and position, the renderer owns look.
+  Proof: MISSING
 - R-106-05  Given the world view, When idle, Then an ambient particle field (rings, inflow streams, dust, starfield, central glow) fills the space behind the territory at low opacity.
+  Proof: MISSING
 - R-106-06  Given a time jump, When the galaxy animates, Then it plays on its own as the chronicle's master clock (E-09 R-069-03, 2 ticks per second), the player sets no speed, and only expanding a chronicle entry pauses it (E-09 R-069-04; Westley, 2026-10-07: decided in the old version of the game).
+  Proof: MISSING
 
 Inputs: strategic snapshot; ownership timeline; event log.
 Outputs: screen; T2 screenshots.
@@ -120,10 +160,15 @@ As a player, I want to pan, zoom, orbit, focus a system, and pick out a faction,
 
 Rules
 - R-107-01  Given the world view, When the player left-drags, Then the camera pans; scroll zooms along the forward axis; right-drag orbits; clicking a system centers on it and zooms to Local.
+  Proof: MISSING
 - R-107-02  Given a time jump, When the camera auto-orbits, Then any player input overrides it; outside a jump the camera is fully the player's.
+  Proof: MISSING
 - R-107-03  Given the faction list panel (always visible), When a faction is hovered, Then its territory brightens and others dim; When clicked, Then all other territory fades to near-invisible until clicked again or elsewhere.
+  Proof: MISSING
 - R-107-04  Given the faction data panel (opposite side), When a faction is hovered or selected or a system is focused, Then it shows the faction name, system count, and aggregate stats; no per-region detail at launch.
+  Proof: MISSING
 - R-107-05  Given a system hover, When shown, Then a tooltip gives name and owner, band-sensitive, and only the system's own filaments brighten; filaments and shells have no hover.
+  Proof: MISSING
 
 Inputs: mouse.
 Outputs: camera; panels; tooltip.
@@ -134,12 +179,19 @@ As a player, I want the mission to pull back into the galaxy and the galaxy to p
 
 Rules
 - R-108-01  Given the mission ends, When the player confirms, Then the camera pulls back and up until the battlefield is one point of light and the galaxy fades in around it, full screen; this is a scripted move and not the player's zoom, which stops at the battlefield's map view (S-234).
+  Proof: unbuilt
 - R-108-02  Given the galaxy is visible, When narration begins, Then the scroll panel slides in from the right over 0.40 s and the galaxy resizes to 62 percent width (E-09 R-069-01).
+  Proof: MISSING
 - R-108-03  Given a territory change in a keyframe, When animated, Then the shell tweens from old to new over 2.0 s; nothing snaps; all events in a keyframe animate together.
+  Proof: MISSING
 - R-108-04  Given the entry currently printing names a system, When drawn, Then that system's emission brightens subtly and the entry text is tinted in its primary faction's color.
+  Proof: MISSING
 - R-108-05  Given the last entry has printed, When the galaxy settles, Then the scroll footer shows Proceed and Exit to Main Menu with no countdown.
+  Proof: MISSING
 - R-108-06  Given Proceed, When pressed, Then the panel slides out, the next mission's system highlights, and the camera pushes in until the tactical space materializes and the briefing appears.
+  Proof: unbuilt
 - R-108-07  Given Exit, When pressed at this boundary or at the post-mission moment before pull-back, Then the screen fades to black and the main menu loads, with no camera choreography.
+  Proof: MISSING
 
 Inputs: time jump report; chronicle entries; player buttons.
 Outputs: screen; menu.
@@ -150,10 +202,15 @@ As a player, I want the screens around a mission to read as orders and after-act
 
 Rules
 - R-109-01  Given a mission is generated, When the briefing shows, Then it is E-10 S-079 (three sections, Accept and Refuse only).
+  Proof: MISSING
 - R-109-02  Given a mission ends, When the debrief shows, Then it is E-10 R-079-03 and offers Continue and Exit.
+  Proof: MISSING
 - R-109-03  Given a new campaign, When it starts, Then the onboarding screen is E-08 S-063.
+  Proof: MISSING
 - R-109-04  Given any of these screens, When rendered, Then no raw field numbers appear.
+  Proof: MISSING
 - R-109-05  Given a live mission load the simulation refuses, When the player is on the briefing, Then an error panel names the reason and offers Retry; when the refusal cannot be retried (a desync, a missing peer) the Retry button is hidden (Architect, 2026-10-09, from the lane F landing).
+  Proof: MISSING
 
 Inputs: mission setup, result, onboarding.
 Outputs: screens.
@@ -164,12 +221,19 @@ As a player, I want a main menu that sets the tone and a settings screen that co
 
 Rules
 - R-110-01  Given launch, When the main menu shows, Then the galaxy particle structure runs behind it at 70 percent opacity with an autonomous camera cycling six moods with 5 s transitions, and the menu offers New Campaign, Continue, Era Library, Settings, and Quit, and nothing else.
+  Proof: MISSING
 - R-110-02  Given Settings, When opened, Then it offers resolution, fullscreen, master and music volume, a camera pan-speed slider, and a galaxy quality choice (full, stand-in, fewer particles) that the player sets by hand and the game never changes on its own, except that under the Compatibility renderer the stand-in replaces the raymarch shell at every tier (Architect, 2026-10-08), and the automatic quality fallback Q-106-02 allows (line 310) is decided once at launch from the renderer and the first galaxy frame's measured rate, never mid-session, and the Settings row shows the value chosen (Architect 2026-10-21, implementation; Westley may veto); key rebinding for the layer modifier and control groups joins it once the layer controls (Q-005-03) and the camera controls (Q-103-04) are designed (Q-110-04); accessibility options (colorblind palette, UI scale) are a later story, not in the first playtest rounds.
+  Proof: MISSING
 - R-110-03  Given Continue, When pressed with a save at a chapter boundary, Then the campaign resumes at that boundary.
+  Proof: MISSING
 - R-110-04  Given any loading screen the game shows (campaign load, era switch), When displayed, Then it carries information the player would otherwise never see, in the register of the chronicle (what the Long Horizon foreshadows), never wallpaper art or a bare spinner [Q-110-03: what is shown]. No loading screen exists between mission and galaxy (S-108).
+  Proof: MISSING
 - R-110-05  Given the Era Library, When opened from the main menu, Then the player sees one card per installed era pack that passes validation (E-20 R-146-03), in chronological order, each with the pack's name, spatial scale and tone and whether the player owns it, telling them which ages they can play; a pack that fails validation is not listed.
+  Proof: MISSING
 - R-110-06  Given an era card, When selected, Then the detail shows that pack's identity, its three tiers and its unit roster, all read from the pack manifest; nothing on the screen is hard-coded.
+  Proof: MISSING
 - R-110-07  Given ownership, When the Era Library reads it, Then it comes from a local ownership store, and in development builds every installed era is owned. The screen shows no mastery or tier progress; they return when that part of the game is defined (Q-110-05).
+  Proof: MISSING
 
 Inputs: menu input.
 Outputs: screens.
@@ -180,9 +244,13 @@ As a player, I want the game saved at every chapter boundary without asking, and
 
 Rules
 - R-111-01  Given a mission start, a mission end, or a time jump end, When reached, Then an autosave is written before the player can continue.
+  Proof: MISSING
 - R-111-02  Given a load, When the campaign resumes, Then the world, ledger, chapter, onboarding, RNG state, and chain counter are restored such that the next jump is deterministic (E-08 R-064-04).
+  Proof: MISSING
 - R-111-03  Given a save from a different game version, When loaded, Then it is refused with a message naming the versions.
+  Proof: MISSING
 - R-111-04  Given the campaign list, When the player starts a new campaign, Then a new campaign slot is created with no fixed limit on the number of campaigns; there is no save of any kind during a mission, and quitting mid-mission returns the campaign to its last chapter-boundary autosave.
+  Proof: MISSING
 
 Inputs: game state.
 Outputs: save files; menu.
@@ -195,11 +263,17 @@ Design decided 2026-10-02, not scheduled for building (E-19 S-159, E-22). The ru
 
 Rules
 - R-230-01  Given the economy seat of a pair, When the screen is read, Then the player can see how much of each of the three resources is held (E-22 S-167), the workers and what each is doing, and the population against its one cap (E-22 S-169) [Q-230-01: the layout of the screen].
+  Proof: unbuilt
 - R-230-02  Given a building the player is about to place, When it is held over a lot, Then the screen shows what that lot would yield with what stands beside it, before the building is placed (E-22 S-168).
+  Proof: unbuilt
 - R-230-03  Given the production buildings, When the schedule is read, Then it shows what each is set to make and what is planned ahead on the timeline, and how long a change of focus would take (E-22 S-170).
+  Proof: unbuilt
 - R-230-04  Given technology, When the player reads the technology choices, Then the screen shows what can be chosen and what is in progress (E-22 S-173) [Q-159-12: what technology does].
+  Proof: unbuilt
 - R-230-05  Given walls, gates and towers, When the screen is read, Then the player can see each defense placed and where the raid lanes run (E-22 S-174).
+  Proof: unbuilt
 - R-230-06  Given the economy seat, When the screen is read, Then no list of what the commander needs appears, and no alert that the pair is falling behind on the population cap, worker production, the next technology or production; the player holds those in mind and the pair talks (E-19 R-159-01).
+  Proof: unbuilt
 
 Inputs: economy state from the tick delta; the player's building, queue, schedule and technology commands.
 Outputs: the economy panels, T2-checkable.
@@ -212,10 +286,15 @@ Design decided 2026-10-02, not scheduled for building (E-22 S-179, S-180). The c
 
 Rules
 - R-231-01  Given a commander with nobody in the economy seat, When the player turns the dial, Then it sets the balance of spending between economy, technology and army (E-22 S-180).
+  Proof: unbuilt
 - R-231-02  Given a mission in progress, When the player changes the doctrine, Then the rules follow the new doctrine from then on, at any time in the mission (E-22 S-179).
+  Proof: unbuilt
 - R-231-03  Given the rules that pick the unit mix and the rules that shift production toward what counters the enemy units the player's forces have seen, When the player reads the unit-mix controls, Then there is one switch for each, each can be turned off, and the commander can override the mix the rules pick (E-22 S-180) [Q-231-02: how the override is made].
+  Proof: unbuilt
 - R-231-04  Given the tactical view or the map view (S-161), When the player points at a place and asks for something (expand here, fortify this pass, siege at this gate), Then the request is given and the rules carry it out; the commander never places or queues anything himself. Allowed from the map view, subject to change (Westley, 2026-10-02).
+  Proof: unbuilt
 - R-231-05  Given a request, When it has been given, Then how the screen shows that the request was taken, and what it shows when the rules cannot carry it out, is the Architect's choice (Westley, 2026-10-07; Q-231-02).
+  Proof: unbuilt
 
 Inputs: dial setting; doctrine choice; switch states; a place and a request.
 Outputs: the controls and their state, T2-checkable; commands carried to the rules.
@@ -226,10 +305,15 @@ As a commander, I want to see my ping and my emitting forces, to be told when I 
 
 Rules
 - R-232-01  Given selected units that can ping (E-01 S-162), When the player chooses the ping, presses a layer number and clicks a place, Then the ping is given there, and the screen shows the cooldown of the ping if the sim gives one; the ping is an ability on the one command card all selected units share, on the same keystroke for every unit, in a sub-group or the whole group (the style of Immortal: Gates of Pyre; Westley, 2026-10-07), and with a group selected the unit closest to the clicked place casts it, unless it is out of range, in which case the player moves the cursor closer until it is in range [Q-232-03: how the layer is chosen].
+  Proof: MISSING
 - R-232-02  Given a force, When the player switches it between emitting and silent (E-01 R-163-03), Then the command is given from the HUD and the force's state changes on the next tick [Q-232-03: its key].
+  Proof: unbuilt
 - R-232-03  Given forces on the field, When the in-world chrome is read, Then every force set to emit carries a mark showing that it is emitting, and a silent force carries none.
+  Proof: unbuilt
 - R-232-04  Given the player's units are pinged (E-01 R-162-03), When the ping lands, Then nothing is drawn: the alert is switched off for now (Westley, 2026-10-05). If it returns, it is a sector of about 60 degrees toward the caster and nothing more precise [the display of a returning alert is not decided].
+  Proof: unbuilt
 - R-232-05  Given selected units whose type cannot fire at a layer offset (E-01 S-164), When the player points at an enemy at that offset, Then the cursor shows a red X while it is out of reach and returns to the regular cursor when it is back in reach (Westley, 2026-10-07), whatever the distance.
+  Proof: unbuilt
 
 Inputs: ping and emit commands; the alert and the unit reach tables from the tick delta.
 Outputs: the ping control and its cooldown; the emit mark; the alert and sector; the reach cue, T2-checkable.
@@ -242,8 +326,11 @@ Design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-233-01  Given a commander who will play alone, When the player makes the choices for a mission, Then the player can set which doctrine the rules begin with and whether each of the two unit-mix behaviours (R-231-03) is on; the starting doctrine is the player's pick and has no default, so until the player sets it nothing is produced (Westley, 2026-10-07), and it is set in the lobby (E-22 R-179-03).
-- R-233-02  Given the enemy's economy, When the player makes the choices for a mission, Then the player chooses whether it also scouts, counters and disguises (E-22 S-181), as a pick.
+  Proof: unbuilt
+- R-233-02  Given the enemy's economy, When the player makes the choices for a mission, Then the difficulty decides whether it also scouts, counters and disguises (E-22 S-181, R-181-03; E-14 R-215-06) and the player makes no pick (Westley, 2026-10-07, Q-181-01; this rule said "as a pick" until 2026-11-08).
+  Proof: unbuilt
 - R-233-03  Given a multiplayer universe, When these choices are made, Then they are locked with the rest of the universe's configuration (E-19 R-144-03).
+  Proof: unbuilt
 
 Inputs: the player's choices.
 Outputs: the choice screen, T2-checkable; the settings carried into the mission.
@@ -254,9 +341,13 @@ As a commander, I want to zoom smoothly from a single unit to the battlefield's 
 
 Rules
 - R-234-01  Given the camera at any zoom between the closest and the battlefield's map view, When it moves, Then the world is drawn as one world at continuous detail, with smooth transitions between very different zoom levels (E-17 R-166-05, E-18 S-236).
+  Proof: MISSING
 - R-234-02  Given the closest zoom, When it is read, Then it shows a single unit in deep detail; Given the farthest zoom, Then it is the battlefield's map view of S-161.
+  Proof: MISSING
 - R-234-03  Given the camera at the map view, When the player zooms out further, Then the zoom stops; the galaxy is not reached by the player's zoom, and the pull-back of S-108 is the only move from battlefield to galaxy.
+  Proof: MISSING
 - R-234-04  Given any zoom, When the viewport is read, Then the mission canvas edges still bound the camera (R-103-02), whatever the canvas size.
+  Proof: MISSING
 
 Inputs: scroll or zoom input.
 Outputs: viewport transform.
@@ -269,9 +360,13 @@ Design decided 2026-10-02; the ticker beats are queued (VG-E1M, wired by VG-E1W)
 
 Rules
 - R-235-01  Given the map view (S-161) and the tactical view, When the economy's places are drawn, Then the economic locations, the neutral settlements, the objective, the side's base of operations, its expansions and forward works, and on land maps the strongpoints are marked (E-22 S-175, S-177; E-15).
+  Proof: unbuilt
 - R-235-02  Given an environmental trouble travelling across the map, When it is drawn, Then both sides see where it is as it moves (E-15 holds what it does).
+  Proof: unbuilt
 - R-235-03  Given the ticker (R-104-01), When a base is occupied, a side falls back to an expansion, an expansion is founded, a weather trouble arrives, or a strongpoint is taken or lost, Then the ticker names it; no other economy beat reaches the ticker (Westley, 2026-10-12).
+  Proof: unbuilt
 - R-235-04  Given a shipment that does not arrive (E-22 S-176), When the ticker, the banners and the map are read, Then nothing on them explains why.
+  Proof: unbuilt
 
 Inputs: economy and weather events from the tick delta.
 Outputs: marks on the map view; ticker lines, T2-checkable.
@@ -299,15 +394,21 @@ Q-235-01 closed 2026-10-12, R-235-03. Q-104-02 closed 2026-10-23, R-104-01.
 ## Invariants
 
 - The HUD never shows an enemy composition readout; the player infers from the world only (Westley, 2026-10-07).
+  Proof: MISSING
 - Nothing on screen lists what the commander needs, and nothing explains a shipment that did not arrive.
+  Proof: unbuilt
 - The player's zoom never goes past the battlefield's map view.
+  Proof: MISSING
 - No select-all command exists.
+  Proof: MISSING
 - No loading screen between mission and galaxy and mission.
+  Proof: MISSING
 - Every screen text is free of raw field numbers.
+  Proof: MISSING
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. The long-term goal of thousands of units and workers on one map (hub "Reference Hardware") is not yet a client budget; E-18 S-240 states 30 fps at 1,000 units where this epic states 60 fps, and whether workers, buildings and settlement pieces count as units on screen is decided with the budgets for thousands, which stay a direction until the simulation's budgets (10,000) are reached (Westley, 2026-10-06). Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. The long-term goal of thousands of units and workers on one map (hub "Reference Hardware") is not yet a client budget; E-18 S-240 states 30 fps at 1,000 units where this epic states 60 fps [Q-240-02], and whether workers, buildings and settlement pieces count as units on screen is decided with the budgets for thousands, which stay a direction until the simulation's budgets (10,000) are reached (Westley, 2026-10-06). Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
 
 ## Look and behavior references
 
@@ -348,10 +449,15 @@ Design direction 2026-10-06, not scheduled. Westley, verbatim: "I want to make g
 
 Rules
 - R-245-01  Given a player in any scene, When they press the report key (F12; the last version's `BugReportManager` autoload, zip layout, dual write to `user://logs/reports` and Downloads, clipboard copy and "where it went" popup are kept as-is), Then the game writes a report: the player's words, the scene, and a capture of the last 5 to 10 seconds of the simulation exactly as it ran, and tells the player where it went.
+  Proof: MISSING
 - R-245-02  Given the lockstep backend (E-19 S-139, S-140), When a capture is made, Then it is the save state from 5 to 10 seconds before the press plus the command log since, so the sim replays those seconds byte-identically on our machine; the window is 10 s, and the screenshot, mission metrics, crash log, client log tail, scene name and camera ride beside it (Q-245-02 closed). The last version's zip had no seed and no words field; both are added.
+  Proof: MISSING
 - R-245-03  Given a crash, When the game dies, Then the player is pointed at the log and the capture, as the last version did.
+  Proof: MISSING
 - R-245-04  Given the website, When a player leaves feedback or a report there, Then it enters the same queue as the in-game reports, and nobody has to be present for it to be received.
+  Proof: unbuilt
 - R-245-05  Given the queue, When a report arrives, Then it is read by a person for the beta: a bug goes into the maintenance queue, a complaint is summarised. The later shape, a classifier and the local model of the Agora harness investigating and proposing fixes, is a post-launch idea (Westley, 2026-10-06: "a long way down the road post launch, we can just stub that idea"); Q-245-03 is deferred until then.
+  Proof: unbuilt
 
 Inputs: the report key; the player's words; the lockstep save and command log; the website form.
 Outputs: a report file with the capture; a queue entry; a classification; for bugs, an Agora task.

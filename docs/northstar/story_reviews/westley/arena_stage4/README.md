@@ -1,36 +1,51 @@
-# Lab stage 4: sight (H-088), re-run 2026-11-06 after the stage 4 fixes
+# Lab stage 4: sight (H-088), re-run 2026-11-11 on the engine with the Round 1 rule fixes and the lock fix
 
-Four fights, 20 seeds each, every one beside the same fight with targeting by sight off. Sight is on: a unit fires only at what its side sees; high ground sees down and fires down, low ground never sees up (reach 0 up, 1 down is a lab setting, DEC-stage4-vantage-reach); the holder of a `hold:` layout is on guard. This run follows your 2026-11-06 rulings: a hill is real terrain (a unit is on the upper layer from the ramp's halfway line and sees and is seen from there, nothing else gives red a look up); a box blocks exactly the cells it is drawn on (each snapped to the engine's 100 wu grid, the drawing shows the snapped box); the two traps start red inside the pocket and blue springs all three forces together. The page with every strip is `index.html` in this directory; its frames (`L-0061-s10/` and so on, each fight with its `-control-s10/`) sit beside it. Seed 10 is the median seed the page shows. All 20 seeds of each fight come out the same (the seed changes nothing in the arena), so a rate is 0% or 100%.
+Your stage 4 pictures from 2026-11-06 were made before the engine rule fixes. This run makes them again on the engine that has them: no unit enters an obstacle (a box, wall or building cell), no unit fires on a tick it moved, a unit keeps its target until it dies, leaves sight or is out of reach, Wardens do not stack, and a unit that halts to fire no longer loses its lock (the lock fix, which lengthened the fights). The fights are the same four layouts with the same settings as before (sight on, 20 seeds each, each beside the same fight with targeting by sight off, the holder of a `hold:` layout on guard). Every seed of a fight comes out the same, so a rate is 0% or 100%. Seed 10 is the seed the page shows. The page with every strip is `index.html` in this directory; its frames (`L-0061-s10/` and so on, each fight with its `-control-s10/`) sit beside it. Blue is side A, red is side B.
 
-Watch one: on the Mac `scripts/replay.sh docs/northstar/research/layer_dynamics/arena/stage4/L-0061-s10.fight.json`, on Linux `OM_FIGHT=$PWD/docs/northstar/research/layer_dynamics/arena/stage4/L-0061-s10.fight.json scripts/play.sh --scene res://scenes/proto/fight_replay/fight_replay.tscn`. Space steps forward; V switches the faint sight discs between one per role and one per unit; a hollow unit is one the other side does not see. The control fight (`.../stage4/control/L-0061-control-s10.fight.json`) is the same fight with targeting by sight off.
+What changed in the outcomes against the 2026-11-06 run: L-0039 sight on was a draw at the cap (5 against 8) and is now a red win (0 against 3); L-0061 blue still wins, now with 18 left instead of 23; the two traps are still won by red, now with 24 and 32 red units left instead of 19 and 36. Against the first re-run on the Round 1 fixes alone (before the lock fix) the winners are the same and the fights are longer: L-0061 1693 ticks (was 1663), L-0080 red with 24 left in 1934 ticks (was 25 left, 1597), L-0083 red with 32 left in 1998 ticks (was 35 left, 1622); L-0039 with sight on is unchanged (red, 3 left, 2314 ticks) and its control is blue with 2 left in 2858 ticks (was 2618).
 
-What the numbers say (seed 10; the same in every seed):
+## Results (seed 10; the same in every seed, from the fight files)
+
+Winner and survivors are blue:red. "First seen" is the first sampled tick at which that side sees an enemy (blue / red); the control has none because targeting by sight is off there.
 
 | Fight | With sight | Same fight, targeting by sight off | Your guess |
 |---|---|---|---|
-| Vantage L-0061 (24 against 24, blue in an arc on the hill) | Blue wins, 23 left against 0, 1517 ticks. Blue sees red at tick 0, red first sees blue at tick 120, when it is past the ramp's halfway line. | The same result, 23 against 0, 1517 ticks. | Blue 98%: agrees. |
-| Trap L-0080 (16 against 32) | Red wins, 0 against 19 left, 2235 ticks. Red starts in the pocket; the trap springs at tick 106 (red's leading unit is within 300 wu of the centre of the three forces); blue's three groups all hold a target by tick 233. First seen: red 40 (it sees the arc, whose Vanguards have a shorter sight than red's Interceptors), blue 80. No red unit sees a hill unit while it is on the hill. | The same result and the same positions. | Blue 75%: red wins instead (0%). |
-| Trap L-0083 (24 against 48) | Red wins, 0 against 36 left, 1691 ticks. The trap springs at tick 91. First seen: red 40, blue 60. | The same result. | Blue 75%: red wins instead (0%). |
-| Cover L-0039 (as you drew it, red expected 75%) | A draw at the 600 s cap, 5 against 8 left. First seen: blue 60, red 80. The boxes now block only their three snapped cells, with open lanes between them. | A stall at tick 3260 (silence), 5 against 8. | Red 75%: a draw (0% for blue). |
+| Vantage L-0061 (24 against 24, blue in an arc on the hill) | Blue wins, 18:0 left, 1693 ticks. First seen: blue 0, red 120. Blue 20 of 20 seeds. | Blue wins, 18:0, 1693 ticks. | Blue 98%. |
+| Trap L-0080 (16 against 32) | Red wins, 0:24 left, 1934 ticks. First seen: blue 80, red 40. Blue 0 of 20 seeds. | Red wins, 0:24, 1934 ticks. | Blue 75%. |
+| Trap L-0083 (24 against 48) | Red wins, 0:32 left, 1998 ticks. First seen: blue 60, red 40. Blue 0 of 20 seeds. | Red wins, 0:32, 1998 ticks. | Blue 75%. |
+| Cover L-0039 (as you drew it) | Red wins, 0:3 left, 2314 ticks. First seen: blue 60, red 80. Blue 0 of 20 seeds. | Blue wins, 2:0, 2858 ticks. | Red 75%. |
 
-Checked exactly on the files and on the engine tick by tick (not by eye): L-0061, seed 10, every tick: a red unit changes to the upper layer only on the ramp (it flips 39 to 135 wu past the rim; the ramp is 200 wu wide), no red unit on the low layer ever sees a unit on the hill, and no red unit on the upper layer fails to see a blue within 300 wu. The drawn halfway line sits 100 wu past the rim; the engine's flip is a cell boundary, 1.5 wu from it on the axes of the hill and between 30 wu short and 46 wu past it on the diagonals. L-0080 and L-0083: no red unit sees a hill unit at any tick while that hill unit is on the hill and red is on the low layer (L-0083: one red unit climbs a hill ramp once). Every pair within sight range that is not in a unit's `seen`, in all 20 seeds of all four fights: 33,440 in L-0061 are the layer rule, 4,940 in L-0080 are the layer rule, 20,700 in L-0083 are 19,380 the layer rule, 1,280 the drawn hill in the way (a unit on the plateau cannot see the low ground past the rim at long range, the engine's eye-height line), 40 a drawn wall; 8,080 in L-0039 are a drawn box crossing the line; none is unexplained. In L-0039 the 3,740 pairs that are seen with a box on the segment are all pairs where a unit stands inside a box's cell by up to 5.7 wu (340 unit-frames): a walker pressed to a box settles that far into the cell and then sees out of it. The stage 3 fights reproduce byte for byte under `--sight off`, and a second run of L-0061 and L-0080 gives byte-identical files.
+No fight stalls or ends at the cap in this run.
 
-Open for you (findings, nothing fixed in the engine here):
-- Both traps are lost by blue, the opposite of your 75%: red walks out of the pocket and the three forces attack together, but they take 233 ticks to all hold a target (the hill blocks must come down 850 wu) while the arc fights alone; the numbers are not tuned. `DRAFT-trap-release-radius` is 300 wu; it is yours to change.
-- The engine does not yet do what you described for a unit hit by something it cannot see or reach: an attack-moving unit ignores the hit (rule R-087-01 is now written to say it moves away; the code change is a separate engine story).
-- Walkers do not route around the corner of a planar block (walls, boxes), and an attack-move is not resumed after a kill for some units. L-0039's draw at the cap may be one of these (not traced); the traps need no detour.
-- R-164-01: as written the game's reach table gives a Line type its own layer only, so a Line arc on a hill could not fire down. The lab fires one band down for this stage; whether the game does is yours to rule as a game story.
+## What the rule checker checked
 
-| What to look at | What to expect | Approve means | Deny means |
-|---|---|---|---|
-| Vantage, then its control | Blue on the plateau sees red from the start and fires first; red is hollow until it is past the ramp's halfway line. | The high ground sees first and fires first, and red sees up only from the halfway line. | Red sees blue before the halfway line, or hits blue unseen; name the frame. |
-| Traps, then their controls | Red starts in the pocket and moves out; the hill forces hold unseen; all three forces attack when red is at the centre. | The trap springs together and red does not see the hills until a hill force has come down. | The forces do not attack together, or red sees them first; say so. |
-| Cover (as you like) | Boxes hide units; hollow marks sit behind the boxes. | The boxes hide units. | A unit is hollow with a clear line, or fires through a box. |
+Every fight (sight on and control, all 20 seeds, 160 fight files) was checked after every tick by `scripts/skilllab/invariants.py` for: R-207-06 (no unit ends a tick inside a blocked cell), R-207-07 (inside the canvas), R-087-04 (no fire on a tick the unit moved), R-084-04 (no move in the ticks after a shot), R-087-03 (target lock), R-087-09 (a held target the unit cannot shoot and does not close in on), R-083-03 (no healing above one Warden's rate on a tick nothing hit the unit) and continuity (no jump between ticks, which is where a layer-change jump would show). The thresholds in it are DRAFT constants, yours to set. R-087-03 is checked in the controls too.
 
-## Watching it like a video
+| Fight | Rules reported (sight on) | Rules reported (control) |
+|---|---|---|
+| L-0039 | none | none |
+| L-0061 | none | none |
+| L-0080 | R-087-09: 2 reports a seed, first at tick 293 (unit 7, target 23, 236 wu away), then tick 310 (unit 4, target 38, 287 wu away); 20 of 20 seeds | the same, 20 of 20 seeds |
+| L-0083 | R-087-09: 1 report a seed, tick 249 (unit 15, target 60, 251 wu away); 20 of 20 seeds | the same, 20 of 20 seeds |
 
-The page shows a frame every 5 sim seconds or less. For L-0039 (cover, seed 10) there are four denser files in `closeup/`: a frame every 10 ticks (half a second) and every 7 ticks (about a third of a second), with sight on and the same fight with targeting by sight off. The result is the one above (a draw at the 600 s cap with sight on, a stall at tick 3260 with it off). `OM_FPS` is the replay's speed in frames a second (default 1); a half-second file at `OM_FPS=2` runs in real time, at `OM_FPS=1` at half speed, and a third-of-a-second file at `OM_FPS=3` runs in real time. Space still steps by hand.
+R-087-09 (a blocked target is given up) is Round 2 work and is expected until then. No other rule was reported in any fight: no layer-change jump (continuity) and no target-lock report, so the six R-087-03 reports the first re-run showed on L-0083 are gone. The runner printed one `INVALID` line for each rule, fight and seed (80 lines: L-0080 and L-0083, sight on and control, 20 seeds each) and the invalid fights carry `invalid: true`; the page marks each invalid row with its rule.
+
+The high ground does not yet fire down across layers; that is Round 2 work, and these pictures are made without it.
+
+## Watching it
+
+Watch one: on the Mac `scripts/replay.sh docs/northstar/research/layer_dynamics/arena/stage4/L-0061-s10.fight.json`, on Linux `OM_FIGHT=$PWD/docs/northstar/research/layer_dynamics/arena/stage4/L-0061-s10.fight.json scripts/play.sh --scene res://scenes/proto/fight_replay/fight_replay.tscn`. Space steps forward; V switches the faint sight discs between one per role and one per unit; a hollow unit is one the other side does not see. The control fight (`.../stage4/control/L-0061-control-s10.fight.json`) is the same fight with targeting by sight off.
+
+| What to look at | Approve means | Deny means |
+|---|---|---|
+| Vantage, then its control | The high ground sees first and fires first, and red sees up only from the halfway line. | Red sees blue before the halfway line, or hits blue unseen; name the frame. |
+| Traps, then their controls | The trap springs together and red does not see the hills until a hill force has come down. | The forces do not attack together, or red sees them first; say so. |
+| Cover (as you like) | The boxes hide units. | A unit is hollow with a clear line, or fires through a box. |
+
+## Close-up files
+
+For L-0039 (cover, seed 10) four denser files in `closeup/`: a frame every 10 ticks (half a second; 233 frames with sight on, 287 with it off) and every 7 ticks (about a third of a second; 332 and 410 frames), with sight on and the same fight with targeting by sight off. The results are the ones in the table above. `OM_FPS` is the replay's speed in frames a second (default 1); a half-second file at `OM_FPS=2` runs in real time, at `OM_FPS=1` at half speed, and a third-of-a-second file at `OM_FPS=3` runs in real time. Space still steps by hand.
 
 On the Mac: `OM_AUTOPLAY=1 OM_FPS=2 scripts/replay.sh docs/northstar/story_reviews/westley/arena_stage4/closeup/L-0039-s10-every10.fight.json`. On Linux: `OM_AUTOPLAY=1 OM_FPS=2 OM_FIGHT=$PWD/docs/northstar/story_reviews/westley/arena_stage4/closeup/L-0039-s10-every10.fight.json scripts/play.sh --scene res://scenes/proto/fight_replay/fight_replay.tscn`. The files are `L-0039-s10-every10`, `L-0039-s10-every7`, `L-0039-control-s10-every10` and `L-0039-control-s10-every7` (`.fight.json`); use `OM_FPS=3` for the `every7` ones.
 
-To make another: `python3 -m scripts.skilllab.arena.closeup --layout docs/northstar/research/layer_dynamics/catalogue/L-0039.toml --seed 10 --sight on --every-ticks 10 --out <dir>` (`--sight control` for the sight-off twin; `--from-tick A --to-tick B` keeps only that stretch, which is the way to see one fight moment closely).
+To make another: `python3 -m scripts.skilllab.arena.closeup --layout docs/northstar/research/layer_dynamics/catalogue/L-0039.toml --seed 10 --sight on --every-ticks 10 --out <dir>` (`--sight control` for the sight-off twin; `--from-tick A --to-tick B` keeps only that stretch).

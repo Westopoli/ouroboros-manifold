@@ -30,11 +30,17 @@ As a player, I want each chapter to be briefing, recon, mission, resolution, tim
 
 Rules
 - R-055-01  Given a new chapter, When it starts, Then the order is: mission briefing, recon (free camera, no mission clock), mission (real time, no pause), outcome resolution, time jump with chronicle, character selection, next briefing.
+  Proof: MISSING
 - R-055-02  Given a mission is running, When any tactical tick passes, Then no strategic tick runs; the strategic sim is stopped for the mission's duration.
+  Proof: MISSING
 - R-055-03  Given the mission resolves, When the outcome resolver applies its consequence bundle (E-10), Then those field changes land before the first tick of the time jump.
+  Proof: MISSING
 - R-055-04  Given the time jump completes, When the mission generator runs, Then the character selector runs after it and reads the chosen mission region.
+  Proof: MISSING
 - R-055-05  Given the campaign's first chapter, When the world is generated, Then an opening time jump runs before the first briefing and its chronicle shows 3 to 5 world entries only.
+  Proof: MISSING
 - R-055-06  Given the chapter counter, When read, Then the campaign starts in chapter 1, the opening jump belongs to chapter 1 and does not advance it, and the counter advances by one at the end of each time jump that follows a mission (played or refused); a retry jump with no mission (E-10 R-072-07) never advances it. At the end of such a jump the order is: collapse check (S-062), mission generator, character selector (R-055-04), chapter advance. At the end of the opening jump the mission generator and the character selector run in that order, with no collapse check and no advance. At the end of a retry jump only the mission generator runs.
+  Proof: MISSING
 
 Inputs: mission outcome; world state.
 Outputs: chapter record (number, faction, character, start and end tick, end reason) in the save file.
@@ -46,10 +52,15 @@ As a player, I want the gap between chapters to be decades long and decided by t
 
 Rules
 - R-056-01  Given a time jump, When its length is chosen, Then it is an integer number of ticks in [20, 100], one tick being one in-world year [Q-056-01: code uses a fixed 50].
+  Proof: MISSING
 - R-056-02  Given the jump length, When the jump runs, Then exactly that many strategic ticks run with the full tick sequence (ALG tick sequence), and the player cannot shorten, lengthen, or interrupt it.
+  Proof: MISSING
 - R-056-03  Given the jump, When it ends, Then the report lists territory changes, faction births and deaths, conquests, colonizations, revolts, per-faction average field deltas, the chronicle entries, and an ownership snapshot every 2 ticks for the map animation.
+  Proof: MISSING
 - R-056-04  Given the opening jump, When its length is chosen, Then it is in [20, 50].
+  Proof: MISSING
 - R-056-05  Given the jump, When it ends, Then lineage members are generated (S-059) and natural deaths processed (S-060) once, at the end tick.
+  Proof: MISSING
 
 Inputs: world state at jump start; config bounds.
 Outputs: time jump report; chronicle input (E-09); map animation input (E-16).
@@ -61,14 +72,23 @@ As a player, I want to stay with a bloodline while its story is alive and move o
 
 Rules
 - R-057-01  Given a lineage with no living members, or a dead commander with no living lineage member within 2 hops of the mission region, When selection runs, Then rotation is forced with reason `forced`.
+  Proof: MISSING
 - R-057-02  Given the lineage has fewer than 2 chapters played, When selection runs, Then the player stays.
+  Proof: MISSING
 - R-057-03  Given the home region's total field delta over the jump is D, When the base rotation probability is computed, Then p = 0.8 + min(1, D/200) · (0.1 − 0.8), so a quiet jump (D = 0) rotates at 0.8 and an active one (D ≥ 200) at 0.1.
+  Proof: MISSING
 - R-057-04  Given chapters played in the lineage is c ≥ 2, When the stay probability is computed, Then it decays with c and never reaches 0 or a hard cap [Q-057-01: proposed p_rotate = base p + (1 − base p) · (1 − 0.75^(c − 2))].
+  Proof: MISSING
 - R-057-05  Given the roll says rotate and the lineage home region's stability is below 20, When selection runs, Then the rotation is vetoed and the player stays.
+  Proof: MISSING
 - R-057-06  Given the player stays, When the commander is chosen, Then it is the first living lineage member within 2 hops of the mission region, else the current commander if alive.
+  Proof: MISSING
 - R-057-07  Given the home region, When it is looked up, Then it is the first region in the lineage's history.
+  Proof: MISSING
 - R-057-08  Given a rotation, When it is recorded, Then the chapter counter for the new lineage starts at 1 and the record carries the reason (`forced`, `normal`, `commander_death`) and the pool used.
+  Proof: MISSING
 - R-057-09  Given the campaign has no commander yet (the selection at the end of the opening jump), When selection runs, Then it is a forced rotation (R-057-01) whose previous and nemesis pools are empty, so the unrelated pool (R-058-04) creates the first commander and the first lineage in the mission region; the lineage's chapter counter starts at 1.
+  Proof: MISSING
 
 Inputs: lineage members; chapter counter; home region delta and stability; RNG.
 Outputs: commander selection record in the save file and chronicle framing.
@@ -79,11 +99,17 @@ As a player, I want my next commander to usually be family, sometimes an old ene
 
 Rules
 - R-058-01  Given a rotation, When the pool is rolled, Then one draw picks previous-descendant with probability 0.70, nemesis-descendant 0.20, unrelated 0.10; if the rolled pool is empty the search falls through in the order previous, nemesis, unrelated.
+  Proof: MISSING
 - R-058-02  Given the previous-descendant pool, When candidates are scored, Then each previously played lineage with a living member within 2 hops of the mission region, last played at least 1 chapter ago, scores gap · 0.6 + density · 0.4 with gap = min(chapters ago, 4)/4 and density = min(living nearby, 5)/5; a member is drawn with probability proportional to its lineage's score.
+  Proof: MISSING
 - R-058-03  Given the nemesis pool, When candidates are gathered, Then they are living descendants, within 2 hops, of characters tagged as rivals of any previous commander, excluding the rivals themselves; one is drawn uniformly.
+  Proof: MISSING
 - R-058-04  Given the unrelated pool, When used, Then a new character is created in the mission region's owning faction with a new lineage id.
+  Proof: MISSING
 - R-058-05  Given a mission ends, When rivals are tagged, Then every named enemy-faction character in the mission region gains a rival tag pointing at the player's commander.
+  Proof: MISSING
 - R-058-06  Given any selection, When it completes, Then the commander is marked as a main character so its name is reserved longer after death (E-21 naming).
+  Proof: MISSING
 
 Inputs: ledger; chapter history; mission region; RNG.
 Outputs: selection record with pool rolled and pool used.
@@ -94,9 +120,13 @@ As a player, I want my bloodline to have descendants when I return, spread acros
 
 Rules
 - R-059-01  Given a lineage with n living members and a jump of T ticks, When members are generated at the jump's end, Then max(1, floor(n · 0.03 · T)) descendants are created.
+  Proof: MISSING
 - R-059-02  Given each descendant, When placed, Then its parent is a uniform draw among living members, its faction is the parent's, and with probability 0.1 it is placed in a uniform-random inhabited neighbor of the parent's region, else the parent's region.
+  Proof: MISSING
 - R-059-03  Given a descendant, When recorded, Then it has a name, region, faction, birth tick equal to the jump's end tick, lifespan, lineage id, parent id, and generation = parent's + 1; nothing else.
+  Proof: MISSING
 - R-059-04  Given a lineage with no living members, When generation runs, Then nothing is created.
+  Proof: MISSING
 
 Inputs: lineage; jump length; world; RNG.
 Outputs: ledger records.
@@ -108,11 +138,17 @@ As a player, I want the people the chronicle names to be born, serve, age, and d
 
 Rules
 - R-060-01  Given a faction is created, When named, Then it gets a supreme commander in its first region; Given a region is colonized or conquered, When named, Then it gets a regional commander.
+  Proof: MISSING
 - R-060-02  Given a character is created, When its lifespan is rolled, Then it is a uniform integer in [150, 350] ticks.
+  Proof: MISSING
 - R-060-03  Given a character's age reaches its lifespan, When natural deaths are processed, Then it becomes historical with a death tick, and if its rank is supreme or regional commander a successor is created with a fresh name and lifespan in the same faction and region (regional only if the faction still owns the region).
+  Proof: MISSING
 - R-060-04  Given natural deaths, When processed, Then it happens once at the end of each time jump, not every tick [Q-060-01].
+  Proof: MISSING
 - R-060-05  Given an event of significance tier 3 or higher fires in a region, When logged, Then the region's named characters are attached to the event record; the ledger never stores event history itself.
+  Proof: MISSING
 - R-060-06  Given any character record, When read, Then it holds exactly: id, name, faction, region, rank (supreme_commander, regional_commander, garrison_officer, lineage_member), birth tick, lifespan, status, death tick, lineage id, parent id, generation, rival tags, children.
+  Proof: MISSING
 
 Inputs: faction and region events; tick; RNG.
 Outputs: ledger; event attachments in the tick log; chronicle input.
@@ -123,9 +159,13 @@ As a player, I want a fallen commander's place taken by a relative nearby if one
 
 Rules
 - R-061-01  Given the commander died in the mission, When the next selection runs, Then a living lineage member (not a supreme commander) in the mission region is chosen first, then one in an adjacent region, then, only if the lineage has fewer than 2 chapters played, any living member anywhere.
+  Proof: MISSING
 - R-061-02  Given a successor is found, When assigned, Then the successor becomes the commander of the same lineage and the chapter counter continues.
+  Proof: MISSING
 - R-061-03  Given no successor, When selection runs, Then rotation happens with reason `commander_death`.
+  Proof: MISSING
 - R-061-04  Given a commander death, When recorded, Then the ledger records the region and outcome band and the chronicle frames it (E-09).
+  Proof: MISSING
 
 Inputs: commander status from the outcome resolver (E-10).
 Outputs: succession or rotation record.
@@ -136,9 +176,13 @@ As a player, I want to keep playing in a surviving faction when mine is gone, so
 
 Rules
 - R-062-01  Given the player's faction has zero regions or no longer exists at the end of a time jump, When collapse is checked, Then the chapter ends with reason `faction_collapsed`.
+  Proof: MISSING
 - R-062-02  Given collapse, When the new faction is chosen, Then the rotation pools of R-058-01 to R-058-03 run restricted to candidates in surviving factions, with the 2-hop distance measured from the last mission's region, and the player joins the faction of the candidate drawn; if both pools are empty, the surviving faction with the most regions is chosen, uniform among ties (Q-062-01).
+  Proof: MISSING
 - R-062-03  Given no faction with any region survives, When collapse is checked, Then the campaign ends with reason `no_surviving_factions` (interim until S-054 is designed).
+  Proof: MISSING
 - R-062-04  Given reassignment, When recorded, Then the chronicle carries a major entry framing the fall.
+  Proof: MISSING
 
 Inputs: registry; ownership.
 Outputs: reassignment record; chronicle.
@@ -151,9 +195,13 @@ As a player, I want to pick a difficulty and which kinds of missions I prefer be
 
 Rules
 - R-063-01  Given the onboarding screen, When shown, Then it offers difficulty (easy, medium, hard) and, for each of the 10 mission archetypes, a preference.
+  Proof: MISSING
 - R-063-02  Given the player confirms, When saved, Then the choices are stored per save slot and read by the mission generator (E-10) and difficulty scaling.
+  Proof: MISSING
 - R-063-03  Given the player wants to change the choices later, When they do, Then [Q-063-02: where and when; Westley removed permanence, A-058].
+  Proof: MISSING
 - R-063-04  Given a new campaign after a terminal condition (S-054), When it starts, Then the onboarding screen shows again.
+  Proof: MISSING
 
 Inputs: player choices.
 Outputs: onboarding record in the save file; mission generator weights.
@@ -166,9 +214,13 @@ Nothing carries forward between missions in the beta (E-22 S-182; Westley, 2026-
 
 Rules
 - R-064-01  Given any chapter transition, When the next chapter starts, Then every region field, ownership, faction, tech level, edge type, event queue, and ledger record persists unchanged except by the sim itself.
+  Proof: MISSING
 - R-064-02  Given a new chapter, When forces are assigned, Then they come only from the mission generator's allocation (E-10); nothing carries from the previous mission's surviving units.
+  Proof: MISSING
 - R-064-03  Given progression, When read, Then there is no player level and no stat carried between commanders; the unlock types are era unlocks (E-20) at launch and trait cards (E-11 S-083) after launch.
+  Proof: MISSING
 - R-064-04  Given a save and load between chapters, When loaded, Then the next time jump produces the same trace as if never saved (determinism includes the RNG state and the chain tag counter).
+  Proof: MISSING
 
 Inputs: none.
 Outputs: save file; determinism trace.
@@ -181,7 +233,9 @@ Direction decided in part 2026-10-02 (DECISIONS H7; E-19 R-159-01): more teammat
 
 Rules
 - R-228-01  Given a chapter played by a team of 2 or 4, When the chapter record, the ledger and the character selector are used, Then only the commanding seat has a ledger character; the economy seat has none (Westley 2026-10-21).
+  Proof: unbuilt
 - R-228-02  Given a team of 4, When each pair is read as a sub-civilization inside the civilization, Then [Q-228-02: how a pair maps onto the simulation, which has one faction per civilization and no sub-civilization; whether onto a faction, a set of regions, or only the chapter].
+  Proof: unbuilt
 
 Inputs: team size and pairs (E-19 S-159).
 Outputs: none until the flags are answered.
@@ -211,10 +265,15 @@ Open flags: none. Q-228-02 closed 2026-10-21 (register: map the pair onto the ch
 ## Invariants
 
 - Exactly one commander per chapter; the commander is a living ledger character at chapter start.
+  Proof: MISSING
 - Chapter numbers are consecutive from 1.
+  Proof: MISSING
 - A lineage's chapter counter never exceeds the number of chapters played.
+  Proof: MISSING
 - The bloodline never changes a simulation field, budget, stance, or tech (vision_v2 Q3).
+  Proof: MISSING
 - Same seed and same mission outcomes give the same commanders and the same jump reports.
+  Proof: MISSING
 
 ## Scale requirements
 

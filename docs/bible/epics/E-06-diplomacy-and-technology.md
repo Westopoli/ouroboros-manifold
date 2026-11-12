@@ -30,11 +30,17 @@ As a commander, I want every pair of factions to be hostile, neutral, or coopera
 
 Rules
 - R-042-01  Given any two distinct factions, When their stance is read, Then it is exactly one of hostile, neutral, cooperative, symmetric for the pair; a faction's stance toward itself reads cooperative.
+  Proof: MISSING
 - R-042-02  Given a hostile pair, When agents decide and friction applies, Then each includes the other's regions as attack candidates and friction applies on their shared borders.
+  Proof: MISSING
 - R-042-03  Given a neutral pair, When agents decide and friction applies, Then neither attacks the other, no friction applies, and no adjacency bonus crosses their edges.
+  Proof: MISSING
 - R-042-04  Given a cooperative pair, When drift and tech run, Then adjacency bonus crosses their trade edges (E-02 R-015-03), tech convergence applies (S-047), and no friction or attacks occur.
+  Proof: MISSING
 - R-042-05  Given two starting factions, When the world begins, Then their stance is hostile if their archetype pair is in the override table (conqueror with anyone; fortifier with player and opportunist; opportunist with player; schism with player, fortifier, opportunist, warlord) and neutral otherwise; at launch every starting pair is hostile.
+  Proof: MISSING
 - R-042-06  Given a breakaway faction is created, When stances are set, Then it is hostile toward every existing faction and every existing faction is hostile toward it.
+  Proof: MISSING
 
 Inputs: archetype pairs; stance table.
 Outputs: stance table in the strategic snapshot; faction list panel (E-16) colors relationships.
@@ -45,12 +51,19 @@ As a commander, I want two neutral neighbors who leave each other alone to drift
 
 Rules
 - R-043-01  Given a neutral pair that shares at least one border edge, When a tick passes with no attack between them, Then their non-aggression counter increments by 1; an attack between them resets it to 0.
+  Proof: MISSING
 - R-043-02  Given a neutral pair that shares no border, When ticks pass, Then the counter does not move.
+  Proof: MISSING
 - R-043-03  Given the counter reaches 80, When peace formation is checked, Then an overture fires if both sides' average border-region stability is at least 35; otherwise the counter resets to 0 with no overture.
+  Proof: MISSING
 - R-043-04  Given an overture between factions with average economies 60 and 40, minimum border stability 50, dispositions 2.0 and 1.5, When success is rolled, Then p = min(1, 0.5 · (1 − 0.2) · 0.5 · 2.0 · 1.5) = 0.6, one draw.
+  Proof: MISSING
 - R-043-05  Given the overture succeeds, When applied, Then the pair becomes cooperative, cooperative-since is the current tick, and every shared edge becomes `both`.
+  Proof: MISSING
 - R-043-06  Given the overture fails, When applied, Then the pair stays neutral and the counter resets to 0.
+  Proof: MISSING
 - R-043-07  Given dispositions, When read, Then conqueror 0.1, fortifier 2.0, warlord 0.2, opportunist 1.0, schism 0.3, player 1.5, breakaway 0.8.
+  Proof: MISSING
 
 Inputs: stance table counters; border stability; economies; dispositions.
 Outputs: diplomatic events in the tick log; stance change; edge changes.
@@ -62,12 +75,19 @@ As a commander, I want a cooperative partner to be able to turn on me when it is
 
 Rules
 - R-044-01  Given a cooperative pair, When betrayal is checked, Then each faction rolls once per tick as the potential betrayer, in pair order, and at most one betrayal happens per pair per tick.
+  Proof: MISSING
 - R-044-02  Given a conqueror with border military 60 facing a partner's border military 20, average tension 60, When its chance is computed, Then p = 0.005 · 2.5 · min(3.0, 3.0) · max(1, 1.2) = 0.045.
+  Proof: MISSING
 - R-044-03  Given the partner's border military is 0, When computed, Then the opportunity factor is 3.0.
+  Proof: MISSING
 - R-044-04  Given border military 20 facing 60 and tension 20, When computed, Then opportunity = 1.0 and pressure = 1.0, so p = 0.005 · weight.
+  Proof: MISSING
 - R-044-05  Given weights, When read, Then conqueror 2.5, fortifier 0.3, warlord 2.0, opportunist 2.0, schism 1.5, player 0.5, breakaway 1.0.
+  Proof: MISSING
 - R-044-06  Given a betrayal fires, When applied, Then the pair is hostile at once, every shared edge becomes `border`, and the betrayer attacks the victim's weakest bordering region.
+  Proof: MISSING
 - R-044-07  Given the betrayal attack, When resolved, Then [Q-045-01 decides commit and mode: current code commits the betrayer's entire budget at full efficiency; the bible says a surprise attack].
+  Proof: MISSING
 
 Inputs: stance table; border military; tension; weights.
 Outputs: betrayal event; attack resolution; stance and edge changes.
@@ -78,14 +98,23 @@ As a commander, I want each faction's technology to be a single level that grows
 
 Rules
 - R-045-01  Given a faction with average economy 60 and average population 50, When tech grows, Then Δtech = 0.35 · 0.6 · 0.5 = 0.105.
+  Proof: MISSING
 - R-045-02  Given average population 10, When tech grows, Then the population factor is 0.3, not 0.1.
+  Proof: MISSING
 - R-045-03  Given tech 99.95 and growth 0.105, When applied, Then tech is 100.0.
+  Proof: MISSING
 - R-045-04  Given a faction with no regions, When tech grows, Then nothing changes.
+  Proof: MISSING
 - R-045-05  Given a starting faction, When tech is set, Then it equals the average starting population of its regions · 0.25.
+  Proof: MISSING
 - R-045-06  Given a breakaway is created, When its tech is set, Then it equals the parent's tech at that tick.
+  Proof: MISSING
 - R-045-07  Given a faction whose average economy over its inhabited regions is below 20.0, or whose average population has fallen by 10.0 or more over the last 50 ticks, When the technology step runs on a tick at least 100 ticks after its last Knowledge Lost, Then one uniform draw is made and if it is below 0.03 a Knowledge Lost event fires: tech −5.0 (floored at 0), a fired-event record with template Knowledge Lost, the faction's highest-population region, and the next chain tag, and the faction's last-Knowledge-Lost tick set to now.
+  Proof: MISSING
 - R-045-08  Given a faction not eligible under R-045-07, When the technology step runs, Then no draw is made and tech never falls.
+  Proof: MISSING
 - R-045-09  Given a 5,000-tick run with 50 factions and the launch config, When Knowledge Lost events are counted per 50-tick window, Then the mean over all windows is between 1.0 and 2.0; individual windows may be far outside that (the rate is stochastic and only the mean is asserted).
+  Proof: MISSING
 
 Inputs: owned regions' economy and population.
 Outputs: tech level in the faction entry.
@@ -97,10 +126,15 @@ As a commander, I want a conqueror's technology to show up as firepower and a fo
 
 Rules
 - R-046-01  Given a conqueror at tech 60, When multipliers are read, Then attack 1.096, defense 1.012, economy 1.012.
+  Proof: MISSING
 - R-046-02  Given a fortifier at tech 60, When read, Then attack 1.018, defense 1.054, economy 1.048.
+  Proof: MISSING
 - R-046-03  Given any archetype at tech 0, When read, Then all three multipliers are 1.0.
+  Proof: MISSING
 - R-046-04  Given the attack multiplier, When an attack resolves (E-05 S-037), Then effective attack is multiplied by it; the defender's defense multiplier multiplies effective defense.
+  Proof: MISSING
 - R-046-05  Given the economy multiplier, When a faction's budget accumulates (E-05 R-033-01), Then the gain is scaled by it (DEC-C15-2026-10-22).
+  Proof: MISSING
 
 Inputs: archetype; tech.
 Outputs: multipliers used in attack resolution.
@@ -111,9 +145,13 @@ As a commander, I want the weaker partner in a cooperative pair to catch up towa
 
 Rules
 - R-047-01  Given faction A at tech 30 cooperative with B at tech 70 and C at tech 50, When convergence runs for A, Then bonus = 0.1 · 40/100 = 0.04 from B only.
+  Proof: MISSING
 - R-047-02  Given A at tech 70 and every partner below 70, When convergence runs, Then bonus is 0.
+  Proof: MISSING
 - R-047-03  Given A and B neutral or hostile, When convergence runs, Then bonus is 0.
+  Proof: MISSING
 - R-047-04  Given tech growth and convergence on the same tick, When applied, Then growth applies first, then convergence reads the updated levels in faction order.
+  Proof: MISSING
 
 Inputs: stance table; partner tech.
 Outputs: convergence record in the tick log.
@@ -126,9 +164,13 @@ Direction changed 2026-10-02, rewrite pending: a mission's starting technology i
 
 Rules
 - R-048-01  Given tech in [0, 34), When the tier is read, Then it is 1; in [34, 67) it is 2; in [67, 100] it is 3.
+  Proof: MISSING
 - R-048-02  Given a faction crosses from 33.9 to 34.1, When the next mission generates its forces, Then units use the tier 2 profile; units already fielded in a running mission do not change.
+  Proof: MISSING
 - R-048-03  Given a faction's tech falls from 67.5 to 66.5, When the next mission generates forces, Then units use the tier 2 profile.
+  Proof: MISSING
 - R-048-04  Given a tier change on tick t, When the chronicle distills the window containing t, Then a tier-transition entry is a candidate (E-09).
+  Proof: MISSING
 
 Inputs: tech; tier boundaries [0, 34, 67].
 Outputs: tier in the faction entry; unit profile selection (E-11); chronicle candidate.
@@ -141,9 +183,13 @@ Decided in part 2026-10-02 (DECISIONS H4); the rest is open. Not scheduled for b
 
 Rules
 - R-227-01  Given a mission generates, When a side's starting technology is set, Then it is derived from the faction's technology level (S-045), only slightly [Q-173-01: the mapping from the faction's number to the mission's starting technology, and how slight is slight].
+  Proof: unbuilt
 - R-227-02  Given an era has a wide range of technology levels (for example 1 to 5), When a normal timed single match is played, Then a side has time to climb one or two levels, as a tech-up does in StarCraft 2.
+  Proof: unbuilt
 - R-227-03  Given a mission ends, When the technology a side reached in it is read, Then [Q-227-02: whether anything flows back into the faction's number (S-045), and whether Knowledge Lost (R-045-07) touches a mission's technology].
+  Proof: unbuilt
 - R-227-04  Given the three tiers of R-048-01 and an era's range of levels, When both are read, Then [Q-227-03: how the three tiers relate to the era's levels, for example 1 to 5].
+  Proof: unbuilt
 
 Inputs: the faction's technology (S-045); the era's range of levels.
 Outputs: a mission's starting technology (E-10 mission generator, E-22 S-173).
@@ -171,10 +217,15 @@ Open flags: Q-173-01, Q-159-12. Q-227-02 and Q-227-03 closed 2026-10-21 (registe
 ## Invariants
 
 - Stances are symmetric.
+  Proof: MISSING
 - Cooperative implies every shared edge is `both`; hostile implies every shared edge is `border`.
+  Proof: MISSING
 - Tech in [0, 100]; never rises by more than 0.35 + 0.1 per tick.
+  Proof: MISSING
 - Convergence never lifts a faction above its best partner.
+  Proof: MISSING
 - Same seed, same diplomacy, all platforms.
+  Proof: MISSING
 
 ## Scale requirements
 

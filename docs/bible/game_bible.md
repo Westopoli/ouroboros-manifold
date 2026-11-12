@@ -58,7 +58,7 @@ The tragedy of understanding something you cannot fully control. You can read th
 
 ### What it feels like, and what it does not
 
-- StarCraft 2 for feel and unit interaction: surrounds and high ground matter, and here they matter more.
+- StarCraft 2 for feel and unit interaction: surrounds and high ground matter, and here they matter more. For movement and targeting it is the rule book, not only the feel: where a movement or targeting rule of this bible is silent or can be read two ways, StarCraft 2's behaviour is the answer, and a deliberate difference is written as a rule (Westley, 2026-10-20, 2026-11-06, 2026-11-11; E-11 S-087, E-13 Purpose).
 - Age of Empires 3 and Halo Wars for large-scale battles and how forces are handled: heavy units individually, light units as squads, a selection moving at the pace of its slowest member.
 - Immortal: Gates of Pyre for the combat and accessibility philosophy: low skill floor, high ceiling, rock-paper-scissors with exceptions.
 - Art of Rally for the look: low-poly, stylized, clean silhouettes.

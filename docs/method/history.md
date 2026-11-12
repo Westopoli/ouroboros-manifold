@@ -10,7 +10,7 @@ The method before 2026-10-30 lived in sixteen documents, about 160,000 words. Ea
 | `plans/workflows_2026-10-07/rules.md` | dda6ce64 | Six role sections; now the role cards |
 | `plans/workflows_2026-10-07/dispatcher.md` | dda6ce64 | The Dispatcher runbook; now `runner.md` |
 | `plans/workflows_2026-10-07/method_check.md` | 7ccc8dbe | Thirteen transcript checks; H-005 cuts the script to six |
-| `plans/workflows_2026-10-07/drift_audit.md` | 7499295f | Weekly Sonnet drift audit; now on request |
+| `plans/workflows_2026-10-07/drift_audit.md` | 7499295f | Weekly Sonnet drift audit; on request from 2026-10-30, succeeded 2026-11-09 by `docs/method/requirement_audit.md` |
 | `plans/method_rev3_2026-10-26/spec.md` | ddbfe9f0 | 23 gaps, 24 metrics; four metrics kept |
 | `plans/2026-10-21-tool-split-spec.md` | d5c1e32b | The six questions for Workflow versus cascade; one line in `architect.md` |
 | `plans/2026-10-07-visible-game-spec.md` | 8a92a5d3 | Lane paragraphs, interfaces, owner rows, budget |

@@ -30,9 +30,13 @@ As an era designer, I want the engine to speak only in abstract terms, so that a
 
 Rules
 - R-145-01  Given the engine's source and config, When searched, Then no identifier names an era, setting, or theme (region not star system, heavy combat unit not battleship, military strength not fleet power).
+  Proof: MISSING
 - R-145-02  Given per-era variation, When implemented, Then it is a config value the engine reads uniformly; no `if era ==` branch exists anywhere.
+  Proof: MISSING
 - R-145-03  Given the bible, When engine sections are read, Then theme terms appear only in Vision and Identity and in era pack descriptions.
+  Proof: unbuilt
 - R-145-04  Given a new era pack, When installed, Then the game runs it with zero engine changes; a contract test loads every shipped pack against the same engine build.
+  Proof: MISSING
 
 Inputs: source; packs.
 Outputs: grep and contract test results.
@@ -46,9 +50,13 @@ Direction changed 2026-10-02, rewrite pending: a pack also carries what the econ
 
 Rules
 - R-146-01  Given an era pack, When validated, Then it contains: identity (name, spatial scale, tone), three tier definitions, one unit model per roster type per tier and per-type silhouette conformance (E-18 S-132), 3 to 6 tiered structures, 5 to 10 environment objects, the ability visual mappings for every ability in the roster, attack visual categories per type, era-specific naming pools, era-specific chronicle and briefing fragments, a strategic view definition, and the per-era config values (unit stat profile per tier, restriction mask or none, elevation flag, reinforcement constants, fog constants).
+  Proof: MISSING
 - R-146-02  Given the launch constraint (A-321), When per-era config values are set for the launch eras, Then they are identical within an era kind except art, names and prose, and between the space era and the ground era they differ only in what the kind decides: the vision model, the ping, the vision units and the landscape (E-01; Westley, 2026-10-05: "no longer byte identical, superceded") [Q-146-01 superseded; Q-146-04: whether the era kind is a pack field].
+  Proof: MISSING
 - R-146-03  Given a pack, When any required entry is missing, Then the pack fails to load with the entry named; a missing optional asset uses the placeholder.
+  Proof: MISSING
 - R-146-04  Given the Era Creation Template (six layers), When a new era is designed, Then it follows those layers in order and stays within the fixed engine abstractions (three categories on a fixed rock-paper-scissors, a 20 to 40 type roster per era [Q-082-05], spine plus five gradients, abstract structure types, three tiers at 0/34/67, three resources, E-22 S-167, and the building kinds of E-22 S-168).
+  Proof: unbuilt
 
 Inputs: pack manifest.
 Outputs: validation report; loaded pack.
@@ -59,8 +67,11 @@ As a player, I want an era in space and an era on land to play, all one game, so
 
 Rules
 - R-147-01  Given the first build, When eras are listed, Then it contains exactly two, one in space and one on land, each with an era kind, with units and rules the same within a kind and the vision model, ping, vision units, landscape and visuals different between them (Westley, 2026-10-02 and 2026-10-05), chronologically ordered. The Settled Reach is the space era (`assets/eras/settled_reach/`). The land era is Greek antiquity, named Greek, shipped today as the pack `assets/eras/greek_placeholder/` (the era named Greek, kind ground, era order 1, the six roster types walking, placeholder tone and scale) and reached in the game by the era toggle (Q-147-01 closed 2026-10-22: the land era is named Greek; its brief, tone and roster order are drafts written from the Greek antiquity setting).
+  Proof: MISSING
 - R-147-02  Given any era, When a mission runs, Then the map generator, mission generator, agents, events, combat, and chronicle are the same code with the era's pack loaded.
+  Proof: MISSING
 - R-147-03  Given the same seed in two eras, When maps are generated, Then the map seeds are identical and the landscape and the rendering differ, since the land and space landscape systems are sisters with different objects (E-17 S-166; the space system is Q-166-02) [Q-147-02: whether eras share map seeds or eras may weight layouts differently].
+  Proof: MISSING
 
 Inputs: pack set.
 Outputs: era list; contract tests.
@@ -71,9 +82,13 @@ As a player, I want a campaign to move chronologically through the eras I own, s
 
 Rules
 - R-148-01  Given a campaign in era k and the player owns era k + 1, When the leading civilization's reach for its age tops out, after the chronicle has spent several chapters naming that age being outgrown (the Long Horizon), Then the next time jump lands in era k + 1 with the same galaxy, the same factions, and the same ledger [Q-148-05: the reach measure and its ceiling per age].
+  Proof: unbuilt
 - R-148-02  Given the era transition, When the world carries over, Then region fields, ownership, edges, and characters persist and tech is rescaled so that no faction arrives at late game and the leading faction still leads; only the pack changes; the chronicle frames the transition, and characters from earlier eras fade into distant myths with fewer mentions the farther the timeline moves from them.
+  Proof: unbuilt
 - R-148-03  Given the last owned era, When the next time jump comes, Then history loops: the jump lands in the first owned era with the same galaxy, the same factions, and the same ledger, in solo campaigns and in matches alike [Q-148-04: what the loop does to tech, characters, and the chronicle, and how it relates to the deferred Ouroboros restart, S-054].
+  Proof: unbuilt
 - R-148-04  Given a multiplayer match, When eras traverse, Then E-19 S-143 applies.
+  Proof: unbuilt
 
 Inputs: ownership; campaign state.
 Outputs: era in the save; chronicle entry.
@@ -84,10 +99,15 @@ As a player, I want a fair price and the chance to earn expansions by playing, s
 
 Rules
 - R-149-01  Given Steam, When the base game is listed, Then it is one SKU at $15 that buys 3 to 5 eras to start, and the first build starts with two eras, one in space and one on land (S-147); no subscription, no in-game store, no Workshop at launch.
+  Proof: unbuilt
 - R-149-02  Given a new era, When listed, Then it is $3 to $5.
+  Proof: unbuilt
 - R-149-03  Given an earnable era, When its condition is met in play, Then it unlocks without purchase [Q-149-01: the condition, proposed: complete a campaign of 10 chapters in the preceding era].
+  Proof: unbuilt
 - R-149-04  Given an exclusive era, When read, Then it is purchase-only and marked so on the store page; the launch plan names which eras are which [Q-149-02].
+  Proof: unbuilt
 - R-149-05  Given the unlock system, When read, Then era unlocks are the only unlock type at launch; no player level, no unit unlocks (E-08 R-064-03).
+  Proof: unbuilt
 
 Inputs: store; play state.
 Outputs: ownership; store listing.
@@ -98,9 +118,13 @@ As an era designer, I want maps, civilizations, and era systems to transfer betw
 
 Rules
 - R-150-01  Given a layout in the library, When used, Then it is valid in every era with no era tag (which parts of map generation stay era-agnostic now that the land and space landscapes are sister systems with different objects, E-17 S-166, Q-166-02; Q-150-02 closed 2026-10-18, Architect, implementation).
+  Proof: MISSING
 - R-150-02  Given a civilization (archetype weights, naming subset, colors), When used, Then it is valid in every era.
+  Proof: MISSING
 - R-150-03  Given a skin (unit model set), When applied, Then it maps to the six abstract types and three tiers, and to the worker, a unit that cannot fight (E-15 S-129, E-22 S-167), and nothing else.
+  Proof: MISSING
 - R-150-04  Given the settlement generator (E-17 S-166), When it builds, Then the generator is era-agnostic and the building pieces are era-specific (S-243).
+  Proof: MISSING
 
 Inputs: content libraries.
 Outputs: cross-era validity tests.
@@ -113,8 +137,11 @@ Not deferred (Westley, 2026-10-15: the whole point of the simulation lab is to f
 
 Rules
 - R-151-01  Given an era pack, When loaded, Then the difference between eras is the Climate of War: each era sets its own fog thickness, engagement pace, and reinforcement rate (the pace of production, E-22 S-170, and of strongpoint reinforcement, E-15) as manifest values the engine consumes uniformly [Q-151-02: which economy values an era may set]; units, categories, and counters never change with the era. Chosen through the options pass, `docs/northstar/research/options/era-feel/`, Q-151-01.
+  Proof: unbuilt
 - R-151-02  Given the simulation lab's search over the game's settings (`docs/northstar/research/layer_dynamics/README.md`), When it reports, Then it describes every region where the depth conditions hold, not the first found, and each region is recorded as a candidate Climate of War for an era; an era's values are chosen from a reported region, never set by hand outside one.
+  Proof: MISSING
 - R-151-03  Given the planned eras, When one is briefed, Then it follows the Era Creation Template (R-146-04). The brainstorm list of twenty eras is `docs/legacy/blender_stuff/3d_model_outline_all_eras.md` (2026-09-11; Settled Reach, Medieval, Roman, Age of Sail, Feudal Japan, World War II, Viking, Cyberpunk, Ancient Egypt, Mongol Steppe, Colonial Mars, Bronze Age Collapse, Napoleonic, Mesoamerican, Cold War, Silk Road, Interwar, Post-Apocalyptic, Polynesian, Renaissance Italy); Westley's spoken list adds Greek (the land era as built), World War I, the 2020s and Imperial China "and many more" (2026-10-15). The ordered, named roster is his and is open under Q-147-01; the list is not a decision.
+  Proof: unbuilt
 
 Inputs: lab reports (crossing regions); the era roster.
 Outputs: per-era Climate of War values in the manifest.
@@ -127,8 +154,11 @@ Design decided 2026-10-02, not scheduled for building (E-22, E-17 S-166). This a
 
 Rules
 - R-243-01  Given an era pack, When validated, Then beyond the entries of S-146 it contains: the building pieces that settlements are built from, with their stages of construction (E-18 S-237); the names of the three resources (E-22 S-167); the mapping from each unit category (Strike, Line, Siege) to the resources it needs (E-22 S-171) [Q-159-08: what the three resources are and which category needs which]; the doctrines the rules can follow (whether a doctrine's name, description and parameters are pack content or engine config; Q-243-01 closed 2026-10-18, Architect, implementation); the landforms of the era's landscape (E-17 R-166-03); the environmental troubles of its regions (E-15); the worker's model and animation (E-22 S-167); and, for each unit type, whether it walks or flies (E-01 R-001-07).
+  Proof: MISSING
 - R-243-02  Given the space era, When the pack is validated, Then its landform and environmental-trouble entries wait for the space landscape to be designed (Q-166-02); no rule is written for them yet.
+  Proof: unbuilt
 - R-243-03  Given the economy entries of two packs, When compared, Then [Q-146-02: which of resource names, doctrine names and environmental troubles count as names, which may differ, and which as mechanics, which may not].
+  Proof: unbuilt
 
 Inputs: pack manifest.
 Outputs: validation report.
@@ -153,8 +183,11 @@ Open flags: none. Q-159-08 and Q-146-02 closed 2026-10-21 (register).
 ## Invariants
 
 - Zero era names in engine source.
+  Proof: MISSING
 - Every pack passes the same contract test.
+  Proof: MISSING
 - The two launch eras' units and rules are the same within an era kind (A-321, Westley 2026-10-02 and 2026-10-05); between kinds the vision model, the ping, the vision units, the landscape and the visuals differ, plus art, names and prose [Q-082-05: whether per-era rosters keep unit profiles identical across the launch packs; Q-146-02].
+  Proof: MISSING
 
 ## Scale requirements
 

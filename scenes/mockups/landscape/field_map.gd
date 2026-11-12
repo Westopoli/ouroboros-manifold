@@ -7,6 +7,10 @@ const SPACING := 100.0
 # Peaks 3000-5000wu per the brief. Elevation is stored continuous (world units, sea level
 # 0) for placement and camera; only border tracing quantizes it.
 const PEAK_HEIGHT_WU := 5000.0
+# See also: tests/test_mockup_landscape_waterline.gd (Westley owns these three thresholds)
+const DRAFT_LAKE_FILL_HEIGHT := 150.0
+const DRAFT_RIVER_BAND := 150.0
+const DRAFT_RIVER_MAX_GRADE := 20.0
 const CITY_CORE_TARGET_ELEV_WU := 500.0
 const CITY_REACH_WU := 4500.0
 
@@ -422,7 +426,7 @@ func _build_water(elevation: PackedFloat32Array) -> Dictionary:
 		var path := _trace_river(elevation, water, src)
 		if path.size() >= 2:
 			rivers_out.append(path)
-			_stamp_river(water, path)
+			_stamp_river(elevation, water, path)
 	return {water = water, rivers = rivers_out}
 
 
@@ -452,20 +456,22 @@ func _find_lake_seeds(elevation: PackedFloat32Array) -> Array:
 
 
 func _flood_lake(elevation: PackedFloat32Array, water: PackedFloat32Array, seed_idx: int) -> void:
-	var fill_level: float = elevation[seed_idx] + 150.0
+	# Replaces a depth-first walk capped at 1,500 cells: the cap cut lakes off at arbitrary cells
+	# and made the every-second-column stripes (FINDING-landscape-lakefill-stripes).
+	var fill_level: float = elevation[seed_idx] + DRAFT_LAKE_FILL_HEIGHT
 	var visited := {}
 	var queue: Array = [seed_idx]
+	var head := 0
 	visited[seed_idx] = true
-	var visits := 0
-	while not queue.is_empty() and visits < 1500:
-		var idx: int = queue.pop_back()
-		visits += 1
+	var lake_offsets: Array[Vector2i] = [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]
+	while head < queue.size():
+		var idx: int = queue[head]
+		head += 1
 		if elevation[idx] > fill_level:
 			continue
 		water[idx] = max(water[idx], 1.0)
 		var gy := idx / dim
 		var gx := idx % dim
-		var lake_offsets: Array[Vector2i] = [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]
 		for offset in lake_offsets:
 			var nx: int = gx + offset.x
 			var ny: int = gy + offset.y
@@ -570,7 +576,7 @@ func _nearest_water_cell(water: PackedFloat32Array, gx: int, gy: int) -> Vector2
 	return best
 
 
-func _stamp_river(water: PackedFloat32Array, path: PackedVector2Array) -> void:
+func _stamp_river(elevation: PackedFloat32Array, water: PackedFloat32Array, path: PackedVector2Array) -> void:
 	for i in range(path.size()):
 		var t: float = float(i) / float(max(1, path.size() - 1))
 		var width: float = lerp(50.0, 220.0, t)
@@ -578,6 +584,10 @@ func _stamp_river(water: PackedFloat32Array, path: PackedVector2Array) -> void:
 		var reach: int = int(ceil(width / SPACING)) + 1
 		var gx := int(round(p.x / SPACING))
 		var gy := int(round(p.y / SPACING))
+		var pidx := clampi(gy, 0, dim - 1) * dim + clampi(gx, 0, dim - 1)
+		if _local_grade_deg(elevation, pidx) > DRAFT_RIVER_MAX_GRADE:
+			continue
+		var ceiling: float = elevation[pidx] + DRAFT_RIVER_BAND
 		for oy in range(-reach, reach + 1):
 			for ox in range(-reach, reach + 1):
 				var nx := gx + ox
@@ -587,7 +597,28 @@ func _stamp_river(water: PackedFloat32Array, path: PackedVector2Array) -> void:
 				var cell_pos := Vector2(nx, ny) * SPACING
 				var d := cell_pos.distance_to(p)
 				var idx := ny * dim + nx
+				if elevation[idx] > ceiling:
+					continue
 				water[idx] = max(water[idx], smoothstep(width, width * 0.4, d))
+
+
+# Local grade in degrees: atan of the largest drop from the cell to any of its 8 neighbours,
+# divided by the neighbour distance in wu (SPACING, or SPACING * sqrt(2) on a diagonal).
+func _local_grade_deg(elevation: PackedFloat32Array, idx: int) -> float:
+	var gx := idx % dim
+	var gy := idx / dim
+	var best := 0.0
+	for oy in range(-1, 2):
+		for ox in range(-1, 2):
+			if ox == 0 and oy == 0:
+				continue
+			var nx := gx + ox
+			var ny := gy + oy
+			if nx < 0 or nx >= dim or ny < 0 or ny >= dim:
+				continue
+			var run: float = SPACING * (1.41421356 if ox != 0 and oy != 0 else 1.0)
+			best = max(best, (elevation[idx] - elevation[ny * dim + nx]) / run)
+	return rad_to_deg(atan(best))
 
 
 # Zones (still zone_a..e in code; a kit names them) come from perturbed continuous elevation

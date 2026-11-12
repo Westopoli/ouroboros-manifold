@@ -30,9 +30,13 @@ As a player, I want the game to work with no network and no model, so that it is
 
 Rules
 - R-152-01  Given the game binary, When it runs, Then it makes no network request to any model API; a contract test runs a full chapter with networking disabled.
+  Proof: MISSING
 - R-152-02  Given a library entry is missing at play time, When requested, Then a generic placeholder is used and logged; play never blocks.
+  Proof: MISSING
 - R-152-03  Given the library builder, When it runs, Then it checks the library for an existing entry before dispatching a generation and stores every result.
+  Proof: unbuilt
 - R-152-04  Given the builder, When it calls a model, Then it uses the model named in the project instructions (currently `claude-sonnet-4-20250514` for the builder).
+  Proof: unbuilt
 
 Inputs: library files.
 Outputs: contract test; logs.
@@ -43,10 +47,15 @@ As a designer, I want one pipeline to produce every text library the game reads,
 
 Rules
 - R-153-01  Given the builder, When run, Then it produces: chronicle fragments per category (E-09 S-071), mission archetype entries (each carrying the kind of base each side is given and the slant of its resources, E-22 S-177) and briefing fragments (E-10), event templates with chronicle prose (E-04), behavior scripts per archetype (E-14), layout hints (E-17), naming pools (S-154), and complication templates (deferred until complications exist).
+  Proof: MISSING
 - R-153-02  Given any library, When loaded by the game, Then a validator checks schema, required slots, word limits, banned language, and unique ids, and refuses a library that fails.
+  Proof: MISSING
 - R-153-03  Given a generated batch, When validated, Then structural checks are deterministic, deduplication is by edit distance, and tone and coherence are a second model pass that classifies and never rewrites.
+  Proof: MISSING
 - R-153-04  Given a batch loses more than 35 percent of its output to rejection, When reported, Then the batch is flagged for prompt revision, not silently shipped.
+  Proof: MISSING
 - R-153-05  Given the builder's output, When shipped, Then it is JSON in the era pack or base content directory with a validation report beside it.
+  Proof: MISSING
 
 Inputs: prompts; category and slot definitions; model.
 Outputs: libraries; reports.
@@ -57,12 +66,19 @@ As a player, I want people, places, units, and factions to have names that sound
 
 Rules
 - R-154-01  Given a faction at world generation, When its naming subset is assigned, Then it gets 2 to 3 linguistic roots, a set of phoneme patterns, and 3 to 4 flavor tags; the player civilization gets a wider subset (3 roots, 4 patterns, 4 tags).
+  Proof: unbuilt
 - R-154-02  Given a name request (faction, category), When served, Then a name from the faction's pool for that category is returned and marked in use; era-agnostic and era-specific pools are drawn from equally.
+  Proof: unbuilt
 - R-154-03  Given a Schism breakaway, When its subset is derived, Then it is the parent's subset with exactly one value swapped.
+  Proof: unbuilt
 - R-154-04  Given a name in use, When its character dies, Then it returns to the pool after 500 ticks (4,500 for a main character).
+  Proof: unbuilt
 - R-154-05  Given pool sizes at launch, When counted, Then per faction at least 500 people, 200 places, 200 units, 100 factions, half era-agnostic and half era-specific (whether workers are named, and what the 200 units count; Q-154-01 closed 2026-10-18, Architect, implementation).
+  Proof: unbuilt
 - R-154-06  Given the build, When deduplicated, Then no two names in a batch are within 3 edits.
+  Proof: unbuilt
 - R-154-07  Given a pool is exhausted, When a name is requested, Then [Q-155-01: reuse the oldest historical name, or generate a numbered fallback].
+  Proof: unbuilt
 
 Inputs: faction subsets; pools.
 Outputs: names in the ledger and on screen.
@@ -73,10 +89,15 @@ As an era designer, I want a repeatable pipeline that turns concept art into cle
 
 Rules
 - R-155-01  Given an era, When produced, Then the sequence is concept reference images, base mesh generation (3 to 4 variations per asset), Blender cleanup to the polygon budgets (E-18 R-132-04), export as GLB into the pack directory.
+  Proof: unbuilt
 - R-155-02  Given the Settled Reach, When produced, Then the order is Tier 2 units, Tier 1, Tier 3, structures, environment.
+  Proof: unbuilt
 - R-155-03  Given a humanoid era, When produced, Then bodies are generated in T-pose without weapons, auto-rigged, and weapons are separate props attached at hand bones at runtime; spaceship eras use rigid transforms and VFX only.
+  Proof: unbuilt
 - R-155-04  Given a finished asset, When checked, Then it conforms to its type's silhouette archetype at tactical zoom.
+  Proof: unbuilt
 - R-155-05  Given the building pieces of a settlement with their stages of construction (E-18 S-237) and the worker (E-22 S-167), When an era is produced, Then they are made by the same sequence (their place in the order of R-155-02, and whether an era still costs weeks, not years, with them; Q-155-02 closed 2026-10-18, Architect, implementation).
+  Proof: unbuilt
 
 Inputs: concept art; tools.
 Outputs: pack assets.
@@ -87,8 +108,11 @@ As a designer, I want headless fights on the real engine to measure how much a f
 
 Rules
 - R-156-01  Given the C tactical sim, When the balance harness (the skill lab) runs, Then scripted plays fight composition against composition headless, thousands per hour, and for each fight report the margin (the share of one side's strength left minus the other's), the break-even in whole units (for example 16 units beat 17 enemies and lose to 18, both sides fielding the same mix), and the units firing per side through the fight; win rate is not the measure, since a system with no dice has none.
+  Proof: MISSING
 - R-156-02  Given a rule set whose results fail a condition of the skill lab (a mirrored fight not breaking even at equal numbers, skill not winning the firing count, the result not following the firing count, a dominant or a dead skill, a counter that does not exist) [Q-156-02: the pass marks, which Westley has not confirmed], When found, Then it is flagged in the report.
+  Proof: MISSING
 - R-156-03  Given a stat change, When committed, Then the harness re-runs (continuous integration).
+  Proof: unbuilt
 
 Inputs: unit profiles; scripted plays.
 Outputs: margin, break-even and units-firing report; flags.
@@ -100,6 +124,7 @@ As a designer, I may later want per-civilization unit variety and generated arch
 
 Rules
 - R-157-01  Deferred (A-278, A-279, A-356, A-455, A-522): per-civilization stat profiles, trait pools, power ratings, and generated antagonist archetypes. Recorded, no rule at launch.
+  Proof: unbuilt
 
 Inputs: none yet.
 Outputs: none yet.
@@ -110,8 +135,11 @@ As the development method, I want Agora's per-epic rules files derived from thes
 
 Rules
 - R-158-01  Given an epic file with zero open flags, When `scripts/derive_agora_rules.py` runs, Then it writes `~/Projects/agora/projects/ouroboros/rules/E-##.md` with a "do not edit, derived from" header, the epic's rules, and its "ways this could be wrong" list.
+  Proof: MISSING
 - R-158-02  Given an epic with any open flag, When the script runs, Then no rules file is written for it and the skip is reported.
+  Proof: MISSING
 - R-158-03  Given a rules file, When compared to its epic, Then every R-### in the epic appears in the file verbatim.
+  Proof: MISSING
 
 Inputs: epic files; register.
 Outputs: rules files; report.
@@ -124,7 +152,9 @@ Design decided 2026-10-02, not scheduled for building (E-22).
 
 Rules
 - R-244-01  Given the economy's named things (the three resources, the doctrines, the building kinds and the pieces of a settlement), When the builder runs, Then it can produce their names for an era, to be carried in the era pack (E-20 S-243) (whether these names are generated library content or authored by hand; Q-244-01 closed 2026-10-18, Architect, implementation).
+  Proof: unbuilt
 - R-244-02  Given the economy seat and the solo commander's dial, doctrine switch, unit-mix switches and pointing (E-16 S-230, S-231), When the tutorial library is built, Then it carries text that teaches them, since nothing on the seat's screen lists what the commander needs (E-19 R-159-01) The player meets that text in onboarding (E-08 S-063; Westley, 2026-10-07: "#17: A").
+  Proof: unbuilt
 
 Inputs: the economy's names and teaching needs; the library builder.
 Outputs: names and tutorial text in the libraries and packs.
@@ -152,8 +182,11 @@ Open flags: none.
 ## Invariants
 
 - Zero model calls at play time.
+  Proof: MISSING
 - Every shipped library passes its validator.
+  Proof: MISSING
 - No two names within 3 edits in a batch.
+  Proof: unbuilt
 
 ## Scale requirements
 
