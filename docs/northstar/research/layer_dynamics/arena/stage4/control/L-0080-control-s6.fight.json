@@ -9557,9 +9557,7 @@
         3,
         26
       ],
-      "blocked": [
-        17
-      ],
+      "blocked": [],
       "tick": 1500,
       "units": [
         {
@@ -9772,7 +9770,7 @@
         },
         {
           "alive": true,
-          "facing": -5.009,
+          "facing": -5.036,
           "fired": true,
           "hp": 500.0,
           "id": 17,
@@ -9780,8 +9778,8 @@
           "role": "Vanguard",
           "side": "B",
           "target": null,
-          "x": 1994.4,
-          "y": 2657.07
+          "x": 1989.93,
+          "y": 2673.01
         },
         {
           "alive": true,
@@ -9863,7 +9861,7 @@
         },
         {
           "alive": true,
-          "facing": 0.758,
+          "facing": 0.711,
           "fired": false,
           "hp": 250.0,
           "id": 24,
@@ -9871,12 +9869,12 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1971.28,
-          "y": 2805.46
+          "x": 1992.12,
+          "y": 2817.15
         },
         {
           "alive": true,
-          "facing": 1.28,
+          "facing": 1.286,
           "fired": false,
           "hp": 325.0,
           "id": 25,
@@ -9884,8 +9882,8 @@
           "role": "Interceptor",
           "side": "B",
           "target": null,
-          "x": 1943.09,
-          "y": 2705.42
+          "x": 1945.72,
+          "y": 2709.6
         },
         {
           "alive": true,
@@ -9897,8 +9895,8 @@
           "role": "Vanguard",
           "side": "B",
           "target": null,
-          "x": 1942.75,
-          "y": 2814.53
+          "x": 1942.78,
+          "y": 2813.85
         },
         {
           "alive": false,
@@ -9923,12 +9921,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": null,
-          "x": 1927.7,
-          "y": 2757.58
+          "x": 1932.42,
+          "y": 2758.4
         },
         {
           "alive": true,
-          "facing": -5.722,
+          "facing": -5.15,
           "fired": true,
           "hp": 500.0,
           "id": 29,
@@ -9936,12 +9934,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": null,
-          "x": 1984.09,
-          "y": 2685.25
+          "x": 1994.77,
+          "y": 2702.22
         },
         {
           "alive": true,
-          "facing": 0.891,
+          "facing": 0.892,
           "fired": false,
           "hp": 171.2,
           "id": 30,
@@ -9949,8 +9947,8 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1954.23,
-          "y": 2780.8
+          "x": 1964.29,
+          "y": 2792.95
         },
         {
           "alive": true,
@@ -9962,8 +9960,8 @@
           "role": "Interceptor",
           "side": "B",
           "target": null,
-          "x": 1970.07,
-          "y": 2718.28
+          "x": 1972.69,
+          "y": 2722.69
         },
         {
           "alive": true,
@@ -9975,12 +9973,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": null,
-          "x": 1954.1,
-          "y": 2744.58
+          "x": 1960.23,
+          "y": 2749.24
         },
         {
           "alive": true,
-          "facing": -0.22,
+          "facing": 0.98,
           "fired": true,
           "hp": 250.0,
           "id": 33,
@@ -9988,12 +9986,12 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 2021.24,
-          "y": 2871.04
+          "x": 2022.97,
+          "y": 2880.49
         },
         {
           "alive": true,
-          "facing": 1.568,
+          "facing": 1.567,
           "fired": false,
           "hp": 230.5,
           "id": 34,
@@ -10001,8 +9999,8 @@
           "role": "Interceptor",
           "side": "B",
           "target": null,
-          "x": 1924.29,
-          "y": 2728.3
+          "x": 1923.64,
+          "y": 2729.79
         },
         {
           "alive": true,
@@ -10019,7 +10017,7 @@
         },
         {
           "alive": true,
-          "facing": 0.031,
+          "facing": 0.033,
           "fired": true,
           "hp": 184.0,
           "id": 36,
@@ -10027,12 +10025,12 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 2019.01,
-          "y": 2792.86
+          "x": 2032.28,
+          "y": 2793.02
         },
         {
           "alive": true,
-          "facing": 0.352,
+          "facing": 0.986,
           "fired": true,
           "hp": 325.0,
           "id": 37,
@@ -10040,8 +10038,8 @@
           "role": "Interceptor",
           "side": "B",
           "target": null,
-          "x": 1984.1,
-          "y": 2744.8
+          "x": 1990.64,
+          "y": 2756.67
         },
         {
           "alive": true,
@@ -10066,8 +10064,8 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1897.89,
-          "y": 2754.2
+          "x": 1902.53,
+          "y": 2755.23
         },
         {
           "alive": true,
@@ -10084,7 +10082,7 @@
         },
         {
           "alive": true,
-          "facing": 0.886,
+          "facing": 0.91,
           "fired": true,
           "hp": 500.0,
           "id": 41,
@@ -10092,12 +10090,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": null,
-          "x": 2027.88,
-          "y": 2743.28
+          "x": 2031.4,
+          "y": 2743.7
         },
         {
           "alive": true,
-          "facing": -0.068,
+          "facing": 0.813,
           "fired": true,
           "hp": 250.0,
           "id": 42,
@@ -10105,8 +10103,8 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 2013.95,
-          "y": 2841.94
+          "x": 2018.0,
+          "y": 2850.9
         },
         {
           "alive": true,
@@ -10118,8 +10116,8 @@
           "role": "Interceptor",
           "side": "B",
           "target": null,
-          "x": 1995.42,
-          "y": 2774.32
+          "x": 2002.53,
+          "y": 2788.44
         },
         {
           "alive": false,
@@ -10136,7 +10134,7 @@
         },
         {
           "alive": true,
-          "facing": 0.063,
+          "facing": 0.115,
           "fired": false,
           "hp": 250.0,
           "id": 45,
@@ -10144,12 +10142,12 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 1999.49,
-          "y": 2815.65
+          "x": 2021.85,
+          "y": 2821.15
         },
         {
           "alive": true,
-          "facing": 1.799,
+          "facing": 1.791,
           "fired": false,
           "hp": 325.0,
           "id": 46,
@@ -10157,8 +10155,8 @@
           "role": "Interceptor",
           "side": "B",
           "target": null,
-          "x": 1955.0,
-          "y": 2677.89
+          "x": 1962.3,
+          "y": 2684.6
         },
         {
           "alive": true,
@@ -10175,7 +10173,7 @@
         },
         {
           "alive": true,
-          "facing": 0.479,
+          "facing": 0.836,
           "fired": false,
           "hp": 250.0,
           "id": 48,
@@ -10183,8 +10181,8 @@
           "role": "Raider",
           "side": "B",
           "target": null,
-          "x": 2000.61,
-          "y": 2718.58
+          "x": 2005.14,
+          "y": 2730.41
         }
       ]
     },
@@ -10198,7 +10196,7 @@
       "units": [
         {
           "alive": false,
-          "facing": 0.356,
+          "facing": 0.357,
           "fired": false,
           "hp": 0.0,
           "id": 1,
@@ -10211,9 +10209,9 @@
         },
         {
           "alive": true,
-          "facing": 0.178,
+          "facing": 0.185,
           "fired": true,
-          "hp": 349.6,
+          "hp": 362.8,
           "id": 2,
           "layer": 0,
           "role": "Warden",
@@ -10237,9 +10235,9 @@
         },
         {
           "alive": true,
-          "facing": 0.286,
+          "facing": 0.292,
           "fired": true,
-          "hp": 322.0,
+          "hp": 311.7,
           "id": 4,
           "layer": 0,
           "role": "Warden",
@@ -10406,7 +10404,7 @@
         },
         {
           "alive": true,
-          "facing": -3.561,
+          "facing": -3.414,
           "fired": true,
           "hp": 500.0,
           "id": 17,
@@ -10414,12 +10412,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 4,
-          "x": 1990.33,
-          "y": 2655.88
+          "x": 1977.69,
+          "y": 2697.28
         },
         {
           "alive": true,
-          "facing": -3.263,
+          "facing": -3.184,
           "fired": true,
           "hp": 117.2,
           "id": 18,
@@ -10427,8 +10425,8 @@
           "role": "Raider",
           "side": "B",
           "target": 4,
-          "x": 2011.59,
-          "y": 2727.1
+          "x": 2018.57,
+          "y": 2746.26
         },
         {
           "alive": false,
@@ -10445,7 +10443,7 @@
         },
         {
           "alive": true,
-          "facing": 3.362,
+          "facing": 3.4,
           "fired": true,
           "hp": 500.0,
           "id": 20,
@@ -10453,8 +10451,8 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1912.0,
-          "y": 2823.07
+          "x": 1905.57,
+          "y": 2827.61
         },
         {
           "alive": false,
@@ -10497,7 +10495,7 @@
         },
         {
           "alive": true,
-          "facing": 3.34,
+          "facing": 3.291,
           "fired": true,
           "hp": 250.0,
           "id": 24,
@@ -10505,12 +10503,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1946.89,
-          "y": 2826.53
+          "x": 1932.72,
+          "y": 2814.84
         },
         {
           "alive": true,
-          "facing": 3.012,
+          "facing": 3.021,
           "fired": true,
           "hp": 325.0,
           "id": 25,
@@ -10518,12 +10516,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 4,
-          "x": 1927.93,
-          "y": 2735.81
+          "x": 1935.91,
+          "y": 2736.3
         },
         {
           "alive": true,
-          "facing": 3.484,
+          "facing": 3.454,
           "fired": true,
           "hp": 500.0,
           "id": 26,
@@ -10531,8 +10529,8 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1927.04,
-          "y": 2849.02
+          "x": 1932.11,
+          "y": 2844.84
         },
         {
           "alive": false,
@@ -10549,7 +10547,7 @@
         },
         {
           "alive": true,
-          "facing": 9.513,
+          "facing": 9.492,
           "fired": true,
           "hp": 325.0,
           "id": 28,
@@ -10557,12 +10555,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 4,
-          "x": 1926.62,
-          "y": 2770.8
+          "x": 1931.32,
+          "y": 2767.73
         },
         {
           "alive": true,
-          "facing": -3.457,
+          "facing": -3.311,
           "fired": true,
           "hp": 500.0,
           "id": 29,
@@ -10570,12 +10568,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 4,
-          "x": 1984.08,
-          "y": 2685.22
+          "x": 2000.38,
+          "y": 2716.9
         },
         {
           "alive": true,
-          "facing": 3.396,
+          "facing": 3.369,
           "fired": true,
           "hp": 171.2,
           "id": 30,
@@ -10583,12 +10581,12 @@
           "role": "Raider",
           "side": "B",
           "target": 4,
-          "x": 1932.38,
-          "y": 2800.24
+          "x": 1912.11,
+          "y": 2790.77
         },
         {
           "alive": true,
-          "facing": 2.98,
+          "facing": 2.985,
           "fired": true,
           "hp": 325.0,
           "id": 31,
@@ -10596,12 +10594,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 4,
-          "x": 1956.22,
-          "y": 2725.82
+          "x": 1966.12,
+          "y": 2725.25
         },
         {
           "alive": true,
-          "facing": 9.465,
+          "facing": 9.474,
           "fired": true,
           "hp": 372.5,
           "id": 32,
@@ -10609,25 +10607,25 @@
           "role": "Vanguard",
           "side": "B",
           "target": 4,
-          "x": 1955.92,
-          "y": 2764.37
+          "x": 1968.4,
+          "y": 2766.61
         },
         {
           "alive": true,
-          "facing": -2.996,
+          "facing": 3.324,
           "fired": true,
           "hp": 250.0,
           "id": 33,
           "layer": 0,
           "role": "Raider",
           "side": "B",
-          "target": 2,
-          "x": 1976.34,
-          "y": 2820.48
+          "target": 4,
+          "x": 1950.62,
+          "y": 2790.77
         },
         {
           "alive": true,
-          "facing": 3.12,
+          "facing": 3.082,
           "fired": true,
           "hp": 230.5,
           "id": 34,
@@ -10635,12 +10633,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 4,
-          "x": 1901.8,
-          "y": 2753.95
+          "x": 1908.43,
+          "y": 2748.33
         },
         {
           "alive": true,
-          "facing": -2.764,
+          "facing": -2.83,
           "fired": true,
           "hp": 58.0,
           "id": 35,
@@ -10648,25 +10646,25 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1951.96,
-          "y": 2865.73
+          "x": 1960.65,
+          "y": 2854.08
         },
         {
           "alive": true,
-          "facing": -3.143,
-          "fired": true,
+          "facing": -3.073,
+          "fired": false,
           "hp": 184.0,
           "id": 36,
           "layer": 0,
           "role": "Raider",
           "side": "B",
           "target": 4,
-          "x": 2008.15,
-          "y": 2756.49
+          "x": 2027.77,
+          "y": 2774.54
         },
         {
           "alive": true,
-          "facing": -3.197,
+          "facing": 3.219,
           "fired": true,
           "hp": 325.0,
           "id": 37,
@@ -10674,12 +10672,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 4,
-          "x": 1979.09,
-          "y": 2745.23
+          "x": 1997.37,
+          "y": 2774.41
         },
         {
           "alive": true,
-          "facing": 9.602,
+          "facing": 9.61,
           "fired": true,
           "hp": 48.5,
           "id": 38,
@@ -10687,12 +10685,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 2051.68,
-          "y": 2841.12
+          "x": 2056.35,
+          "y": 2844.26
         },
         {
           "alive": true,
-          "facing": 3.252,
+          "facing": 3.26,
           "fired": true,
           "hp": 250.0,
           "id": 39,
@@ -10700,12 +10698,12 @@
           "role": "Raider",
           "side": "B",
           "target": 4,
-          "x": 1875.78,
-          "y": 2768.89
+          "x": 1889.22,
+          "y": 2771.38
         },
         {
           "alive": true,
-          "facing": 2.601,
+          "facing": 2.664,
           "fired": true,
           "hp": 325.0,
           "id": 40,
@@ -10713,12 +10711,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 4,
-          "x": 1979.04,
-          "y": 2628.08
+          "x": 1975.02,
+          "y": 2647.8
         },
         {
           "alive": true,
-          "facing": 3.148,
+          "facing": 3.028,
           "fired": true,
           "hp": 500.0,
           "id": 41,
@@ -10726,25 +10724,25 @@
           "role": "Vanguard",
           "side": "B",
           "target": 4,
-          "x": 2037.66,
-          "y": 2758.5
+          "x": 2040.17,
+          "y": 2725.76
         },
         {
           "alive": true,
-          "facing": -2.954,
+          "facing": -2.998,
           "fired": true,
           "hp": 250.0,
           "id": 42,
           "layer": 0,
           "role": "Raider",
           "side": "B",
-          "target": 4,
-          "x": 1999.14,
-          "y": 2800.9
+          "target": 2,
+          "x": 1962.9,
+          "y": 2818.14
         },
         {
           "alive": true,
-          "facing": 3.225,
+          "facing": 3.321,
           "fired": true,
           "hp": 325.0,
           "id": 43,
@@ -10752,8 +10750,8 @@
           "role": "Interceptor",
           "side": "B",
           "target": 4,
-          "x": 1984.38,
-          "y": 2774.79
+          "x": 2010.95,
+          "y": 2801.16
         },
         {
           "alive": false,
@@ -10770,20 +10768,20 @@
         },
         {
           "alive": true,
-          "facing": -2.952,
+          "facing": -2.934,
           "fired": true,
           "hp": 250.0,
           "id": 45,
           "layer": 0,
           "role": "Raider",
           "side": "B",
-          "target": 4,
-          "x": 1961.65,
-          "y": 2794.37
+          "target": 2,
+          "x": 1986.44,
+          "y": 2836.73
         },
         {
           "alive": true,
-          "facing": 2.833,
+          "facing": 2.863,
           "fired": true,
           "hp": 325.0,
           "id": 46,
@@ -10791,12 +10789,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 4,
-          "x": 1938.91,
-          "y": 2701.32
+          "x": 1943.31,
+          "y": 2705.77
         },
         {
           "alive": true,
-          "facing": -3.469,
+          "facing": -3.457,
           "fired": true,
           "hp": 500.0,
           "id": 47,
@@ -10804,12 +10802,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 4,
-          "x": 2016.13,
-          "y": 2671.19
+          "x": 2010.72,
+          "y": 2676.55
         },
         {
           "alive": true,
-          "facing": 2.953,
+          "facing": 3.087,
           "fired": true,
           "hp": 250.0,
           "id": 48,
@@ -10817,8 +10815,8 @@
           "role": "Raider",
           "side": "B",
           "target": 4,
-          "x": 1984.26,
-          "y": 2715.16
+          "x": 1988.94,
+          "y": 2744.74
         }
       ]
     },
@@ -10832,7 +10830,7 @@
       "units": [
         {
           "alive": false,
-          "facing": 0.356,
+          "facing": 0.357,
           "fired": false,
           "hp": 0.0,
           "id": 1,
@@ -10845,9 +10843,9 @@
         },
         {
           "alive": true,
-          "facing": 0.178,
+          "facing": 0.188,
           "fired": true,
-          "hp": 158.0,
+          "hp": 141.4,
           "id": 2,
           "layer": 0,
           "role": "Warden",
@@ -10871,7 +10869,7 @@
         },
         {
           "alive": false,
-          "facing": 0.286,
+          "facing": 0.296,
           "fired": false,
           "hp": 0.0,
           "id": 4,
@@ -11040,7 +11038,7 @@
         },
         {
           "alive": true,
-          "facing": -3.664,
+          "facing": -3.538,
           "fired": true,
           "hp": 500.0,
           "id": 17,
@@ -11048,12 +11046,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1990.33,
-          "y": 2655.88
+          "x": 1977.69,
+          "y": 2697.28
         },
         {
           "alive": true,
-          "facing": -3.383,
+          "facing": -3.307,
           "fired": false,
           "hp": 117.2,
           "id": 18,
@@ -11061,8 +11059,8 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 2011.59,
-          "y": 2727.11
+          "x": 2018.57,
+          "y": 2746.25
         },
         {
           "alive": false,
@@ -11079,7 +11077,7 @@
         },
         {
           "alive": true,
-          "facing": 3.362,
+          "facing": 3.4,
           "fired": true,
           "hp": 500.0,
           "id": 20,
@@ -11087,8 +11085,8 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1912.0,
-          "y": 2823.07
+          "x": 1905.57,
+          "y": 2827.61
         },
         {
           "alive": false,
@@ -11131,7 +11129,7 @@
         },
         {
           "alive": true,
-          "facing": 3.34,
+          "facing": 3.291,
           "fired": true,
           "hp": 250.0,
           "id": 24,
@@ -11139,12 +11137,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1946.89,
-          "y": 2826.53
+          "x": 1932.72,
+          "y": 2814.84
         },
         {
           "alive": true,
-          "facing": 2.836,
+          "facing": 2.851,
           "fired": true,
           "hp": 325.0,
           "id": 25,
@@ -11152,12 +11150,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1927.93,
-          "y": 2735.81
+          "x": 1935.91,
+          "y": 2736.3
         },
         {
           "alive": true,
-          "facing": 3.484,
+          "facing": 3.454,
           "fired": true,
           "hp": 500.0,
           "id": 26,
@@ -11165,8 +11163,8 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1927.04,
-          "y": 2849.02
+          "x": 1932.11,
+          "y": 2844.84
         },
         {
           "alive": false,
@@ -11183,7 +11181,7 @@
         },
         {
           "alive": true,
-          "facing": 9.315,
+          "facing": 9.3,
           "fired": true,
           "hp": 325.0,
           "id": 28,
@@ -11191,12 +11189,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1926.53,
-          "y": 2770.82
+          "x": 1931.32,
+          "y": 2767.73
         },
         {
           "alive": true,
-          "facing": -3.573,
+          "facing": -3.432,
           "fired": true,
           "hp": 500.0,
           "id": 29,
@@ -11204,12 +11202,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1984.08,
-          "y": 2685.22
+          "x": 2000.38,
+          "y": 2716.9
         },
         {
           "alive": true,
-          "facing": 3.207,
+          "facing": 3.153,
           "fired": true,
           "hp": 171.2,
           "id": 30,
@@ -11217,12 +11215,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1932.39,
-          "y": 2800.25
+          "x": 1912.11,
+          "y": 2790.77
         },
         {
           "alive": true,
-          "facing": 2.831,
+          "facing": 2.843,
           "fired": true,
           "hp": 325.0,
           "id": 31,
@@ -11230,12 +11228,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1956.22,
-          "y": 2725.82
+          "x": 1966.12,
+          "y": 2725.25
         },
         {
           "alive": true,
-          "facing": 9.296,
+          "facing": 9.316,
           "fired": true,
           "hp": 372.5,
           "id": 32,
@@ -11243,25 +11241,25 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1955.74,
-          "y": 2764.0
+          "x": 1968.4,
+          "y": 2766.61
         },
         {
           "alive": true,
-          "facing": -2.997,
-          "fired": false,
+          "facing": 3.151,
+          "fired": true,
           "hp": 250.0,
           "id": 33,
           "layer": 0,
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1976.34,
-          "y": 2820.25
+          "x": 1950.62,
+          "y": 2790.77
         },
         {
           "alive": true,
-          "facing": 2.899,
+          "facing": 2.875,
           "fired": true,
           "hp": 230.5,
           "id": 34,
@@ -11269,12 +11267,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1901.76,
-          "y": 2753.89
+          "x": 1908.43,
+          "y": 2748.33
         },
         {
           "alive": true,
-          "facing": -2.764,
+          "facing": -2.83,
           "fired": true,
           "hp": 58.0,
           "id": 35,
@@ -11282,12 +11280,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1951.96,
-          "y": 2865.73
+          "x": 1960.65,
+          "y": 2854.08
         },
         {
           "alive": true,
-          "facing": -3.273,
+          "facing": -3.197,
           "fired": false,
           "hp": 184.0,
           "id": 36,
@@ -11295,12 +11293,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 2008.15,
-          "y": 2756.5
+          "x": 2027.77,
+          "y": 2774.54
         },
         {
           "alive": true,
-          "facing": -3.34,
+          "facing": 3.079,
           "fired": true,
           "hp": 325.0,
           "id": 37,
@@ -11308,12 +11306,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1979.13,
-          "y": 2745.21
+          "x": 1997.37,
+          "y": 2774.41
         },
         {
           "alive": true,
-          "facing": 9.602,
+          "facing": 9.613,
           "fired": true,
           "hp": 24.5,
           "id": 38,
@@ -11321,12 +11319,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 2051.68,
-          "y": 2841.12
+          "x": 2052.35,
+          "y": 2844.47
         },
         {
           "alive": true,
-          "facing": 2.969,
+          "facing": 3.005,
           "fired": true,
           "hp": 250.0,
           "id": 39,
@@ -11334,12 +11332,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1875.78,
-          "y": 2768.89
+          "x": 1889.22,
+          "y": 2771.38
         },
         {
           "alive": true,
-          "facing": 2.514,
+          "facing": 2.568,
           "fired": true,
           "hp": 325.0,
           "id": 40,
@@ -11347,12 +11345,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1959.08,
-          "y": 2644.42
+          "x": 1964.95,
+          "y": 2656.03
         },
         {
           "alive": true,
-          "facing": 3.031,
+          "facing": 2.919,
           "fired": true,
           "hp": 500.0,
           "id": 41,
@@ -11360,12 +11358,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 2037.66,
-          "y": 2758.5
+          "x": 2040.17,
+          "y": 2725.76
         },
         {
           "alive": true,
-          "facing": -3.092,
+          "facing": -2.998,
           "fired": false,
           "hp": 250.0,
           "id": 42,
@@ -11373,12 +11371,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1999.3,
-          "y": 2800.82
+          "x": 1962.9,
+          "y": 2818.14
         },
         {
           "alive": true,
-          "facing": 3.077,
+          "facing": 3.208,
           "fired": true,
           "hp": 325.0,
           "id": 43,
@@ -11386,8 +11384,8 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1984.38,
-          "y": 2774.79
+          "x": 2005.88,
+          "y": 2805.23
         },
         {
           "alive": false,
@@ -11404,7 +11402,7 @@
         },
         {
           "alive": true,
-          "facing": -3.115,
+          "facing": -2.934,
           "fired": false,
           "hp": 250.0,
           "id": 45,
@@ -11412,12 +11410,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1961.52,
-          "y": 2794.22
+          "x": 1986.44,
+          "y": 2836.73
         },
         {
           "alive": true,
-          "facing": 2.688,
+          "facing": 2.718,
           "fired": true,
           "hp": 325.0,
           "id": 46,
@@ -11425,12 +11423,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1938.91,
-          "y": 2701.32
+          "x": 1943.31,
+          "y": 2705.77
         },
         {
           "alive": true,
-          "facing": -3.571,
+          "facing": -3.561,
           "fired": true,
           "hp": 500.0,
           "id": 47,
@@ -11438,12 +11436,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 2016.13,
-          "y": 2671.19
+          "x": 2010.72,
+          "y": 2676.55
         },
         {
           "alive": true,
-          "facing": 2.825,
+          "facing": 2.95,
           "fired": false,
           "hp": 250.0,
           "id": 48,
@@ -11451,8 +11449,8 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1984.26,
-          "y": 2715.16
+          "x": 1988.94,
+          "y": 2744.74
         }
       ]
     },
@@ -11462,11 +11460,11 @@
         26
       ],
       "blocked": [],
-      "tick": 1731,
+      "tick": 1726,
       "units": [
         {
           "alive": false,
-          "facing": 0.356,
+          "facing": 0.357,
           "fired": false,
           "hp": 0.0,
           "id": 1,
@@ -11479,7 +11477,7 @@
         },
         {
           "alive": false,
-          "facing": 0.178,
+          "facing": 0.188,
           "fired": false,
           "hp": 0.0,
           "id": 2,
@@ -11505,7 +11503,7 @@
         },
         {
           "alive": false,
-          "facing": 0.286,
+          "facing": 0.296,
           "fired": false,
           "hp": 0.0,
           "id": 4,
@@ -11674,7 +11672,7 @@
         },
         {
           "alive": true,
-          "facing": -3.664,
+          "facing": -3.538,
           "fired": true,
           "hp": 500.0,
           "id": 17,
@@ -11682,12 +11680,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1990.33,
-          "y": 2655.88
+          "x": 1977.69,
+          "y": 2697.28
         },
         {
           "alive": true,
-          "facing": -3.383,
+          "facing": -3.307,
           "fired": false,
           "hp": 117.2,
           "id": 18,
@@ -11695,8 +11693,8 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 2011.59,
-          "y": 2727.11
+          "x": 2018.57,
+          "y": 2746.25
         },
         {
           "alive": false,
@@ -11713,7 +11711,7 @@
         },
         {
           "alive": true,
-          "facing": 3.362,
+          "facing": 3.4,
           "fired": true,
           "hp": 500.0,
           "id": 20,
@@ -11721,8 +11719,8 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1912.0,
-          "y": 2823.07
+          "x": 1905.57,
+          "y": 2827.61
         },
         {
           "alive": false,
@@ -11765,7 +11763,7 @@
         },
         {
           "alive": true,
-          "facing": 3.34,
+          "facing": 3.291,
           "fired": true,
           "hp": 250.0,
           "id": 24,
@@ -11773,12 +11771,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1946.89,
-          "y": 2826.53
+          "x": 1932.72,
+          "y": 2814.84
         },
         {
           "alive": true,
-          "facing": 2.836,
+          "facing": 2.851,
           "fired": true,
           "hp": 325.0,
           "id": 25,
@@ -11786,12 +11784,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1927.93,
-          "y": 2735.81
+          "x": 1935.91,
+          "y": 2736.3
         },
         {
           "alive": true,
-          "facing": 3.484,
+          "facing": 3.454,
           "fired": true,
           "hp": 500.0,
           "id": 26,
@@ -11799,8 +11797,8 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1927.04,
-          "y": 2849.02
+          "x": 1932.11,
+          "y": 2844.84
         },
         {
           "alive": false,
@@ -11817,7 +11815,7 @@
         },
         {
           "alive": true,
-          "facing": 9.315,
+          "facing": 9.3,
           "fired": true,
           "hp": 325.0,
           "id": 28,
@@ -11825,12 +11823,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1926.53,
-          "y": 2770.82
+          "x": 1931.32,
+          "y": 2767.73
         },
         {
           "alive": true,
-          "facing": -3.573,
+          "facing": -3.432,
           "fired": true,
           "hp": 500.0,
           "id": 29,
@@ -11838,12 +11836,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1984.08,
-          "y": 2685.22
+          "x": 2000.38,
+          "y": 2716.9
         },
         {
           "alive": true,
-          "facing": 3.207,
+          "facing": 3.153,
           "fired": true,
           "hp": 171.2,
           "id": 30,
@@ -11851,12 +11849,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1932.39,
-          "y": 2800.25
+          "x": 1912.11,
+          "y": 2790.77
         },
         {
           "alive": true,
-          "facing": 2.831,
+          "facing": 2.843,
           "fired": true,
           "hp": 325.0,
           "id": 31,
@@ -11864,12 +11862,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1956.22,
-          "y": 2725.82
+          "x": 1966.12,
+          "y": 2725.25
         },
         {
           "alive": true,
-          "facing": 9.296,
+          "facing": 9.316,
           "fired": true,
           "hp": 372.5,
           "id": 32,
@@ -11877,25 +11875,25 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1955.74,
-          "y": 2764.0
+          "x": 1968.4,
+          "y": 2766.61
         },
         {
           "alive": true,
-          "facing": -2.997,
-          "fired": false,
+          "facing": 3.151,
+          "fired": true,
           "hp": 250.0,
           "id": 33,
           "layer": 0,
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1976.34,
-          "y": 2820.25
+          "x": 1950.62,
+          "y": 2790.77
         },
         {
           "alive": true,
-          "facing": 2.899,
+          "facing": 2.875,
           "fired": true,
           "hp": 230.5,
           "id": 34,
@@ -11903,12 +11901,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1901.76,
-          "y": 2753.89
+          "x": 1908.43,
+          "y": 2748.33
         },
         {
           "alive": true,
-          "facing": -2.764,
+          "facing": -2.83,
           "fired": true,
           "hp": 58.0,
           "id": 35,
@@ -11916,12 +11914,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 1951.96,
-          "y": 2865.73
+          "x": 1960.65,
+          "y": 2854.08
         },
         {
           "alive": true,
-          "facing": -3.273,
+          "facing": -3.197,
           "fired": false,
           "hp": 184.0,
           "id": 36,
@@ -11929,12 +11927,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 2008.15,
-          "y": 2756.5
+          "x": 2027.77,
+          "y": 2774.54
         },
         {
           "alive": true,
-          "facing": -3.34,
+          "facing": 3.079,
           "fired": true,
           "hp": 325.0,
           "id": 37,
@@ -11942,12 +11940,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1979.13,
-          "y": 2745.21
+          "x": 1997.37,
+          "y": 2774.41
         },
         {
           "alive": true,
-          "facing": 9.602,
+          "facing": 9.613,
           "fired": true,
           "hp": 20.5,
           "id": 38,
@@ -11955,12 +11953,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 2051.68,
-          "y": 2841.12
+          "x": 2052.35,
+          "y": 2844.47
         },
         {
           "alive": true,
-          "facing": 2.969,
+          "facing": 3.005,
           "fired": true,
           "hp": 250.0,
           "id": 39,
@@ -11968,12 +11966,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1875.78,
-          "y": 2768.89
+          "x": 1889.22,
+          "y": 2771.38
         },
         {
           "alive": true,
-          "facing": 2.514,
+          "facing": 2.568,
           "fired": true,
           "hp": 325.0,
           "id": 40,
@@ -11981,12 +11979,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1959.08,
-          "y": 2644.42
+          "x": 1964.95,
+          "y": 2656.03
         },
         {
           "alive": true,
-          "facing": 3.031,
+          "facing": 2.919,
           "fired": true,
           "hp": 500.0,
           "id": 41,
@@ -11994,12 +11992,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 2037.66,
-          "y": 2758.5
+          "x": 2040.17,
+          "y": 2725.76
         },
         {
           "alive": true,
-          "facing": -3.092,
+          "facing": -2.998,
           "fired": false,
           "hp": 250.0,
           "id": 42,
@@ -12007,12 +12005,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1999.3,
-          "y": 2800.82
+          "x": 1962.9,
+          "y": 2818.14
         },
         {
           "alive": true,
-          "facing": 3.077,
+          "facing": 3.208,
           "fired": true,
           "hp": 325.0,
           "id": 43,
@@ -12020,8 +12018,8 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1984.38,
-          "y": 2774.79
+          "x": 2005.88,
+          "y": 2805.23
         },
         {
           "alive": false,
@@ -12038,7 +12036,7 @@
         },
         {
           "alive": true,
-          "facing": -3.115,
+          "facing": -2.934,
           "fired": false,
           "hp": 250.0,
           "id": 45,
@@ -12046,12 +12044,12 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1961.52,
-          "y": 2794.22
+          "x": 1986.44,
+          "y": 2836.73
         },
         {
           "alive": true,
-          "facing": 2.688,
+          "facing": 2.718,
           "fired": true,
           "hp": 325.0,
           "id": 46,
@@ -12059,12 +12057,12 @@
           "role": "Interceptor",
           "side": "B",
           "target": 2,
-          "x": 1938.91,
-          "y": 2701.32
+          "x": 1943.31,
+          "y": 2705.77
         },
         {
           "alive": true,
-          "facing": -3.571,
+          "facing": -3.561,
           "fired": true,
           "hp": 500.0,
           "id": 47,
@@ -12072,12 +12070,12 @@
           "role": "Vanguard",
           "side": "B",
           "target": 2,
-          "x": 2016.13,
-          "y": 2671.19
+          "x": 2010.72,
+          "y": 2676.55
         },
         {
           "alive": true,
-          "facing": 2.825,
+          "facing": 2.95,
           "fired": false,
           "hp": 250.0,
           "id": 48,
@@ -12085,8 +12083,8 @@
           "role": "Raider",
           "side": "B",
           "target": 2,
-          "x": 1984.26,
-          "y": 2715.16
+          "x": 1988.94,
+          "y": 2744.74
         }
       ]
     }
@@ -12231,7 +12229,7 @@
       0,
       26
     ],
-    "ticks": 1731,
+    "ticks": 1726,
     "winner": "B"
   },
   "schema": "om-fight-2",
