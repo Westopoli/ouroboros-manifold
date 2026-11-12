@@ -28,7 +28,9 @@ from conftest import OMFeature
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 RAIDER = 0
+SUPPLY = 6  # never fires: an idle ENEMY of the mover that stays idle (R-097-10)
 FRIEND = 0
+ENEMY = 1
 POS_TOL = 0.05
 DIAMETER = 30.0  # 2 x radius 15
 CANVAS = 4000.0  # the Python's open_field, A157's scene
@@ -59,10 +61,12 @@ def _min_pair(lib, w, ids):
 # ------------------------------------------------------------------ every unit starts pair checks
 
 def test_R_097_10_unit_walking_into_a_stopped_one_is_pushed_out(lib, tw):
-    """R-097-10: S (id 1, stopped) at (110,0); M (id 2, the HIGHER id) at (120,0) walks -x to (112.5,0), 2.5 wu
-    from S. M takes the full displacement and S none: M ends at (140,0), S still at (110,0), 30 apart. The old
-    rule checks the pair only when its lower-id unit (S) moved, so M ends at (112.5,0)."""
-    s = lib.om_unit_spawn(tw, RAIDER, FRIEND, 110.0, 0.0, 0)
+    """R-097-10: S (id 1, a stopped ENEMY Supply) at (110,0); M (id 2, the HIGHER id) at (120,0) walks -x to (112.5,0), 2.5 wu
+    from S. M takes the full displacement and S none (an idle unit takes none from an enemy mover): M ends at (140,0), S still at (110,0), 30 apart. The old
+    rule checks the pair only when its lower-id unit (S) moved, so M ends at (112.5,0).
+    Test-defect (engine rules round 4, T10): S was a unit of M's own side, which R-097-10 now makes take the push ("an idle unit ... takes the full displacement from a mover of its own side"); the own-side
+    scene is tests/csim/test_E13_R097_10_idle_own_units_yield.py."""
+    s = lib.om_unit_spawn(tw, SUPPLY, ENEMY, 110.0, 0.0, 0)
     m = lib.om_unit_spawn(tw, RAIDER, FRIEND, 120.0, 0.0, 0)
     assert s < m, "scene error: the stopped unit must have the lower id"
     lib.om_command_move(tw, m, -1000.0, 0.0)
@@ -75,10 +79,11 @@ def test_R_097_10_unit_walking_into_a_stopped_one_is_pushed_out(lib, tw):
 
 def test_R_097_10_lower_id_mover_still_pushes_control(lib, tw):
     """Positive control for the test above (green today, stays green): the mirror scene with the MOVER at the
-    lower id. M (id 1) at (100,0) goes -x to (92.5,0), 17.5 from the stopped S (id 2) at (110,0): pushed back to
-    (80,0), S unmoved."""
+    lower id. M (id 1) at (100,0) goes -x to (92.5,0), 17.5 from the stopped ENEMY Supply S (id 2) at (110,0): pushed back to
+    (80,0), S unmoved.
+    Test-defect (engine rules round 4, T10): S was a unit of M's own side (R-097-10: an idle own unit takes the push, see the test above)."""
     m = lib.om_unit_spawn(tw, RAIDER, FRIEND, 100.0, 0.0, 0)
-    s = lib.om_unit_spawn(tw, RAIDER, FRIEND, 110.0, 0.0, 0)
+    s = lib.om_unit_spawn(tw, SUPPLY, ENEMY, 110.0, 0.0, 0)
     lib.om_command_move(tw, m, -1000.0, 0.0)
     lib.om_tactical_step(tw)
     assert lib.om_unit_get_pos(tw, s) == (110.0, 0.0)

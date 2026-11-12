@@ -38,6 +38,18 @@ def layout(lid, situation, landscape, feature, yc=YC, orders="both_same_point", 
     return out
 
 
+def queue_layout(name, lid, n=32, cols=8):
+    """(layout, rectangles) of the planar kind `name` with n units a side in blocks of `cols` rows: the fixture of the tests that need units stalled at the ground.
+    Test-defect (engine rules Round 4, R-097-10): with 8 a side no planar fixture lists a unit blocked any more (0 on every frame, seed 1, caps 20 and 60 s, sight off and on): the
+    units that stood in each other's way were idle own units, which now step aside. The ridge fixture with 32 a side lists 4, 3, 3 and 2 blocked units on the frames at 300, 400,
+    500 and 600 ticks (cap 30 s) and with 64 a side 22, 26, 28 and 11; the chokepoint, cover and city fixtures list none at 32 or 64 a side."""
+    lay, rects = planar(name, lid)
+    yc = KINDS[name]()[4]
+    lay["side_a"] = {"headcount": n, "units": block(n, 1000.0, yc, 0.0, 0, cols=cols)}
+    lay["side_b"] = {"headcount": n, "units": block(n, 3000.0, yc, round(math.pi, 4), cols=cols)}
+    return lay, rects
+
+
 def without_features(lay):
     """The control: the same units and ids, `features` emptied. R6 wants a feature for every situation but open_field, so the situation becomes open_field."""
     out = json.loads(json.dumps(lay))

@@ -16,7 +16,7 @@ Premises dumped 2026-11-11 on this tree (main 7ba38983), run.fight(L-0081, seed 
   they are not asserted here and are reported to the Architect.
 Red today: unit 13's three runs.
 
-Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47): 737 ticks; flinch flag on unit 13 only, 87 unit-ticks, one run (ticks 182 to 268), no stall; the lab checker reports no violation of any rule. In the
+Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47): 737 ticks (741 on the Round 4 tip 6d3d7635, R-097-10: an idle unit steps aside for a mover of its own side; the lab checker reports no violation of any rule on it, seed 1 sight on, and the flinch run is unchanged); flinch flag on unit 13 only, 87 unit-ticks, one run (ticks 182 to 268), no stall; the lab checker reports no violation of any rule. In the
 flinch the unit has no destination (the recorder's `dest` is None), so the stall detector below is blind to a fixed unit by construction and sees only the old state, a destination ordered by the
 pursuit-end check and a unit that stands: that is what the red test judged and what the fake-tick control proves it reads.
 """
@@ -105,11 +105,11 @@ def test_control_the_measure_flags_a_flinching_unit_that_stands_and_not_one_that
 
 def test_control_L0081_runs_to_the_measured_end_and_unit_13_flinches():
     """Control (the premise of the red test; re-dumped 2026-11-12 on the Round 3 tip d70c8d47, Test-defect: the premises were dumped on the engine before the fixes): L-0081 seed 1 sight on runs
-    737 ticks (2,560 before; fix 3, 8f825d59, moves it to 831 and fix 2, 94da7493, to 737; d70c8d47 leaves it); the only unit that ever carries the flinch flag is unit 13, on 87 unit-ticks in one run from
+    741 ticks (2,560 before; fix 3, 8f825d59, moves it to 831 and fix 2, 94da7493, to 737; d70c8d47 leaves it; Round 4, 6d3d7635, R-097-10: 741, checker reports none; Test-defect); the only unit that ever carries the flinch flag is unit 13, on 87 unit-ticks in one run from
     tick 182 to tick 268, with no destination while it moves away, and it ends the run 196 wu from where it began (R-087-01 'moves 200 wu directly away', the step is 2 wu a tick), so the move
     away is made and is not a run on the spot; at tick 269 the attack-mover has its destination back."""
     rec, flinch = played()
-    assert len(rec.ticks) == 737, len(rec.ticks)
+    assert len(rec.ticks) == 741, len(rec.ticks)
     units = {u for d in flinch for u, v in d.items() if v}
     assert units == {13}, units
     ticks = [n + 1 for n, d in enumerate(flinch) if d.get(13)]

@@ -314,12 +314,14 @@ def test_R_098_02_blocked_cell_blocks_sight_and_fire_on_its_layers(lib, tw):
 # ---------------------------------------------------------------- collision pushes slide along blocked cells
 
 def _slide_scene(lib, w, wall):
-    """M (195,500) goes +y; idle S at (180,520). After the step M is 19.5 from S and is pushed along S->M, toward +x
-    (203.1, 500.8): into column 2 (x 200..300) when that is blocked."""
+    """M (195,500) goes +y; idle ENEMY S (a Supply, which never fires) at (180,520). After the step M is 19.5 from S and is pushed along S->M, toward +x
+    (203.1, 500.8): into column 2 (x 200..300) when that is blocked.
+    Test-defect (engine rules round 4, T10): S was a unit of M's own side; R-097-10 gives the push of an idle own unit to the idle unit, so M would not have been pushed and the slide test proved nothing
+    (its control above, the unblocked push, went red). An idle enemy takes none, as the scene needs."""
     if wall:
         assert lib.om_map_block_rect(w, 210.0, 10.0, 290.0, 1990.0, 0, 4) == 0
     m = lib.om_unit_spawn(w, RAIDER, FRIEND, 195.0, 500.0, 0)
-    lib.om_unit_spawn(w, RAIDER, FRIEND, 180.0, 520.0, 0)
+    lib.om_unit_spawn(w, 6, ENEMY, 180.0, 520.0, 0)   # 6 = Supply
     lib.om_command_move(w, m, 195.0, 1500.0)
     lib.om_tactical_step(w)
     return lib.om_unit_get_pos(w, m)

@@ -55,7 +55,8 @@ RADIUS_MIN, RADIUS_MAX = 1.0, 200.0   # DRAFT-radius-bounds 1 to 200 (story)
 STEP_TOL = 0.05                       # numeric slack for the C's cheap trig, as in test_PP_collision_radius_runtime.py
 
 # Recorded on the unmodified tree by test_PP_collision_radius_runtime.py (origin/main 37858c8e, no csrc change).
-TRACE_R15 = "9266aad512c513ca24883b28e4cca87963685878a14136619d98caf703b4c5a2"
+# Test-defect, re-recorded 2026-11-12 with the copy in test_PP_collision_radius_runtime.py (engine rules Round 4, R-097-10; was 9266aad512c513ca...; the reason is given there).
+TRACE_R15 = "53b854664d08e163e8863ebb4c39b5d71d9826b5bcaec99ef18308af9d5dd4d8"
 
 
 def _set_radius(lib, w, unit_type, radius):
@@ -340,7 +341,9 @@ def test_H_041_production_slot_spacing_follows_the_largest_when_every_radius_is_
 # the 100-tick scene's unit state (same size), and H-041 with no radius set reproduces the H-057-alone bytes (checked on both libs).
 # How it was recorded: a lib built from `git archive origin/main csrc` (commit recorded in the commit body), _save_scene_bytes run through
 # conftest's own binding functions against it. Not recorded from a modified tree: if it ever changes, a landing changed the save format.
-SAVE_NO_RADIUS_SHA256 = "bd3b8f1b25769d06e8e565319477f8183ff232729dc65197cf67e09598121bcd"
+# Test-defect, re-pinned 2026-11-12 from bd3b8f1b... (engine rules Round 4, R-097-10: an idle unit steps aside for a mover of its own side; the mixed scene's unit state moves from tick 48 of
+# the 100, as TRACE_R15 does, and the size is the same). Taken from the Round 4 lib; the format is unchanged (the Round 3 lib gives the old value).
+SAVE_NO_RADIUS_SHA256 = "22577020d600e85ef27725e7de01d36da6f1aaf16620730e21a5717b48f0aaba"
 SAVE_NO_RADIUS_SIZE = 1154363
 SAVE_SERIAL_AT = 40   # the 8-byte world serial (csrc/save.c header): a per-process counter of worlds created, so a second save in one process differs there only; zeroed before hashing
 

@@ -188,11 +188,14 @@ def test_R_097_06_its_speed_multiplied_by_1(lib, world_factory):
 
 
 def test_R_097_10_it_moves_0_other_takes(lib, world_factory):
-    """Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement."""
+    """Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement.
+    Test-defect (engine rules round 4, T10): u1 is an idle ENEMY unit (faction 1) of the mover. R-097-10's exception, "an idle unit (no move target, not engaged) takes the full displacement from a mover of its
+    own side and none from an enemy mover, which takes all of it", gives the push of an idle own unit to the idle unit, so the scene's own-side u1 would be moved; the own-side scene is
+    tests/csim/test_E13_R097_10_idle_own_units_yield.py."""
     w = world_factory(n_regions=1)
 
-    # u1 is stationary (no move target, idle at 100.0, 100.0)
-    u1 = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 100.0, 100.0, 0)
+    # u1 is stationary (no move target, idle at 100.0, 100.0), an enemy of the mover
+    u1 = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 100.0, 100.0, 0)
 
     # u2 is moving, placed at (110.0, 100.0) (distance 10 wu < 30 wu)
     u2 = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 110.0, 100.0, 0)

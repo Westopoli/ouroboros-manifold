@@ -68,8 +68,11 @@ def test_R_101_01_no_unit_overlaps_another_no(lib, world_factory):
             prev_p = prev_positions[uid]
             curr_p = current_positions[uid]
             tick_disp = math.hypot(curr_p[0] - prev_p[0], curr_p[1] - prev_p[1])
-            # Raider speed is 150 wu/s = 7.5 wu/tick. No teleport > 12.0 wu in one tick
-            assert tick_disp <= 12.0
+            # Raider speed is 150 wu/s = 7.5 wu/tick. No teleport > 12.0 wu in one tick.
+            # Test-defect (engine rules round 4, T10): R-097-10 gives the whole push to an idle unit (one that has arrived: no move order) when a mover of its own side walks into it, so such a unit
+            # is carried by the push, not by its own step: up to one collision diameter (DRAFT-teleport-pushed 30 wu, Westley's to change; measured 12.6 wu on a scratch build of the rule) in a tick.
+            # A unit that still has its move order keeps the 12.0 bound: it walks under its own power.
+            assert tick_disp <= (12.0 if _has_move_order(lib, w, uid) else 30.0)
 
             # Test-defect, A160: arrival = move order ended; the 22.5 wu on-slot radius moved to a reporting control (stopped-pair pushes move units off their slots in both engines).
             # Move order ended = om_unit_get_destination's return value (has_dest) is 0.

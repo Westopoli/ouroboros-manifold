@@ -244,8 +244,10 @@ def test_results_md_has_the_blocked_column_counting_the_frames_blocked_units(tmp
     (computed here from the fight file), a fight with no `blocked` key gets 0; the header is written once for two runs into one results.md.
     The ridge fixture stalls with blocked units (premise asserted: the sum is above 0, so a count of 0 would be a wrong cell and not a quiet fixture).
     Test-defect (engine rule fixes F1 to F4, 2026-11-11): this was the cover fixture, which no longer stalls a targetless unit (its units hold a lock and fire; sum 0 on
-    every frame, cap 60 s); the ridge fixture still does (6 units on the frames at 300 and 400 ticks)."""
-    cover = fx.planar("ridge", "L-9327")[0]
+    every frame, cap 60 s); the ridge fixture still does (6 units on the frames at 300 and 400 ticks).
+    Test-defect (engine rules Round 4, R-097-10): the ridge fight with 8 a side lists no blocked unit now either (idle own units step aside); the ridge with 32 a side
+    (`h063_fixtures.queue_layout`) lists 4, 3, 3 and 2 on the frames at 300 to 600 ticks, sum above 0, and its fight is still a 'ground' fight with the column."""
+    cover = fx.queue_layout("ridge", "L-9327")[0]
     proc, doc = fx.fight(cover, tmp_path, 1, "--cap-seconds", "60")
     assert proc.returncode in (0,), proc.stdout + proc.stderr
     want = sum(len(f.get("blocked", [])) for f in doc["frames"])
