@@ -16,6 +16,7 @@ fights use (fight.fight, search.run_search); `Blind` stands in for an engine the
 never a Python re-derivation. Every number below is a DRAFT constant, Westley's to change:
   DRAFT-inv-cell-depth 1 wu     DRAFT-inv-push-radius 40 wu     DRAFT-inv-stuck-ticks 20     DRAFT-inv-step-slack 1.3 wu
 and, Round 2: DRAFT-inv-nearest-tol 1 wu  DRAFT-inv-return-fire-ticks 4  DRAFT-guard-radius 200 wu  DRAFT-guard-leash-slack 1 wu  DRAFT-f7-slant-slack 1 wu
+and, Round 2b: DRAFT-giveup-exclusion-ticks 100 (a given-up target is not the nearest for that long), DRAFT-slant-ground-only (R-087-10 is measured flat when either unit is a flyer)
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
 (R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
