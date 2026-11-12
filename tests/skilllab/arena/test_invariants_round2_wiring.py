@@ -123,8 +123,8 @@ def test_R_087_09_the_monitor_reports_no_stall_outside_the_units_attack_range():
 
 
 def test_continuity_control_L0039_has_no_leap_even_beside_a_friend():
-    """continuity under the new rule (push allowance 2.0 wu): L-0039 seed 10 has 4 unit-ticks over max speed + slack, all within 0.1 wu and beside a unit: 0
-    violations (green today and after)."""
+    """continuity (R-004-08: a unit that changes layer does not jump; a same-layer push beside a unit is not judged): L-0039 seed 10 has 4 unit-ticks over max speed + slack,
+    all within 0.1 wu and beside a unit: 0 violations (green today and after)."""
     mon, _ = played("L-0039")
     assert of(mon, "continuity") == []
 

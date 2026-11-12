@@ -11,11 +11,11 @@ Two layers:
   Monitor(engine, world, width, height, sight)  the online wrapper `run.fight` uses: reads the engine after each step, builds the frame, feeds `_Checker`
 
 Round 2 (engine rules, 2026-11-11) adds: R-087-03 acquisitions (nearest seen enemy, cohort turn, return fire), R-093-02 (fire only at the side's visible set of the previous
-frame), R-087-09 only within attack range, continuity with a PUSH_ALLOWANCE, R-096-08 (guard leash) and R-087-10 (spherical range of a shot). `watch` is the entry the lab
+frame), R-087-09 only within attack range, continuity judging layer changes (not every push), R-096-08 (guard leash) and R-087-10 (spherical range of a shot). `watch` is the entry the lab
 fights use (fight.fight, search.run_search); `Blind` stands in for an engine the checker cannot read. A violation is {"rule", "tick", "unit", "detail"}. The cell test of R-207-06 is the engine's own `om_navmesh_is_cell_blocked` (the Monitor binds it),
 never a Python re-derivation. Every number below is a DRAFT constant, Westley's to change:
   DRAFT-inv-cell-depth 1 wu     DRAFT-inv-push-radius 40 wu     DRAFT-inv-stuck-ticks 20     DRAFT-inv-step-slack 1.3 wu
-and, Round 2: DRAFT-inv-nearest-tol 1 wu  DRAFT-inv-return-fire-ticks 4  DRAFT-inv-push-allowance 2 wu  DRAFT-guard-radius 200 wu  DRAFT-guard-leash-slack 1 wu  DRAFT-f7-slant-slack 1 wu
+and, Round 2: DRAFT-inv-nearest-tol 1 wu  DRAFT-inv-return-fire-ticks 4  DRAFT-guard-radius 200 wu  DRAFT-guard-leash-slack 1 wu  DRAFT-f7-slant-slack 1 wu
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
 (R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
@@ -37,7 +37,6 @@ LEASH_SLACK = 25.0
 GUARD_RADIUS = 200.0         # R-096-08 (DRAFT-guard-radius, Westley's): how far from its post a guard may stand
 GUARD_SLACK = 1.0            # DRAFT-guard-leash-slack
 SLANT_SLACK = 1.0            # DRAFT-f7-slant-slack: a shot may exceed the attacker's range by this much (the same tick's push pass moves a unit by under 1 wu)
-PUSH_ALLOWANCE = 2.0         # DRAFT-inv-push-allowance: a collision push explains at most this much of a displacement above the top step (continuity)
 TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
 NEAREST_TOL = 1.0            # DRAFT-inv-nearest-tol: an acquired target within this much of the nearest eligible enemy counts as the nearest (R-087-03)
 RETURN_FIRE_TICKS = 4        # DRAFT-inv-return-fire-ticks: a hit by the target in the frame of the acquisition or the 3 before it is return fire (R-087-06)
@@ -117,6 +116,15 @@ class _Checker:
                         return True
         return False
 
+    def _repaired(self, p, r):
+        """The unit started the frame inside a blocked cell of its starting layer, or on a cell blocked for the layer it ends on: the blocked-cell repair (R-207-06) placed it
+        and the checker cannot see that flag, so continuity does not judge it this frame."""
+        blocked = self.rules.blocked_cell
+        if blocked is None or p["x"] < 0.0 or p["y"] < 0.0:
+            return False
+        cx, cy = int(p["x"] // CELL), int(p["y"] // CELL)
+        return bool(blocked(cx, cy, p["layer"]) or blocked(cx, cy, r["layer"]))
+
     def _depth(self, x, y, layer):
         """Distance to the nearest face of the blocked cell (x, y) is in that borders an open cell; 1e9 when no neighbour is open."""
         cx, cy = int(x // CELL), int(y // CELL)
@@ -165,8 +173,8 @@ class _Checker:
                 if "R-083-03" in on and u not in hit and r["hp"] - p["hp"] > HEAL_ONE + 1e-6:
                     out.append(_violation("R-083-03", tick, u, "hp rose %.4f in a tick nothing hit it (one Warden heals %.3f)" % (r["hp"] - p["hp"], HEAL_ONE)))
                 step = rules.max_step.get(u)
-                if ("continuity" in on and step is not None and moved > step + STEP_SLACK
-                        and (moved > step + STEP_SLACK + PUSH_ALLOWANCE or not self._pushed(frame, u))):
+                if ("continuity" in on and step is not None and moved > step + STEP_SLACK and not self._repaired(p, r)
+                        and (p["layer"] != r["layer"] or not self._pushed(frame, u))):
                     out.append(_violation("continuity", tick, u, "moved %.2f wu in a tick (at most %.2f + %.1f), layer %d to %d" % (
                         moved, step, STEP_SLACK, p["layer"], r["layer"])))
             if "R-087-03" in on:
@@ -329,9 +337,9 @@ KEEP = 20          # violations written to a fight document (spec: the first 20)
 
 
 def suspended_for(sight):
-    """{rule: switch} the checker cannot judge in a run with this `sight` ("off", "on" or "control"): sight "off" turns targeting by sight off, and R-087-03's
-    clause 'leaves its side's sight' and R-093-02 have no meaning without it. ("control" also has targeting by sight off; the test writer's contract names only "off".)"""
-    return {"R-087-03": SWITCH_TARGET_BY_SIGHT, "R-093-02": SWITCH_TARGET_BY_SIGHT} if sight == "off" else {}
+    """{rule: switch} the checker cannot judge in a run with this `sight` ("off", "on" or "control"): sight "off" and the control (`--control sight`, the same fight with
+    targeting by sight off) turn targeting by sight off, and R-087-03's clause 'leaves its side's sight' and R-093-02 have no meaning without it."""
+    return {"R-087-03": SWITCH_TARGET_BY_SIGHT, "R-093-02": SWITCH_TARGET_BY_SIGHT} if sight in ("off", "control") else {}
 
 
 class Monitor:

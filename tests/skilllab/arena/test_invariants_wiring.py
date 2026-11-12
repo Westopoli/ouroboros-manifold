@@ -9,7 +9,8 @@ Spec: docs/northstar/plans/engine-rules-2026-11-08/spec.md "F0". The pure predic
         .after_step()      call right after engine.step(world); reads the engine's state, extends the recorded trace by one frame and runs the checks
         .violations        every violation so far, {"rule", "tick", "unit", "detail"} dicts, ordered by (tick, rule, unit); tick counts after_step calls from 1
         .suspended         {rule: switch} of the rules this run cannot judge; sight "off" suspends R-087-03 (its 'leaves the side's sight' clause has no meaning
-                           with targeting by sight off); sight "on" or "control" suspends nothing that test_invariants.py names
+                           with targeting by sight off) and R-093-02; sight "control" (targeting by sight off too) suspends the same two (2026-11-11 correction,
+                           tests/skilllab/arena/test_invariants_continuity_sight_wiring.py); sight "on" suspends nothing
       `run.fight` builds one after spawning (width and height of the landscape preset), calls after_step() after every engine.step, and hands the result to
       `run._document` (through the orders block it returns, as it does for stage4); `closeup.py` gets it for free (it calls both).
 
@@ -239,12 +240,14 @@ def _main(args, capsys):
 
 def test_F0_run_py_prints_one_INVALID_line_per_rule_and_exits_2(plant, tmp_path, capsys):
     """F0: 'run.py prints `INVALID <id> <rule> tick N unit U` per distinct rule and exits 2 when any fight is invalid'. L-0039, sight off, 10 s, the planted
-    wall entry. Red today: exit 0, no line."""
+    wall entry. Red today: exit 0, no line. (2026-11-11 correction, Test-defect: this also required a `continuity` line. The plant teleports a unit of the dense
+    L-0039 start onto a blocked cell on one layer, beside its friends, and continuity now judges layer changes and unpushed steps only (R-004-08; the tick-6 repeat starts inside
+    a blocked cell and is not judged), so only R-207-06 is printed; the two-rule document is test_F0_a_planted_wall_entry_makes_the_fight_document_invalid.)"""
     seen = plant()
     code, out = _main(["--layout", str(L0039), "--seed", "1", "--out", str(tmp_path), "--cap-seconds", "10"], capsys)
     lines = [m.groups() for m in re.finditer(r"^INVALID L-0039 (\S+) tick (\d+) unit (\d+)$", out, re.M)]
     rules = [r for r, _, _ in lines]
-    assert code == 2 and len(rules) == len(set(rules)) and {"R-207-06", "continuity"} <= set(rules), (code, out)
+    assert code == 2 and len(rules) == len(set(rules)) and "R-207-06" in rules, (code, out)
     assert ("R-207-06", "5", str(seen["unit"])) in lines
     doc = json.loads((tmp_path / "L-0039-s1.fight.json").read_text())
     assert doc["invalid"] is True

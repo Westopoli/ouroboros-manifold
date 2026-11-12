@@ -399,8 +399,10 @@ def main(argv=None):
     args.out.mkdir(parents=True, exist_ok=True)
     fights = []
     invalid = False
-    for rule, switch in sorted(invariants.suspended_for(args.sight).items()):
-        print("SUSPENDED %s %s %s" % (layout["id"], rule, switch), file=sys.stderr)   # F0: a check this run cannot judge is said, never passed in silence (stderr: stdout is pinned by the stage tests)
+    runs = [(layout["id"], args.sight)] + ([(layout["id"] + "-control", "control")] if args.control_dir and args.control == "sight" else [])   # the sight-off control is a run too
+    for name, sight in runs:
+        for rule, switch in sorted(invariants.suspended_for(sight).items()):
+            print("SUSPENDED %s %s %s" % (name, rule, switch), file=sys.stderr)   # F0: a check this run cannot judge is said, never passed in silence (stderr: stdout is pinned by the stage tests)
     for seed in range(args.seed, args.seed + count):
         frames, last, end, orders = fight(layout, seed, args.sight, args.cap_seconds)
         doc = _document(layout, args.layout, seed, args.sight, frames, last, end, orders)
