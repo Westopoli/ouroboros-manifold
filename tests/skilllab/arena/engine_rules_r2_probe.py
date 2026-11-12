@@ -12,7 +12,8 @@ Per tick and per living unit that holds a target:  a row (tick, a, t, flat, dz_f
 and per tick the shots (attacker, target) of the step, and every unit's before and after position and layer.
 
 DRAFT numbers (Westley's to change): SLANT_SLACK 1.0 wu (the engine's shot is decided on a position that the same tick's push pass may move by under 1 wu), STEP_SLACK 1.3 wu
-(DRAFT-inv-step-slack, the F0 constant), PUSH_FREE true (no push excuse at all: on an open field with 24 walkers no unit-tick moves more than 1.3 wu above its top step, measured on L-0050).
+(DRAFT-inv-step-slack, the F0 constant), PUSH_FREE true (no push excuse at all: on an open field with 24 walkers 4 of 103,542 unit-ticks move more than 1.3 wu above their top step, by 1.47 to 2.01 wu, a push in a pack, measured on L-0050 on 2026-11-12;
+the layer-change tests that use this probe have no push excuse, so a push on a layer-change tick of that size would read as a jump).
 """
 import contextlib
 import ctypes
