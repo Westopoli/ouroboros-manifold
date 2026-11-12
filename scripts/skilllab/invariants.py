@@ -339,7 +339,7 @@ KEEP = 20          # violations written to a fight document (spec: the first 20)
 def suspended_for(sight):
     """{rule: switch} the checker cannot judge in a run with this `sight` ("off", "on" or "control"): sight "off" and the control (`--control sight`, the same fight with
     targeting by sight off) turn targeting by sight off, and R-087-03's clause 'leaves its side's sight' and R-093-02 have no meaning without it."""
-    return {"R-087-03": SWITCH_TARGET_BY_SIGHT, "R-093-02": SWITCH_TARGET_BY_SIGHT} if sight == "off" else {}
+    return {"R-087-03": SWITCH_TARGET_BY_SIGHT, "R-093-02": SWITCH_TARGET_BY_SIGHT} if sight in ("off", "control") else {}
 
 
 class Monitor:
