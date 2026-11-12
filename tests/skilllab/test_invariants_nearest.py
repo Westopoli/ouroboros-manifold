@@ -189,3 +189,122 @@ def test_R_087_03_after_the_exclusion_window_the_given_up_enemy_is_eligible_agai
     """R-087-09 (DRAFT-giveup-exclusion-ticks 100): 109 frames after the give-up (frame 20; frame 129) the given-up enemy 2 is the nearest eligible enemy again: taking it is silent, and
     taking enemy 4 (230 wu, no longer the nearest) is a violation. Both green today; the second turns red for an exclusion that never ends."""
     assert (after_give_up(inv, chose=2, at=129), after_give_up(inv, chose=4, at=129)) == ([], [("R-087-03", 129, 1)])
+
+
+# ------------------------------------------------------------------ Round 3, T9 item 3: what an engine pick may skip (the checker's `_acquire` knows two legal skips too few)
+#
+# R-087-03 "it targets the nearest such enemy" is judged by the engine in two stages (csrc/unit.c om_tac_nearest_actable / om_tac_pick_across, and om_tac_guard_seen for a guard); the checker's
+# "nearest" must skip what the engine may skip. The engine's eligibility, traced by an investigator (engine-rules-baseline/x2/log3.txt, repro3.py): a candidate is alive, not stealthed, hostile, not
+# given up by this unit (R-087-09, tested above) and seen by the side. Then
+#   stage 1   in range from where the unit stands: the same layer, planar distance within the attack range; another layer within the unit's reach, SLANT distance within the range (walkers only; a
+#             flyer on either end is measured flat, R-087-10, DRAFT-slant-ground-only). The nearest by planar distance wins.
+#   stage 2   guards only, and only when stage 1 finds nothing: any layer in reach, SLANT distance from the guard's POST at most GUARD_RADIUS 200 + the attack range (R-096-08, csrc/unit.c
+#             om_tac_guard_engageable); the nearest to the unit by planar distance wins.
+# Reported today as "not the nearest" although legal, on L-0084 seed 1 (the whole fight is tests/skilllab/arena/test_engine_rules_r3_checker_nearest.py): six guard cases (tick/unit 1083/16, 1086/15,
+# 1556/25, 1557/26, 1558/27, 1559/24: the nearer enemy was over 500 wu from the post by slant) and two slant cases (1270/15, 1271/16: the nearer enemy, 95 wu away, was 327.6 and 330.0 wu away by slant
+# against a range of 300, and a same-layer enemy in range was taken).
+# Rule words: R-087-03 "Then it targets the nearest such enemy"; R-096-08 "stepping toward it no farther than `GUARD_RADIUS` = 200 wu from the post"; R-087-10 "the distance is spherical: the
+# horizontal distance and the height difference between the two units' layers ... taken together". The API is the one pinned above (frames, Rules); the Rules the checker needs here exist already
+# (`guards`, `layer_heights`, `attack_range`, `range_mult`, `flyers`), the Monitor fills them.
+
+GUARD_RADIUS = 200.0     # R-096-08 (DRAFT-guard-radius, Westley's)
+RANGE = 300.0
+
+
+def pick(inv, units, chose, *, at=5, slot=1, guard=None, heights=None, reach=None, flyers=(), unit=None):
+    """Unit 1 (side 0, attack range 300, cohort slot `slot`) has no target until frame `at`, when it takes `chose`. `units` are the enemies {id: row}, all seen. `guard` is the post of unit 1, if a guard.
+    `heights` the layer band floors, `reach` unit 1's (up, down). Returns the R-087-03 violations as (rule, tick, unit)."""
+    frames = []
+    for k in range(0, at + 1):
+        ux, uy, ul = (unit or (100, 100)) + (() if unit and len(unit) > 2 else (0,))
+        one = row(ux, uy, side=0, layer=ul, target=chose if k >= at else 0)
+        frames.append(({1: one, **{u: dict(r) for u, r in units.items()}}, []))
+    tr = trace(*frames)
+    for fr in tr:
+        fr["visible"] = {0: set(units), 1: {1}}
+    kw = dict(cohort={1: slot}, attack_range={1: RANGE}, sensor_radius={1: 5000.0})
+    if guard is not None:
+        kw["guards"] = {1: guard}
+    if heights is not None:
+        kw["layer_heights"] = heights
+    if reach is not None:
+        kw["reach"] = {1: reach}
+    if flyers:
+        kw["flyers"] = set(flyers)
+    return keys(inv.check(tr, rules(inv, **kw), only=["R-087-03"]).violations)
+
+
+# -- guards: stage 2 measures from the post, not from where the guard stands
+
+# The guard stands 150 wu east of its post (100, 100), at (250, 100). N: 420 wu from the guard, 570 wu from the post (limit 200 + 300 = 500): not engageable. F: 460 wu from the guard, 484 from the post:
+# engageable. Nothing is within 300 wu of the guard, so stage 1 finds nothing and stage 2 picks the nearest engageable: F.
+GUARD_AT, POST = (250, 100), (100, 100)
+N_FAR_FROM_POST = {2: row(670, 100, side=1)}         # 420 from the guard, 570 from the post
+F_ENGAGEABLE = {3: row(250, 560, side=1)}            # 460 from the guard, 484 from the post
+
+
+def test_R_087_03_control_a_guard_taking_the_nearest_enemy_it_can_engage_from_its_post_is_silent(inv):
+    """R-087-03 control (green today and after): the same guard with enemy E at 400 wu from it and 446 from the post (engageable) as well as F (460, 484): taking E, the nearest it can engage, is silent."""
+    e = {4: row(250, 500, side=1)}                    # 400 from the guard, 446 from the post
+    assert pick(inv, {**e, **F_ENGAGEABLE}, chose=4, guard=POST, unit=GUARD_AT) == []
+
+
+def test_R_087_03_a_guard_may_skip_a_nearer_enemy_that_is_beyond_its_post_radius_plus_range(inv):
+    """R-087-03 'it targets the nearest such enemy' + R-096-08 'no farther than GUARD_RADIUS = 200 wu from the post' (engine stage 2, om_tac_guard_seen): the guard at (250, 100), post (100, 100), range
+    300, picks F (460 from it, 484 from the post) while N (420 from it) is 570 wu from the post, beyond 200 + 300 = 500: legal, silent. Measured on L-0084 seed 1: ticks 1083 (unit 16), 1086 (15), 1556
+    (25), 1557 (26), 1558 (27), 1559 (24). Red today: `_acquire` counts N as the nearest (420 against 460)."""
+    assert pick(inv, {**N_FAR_FROM_POST, **F_ENGAGEABLE}, chose=3, guard=POST, unit=GUARD_AT) == []
+
+
+def test_R_087_03_a_guard_skipping_a_nearer_enemy_it_could_engage_from_its_post_is_still_a_violation(inv):
+    """R-087-03 control (green today and after): the same guard, with a nearer enemy N2 at 420 from it and 446 from the post (inside the 500 wu): taking F (460) instead is a violation. The skip is for
+    the enemy the guard may not reach from its post, not for every enemy the guard does not take."""
+    n2 = {2: row(250, 520, side=1)}                   # 420 from the guard, 446 from the post
+    assert pick(inv, {**n2, **F_ENGAGEABLE}, chose=3, guard=POST, unit=GUARD_AT) == [("R-087-03", 5, 1)]
+
+
+def test_R_087_03_a_unit_that_is_not_a_guard_may_not_skip_an_enemy_beyond_a_post_radius(inv):
+    """R-087-03 control (green today and after): the post radius is for guards (R-096-08). The same positions with no guard order: taking F while N (420) is nearer is a violation."""
+    assert pick(inv, {**N_FAR_FROM_POST, **F_ENGAGEABLE}, chose=3, unit=GUARD_AT) == [("R-087-03", 5, 1)]
+
+
+def test_R_087_03_a_guard_with_an_enemy_in_range_must_take_the_nearest_in_range_not_stage_two(inv):
+    """R-087-03 control (green today and after): stage 2 runs only when stage 1 finds nothing. The guard at (250, 100) has enemy A in range (250 wu) and enemy B in range (280 wu); taking B is a
+    violation although both are inside the post's 500 wu."""
+    a, b = {2: row(500, 100, side=1)}, {3: row(250, 380, side=1)}       # 250 and 280 from the guard
+    assert pick(inv, {**a, **b}, chose=3, guard=POST, unit=GUARD_AT) == [("R-087-03", 5, 1)]
+
+
+# -- slant: another layer's enemy is in range by slant distance
+
+# Layers 0 and 1, band floors 0 and 313.5 wu (R-087-10: the height difference counts). The unit stands on layer 1 at (100, 100), reach (0 up, 1 down). A is on layer 0, 95 wu away
+# horizontally: 327.6 by slant, out of range 300. B is on layer 1, 250 wu away: in range.
+HEIGHTS = [0.0, 313.5]
+UNIT_L1 = (100, 100, 1)
+A_OUT_OF_RANGE_BY_SLANT = {2: row(195, 100, side=1, layer=0)}        # 95 planar, 327.6 by slant
+B_SAME_LAYER_IN_RANGE = {3: row(350, 100, side=1, layer=1)}          # 250 planar and by slant
+
+
+def test_R_087_03_a_unit_may_skip_a_nearer_enemy_on_another_layer_that_is_out_of_range_by_slant(inv):
+    """R-087-03 + R-087-10 'the distance is spherical' (engine stage 1, om_tac_pick_across): the unit on layer 1 takes B (250 wu, same layer, in range) while A (95 wu away horizontally, layer 0) is 327.6
+    wu away by slant, outside its range 300: legal, silent. Measured on L-0084 seed 1: ticks 1270 (unit 15, nearer enemy 327.6 by slant against range 300) and 1271 (unit 16, 330.0). Red today:
+    `_acquire` measures planar distance only and counts A as the nearest (95 against 250)."""
+    assert pick(inv, {**A_OUT_OF_RANGE_BY_SLANT, **B_SAME_LAYER_IN_RANGE}, chose=3, unit=UNIT_L1, heights=HEIGHTS, reach=(0, 1)) == []
+
+
+def test_R_087_03_a_unit_skipping_a_nearer_enemy_inside_range_by_slant_is_still_a_violation(inv):
+    """R-087-03 control (green today and after): band floors 0 and 100 wu make A 138.0 wu away by slant, inside range 300: taking B (250) instead is a violation. The slant skip is for the enemy out of range
+    by slant, not for every enemy on another layer."""
+    assert pick(inv, {**A_OUT_OF_RANGE_BY_SLANT, **B_SAME_LAYER_IN_RANGE}, chose=3, unit=UNIT_L1, heights=[0.0, 100.0], reach=(0, 1)) == [("R-087-03", 5, 1)]
+
+
+def test_R_087_03_a_flyer_measures_flat_so_a_nearer_enemy_on_another_layer_is_not_skipped(inv):
+    """R-087-10 'DRAFT-slant-ground-only' (a flyer on either end is measured flat) control (green today and after): the same scene as the slant skip with unit 1 a flyer: A is 95 wu away flat, in range;
+    taking B (250) instead is a violation."""
+    assert pick(inv, {**A_OUT_OF_RANGE_BY_SLANT, **B_SAME_LAYER_IN_RANGE}, chose=3, unit=UNIT_L1, heights=HEIGHTS, reach=(0, 1), flyers=(1,)) == [("R-087-03", 5, 1)]
+
+
+def test_R_087_03_a_nearer_enemy_on_a_layer_out_of_reach_is_not_eligible_by_slant_or_otherwise(inv):
+    """R-087-03 control (green today and after, the existing reach skip): A on layer 3, the unit reaches 0 up, 1 down from layer 1: not eligible. Taking B is silent."""
+    far_layer = {2: row(195, 100, side=1, layer=3)}
+    assert pick(inv, {**far_layer, **B_SAME_LAYER_IN_RANGE}, chose=3, unit=UNIT_L1, heights=[0.0, 313.5, 600.0, 900.0], reach=(0, 1)) == []
