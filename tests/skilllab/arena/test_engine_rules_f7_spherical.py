@@ -18,8 +18,8 @@ NEW CHECKER NAME (the implementer adds it to scripts/skilllab/invariants.py RULE
 horizontal distance and the band-height difference of the two layers) exceeds the attacker's attack range by more than DRAFT-f7-slant-slack 1.0 wu. The tests below do not
 depend on it except test_R_087_10_the_checker_knows_the_rule.
 
-Premises dumped from the built tree (Round 1 tip 94c2fb5d, 2026-11-11, L-0061 seed 1 sight on, the whole fight 1663 ticks): the I11nl pair at ticks 57 to 63 (printed by the
-failing assertion below):
+Premises dumped from the built tree (Round 1 tip 94c2fb5d, 2026-11-11, L-0061 seed 1 sight on, the whole fight 1663 ticks; the pair under test is a different one since the Round 2 re-dump, see
+test_R_098_02_i11nl_the_sweeps_pair_can_shoot_when_it_sees_and_is_in_range_by_slant): the I11nl pair at ticks 57 to 63 (printed by the failing assertion below):
   unit 2 Warden (range 350) layer 1 at (1367.9, 1864.9), unit 26 Warden layer 0 at (1018.8 to 1043.2, 1954.0): flat 360.3 (tick 57) falling to 336.7 (tick 63)
   band heights [70, 130, 190, 250, 310]: layer 1 is 60 wu above layer 0 in the layer-floor reading (the terrain height under unit 2 is 190, the plateau above its floor)
   om_unit_can_see(2, 26) = 1 on every one of those ticks; om_combat_can_shoot(2, 26) = 0; the line crosses three layer-0 ground cells of the hill, (12,18), (12,19), (13,18),
@@ -35,8 +35,8 @@ import engine_rules_r2_probe as probe
 
 SLACK = probe.SLANT_SLACK
 FIGHT = "L-0061"
-PAIR = (2, 26)
-WATCH = ((57, PAIR), (58, PAIR), (59, PAIR), (60, PAIR), (61, PAIR), (62, PAIR), (63, PAIR))
+PAIR = (12, 25)
+WATCH = ((59, PAIR), (60, PAIR), (61, PAIR), (62, PAIR), (63, PAIR), (64, PAIR))
 MIN_CROSS = 50
 
 
@@ -90,10 +90,13 @@ def test_R_087_10_no_unit_fires_at_a_target_beyond_its_range_by_slant(run):
 
 
 def test_R_098_02_i11nl_the_sweeps_pair_can_shoot_when_it_sees_and_is_in_range_by_slant(run):
-    """R-098-02 / R-087-10, the open case of the sweep (I11nl): L-0061 ticks 57 to 63, Warden 2 (layer 1) and Warden 26 (layer 0). Every tick on which 2 sees 26, the pair
-    is inside 2's range 350 by slant, and no planar obstacle stands between them (L-0061 has none), 2 must be able to shoot 26. The failing line prints the measured premises.
-    Measured: sees on all seven ticks, can_shoot false on all seven; inside range 350 by slant on ticks 61, 62, 63 (slant 349.7, 345.8, 342.0; ticks 57 to 60
-    are 353.5 to 365.3, outside by slant though 348.3 flat on tick 60 is inside). Red today."""
+    """R-098-02 / R-087-10, the open case of the sweep (I11nl): L-0061 ticks 59 to 64, Warden 12 (layer 1) and Warden 25 (layer 0). Every tick on which 12 sees 25, the pair
+    is inside 12's range 350 by slant, and no planar obstacle stands between them (L-0061 has none), 12 must be able to shoot 25. The failing line prints the measured premises.
+    Pair re-chosen 2026-11-11 (Test-defect, Round 2): the sweep's pair was Wardens 2 and 26 at ticks 57 to 63 of the Round 1 fight; in the Round 2 fight (F9, a5f4084c) Warden 26 leaves
+    fire it cannot see from tick 41 and the pair is 421 wu apart then. Measured on the Round 2 tree, L-0061 seed 1 sight on: Warden 12 (type 3, range 350, layer 1 at (1286.2, 1857.5)) and Warden 25
+    (layer 0, (975.1, 1941.3) walking to (955.9, 1946.9)): sees on all six ticks, can_shoot true on all six, flat 322.2 to 342.2, slant 327.7 to 347.4 (inside 350 by slant on every tick, the same
+    edge-of-range situation as the sweep's pair). The same fight run on the engine before the F7 fire-side fix (787a766c, whole fight) has 20,484 held-target unit-ticks that see across layers
+    inside range by slant and cannot shoot, none of which shoots; the Round 2 tree has 0 of them and 26,001 that do shoot (see the whole-fight test below)."""
     a, b = PAIR
     rows = []
     for n in sorted(run.dumps):
