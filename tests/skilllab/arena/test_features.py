@@ -130,15 +130,21 @@ def test_engine_binds_the_terrain_heights_setter():
     assert "self._lib.om_terrain_set_heights(" in text, "no Engine method calls om_terrain_set_heights"
 
 
-def test_runner_writes_blocked_per_frame_for_the_gap_queue(runs):
+def test_runner_writes_blocked_per_frame_for_the_gap_queue(tmp_path):
     """H-063 "a marker on units blocked for more than 2 s: the first-contact queue at a gap" and ruling 5: "the runner writes an optional per-frame `blocked` list (unit
     rows blocked more than 2 s, judged at sample ticks) into the fight file". The ridge fight has `blocked` on every frame, a list of ints, and at some
     frame it is not empty (units stall at the ridge). CONTROL half: the features-emptied twin has no blocked unit in any frame (absent or empty), so the marker is the
     ground's.
     Test-defect (engine rule fixes F1 to F4, 2026-11-11): the chokepoint and cover fights no longer list a unit blocked (measured: 0 on every frame, seed 1, cap 60 s, sight on
     and off), because a unit that halts at the walls now holds its lock on an enemy and fires, and `blocked` counts only units with no target. The ridge fixture (one wall
-    across the field, small_tiered) still stalls targetless units (6 on the frames at 300 and 400 ticks), so the marker is proved there."""
-    _, _, with_p, with_doc, _, ctl_doc = runs["ridge"]
+    across the field, small_tiered) still stalls targetless units (6 on the frames at 300 and 400 ticks), so the marker is proved there.
+    Test-defect (engine rules Round 4, R-097-10): the ridge fight with 8 a side lists no blocked unit now either (0 on every frame, caps 20 and 60 s, sight off and on): the stalled
+    ones were held by idle own units, which step aside now. The ridge with 32 a side (`h063_fixtures.queue_layout`, units in blocks of 8) lists 4 and 3 on the frames at 300 and 400
+    ticks at this cap, and its features-emptied twin none."""
+    lay, _ = fx.queue_layout("ridge", "L-9193")
+    with_p, with_doc = fx.fight(lay, tmp_path / "with", 1, *CAP)
+    ctl_p, ctl_doc = fx.fight(fx.without_features(lay), tmp_path / "without", 1, *CAP)
+    assert ctl_p.returncode == 0, ctl_p.stdout[-300:] + ctl_p.stderr[-500:]
     assert with_p.returncode == 0, with_p.stdout[-300:] + with_p.stderr[-500:]
     frames = with_doc["frames"]
     assert all(isinstance(f.get("blocked"), list) and all(isinstance(i, int) for i in f["blocked"]) for f in frames), "a frame has no int list `blocked`"
