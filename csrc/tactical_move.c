@@ -363,6 +363,8 @@ enum { OM_LAY_NONE, OM_LAY_PENDING, OM_LAY_FLIGHT };
 void om_tac_unit_set_layer(om_world *w, uint32_t unit_id, uint32_t layer);
 /* See also: om_tac_unit_set_guard in unit.c, which owns the guard flag (R-096-08) */
 void om_tac_unit_set_guard(om_world *w, uint32_t unit_id, int on);
+/* See also: om_tac_guard_clamp in unit.c, which owns the guard's post and radius (R-096-08); called by the collision pass */
+int om_tac_guard_clamp(om_world *w, uint32_t unit_id, double *x, double *y);
 
 /* A new move order ends a routed transfer that has not begun; one in flight finishes (R-002-04: a user's transfer
  * is never cleared by a move order). */
@@ -1989,9 +1991,14 @@ static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
         if (ms->col_pursue && om_move_pass_settled(ms)) break;
     }
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        double gx, gy;
         if (!ms->grid_in[id]) continue;
-        ms->units[id].x = om_move_grid_x(ms, id);
-        ms->units[id].y = om_move_grid_y(ms, id);
+        gx = om_move_grid_x(ms, id);
+        gy = om_move_grid_y(ms, id);
+        /* R-096-08: a push never carries a guard out of its radius */
+        if (ms->col_pursue && om_tac_guard_clamp(w, id, &gx, &gy)) om_move_grid_set(ms, id, gx, gy);
+        ms->units[id].x = gx;
+        ms->units[id].y = gy;
     }
     if (settled) om_move_settle_record(ms);
 }

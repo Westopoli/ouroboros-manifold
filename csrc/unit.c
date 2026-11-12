@@ -2320,6 +2320,23 @@ void om_tac_unit_set_guard(om_world *w, uint32_t unit_id, int on) {
     if (!om_unit_get_pos(w, unit_id, &u->anchor_x, &u->anchor_y)) { u->anchor_x = u->x; u->anchor_y = u->y; }
 }
 
+/* R-096-08: a guard never crosses its radius. The collision pass pushes a guard pressed against its neighbours past the circle (measured 2026-11-11, L-0084
+ * seed 1: 0.4 to 1.7 wu a tick, guards standing in a row on it, in a backswing too, when a step is 0); it asks here, once per unit it has moved, and a guard
+ * outside is put back onto the circle straight toward its post, so the frame ends inside. Returns 1 when (*x, *y) were changed. Only under pursuit by steering,
+ * where the guard walks (F6). See also: om_move_collision_pass_internal in csrc/tactical_move.c. */
+int om_tac_guard_clamp(om_world *w, uint32_t unit_id, double *x, double *y) {
+    const om_tac_state *ro = om_tac_ro(w);
+    const om_unit_row *u;
+    double ex, ey, k;
+    if (!ro || !om_tac_pursue(w)) return 0;
+    u = om_registry_find_in((om_tac_state *)ro, unit_id);
+    if (!u || !u->guard || u->hp <= 0.0 || om_tac_dist_le(*x - u->anchor_x, *y - u->anchor_y, OM_GUARD_RADIUS)) return 0;
+    ex = *x - u->anchor_x; ey = *y - u->anchor_y;
+    k = OM_GUARD_RADIUS / sqrt(ex * ex + ey * ey);
+    *x = u->anchor_x + ex * k; *y = u->anchor_y + ey * k;
+    return 1;
+}
+
 static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
     double dest_x = 0.0, dest_y = 0.0, interval_ticks = u->attack_interval * (double)OM_TACTICAL_TICK_RATE;
     int has_dest = om_unit_get_destination(w, u->unit_id, &dest_x, &dest_y);
