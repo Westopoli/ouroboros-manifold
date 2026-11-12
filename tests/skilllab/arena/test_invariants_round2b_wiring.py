@@ -13,12 +13,15 @@ Premises dumped 2026-11-11 on this tree (combined Round 2 branch d5be5d7d, the c
   Unit 13 of the cover fixture (a type-2 walker, attack range 300, sensor 700, speed 80): target 0 at ticks 354 and 355, takes enemy 6 at tick 356 (cohort turn) at 301.3 wu, holds it
                      through tick 375 standing at (2123.2, 1861.9) with no destination, moved 0.00 wu a tick, fires nothing; at tick 376 it takes enemy 5 and gets a destination. R-087-04 (E-11):
                      "walks toward it until the enemy is within attack range, then halts and fires".
+
+Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47): fights 2136 / 3923 / 847 ticks, no violation of any rule in any. The L-0061 tick 42, L-0084 tick 349 and cover tick 206 events still happen (the unit
+changes target there). The L-0084 tick 1754 lag (guards 33, 39 and 40 holding 93 for one tick after the sight check) is gone: they now drop at tick 1754 (Round 3 fix 1), and unit 13 of the cover fixture
+no longer gives enemy 6 up at tick 376 (it holds it past tick 420): the two tests for those two events (R-093-02 L-0084, R-087-09 tick 376) pass without meeting the case, which the pure tests
+(tests/skilllab/test_invariants_visible.py, test_invariants_give_up.py) still cover.
 """
 import sys
 from functools import lru_cache
 from pathlib import Path
-
-import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import engine_rules_oracle as oracle  # noqa: E402
@@ -57,10 +60,11 @@ def at(mon, rule, tick, unit=None):
 
 
 def test_control_the_monitor_runs_the_three_fights_to_the_measured_ends():
-    """Control (green today and after, unless the engine changes): L-0061 seed 1 2234 ticks, L-0084 seed 1 3718, the cover fixture 1086; sight on suspends nothing. Proves the fights below are the
-    ones the premises were dumped on."""
+    """Control (green today and after, unless the engine changes): L-0061 seed 1 2136 ticks, L-0084 seed 1 3923, the cover fixture 847; sight on suspends nothing. Proves the fights below are the
+    ones the premises were dumped on. Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47; Test-defect: dumped before the Round 3 engine fixes): was 2234 / 3718 / 1086 on 7ba38983. L-0061: 2234 -> 2025
+    at fix 3 (8f825d59) -> 2136 at fix 2 (94da7493); L-0084: 3718 -> 3923 at fix 1 (d70c8d47); cover: 1086 -> 847 at fix 2. The lab checker reports no violation of any rule on any of the three."""
     got = [(played(n)[0].tick, played(n)[0].suspended) for n in ("L-0061", "L-0084", "cover")]
-    assert got == [(2234, {}), (3718, {}), (1086, {})]
+    assert got == [(2136, {}), (3923, {}), (847, {})]
 
 
 def test_R_096_08_a_guard_dropping_a_target_beyond_radius_plus_range_by_slant_is_not_an_r_087_03_report_L0061():
@@ -97,29 +101,33 @@ def test_R_093_02_one_tick_of_lag_on_sight_is_not_a_report_L0084():
     assert got == [], got
 
 
-def test_R_087_04_premise_unit_13_holds_an_out_of_range_target_standing_still_in_the_cover_fixture():
-    """Premise of the finding below (green today; pinned from the engine tracer, tick by tick): unit 13 of the cover fixture holds enemy 6 on ticks 356 to 375, 301.3 wu away with attack range
-    300, with no destination, its position unchanged (moved under 0.5 wu a tick), and fires nothing."""
+def test_R_087_04_premise_unit_13_holds_enemy_6_and_closes_on_it_in_the_cover_fixture():
+    """Premise of the test below (green; re-written 2026-11-12, Test-defect: the premise it pinned, unit 13 holding enemy 6 at 301.3 wu with range 300 and standing still on ticks 356 to 375, was the
+    engine before Round 3 fix 2, 94da7493, and is gone): on the cover fixture today unit 13 (range 300) holds enemy 6 on every tick 356 to 375 and has its attack-move destination, is 242.8 wu from
+    it at tick 356 and walks to 216.3 wu by tick 366 (about 2 wu a tick), where it stands. It is inside attack range throughout; the case 'a held target just outside attack range' does not occur in
+    this fight any more (reported)."""
     _, rec = played("cover")
     u, t = 13, 6
     rng = rec.stats[rec.typ[u]]["attack_range"]
     assert rng == 300.0
     rows = [tk for tk in rec.ticks if 356 <= tk["n"] <= 375]
     assert len(rows) == 20
+    dist = {}
     for tk in rows:
-        p, q = tk["pre"][u], tk["post"][u]
-        d = ((q["x"] - tk["post"][t]["x"]) ** 2 + (q["y"] - tk["post"][t]["y"]) ** 2) ** 0.5
-        moved = ((q["x"] - p["x"]) ** 2 + (q["y"] - p["y"]) ** 2) ** 0.5
-        assert q["tgt"] == t and rng < d <= rng + 2.0 and q["dest"] is None and moved < 0.5 and not [f for f in tk["fires"] if f[0] == u], (tk["n"], q["tgt"], d, q["dest"], moved)
+        q = tk["post"][u]
+        dist[tk["n"]] = ((q["x"] - tk["post"][t]["x"]) ** 2 + (q["y"] - tk["post"][t]["y"]) ** 2) ** 0.5
+        assert q["tgt"] == t and q["dest"] is not None and dist[tk["n"]] <= rng, (tk["n"], q["tgt"], dist[tk["n"]], q["dest"])
+    assert abs(dist[356] - 242.8) < 0.5 and abs(dist[366] - 216.3) < 0.5 and abs(dist[375] - 216.2) < 0.5, (dist[356], dist[366], dist[375])
 
 
-@pytest.mark.xfail(strict=True, reason="FINDING, not for the checker's implementer (engine, needs an engine trace): R-087-04 says a unit that holds a target outside attack range 'walks toward it until the enemy "
-                   "is within attack range'; the engine's unit 13 stands still for 20 ticks 1.3 wu out of range and then gives the target up. Strict, so a change in the engine or the rule shows up.")
 def test_R_087_04_finding_a_unit_holding_a_target_just_outside_attack_range_walks_toward_it():
     """R-087-04 (E-11): "... acquires the nearest such enemy at its cohort turn (R-087-08), anchors where it stands (R-087-05) and walks toward it until the enemy is within attack range, then
     halts and fires". Written to the rule text: unit 13 of the cover fixture holds enemy 6, 301.3 wu away with range 300, from tick 356; by tick 375 it must be closer than at tick 357 by more
     than 1 wu. Measured: the distance is 301.3 on every one of those ticks (the unit does not move), see the premise test above. The engine, not the checker, is what differs; the cause
-    (no route is built for an out-of-range target whose line is blocked?) needs an engine trace and is not asserted here. Red today."""
+    (no route is built for an out-of-range target whose line is blocked?) needs an engine trace and is not asserted here. Was an xfail (strict) while red on 7ba38983; the marker is removed
+    2026-11-12 (Test-defect: Round 3 fix 2, 94da7493, 'the chase orders the move again when the unit has no route', cured it: the strict xfail turned into a failure). The assertion is unchanged. Note: the
+    cover fight no longer holds a target outside attack range at these ticks (the premise test above), so this passes because unit 13 closes from 242.8 to 216.3 wu; the case itself is
+    tests/csim/test_E11_R087_04_chase_resumes_after_the_pause.py."""
     _, rec = played("cover")
     u, t = 13, 6
     def dist(n):
