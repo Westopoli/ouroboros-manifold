@@ -432,9 +432,12 @@ def _state_hash(lib, w):
 # Built at each Round 3 engine commit: 8f825d59 is the first to differ and 94da7493 (fix 2) and d70c8d47 (fix 1) leave its hashes as they are. Spread first differs at tick 69 (unit 578, a raider
 # flinching since tick 68 after damage from an attacker it does not see; the old pursuit-end check walked it back toward its point, so its step away went a different way, 7.5 wu off at tick 69, one unit that tick);
 # clash at tick 367 (unit 52, flinching since tick 366: 4.5 wu off at the first step away, 64 units differ at that tick). The fixed unit steps straight away from the damage.
+# Re-recorded 2026-11-12 (engine rules Round 4, R-097-10: an idle unit takes the push of a mover of its own side and steps aside; was: 2026-11-12 recorded: clash f6194aa2, spread 8c68d293).
+# Built on the Round 3 tip e2dcee93 and on 6d3d7635 in lock step: the first step to differ is step 1 in both scenes. Clash: 11 idle units are moved on step 1 (unit 69 by 0.4 wu: unit 86, of its own side,
+# takes a target that tick and walks 7.4 wu into it at 32.7 wu; 22 units differ in all). Spread: unit 51 is moved 7.8 wu by unit 418 of its own side, 16.4 wu away (2 units differ).
 GOLDEN = {
-    "clash": "f6194aa24efc6ef8aa49bb3e5cd45843f40ae070c353dafd81d0cdfbee7d5143",
-    "spread": "8c68d293ba67aa9f40042bcdc25b7bc8d516b14c40ffdaef46f418a1a84f92d3",
+    "clash": "8c76ebb28e7f99bd9a455fbd6058990e099d80cef50817fa6697902fadf96931",
+    "spread": "fad7b9ebc023cd0dd3a4c084c5b5c4a3f3900e185e5e61abc5f1e103e79bda65",
 }
 
 
