@@ -52,7 +52,10 @@ STEP_TOL = 0.05   # numeric slack for the C's cheap trig, not a rule threshold
 ARRIVAL_MULT = 1.5   # R-099-04 and csrc/om_constants.h OM_ARRIVAL_TOLERANCE_MULT
 
 # Recorded on the unmodified tree (see the module docstring). Green today.
-TRACE_R15 = "9266aad512c513ca24883b28e4cca87963685878a14136619d98caf703b4c5a2"
+# Test-defect, re-recorded 2026-11-12 (engine rules Round 4, R-097-10: an idle unit takes the push of a mover of its own side and steps aside; was 9266aad512c513ca...). Built on the Round 3
+# tip e2dcee93 and on 6d3d7635 in lock step: the first tick to differ is 48 (two units differ): the 3 x 2 group has an arrived member, unit 9, that stood still at its slot in the old engine
+# while unit 11 of its group, 30 wu away and still walking, was held back; the new engine moves unit 9 aside by 2.8 wu. Radius 15 set and radius unset still give one trace.
+TRACE_R15 = "53b854664d08e163e8863ebb4c39b5d71d9826b5bcaec99ef18308af9d5dd4d8"
 
 
 def _world(lib, radius):
