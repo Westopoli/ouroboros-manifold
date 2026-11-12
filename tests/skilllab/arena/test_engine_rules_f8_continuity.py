@@ -25,8 +25,15 @@ too few to call the fight a ramp crossed by many units. L-0084 is the catalogue'
 53 of its 96 units change layer, and the jump test over it is red on the Round 1 tip (1596 unit-ticks over the bound) and green on Round 2 (0). Candidates measured
 on Round 2 (layer-change unit-ticks): L-0062 9353, L-0064 993, L-0065 3161, L-0066 5903, L-0079 77, L-0081 8, L-0082 260, L-0084 7142; the flank_route layouts
 L-0067, L-0069 and L-0071 have none.
+
+L-0083 replaced by L-0065 (2026-11-12, Test-defect: Round 3 fix 2, 94da7493, shortened L-0083 to 1516 ticks and 19 layer-change unit-ticks (15 units), one under the control's 20; the bar stays Westley's 20).
+Measured on the Round 3 tip (d70c8d47, seed 1, sight on, each fight to its end): layer-change unit-ticks / units / jumps with a layer change / the checker's violations:
+  L-0061 31 / 13 / 0 / none   L-0063 5700 / 48 / 0 / R-087-03 x3 (reported)   L-0065 657 / 27 / 0 / none   L-0084 816 / 20 / 0 / none   L-0083 19 / 15 / 0 / none
+  other candidates: L-0062 5364 / 33 / 0 / R-087-03 x1   L-0064 34 / 8 / 1 / continuity x1   L-0066 1776 / 29 / 0 / none   L-0079 77 / 15 / 0 / none   L-0082 260 / 20 / 0 / none
+L-0065 is the clean candidate with the most units; L-0061 changed from 3933 to 31 layer changes (24 to 13 units) with Round 3.
 """
 import collections
+import math
 import tomllib
 
 import pytest
@@ -34,7 +41,7 @@ import pytest
 import engine_rules_oracle as oracle
 import engine_rules_r2_probe as probe
 
-HILLS = ["L-0061", "L-0063", "L-0083", "L-0084"]
+HILLS = ["L-0061", "L-0063", "L-0065", "L-0084"]
 SLACK = probe.STEP_SLACK
 _CACHE = {}
 
@@ -94,9 +101,31 @@ def test_R_004_08_no_unit_jumps_on_the_tick_it_changes_layer(name):
         name, len(bad), SLACK, len({b[1] for b in bad}), bad[:3])
 
 
+PUSH_RADIUS = 40.0     # DRAFT-inv-push-radius, the checker's number: another living unit this close at either end of the tick is a collision push
+
+
+def _pushed(tk, u, ids):
+    """True when another living unit stood within PUSH_RADIUS of the unit, any of its two positions (before, after the tick) against any of the other's two."""
+    for o in ids:
+        if o == u or not (tk["pre"][o]["alive"] or tk["post"][o]["alive"]):
+            continue
+        for a in (tk["pre"][u], tk["post"][u]):
+            for b in (tk["pre"][o], tk["post"][o]):
+                if math.hypot(b["x"] - a["x"], b["y"] - a["y"]) < PUSH_RADIUS:
+                    return True
+    return False
+
+
 def test_R_004_08_control_an_open_field_has_no_unit_over_the_bound():
-    """Control (green today and after): L-0050 (no features, no layers, 24 walkers a side, sight on) has no unit-tick over the bound by more than the slack, so the bound
-    and the probe are not a blanket 'true', and a push alone never exceeds it. (One unit-tick of 103,000 measured 0.7 over the bound's 1.3: a tolerance of 2 wu is allowed here.)"""
-    run, _ = _fight("L-0050")
-    bad = [(n, u, round(d, 1)) for n, u, d, l0, l1, top in run.moves if d > top + 2.0]
-    assert len(run.moves) > 10000 and not bad, "L-0050: %d unit-ticks over the bound + 2.0 of %d: %s" % (len(bad), len(run.moves), bad[:3])
+    """Control (green today and after): L-0050 (no features, no layers, 24 walkers a side, sight on) has no unit-tick over the bound (top step + 2.0 wu) unless another living unit stands within 40 wu of
+    the unit (the checker's push excuse, DRAFT-inv-push-radius), so the bound and the probe are not a blanket 'true', and a unit on its own never moves over it. Re-written 2026-11-12 (Test-defect:
+    it allowed no unit-tick over the bound + 2.0 at all, no neighbour excuse): on the Round 3 tip one unit-tick of 103,542 is 2.01 wu over the top step of 4.4 (6.41 wu, tick 2064, unit 33, a Vanguard on
+    a flat field, layer 0 to 0): a nearly standing unit pushed in a pack, three neighbours touching at 29 to 33 wu before and after, moving 5.0, 4.2, 3.0 and 6.4 wu on ticks 2061 to 2064 and then not at all.
+    Not a jump: the layer-change jumps this module is about are 24 to 78 wu. Four unit-ticks of the fight are over the bound + 1.3 (5.87, 6.06, 6.15, 6.41 wu), so a push can exceed the slack of the
+    layer-change test above, which has no push excuse (reported); the earlier claim that a push never does was true of the fights it was measured on."""
+    from scripts.skilllab.arena import run
+    with oracle.recording() as recs, probe.probing() as runs:
+        run.fight(oracle.catalogue("L-0050"), 1, "on", 600, 100000)
+    rec, moves = oracle.only(recs), probe.only(runs).moves
+    bad = [(n, u, round(d, 2)) for n, u, d, l0, l1, top in moves if d > top + 2.0 and not _pushed(rec.ticks[n - 1], u, rec.ids)]
+    assert len(moves) > 10000 and not bad, "L-0050: %d unit-ticks over the bound + 2.0 with no neighbour within %d wu, of %d: %s" % (len(bad), PUSH_RADIUS, len(moves), bad[:3])
