@@ -298,6 +298,12 @@ class _Checker:
         limit = GUARD_RADIUS + self.rules.attack_range.get(u, 0.0) * self.rules.range_mult(la, lb)
         return math.hypot(math.hypot(o_prev["x"] - post[0], o_prev["y"] - post[1]), dz) > limit
 
+    def _spherical(self, xy, layer, row, flat=False):
+        """R-087-10: the distance from the point `xy` on `layer` to the unit row `row`, the horizontal distance and the band-height difference of the two layers together; `flat`: horizontal only."""
+        heights, lb = self.rules.layer_heights, row["layer"]
+        dz = heights[lb] - heights[layer] if not flat and layer < len(heights) and lb < len(heights) else 0.0
+        return math.hypot(math.hypot(row["x"] - xy[0], row["y"] - xy[1]), dz)
+
     def _acquire(self, frame, u, r, p, tick, out):
         """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
         judged on the previous frame (the state before the step): the target is the nearest enemy that frame's visible set of the unit's side holds (planar distance,
@@ -314,7 +320,9 @@ class _Checker:
             return
         side, vis = p["side"], prev.get("visible")
         reach = self.rules.reach.get(u)
-        nearest = mine = None            # distance to the nearest eligible enemy, and to the target when it is eligible
+        rng, post = self.rules.attack_range.get(u), self.rules.guards.get(u)
+        mine = None                      # planar distance to the target when it is seen, alive and in reach
+        eligible = []                    # (planar distance, distance from where the unit stands as stage 1 measures it, slant from the post) of every enemy that is not given up
         for e, row in prev["units"].items():
             if not row["alive"] or row["side"] == side or (vis is not None and e not in vis.get(side, ())):
                 continue
@@ -325,8 +333,24 @@ class _Checker:
                 mine = d
             if tick - self.gave_up.get((u, e), -GIVEUP_EXCLUSION_TICKS) < GIVEUP_EXCLUSION_TICKS:
                 continue                     # R-087-09: given up by this unit within the exclusion window, so not a candidate for "the nearest"
-            if nearest is None or d < nearest:
-                nearest = d
+            flat = u in self.rules.flyers or e in self.rules.flyers          # DRAFT-slant-ground-only
+            eligible.append((d, self._spherical((p["x"], p["y"]), p["layer"], row, flat),
+                             self._spherical(post, p["layer"], row) if post is not None else None))
+        nearest = None
+        if eligible:
+            nearest = min(d for d, _, _ in eligible)
+            if rng is not None:
+                # R-087-03 with R-087-10: stage 1, what the unit can shoot from where it stands (same layer: planar within range; another layer in reach: within range by slant, a flyer
+                # on either end measured flat); the nearest of those wins and may skip a nearer enemy that is out of range by slant.
+                in_range = [d for d, sl, _ in eligible if sl <= rng]
+                if in_range:
+                    nearest = min(in_range)
+                elif post is not None:
+                    # R-087-03 with R-096-08: stage 2, a guard with nothing in range takes the nearest enemy it can engage from its post (slant from the post at most GUARD_RADIUS + range),
+                    # and may skip a nearer one that is beyond that. A unit that is not a guard keeps the nearest seen.
+                    engageable = [d for d, _, sp in eligible if sp <= GUARD_RADIUS + rng]
+                    if engageable:
+                        nearest = min(engageable)
         if mine is None or (nearest is not None and mine > nearest + NEAREST_TOL):
             out.append(_violation("R-087-03", tick, u, "acquired %d, not the nearest enemy its side sees (%s; nearest %s wu)" % (
                 tgt, "unseen, dead or out of reach" if mine is None else "%.1f wu" % mine, "none" if nearest is None else "%.1f" % nearest)))
