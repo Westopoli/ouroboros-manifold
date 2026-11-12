@@ -136,3 +136,56 @@ def test_R_087_03_a_retarget_after_the_old_target_died_is_an_acquisition(inv):
     bad = acq(inv, chose=4, old=2, old_dead_from=3, enemies=en)
     good = acq(inv, chose=3, old=2, old_dead_from=3, enemies=en)
     assert (keys(bad), good) == ([("R-087-03", 5, 1)], [])
+
+
+# ------------------------------------------------------------------ Round 2, T8: nearest at acquisition and the give-up exclusion (R-087-09)
+#
+# R-087-09 (E-11): "... if it finds none within 1 s (20 ticks) it drops the target and acquires another". The engine (csrc/unit.c, OM_GIVEUP_EXCLUSION_TICKS) keeps a given-up target
+# ineligible for that unit for 100 ticks or until its line clears (DRAFT-giveup-exclusion-ticks 100, Westley's to change), so the unit's next pick is the nearest OTHER enemy its
+# side sees. The checker's `_acquire` does not know that. Measured 2026-11-11 on this tree, the cover close-up fixture (tests/skilllab/arena/test_closeup.py COVER: h088 cover
+# layout, side A Raiders, hold:A, seed 1, sight on, 1086 ticks): tick 205 unit 15 target 4 -> 0 (given up: 20 unshootable ticks at 232.6 to 233.1 wu), tick 206 unit 15 target 0 -> 3
+# (236.3 wu; the nearest seen enemy is the given-up 4 at 232.7). THE API IS UNCHANGED (frames, Rules); the checker has to remember a give-up it excused (R-087-09: the target
+# unshootable and not closed in on for 20 frames, then dropped) and leave that target out of the "nearest" set for DRAFT-giveup-exclusion-ticks 100 frames.
+
+GIVE_UP_STUCK = 20          # frames the target is held unshootable before the engine gives it up (R-087-09, 20 ticks)
+EXCLUSION = 100             # DRAFT-giveup-exclusion-ticks
+
+
+def after_give_up(inv, chose, at, stuck=GIVE_UP_STUCK):
+    """Unit 1 (side 0, still at (100, 100), attack range 500, cohort slot at % 4) holds enemy 2 (the nearest seen enemy, 200 wu) in frames 0..stuck-1 with the line blocked
+    (`shootable` False), drops it in frame stuck (target 0: the give-up) and takes `chose` in frame `at`. Enemies, all seen, all still: 2 at 200 wu, 4 at 230 wu, 5 at 300 wu.
+    Returns the R-087-03 violations as (rule, tick, unit)."""
+    en = {2: row(300, 100, side=1), 4: row(330, 100, side=1), 5: row(400, 100, side=1)}
+    frames = []
+    for k in range(0, at + 1):
+        held = 2 if k < stuck else 0
+        target = chose if k == at else held
+        frames.append(({1: row(100, 100, target=target, shootable=not held), **{u: dict(r) for u, r in en.items()}}, []))
+    return keys(inv.check(trace(*frames), rules(inv, cohort={1: at % 4}, attack_range={1: 500.0}, sensor_radius={1: 5000.0}), only=["R-087-03"]).violations)
+
+
+def test_R_087_03_control_a_unit_that_never_gave_anything_up_takes_the_nearest_not_the_next_nearest(inv):
+    """R-087-03 'it targets the nearest such enemy' control (green today and after): the same trace as the tests below with no give-up (enemy 2 never held), the unit takes enemy 4
+    (230 wu) with enemy 2 (200 wu) seen and nothing excluded: a violation at its tick."""
+    assert after_give_up(inv, chose=4, at=61, stuck=0) == [("R-087-03", 61, 1)]
+
+
+@pytest.mark.parametrize("at", [22, 61, 117], ids=["next-cohort-turn", "41-ticks-after", "97-ticks-after"])
+def test_R_087_03_after_a_give_up_the_next_nearest_other_enemy_is_a_legal_pick_inside_the_exclusion_window(inv, at):
+    """R-087-03 with R-087-09 (DRAFT-giveup-exclusion-ticks 100): the unit gave enemy 2 up in frame 20 (20 unshootable frames, then target 0); in frame `at` (2, 41 and 97 frames
+    later, on its cohort turn) it takes enemy 4, the nearest enemy other than the given-up 2: silent. Measured: cover close-up tick 206, unit 15. Red today: `_acquire` counts the given-up
+    enemy 2 as the nearest (200 wu against 230)."""
+    assert after_give_up(inv, chose=4, at=at) == []
+
+
+@pytest.mark.parametrize("at", [22, 61])
+def test_R_087_03_after_a_give_up_the_third_nearest_enemy_is_still_a_violation(inv, at):
+    """R-087-03 control (green today and after): the same trace but the unit takes enemy 5 (300 wu), farther than the next-nearest other enemy 4 (230 wu): a violation. The exclusion
+    removes only the given-up target from the set; it does not make every pick legal."""
+    assert after_give_up(inv, chose=5, at=at) == [("R-087-03", at, 1)]
+
+
+def test_R_087_03_after_the_exclusion_window_the_given_up_enemy_is_eligible_again(inv):
+    """R-087-09 (DRAFT-giveup-exclusion-ticks 100): 109 frames after the give-up (frame 20; frame 129) the given-up enemy 2 is the nearest eligible enemy again: taking it is silent, and
+    taking enemy 4 (230 wu, no longer the nearest) is a violation. Both green today; the second turns red for an exclusion that never ends."""
+    assert (after_give_up(inv, chose=2, at=129), after_give_up(inv, chose=4, at=129)) == ([], [("R-087-03", 129, 1)])

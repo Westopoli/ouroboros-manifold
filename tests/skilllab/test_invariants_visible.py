@@ -88,3 +88,61 @@ def test_R_093_02_the_monitor_suspends_it_with_sight_off(inv):
     """suspended_for("off") names R-093-02 as well as R-087-03; "on" suspends neither."""
     assert (inv.suspended_for("off"), inv.suspended_for("on")) == (
         {"R-087-03": "OM_TP_TARGET_BY_SIGHT", "R-093-02": "OM_TP_TARGET_BY_SIGHT"}, {})
+
+
+# ------------------------------------------------------------------ Round 2, T8: one tick of lag on sight (R-093-02)
+#
+# R-093-02 (E-12): "Given any unit of any side, When it acquires, pursues or fires at a target, Then the target is in its side's visible set". The engine validates a lock against sight
+# at the start of its tick and drops an unseen target on the NEXT tick, so for one frame a unit still holds a target that was missing from the previous frame's visible set. Measured
+# 2026-11-11 on this tree: L-0084 seed 1 sight on, tick 1754, units 33, 39 and 40 each "holds 93, which its side did not see before the step" (the only three R-093-02 reports of the
+# fight's 3718 ticks; tests/skilllab/arena/test_invariants_round2b_wiring.py). THE PINNED SEMANTICS: a unit that already held the target in the previous frame is excused the FIRST frame
+# in which the previous frame's visible set lacks it; the second consecutive such frame is a violation (reported at that frame, once per unit and frame). A unit that ACQUIRES an unseen
+# target (its previous target was another or none) is a violation at once, and a shot at a target outside the previous frame's visible set is a violation at once (no grace for a shot).
+# The existing tests above (acquisition of an unseen target at frame 2, a shot at an unseen one) are unchanged by this.
+
+def lag_frames(held, visible, fires_at=None):
+    """Unit 1 (side 0) and enemy 2 (side 1) stand still. `held`: the unit's target in frames 0.. (a list of 0 or 2); `visible`: side 0's visible set in frames 0.. (a list of sets);
+    `fires_at` the frame in which unit 1 fires at enemy 2."""
+    tr = trace(*[({1: row(100, 100, target=t), 2: row(300, 100, side=1)}, [(1, 2)] if fires_at == k else []) for k, t in enumerate(held)])
+    for fr, vis in zip(tr, visible):
+        fr["visible"] = {0: set(vis), 1: {1}}
+    return tr
+
+
+def lag_hits(inv, tr):
+    return [(v["rule"], v["tick"], v["unit"]) for v in inv.check(tr, rules(inv), only=["R-093-02"]).violations]
+
+
+def test_R_093_02_a_held_target_that_goes_unseen_for_one_frame_and_is_dropped_on_the_next_is_not_a_violation(inv):
+    """R-093-02 with the engine's one-tick lag: enemy 2 is seen in frames 0 to 2 and missing from the visible set from frame 2 on (the engine sees it gone at the start of tick 3 and
+    drops it on tick 4). Unit 1 holds it in frames 1 to 3 and drops it in frame 4: the frame-3 check (the visible set of frame 2 lacks it) is the one lagged frame: silent. Red today:
+    the check reports unit 1 at tick 3 (L-0084 tick 1754, units 33, 39, 40)."""
+    tr = lag_frames(held=[0, 2, 2, 2, 0, 0], visible=[{2}, {2}, set(), set(), set(), set()])
+    assert lag_hits(inv, tr) == []
+
+
+def test_R_093_02_a_held_target_that_stays_unseen_for_two_frames_is_a_violation(inv):
+    """R-093-02: the same trace but the unit holds enemy 2 for a second frame after it went missing (frames 3 and 4 against the sets of frames 2 and 3): the first is the lag, the second is
+    a violation, reported at frame 4 and only there. Red today: it is reported at frame 3 as well."""
+    tr = lag_frames(held=[0, 2, 2, 2, 2, 0], visible=[{2}, {2}, set(), set(), set(), set()])
+    assert lag_hits(inv, tr) == [("R-093-02", 4, 1)]
+
+
+def test_R_093_02_a_shot_at_a_target_outside_the_visible_set_is_a_violation_at_once(inv):
+    """R-093-02 'fires at' (no grace for a shot): the unit holds enemy 2 from frame 1, it goes missing from the visible set in frame 2, and unit 1 fires at it in frame 3, the first frame
+    in which the previous frame's set lacks it: a violation at frame 3, and it is the shot that is reported. Green today and after (the control that the lag is not a free shot)."""
+    tr = lag_frames(held=[0, 2, 2, 2, 0], visible=[{2}, {2}, set(), set(), set()], fires_at=3)
+    got = inv.check(tr, rules(inv), only=["R-093-02"]).violations
+    assert [(v["rule"], v["tick"], v["unit"]) for v in got] == [("R-093-02", 3, 1)] and "fired" in got[0]["detail"]
+
+
+def test_R_093_02_a_unit_that_acquires_an_unseen_target_is_a_violation_at_once(inv):
+    """R-093-02 'acquires' (no grace for an acquisition): unit 1 has no target in frames 0 and 1, takes enemy 2 in frame 2 while the visible set of frame 1 does not hold it: a violation at
+    frame 2. Green today and after: the grace is for a lock the unit already held, not for taking an unseen target."""
+    tr = lag_frames(held=[0, 0, 2, 2, 0], visible=[set()] * 5)
+    assert lag_hits(inv, tr)[:1] == [("R-093-02", 2, 1)]
+
+
+def test_R_093_02_a_target_seen_in_every_frame_is_silent(inv):
+    """R-093-02 control (green today and after): the lag trace with the target seen in every frame is silent."""
+    assert lag_hits(inv, lag_frames(held=[0, 2, 2, 2, 2, 0], visible=[{2}] * 6)) == []
