@@ -1055,7 +1055,7 @@ uint32_t om_terrain_band_heights(const om_world *w, double *out, uint32_t cap) {
 
 /* F7 (R-087-10): the height difference of two layers in wu, from om_terrain_band_heights: each layer is read at its band floor (DRAFT-slant-height-band-floor;
  * a unit mid-slope is not read at its slope height). 0 in a world with no terrain, on one layer, and for a layer beyond the five bands: those measure flat.
- * Internal (om_internal.h), used by the weapon-reach tests (attack range, area radius) in csrc/unit.c; sight and the leash stay horizontal (R-087-10). */
+ * Internal (om_internal.h), used by the weapon-reach tests (attack range, area radius) in csrc/unit.c, which apply it only between two walking units (DRAFT-slant-ground-only); sight and the leash stay horizontal (R-087-10). */
 double om_terrain_layer_dz(const om_world *w, uint32_t layer_a, uint32_t layer_b) {
     const om_terrain_state *st = ts_ro(w);
     if (!st || layer_a == layer_b || layer_a >= OM_TERRAIN_BANDS || layer_b >= OM_TERRAIN_BANDS) return 0.0;

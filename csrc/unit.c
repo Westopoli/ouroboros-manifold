@@ -614,10 +614,15 @@ static int om_tac_dist_le(double dx, double dy, double r) {
     return (dx * dx + dy * dy) <= (r * r);
 }
 
-/* F7 (R-087-10): the same test, spherical: dx, dy the horizontal offset, plus the height difference of layers la and lb (om_terrain_layer_dz; 0 on one layer
- * or with no terrain, so there it is the flat test to the last bit). */
-static int om_tac_dist_le_layers(const om_world *w, uint32_t la, uint32_t lb, double dx, double dy, double r) {
-    const double dz = om_terrain_layer_dz(w, la, lb);
+/* F7 (R-087-10): the same test, spherical: dx, dy the horizontal offset between units a and b, plus the height difference of their layers
+ * (om_terrain_layer_dz; 0 on one layer or with no terrain, so there it is the flat test to the last bit).
+ * DRAFT-slant-ground-only (R-087-10, provisional until the owner rules): the slant counts only when BOTH units are walking units (movement kind 1).
+ * Air layers' band floors are about 920 wu apart, so by slant no flyer could reach another layer and a flyer fight would never end; when either unit
+ * is a flyer (kind 0) or a swimmer (kind 2) the test is flat, as before the slant. Every weapon-reach test goes through this one helper. */
+static int om_tac_dist_le_layers(const om_world *w, const om_unit_row *a, const om_unit_row *b, double dx, double dy, double r) {
+    const int ground = om_unit_profile_movement_kind(w, a->unit_type) == OM_MOVE_WALKING
+                    && om_unit_profile_movement_kind(w, b->unit_type) == OM_MOVE_WALKING;
+    const double dz = ground ? om_terrain_layer_dz(w, a->layer, b->layer) : 0.0;
     return (dx * dx + dy * dy + dz * dz) <= (r * r);
 }
 
@@ -1743,7 +1748,7 @@ static int om_tac_noncombat(const om_unit_row *u) {
 }
 
 static int om_tac_within(const om_world *w, const om_unit_row *a, const om_unit_row *b, double r) {
-    return om_tac_dist_le_layers(w, a->layer, b->layer, a->x - b->x, a->y - b->y, r);
+    return om_tac_dist_le_layers(w, a, b, a->x - b->x, a->y - b->y, r);
 }
 
 /* Targeting cohort slot: the Python staggers by its 0-based uid and the C ids are uid + 1, so under
@@ -2189,7 +2194,7 @@ static int om_tac_find_spot(om_world *w, om_unit_row *u, const om_unit_row *t, d
             int n, k, ok = 1;
             double px = u->x, py = u->y;
             if (leash_r >= 0.0 && !om_tac_dist_le(sx - cx, sy - cy, leash_r)) continue;
-            if (!om_tac_dist_le_layers(w, u->layer, t->layer, sx - t->x, sy - t->y, range)) continue;
+            if (!om_tac_dist_le_layers(w, u, t, sx - t->x, sy - t->y, range)) continue;
             if (!om_combat_can_shoot_from(w, u->unit_id, sx, sy, t->unit_id)) continue;
             n = (int)(r / 10.0) + 1;
             for (k = 1; k <= n && ok; k++) {
@@ -2230,7 +2235,7 @@ static int om_tac_spot_step(om_world *w, om_unit_row *u, const om_unit_row *t, d
 /* F6 (R-096-08): a guard may engage t when it can shoot it from where it stands, or could from the edge of its radius about its post (px, py). */
 static int om_tac_guard_engageable(const om_world *w, const om_unit_row *u, const om_unit_row *t, double px, double py) {
     return om_tac_in_reach(w, u, t)
-        && om_tac_dist_le_layers(w, u->layer, t->layer, t->x - px, t->y - py, OM_GUARD_RADIUS + u->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, u, t));
+        && om_tac_dist_le_layers(w, u, t, t->x - px, t->y - py, OM_GUARD_RADIUS + u->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, u, t));
 }
 
 /* F6 (R-096-08): the nearest enemy the guard's side sees that it can engage from its radius (lowest id on a tie), on its layer or another within reach. */
@@ -3186,7 +3191,7 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
         if (cand->hp <= 0.0) continue;
         if (cand->faction_id == attacker->faction_id) continue;
         if (!om_tac_in_reach(w, attacker, cand)) continue;
-        if (!om_tac_dist_le_layers(w, center->layer, cand->layer, cand->x - center->x, cand->y - center->y, radius)) continue;   /* R-087-10: area radius, spherical */
+        if (!om_tac_dist_le_layers(w, center, cand, cand->x - center->x, cand->y - center->y, radius)) continue;   /* R-087-10: area radius, spherical */
         if (total >= cap) break;
         mult = om_resolve_hit_multiplier(w, attacker->category, cand);
         dmg = attacker->base_damage * mult * om_unit_output_multiplier(w, attacker_id)
