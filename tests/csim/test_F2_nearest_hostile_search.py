@@ -425,9 +425,12 @@ def _state_hash(lib, w):
 # Re-recorded day22 on push/pl-land (A188 leash tests the unit's own distance; clash 37bc9238 -> e1377247; spread unchanged; was: day21 pp-settle-gold recorded).
 # Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold and day22 pl-land recorded). TD-PP-A199-rerecord.
 # Re-recorded 2026-11-08 (engine rule fixes F2, F3, F4; the new run has 0 R-207-06, R-087-04, R-084-04, R-087-03, R-083-03 violations by scripts/skilllab/invariants.py; was: day23 recorded: clash cbcb5408, spread f5cd5e5c). Test-defect.
+# Re-recorded 2026-11-11 (engine rules Round 2, F9 a5f4084c: an attack-mover with no target leaves unseen fire, then resumes its point, R-087-01; was: 2026-11-08 recorded: clash babdc2db, spread 2a7652cc).
+# Built at each Round 2 engine commit: every one up to f917a552 reproduces the old hashes at tick 400 and at every tick before it; a5f4084c is the first to differ. Spread first differs at tick 2
+# (an attack-moving raider with no target steps away from where it was, unit 109, about 7 wu); clash at tick 83 (unit 24 drops target 581 to 0, the target it did not see, and 581 is no longer hit by it).
 GOLDEN = {
-    "clash": "babdc2dbdff49b4df23fb6733b0880392054a70b6d9c6bd2d3c1eb0991570b23",
-    "spread": "2a7652cce17376914fdc4823ba2c54fad352a495cff0ab62b58e9b9a0aa89f47",
+    "clash": "97289311ff46d14057a225c0e785ecc7cb5add9eb0a28711151adf28c12cdc9a",
+    "spread": "b12dcbf52a982ad69a0b1483db4ecb0ab934485ea5347281f3af07901cde2d71",
 }
 
 

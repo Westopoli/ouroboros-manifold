@@ -34,8 +34,8 @@
   "mirror": false,
   "agree": true,
   "firing_capable": {
-    "A": 21.0,
-    "B": 14.0
+    "A": 23.0,
+    "B": 9.0
   },
   "median_seed": 10
 }

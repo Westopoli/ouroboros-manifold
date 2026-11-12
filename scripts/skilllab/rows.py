@@ -14,6 +14,12 @@ _FEATURE_FIELDS = ("choke_count", "choke_width_wu", "choke_width_bodies", "lane_
                    "fight_layer_blocked", "cover_density_corridor", "start_distance", "detour_ratio", "blocked_layer_top")
 
 
+def invalid_cell(result):
+    """The sweep row's `invalid` cell: 1 a rule was broken, 0 judged clean, "suspended" not judged (checker off, engine unreadable); never 0 for a run nobody checked."""
+    flag = getattr(result, "invalid", False)
+    return "suspended" if flag is None else int(bool(flag))
+
+
 def fight_row(result, features=None, knob="none", knob_value=None, baseline="none", ceiling_hit=0, prefight="ok", **labels):
     clash = [k for k in labels if k in _FIXED]
     if clash:

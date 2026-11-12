@@ -7,7 +7,10 @@ move up the hill, blue should become in vision as soon as they crest over the ha
 setting: a unit on the ramp is on the upper layer from the slope midline (R-004-06, R-004-08), and only then sees and is seen by the rise (R-005-09).
 
 Fixture: `small_tiered`, hill centre (1100, 2000) radius 700 (the H-088 vantage fixture): rim at x 1800, foot at x 2000 (RAMP_WU 200), so the midline is near
-x 1900 on the +x side. A low walker starts at (2300, 2000) and attack-moves west; a Vanguard stands still on the rise at (1700, 2000).
+x 1900 on the +x side. A low walker starts at (2300, 2000) and attack-moves west; a Vanguard stands still on the rise at (1550, 2000) (RISE_BACK 450 wu from the hill centre).
+RISE_BACK 450, not 600 (Test-defect, engine rules Round 2, F9 a5f4084c, R-087-01): a walker with no target now leaves fire it cannot see, and the Vanguard (attack range 300) shot the climber, who cannot
+see up (R-005-09), from the moment it came inside 300 wu, before the midline; the climber turned back, the Vanguard followed it down, and no flip happened in 700 ticks (every engine commit up to f917a552 flips at tick 133, a5f4084c
+does not). From 450 wu the flip (x about 1900, 350 wu off) comes before the first shot (tick 133 against 143 at heading 0), so the geometry and sight tests below still measure the ramp and not the retreat.
 The engine's flip is read from the walker's own layer each tick, the band boundary from `Engine.terrain_band_at` on the walker's row, and the drawn midline (radius + 100)
 is compared with both. The stage 4 rule set is set by hand here exactly as run.fight sets it (ground era, walkers, reach 0 up 1 down)."""
 import math
@@ -22,6 +25,7 @@ from scripts.skilllab.engine import Engine
 from scripts.skilllab.fight import _register_types
 
 CX, CY, RADIUS, RAMP = 1100.0, 2000.0, 700.0, 200.0
+RISE_BACK = 450.0     # where the Vanguard stands on the rise, from the hill centre along the heading (was 600; see the module docstring)
 
 
 def _world(low_xy, rise_xy):
@@ -48,7 +52,7 @@ def _climb(heading_deg=0.0, ticks=700):
     [(tick, x, y, layer, low sees rise, rise sees low)] and the engine."""
     a = math.radians(heading_deg)
     start = (CX + (RADIUS + RAMP + 400) * math.cos(a), CY + (RADIUS + RAMP + 400) * math.sin(a))
-    e, w, low, rise = _world(start, (CX + 600 * math.cos(a), CY + 600 * math.sin(a)))
+    e, w, low, rise = _world(start, (CX + RISE_BACK * math.cos(a), CY + RISE_BACK * math.sin(a)))
     e.order_attack_move(w, [low], CX + 400 * math.cos(a), CY + 400 * math.sin(a))
     rows = []
     for t in range(1, ticks + 1):

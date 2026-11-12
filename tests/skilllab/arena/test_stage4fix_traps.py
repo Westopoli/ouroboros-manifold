@@ -22,7 +22,9 @@ from scripts.skilllab.engine import Engine
 ROOT = Path(__file__).resolve().parents[3]
 CATALOGUE = ROOT / "docs" / "northstar" / "research" / "layer_dynamics" / "catalogue"
 POCKET = (1700.0, 1600.0, 2300.0, 2400.0)   # the inside of the walls box: x0, y0, x1, y1 (walls at x 1500-1700 and 2300-2500, back wall y 1400-1600, mouth open at y 2400)
-SPREAD_TICKS = 126   # measured (seed 1, ticks): L-0080 126 (hill_w 233, hill_e 205, arc 107 after a release at 106), L-0083 81; first targets of the three groups after the release
+SPREAD_TICKS = 130   # measured (seed 1, ticks): L-0080 130 (hill_w 237, hill_e 205, arc 107 after a release at 106), L-0083 81; first targets of the three groups after the release
+# Re-recorded 2026-11-11 (engine rules Round 2; was 126 = hill_w 233, hill_e 205, arc 107). Test-defect: the bound was the spread measured on the Round 1 engine; hill_w now takes its first target 4 ticks
+# later. The lab checker on the new L-0080 seed 1 sight-on fight (2365 ticks, wipe, B wins): no violation of any of its eleven rules. The bound is a recording of the measured spread, not Westley's number.
 CAP = 150
 
 

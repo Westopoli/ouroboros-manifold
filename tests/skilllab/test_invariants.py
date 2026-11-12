@@ -38,7 +38,9 @@ Rule semantics pinned here, each from the spec's F0 list (numbers are the spec's
     R-087-09    a held target that is not "shootable" for more than 20 consecutive frames (DRAFT-inv-stuck-ticks) while the distance to it did not fall
                 by more than 1 wu below the run's first distance
     R-083-03    a living unit's hp rose by more than 0.075 (plus 1e-6) in a frame in which no shot hit it
-    continuity  a living unit moved more than max_step[unit] + 1.3 wu in a frame (DRAFT-inv-step-slack; layer change included) with no unit within 40 wu
+    continuity  a living unit moved more than max_step[unit] + 1.3 wu in a frame (DRAFT-inv-step-slack); round 2 (corrected): on a frame where its layer changes nothing excuses
+                it; on a frame with no layer change another living unit within 40 wu (DRAFT-inv-push-radius) does (no push allowance); a unit that starts the frame inside a
+                blocked cell, or on a cell blocked for its new layer, is not judged (tests/skilllab/test_invariants_tightened.py)
 """
 import importlib
 
@@ -116,9 +118,10 @@ def test_a_violation_is_a_dict_of_rule_tick_unit_detail(inv):
     assert (v["rule"], v["tick"], v["unit"]) == ("R-207-06", 1, 1)
 
 
-def test_rules_lists_the_eight_checks(inv):
-    """F0 'Checks, each with its rule id'."""
-    assert tuple(inv.RULES) == ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity")
+def test_rules_lists_the_eleven_checks(inv):
+    """F0 'Checks, each with its rule id'. Engine rules round 2: R-093-02 (fire only at what your side sees, T3) is the ninth, R-096-08 (a guard stays inside its radius) the tenth and R-087-10
+    (a shot is inside weapon reach by slant) the eleventh, each appended; the pin was nine. tests/skilllab/arena/test_engine_rules_f6_guard.py and test_engine_rules_f7_spherical.py require the last two."""
+    assert tuple(inv.RULES) == ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02", "R-096-08", "R-087-10")
 
 
 # ------------------------------------------------------------------ R-207-06
@@ -314,9 +317,11 @@ def test_continuity_a_jump_beyond_max_speed_plus_slack_is_flagged(inv):
     assert [(v["rule"], v["tick"], v["unit"]) for v in plain.violations] == [("continuity", 1, 1)] and len(layered.violations) == 1
 
 
-@pytest.mark.parametrize("dist,neighbour", [(4.7, False), (25.0, True)], ids=["within-3.5-plus-1.3", "pushed-by-a-neighbour"])
+@pytest.mark.parametrize("dist,neighbour", [(4.7, False), (6.5, True), (25.0, True)], ids=["within-3.5-plus-1.3", "pushed-by-a-neighbour", "leap-beside-a-friend-same-layer"])
 def test_continuity_control_a_step_within_the_slack_or_a_push_is_silent(inv, dist, neighbour):
-    """continuity control: 4.7 wu (max 3.5 + 1.3 = 4.8) is silent; 25 wu with a unit within 40 wu is a push, silent."""
+    """continuity control: 4.7 wu (max 3.5 + 1.3 = 4.8) is silent; with a unit within 40 wu and no layer change a displacement above the bound is a collision push, which no
+    rule limits (R-004-08 is about a unit that changes layer): 6.5 wu and 25 wu are silent. (Engine rules round 2 made 25 wu a violation; the 2026-11-11 correction
+    narrows continuity to layer changes. The layer-change and blocked-cell cases are in test_invariants_tightened.py.) Red today: the 25 wu case."""
     assert _jump(inv, dist, neighbour=neighbour).violations == []
 
 

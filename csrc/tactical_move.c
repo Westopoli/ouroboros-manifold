@@ -323,6 +323,8 @@ uint32_t col_cur;
     double   start_x[OM_MOVE_MAX_UNITS], start_y[OM_MOVE_MAX_UNITS];
     double   pass_x[OM_MOVE_MAX_UNITS], pass_y[OM_MOVE_MAX_UNITS];
     int32_t  start_layer[OM_MOVE_MAX_UNITS];
+    /* F8: 1 for a unit om_move_leave_blocked placed this tick; om_move_slope_clamp leaves its displacement alone (a placement, not a walk). Not saved: rebuilt every tick. */
+    uint8_t  placed[OM_MOVE_MAX_UNITS];
     /* col_pursue / col_route cache the two switches during a collision pass. */
     int      col_pursue, col_route;
     /* The runtime unit collision radius (OM_TP_UNIT_COLLISION_RADIUS), read once per tick and per standalone collision
@@ -361,6 +363,8 @@ enum { OM_LAY_NONE, OM_LAY_PENDING, OM_LAY_FLIGHT };
 void om_tac_unit_set_layer(om_world *w, uint32_t unit_id, uint32_t layer);
 /* See also: om_tac_unit_set_guard in unit.c, which owns the guard flag (R-096-08) */
 void om_tac_unit_set_guard(om_world *w, uint32_t unit_id, int on);
+/* See also: om_tac_guard_clamp in unit.c, which owns the guard's post and radius (R-096-08); called by the collision pass */
+int om_tac_guard_clamp(om_world *w, uint32_t unit_id, double *x, double *y);
 
 /* A new move order ends a routed transfer that has not begun; one in flight finishes (R-002-04: a user's transfer
  * is never cleared by a move order). */
@@ -1387,11 +1391,24 @@ static void om_move_cell_at(const om_move_state *ms, double x, double y, int32_t
     if (*cy >= ny && y <= ms->canvas_h) *cy = ny - 1;
 }
 
+/* Whether the walk of om_move_los_walk counts cell (cx, cy) as blocking. With `as_sight` it counts it as fog.c om_fog_grid_blocks does (R-098-02: fire is blocked
+ * exactly as vision is): the cells holding the two ends are exempt (a unit stands in its cell), and so is the ground of a hill, a cell whose terrain
+ * band is above the layer walked (a unit on a hill's layer stands over those cells; the ground itself is om_terrain_sight_blocks' business). */
+static int om_move_los_cell_blocked(const om_world *w, om_move_state *ms, uint32_t layer, int32_t cx, int32_t cy, int as_sight,
+                                    int32_t sx, int32_t sy, int32_t ex, int32_t ey) {
+    if (as_sight) {
+        if ((cx == sx && cy == sy) || (cx == ex && cy == ey)) return 0;
+        if (om_era_kind(w) == 1 && om_terrain_present(w) &&
+            om_terrain_band_at(w, ((double)cx + 0.5) * OM_NAVMESH_CELL_SIZE, ((double)cy + 0.5) * OM_NAVMESH_CELL_SIZE) - 1 > (int)layer) return 0;
+    }
+    return om_move_cell_blocked(w, ms, layer, cx, cy);
+}
+
 /* Exact grid walk (Amanatides and Woo) from (x0, y0) to (x1, y1) through the 100 wu cells: 1 when no cell it
- * touches is blocked on the layer. A line through a cell corner needs both side cells open. */
-static int om_move_los_clear(const om_world *w, om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer) {
+ * touches is blocked on the layer. A line through a cell corner needs both side cells open. `as_sight`: see om_move_los_cell_blocked. */
+static int om_move_los_walk(const om_world *w, om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer, int as_sight) {
     const double inf = OM_MOVE_GRID_FAR;
-    int32_t cx, cy, ex, ey;
+    int32_t cx, cy, ex, ey, c0x, c0y;
     const double dx = x1 - x0, dy = y1 - y0;
     const int32_t sx = dx > 0.0 ? 1 : -1, sy = dy > 0.0 ? 1 : -1;
     double tx, ty;
@@ -1400,19 +1417,24 @@ static int om_move_los_clear(const om_world *w, om_move_state *ms, double x0, do
     int32_t left;
     om_move_cell_at(ms, x0, y0, &cx, &cy);
     om_move_cell_at(ms, x1, y1, &ex, &ey);
+    c0x = cx; c0y = cy;
     tx = dx != 0.0 ? ((double)(sx > 0 ? cx + 1 : cx) * OM_NAVMESH_CELL_SIZE - x0) / dx : inf;
     ty = dy != 0.0 ? ((double)(sy > 0 ? cy + 1 : cy) * OM_NAVMESH_CELL_SIZE - y0) / dy : inf;
     left = (ex > cx ? ex - cx : cx - ex) + (ey > cy ? ey - cy : cy - ey) + 1;
     for (;;) {
-        if (om_move_cell_blocked(w, ms, layer, cx, cy)) return 0;
+        if (om_move_los_cell_blocked(w, ms, layer, cx, cy, as_sight, c0x, c0y, ex, ey)) return 0;
         if ((cx == ex && cy == ey) || left-- <= 0) return 1;
         if (tx < ty) { cx += sx; tx += ddx; }
         else if (ty < tx) { cy += sy; ty += ddy; }
         else {
-            if (om_move_cell_blocked(w, ms, layer, cx + sx, cy) || om_move_cell_blocked(w, ms, layer, cx, cy + sy)) return 0;
+            if (om_move_los_cell_blocked(w, ms, layer, cx + sx, cy, as_sight, c0x, c0y, ex, ey) || om_move_los_cell_blocked(w, ms, layer, cx, cy + sy, as_sight, c0x, c0y, ex, ey)) return 0;
             cx += sx; cy += sy; tx += ddx; ty += ddy;
         }
     }
+}
+
+static int om_move_los_clear(const om_world *w, om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer) {
+    return om_move_los_walk(w, ms, x0, y0, x1, y1, layer, 0);
 }
 
 /* Breadth-first fill from one cell over open cells (4 neighbours, +x -x +y -y), O(cells), ties settled by the
@@ -1969,9 +1991,14 @@ static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
         if (ms->col_pursue && om_move_pass_settled(ms)) break;
     }
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        double gx, gy;
         if (!ms->grid_in[id]) continue;
-        ms->units[id].x = om_move_grid_x(ms, id);
-        ms->units[id].y = om_move_grid_y(ms, id);
+        gx = om_move_grid_x(ms, id);
+        gy = om_move_grid_y(ms, id);
+        /* R-096-08: a push never carries a guard out of its radius */
+        if (ms->col_pursue && om_tac_guard_clamp(w, id, &gx, &gy)) om_move_grid_set(ms, id, gx, gy);
+        ms->units[id].x = gx;
+        ms->units[id].y = gy;
     }
     if (settled) om_move_settle_record(ms);
 }
@@ -2175,6 +2202,7 @@ static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_
         mu->x = (double)best_x * OM_NAVMESH_CELL_SIZE + (rx < lo ? lo : (rx > hi ? hi : rx));
         mu->y = (double)best_y * OM_NAVMESH_CELL_SIZE + (ry < lo ? lo : (ry > hi ? hi : ry));
     }
+    ms->placed[mu->unit_id] = 1;   /* F8: the repair is a placement; om_move_slope_clamp does not cut it. See also: om_move_slope_clamp */
     mu->plan_valid = 0;
     om_move_route_drop(mu);
     om_move_grid_update(ms, mu);
@@ -2697,6 +2725,43 @@ static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
     }
 }
 
+/* DRAFT-slope-step-slack: wu a walker on a slope may exceed its pace in a tick before om_move_slope_clamp brings it back (a push of a step or two is the crowd's, a jump is not;
+ * below the lab checker's DRAFT-inv-step-slack 1.3). Westley's to change. */
+#define OM_SLOPE_STEP_SLACK 1.0
+
+/* F8 (R-004-06, R-004-08): a walker on a slope may change layer at the midline, but its position is its own step each tick. The layer flip (om_move_walker_tick) puts
+ * it among the units of the new layer, which it overlapped without colliding on the old one; the collision pass then resolved the whole overlap in one tick, a jump of
+ * 10 to 20 wu (the I5tL jumps, the I23 flicker). A walker standing on a slope at the start or the end of the tick is brought back along its tick's displacement to the
+ * most its pace allows (the unit's speed, and the slope's down multiplier) plus OM_SLOPE_STEP_SLACK; the rest of the overlap is resolved on the next ticks, a step at a time.
+ * A unit om_move_leave_blocked placed this tick (R-207-06 repair, e.g. an ordered layer change landing in a blocked cell: nearest open cell, R-097-09) is not cut: that is a placement, not a walk.
+ * Only with PURSUE_BY_STEERING on (start_x/start_y are the start-of-tick positions). See also: om_move_walker_tick, om_move_collision_pass_internal. */
+static void om_move_slope_clamp(om_world *w, om_move_state *ms, uint32_t period) {
+    const double down = om_tactical_get_param(w, OM_TP_SLOPE_DOWN_MULT);
+    const double scale = (down > 1.0 ? down : 1.0) * (double)period / (double)OM_TACTICAL_TICK_RATE;
+    uint32_t id;
+    if (!om_terrain_present(w)) return;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        om_move_unit *mu = &ms->units[id];
+        om_slope sl;
+        double dx, dy, d, bound, eff, nominal;
+        if (!mu->in_use || !ms->grid_in[id] || ms->placed[id]) continue;
+        dx = mu->x - ms->start_x[id];
+        dy = mu->y - ms->start_y[id];
+        if (dx == 0.0 && dy == 0.0) continue;
+        d = sqrt(dx * dx + dy * dy);
+        nominal = om_unit_profile_speed(w, om_unit_get_unit_type(w, id));
+        if (d <= nominal * scale + OM_SLOPE_STEP_SLACK) continue;   /* cheap exit: the bound is never below this one */
+        if (!om_unit_alive(w, id) || !om_move_is_walker(w, id)) continue;
+        if (om_terrain_slope_at(w, mu->x, mu->y, &sl) < 0 && om_terrain_slope_at(w, ms->start_x[id], ms->start_y[id], &sl) < 0) continue;
+        eff = om_unit_effective_speed(w, id);
+        bound = (eff > nominal ? eff : nominal) * scale + OM_SLOPE_STEP_SLACK;
+        if (d <= bound) continue;
+        mu->x = ms->start_x[id] + dx * (bound / d);
+        mu->y = ms->start_y[id] + dy * (bound / d);
+        om_move_grid_update(ms, mu);
+    }
+}
+
 static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick, uint32_t period) {
     uint32_t id;
     om_move_discover(w, ms);
@@ -2709,6 +2774,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
         for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
             ms->start_x[id] = ms->units[id].x;
             ms->start_y[id] = ms->units[id].y;
+            ms->placed[id] = 0;
             if (ms->grid_in[id]) {
                 ms->slot_sx[ms->unit_slot[id]] = ms->start_x[id];
                 ms->slot_sy[ms->unit_slot[id]] = ms->start_y[id];
@@ -2725,6 +2791,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     }
     om_move_walker_tick(w);
     om_move_collision_pass_internal(w, ms);
+    if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_slope_clamp(w, ms, period);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_face_pass(w, ms, period);
     om_move_groups_check_arrival(ms);
 }
@@ -2829,7 +2896,9 @@ static int om_combat_cover_blocks(const om_world *w, uint32_t p0, uint32_t p1, d
     return 0;
 }
 
-int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
+/* The fire test from a given place: unit p0 as if it stood at (x0, y0) on its own layer, unit p1 where it stands. om_combat_can_shoot is this at p0's
+ * own position; F5 (R-087-09) asks it of candidate firing spots. Body below. See also: om_combat_can_shoot. */
+int om_combat_can_shoot_from(const om_world *w, uint32_t p0, double x0, double y0, uint32_t p1) {
     /* R-098-01: units never block fire, so no unit is consulted between the
      * endpoints. R-098-02: terrain (this module's density cells) and the
      * cover/obstacle discs tactical_mapgen.c records block the line the same
@@ -2838,12 +2907,10 @@ int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
      * strictly between the two units are sampled, at one-wu resolution. */
     om_world *ww = (om_world *)w;
     om_move_state *ms;
-    double x0, y0, dx, dy, dist;
+    double dx, dy, dist;
     int steps, i;
     if (!w) return 0;
     ms = om_ms(ww);
-    x0 = om_unit_position_x(ww, p0);
-    y0 = om_unit_position_y(ww, p0);
     dx = om_unit_position_x(ww, p1) - x0;
     dy = om_unit_position_y(ww, p1) - y0;
     dist = sqrt(dx * dx + dy * dy);
@@ -2852,7 +2919,8 @@ int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
         /* R-098-02: a blocked cell on the lower of the two layers blocks the line, as the cover test does.
          * See also: fog.c, the sight side. */
         if (om_combat_cover_blocks(w, p0, p1, x0, y0, x0 + dx, y0 + dy)) return 0;
-        if (!om_move_los_clear(w, ms, x0, y0, x0 + dx, y0 + dy, (uint32_t)om_move_layer(w, p0) < (uint32_t)om_move_layer(w, p1) ? (uint32_t)om_move_layer(w, p0) : (uint32_t)om_move_layer(w, p1))) return 0;
+        /* R-098-02, I11nl: the walk reads the cells as the sight side does (om_move_los_cell_blocked), so a unit that sees a target can shoot it. */
+        if (!om_move_los_walk(w, ms, x0, y0, x0 + dx, y0 + dy, (uint32_t)om_move_layer(w, p0) < (uint32_t)om_move_layer(w, p1) ? (uint32_t)om_move_layer(w, p0) : (uint32_t)om_move_layer(w, p1), 1)) return 0;
     }
     /* Terrain stage 2: in a ground era the ground between the two stands in the line, the same test as fog.c's. See also: om_fog_can_see_at. */
     if (om_era_kind(w) == 1 && om_terrain_present(w) && om_terrain_sight_blocks(w, om_move_layer(w, p0), x0, y0, om_move_layer(w, p1), x0 + dx, y0 + dy)) return 0;
@@ -2868,6 +2936,11 @@ int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
         if ((g.cover_density > 0.0 && !om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN)) || g.obstacle_density > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
     }
     return 1;
+}
+
+int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
+    if (!w) return 0;
+    return om_combat_can_shoot_from(w, p0, om_unit_position_x((om_world *)w, p0), om_unit_position_y((om_world *)w, p0), p1);
 }
 
 void om_command_attack_target_kiting(om_world *w, uint32_t unit, uint32_t target, double retreat_x, double retreat_y) {

@@ -50,7 +50,7 @@ for _p in (str(ROOT), HERE):
         sys.path.insert(0, _p)
 
 import ref_firing_rev2 as ref  # noqa: E402
-from scripts.skilllab import engine as engine_mod, fight, firing, plays  # noqa: E402
+from scripts.skilllab import engine as engine_mod, fight, firing, invariants, plays  # noqa: E402
 from scripts.skilllab.contract import Block, Cover, Group, Setup, Terrain  # noqa: E402
 
 # DRAFT, Westley's number. Stage one (firing.py and engine.py) only; measured floor: with firing stubbed a 16v16 fight costs
@@ -82,9 +82,10 @@ def firing_of(module):
             setattr(fight, n, f)
 
 
-def fight_with(module, setup, seed, swap, eng):
+def fight_with(module, setup, seed, swap, eng, check=True):
+    """check=False is for the speed test only (it measures engine speed; the whole-run rule checker now runs inside fight.fight and its cost is in no ratio of firing code)."""
     with firing_of(module):
-        return fight.fight(setup, seed, swap, eng)
+        return fight.fight(setup, seed, swap, eng, check=check)
 
 
 def assert_results_equal(a, b, what="fight"):
@@ -687,14 +688,18 @@ def within_ratio(measured, limit=None):
 def test_the_speed_ratio_of_the_live_firing_against_the_frozen_reference(library):
     """Acceptance (c): 26 fights, blob_play(16) against 12 to 24, both orders, live and reference interleaved in this process. RED until
     the builder: today the two are the same code and the ratio is about 1.0. Results are compared too, so a faster-but-different
-    firing cannot pass."""
+    firing cannot pass.
+
+    Both sides run with check=False (fight.fight's keyword): the speed ratio is of the firing code, and the rule checker, which runs inside every lab fight since Round 2,
+    costs the same on both sides and pulled the ratio to 0.890 against the 0.75 limit. The limit does not move. A check=False result is no evidence about rules: the last
+    assertion below says every result of this test reports the checker suspended (invalid None, every rule 'checker off'), so this test can never be mistaken for rule evidence."""
     items = [(enemies, swap) for enemies in RATIO_ENEMIES for swap in RATIO_SWAPS]
     seen = {}
 
     def run(label, module):
         def go(item):
             enemies, swap = item
-            seen[(label, item)] = fight_with(module, plays.blob_play(16)(enemies, swap), 0, swap, library)
+            seen[(label, item)] = fight_with(module, plays.blob_play(16)(enemies, swap), 0, swap, library, check=False)
         return go
 
     measured = measure_ratio(run("new", firing), run("ref", ref), items)
@@ -702,6 +707,9 @@ def test_the_speed_ratio_of_the_live_firing_against_the_frozen_reference(library
           % (measured[0], measured[1], measured[2], measured[3], measured[4], DRAFT_LAB_SPEED_RATIO_1, len(items)))
     for item in items:
         assert_results_equal(seen[("new", item)], seen[("ref", item)], "enemies %d swap %s" % item)
+    for key, result in seen.items():
+        assert result.invalid is None and result.violations == [] and set(result.suspended.values()) == {"checker off"} and set(result.suspended) == set(invariants.RULES), (
+            "%s: a check=False result must report the checker suspended, got invalid %r suspended %r" % (key, result.invalid, result.suspended))
     within_ratio(measured)
 
 
