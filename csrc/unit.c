@@ -2020,7 +2020,12 @@ static void om_tac_end_pursuit(om_world *w, om_unit_row *u) {
 /* H-057 (R-087-04 rev 2026-11-01): walk toward a target beyond attack range. The unit leaves its group for the
  * engagement exactly as the return-fire redirect does: am_gid cleared, order_x/y kept as the point to resume to. */
 static void om_tac_chase(om_world *w, om_unit_row *u, const om_unit_row *t) {
-    if (!u->halted && u->issued_x == t->x && u->issued_y == t->y) return;
+    double rx, ry;
+    /* The move is already ordered only while the unit still has the route: the route planner refuses a move while the unit cannot move (the
+     * pause after its own shot, R-084-04) and drops the destination, but issued_x/y keeps the target's place, so without the destination test
+     * the chase never ordered again and the unit stood until the give-up (R-087-04). A braced unit is not covered: no rule says what it does
+     * with a target out of range; it gets its move re-ordered each tick and the route is refused each tick, as before. */
+    if (!u->halted && u->issued_x == t->x && u->issued_y == t->y && om_unit_get_destination(w, u->unit_id, &rx, &ry)) return;
     if (u->am_gid != 0 && om_unit_get_group_id(w, u->unit_id) == u->am_gid) {
         if (!om_unit_get_destination(w, u->unit_id, &u->order_x, &u->order_y)) {
             u->order_x = u->issued_x; u->order_y = u->issued_y;
