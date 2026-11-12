@@ -14,7 +14,7 @@ Premises dumped 2026-11-11 on this tree (combined Round 2 branch d5be5d7d, the c
                      through tick 375 standing at (2123.2, 1861.9) with no destination, moved 0.00 wu a tick, fires nothing; at tick 376 it takes enemy 5 and gets a destination. R-087-04 (E-11):
                      "walks toward it until the enemy is within attack range, then halts and fires".
 
-Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47): fights 2136 / 3923 / 847 ticks, no violation of any rule in any. The L-0061 tick 42, L-0084 tick 349 and cover tick 206 events still happen (the unit
+Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47): fights 2136 / 3923 / 847 ticks, no violation of any rule in any (the cover fixture is 801 ticks on the Round 4 tip 6d3d7635, R-097-10, still none; first different tick 575). The L-0061 tick 42, L-0084 tick 349 and cover tick 206 events still happen (the unit
 changes target there). The L-0084 tick 1754 lag (guards 33, 39 and 40 holding 93 for one tick after the sight check) is gone: they now drop at tick 1754 (Round 3 fix 1), and unit 13 of the cover fixture
 no longer gives enemy 6 up at tick 376 (it holds it past tick 420): the two tests for those two events (R-093-02 L-0084, R-087-09 tick 376) pass without meeting the case, which the pure tests
 (tests/skilllab/test_invariants_visible.py, test_invariants_give_up.py) still cover.
@@ -60,11 +60,12 @@ def at(mon, rule, tick, unit=None):
 
 
 def test_control_the_monitor_runs_the_three_fights_to_the_measured_ends():
-    """Control (green today and after, unless the engine changes): L-0061 seed 1 2136 ticks, L-0084 seed 1 3923, the cover fixture 847; sight on suspends nothing. Proves the fights below are the
+    """Control (green today and after, unless the engine changes): L-0061 seed 1 2136 ticks, L-0084 seed 1 3923, the cover fixture 801; sight on suspends nothing. Proves the fights below are the
     ones the premises were dumped on. Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47; Test-defect: dumped before the Round 3 engine fixes): was 2234 / 3718 / 1086 on 7ba38983. L-0061: 2234 -> 2025
-    at fix 3 (8f825d59) -> 2136 at fix 2 (94da7493); L-0084: 3718 -> 3923 at fix 1 (d70c8d47); cover: 1086 -> 847 at fix 2. The lab checker reports no violation of any rule on any of the three."""
+    at fix 3 (8f825d59) -> 2136 at fix 2 (94da7493); L-0084: 3718 -> 3923 at fix 1 (d70c8d47); cover: 1086 -> 847 at fix 2 -> 801 on the Round 4 tip 6d3d7635 (R-097-10: an idle unit steps aside for a mover of its own side; first different tick 575; Test-defect: dumped
+    before it). The lab checker reports no violation of any rule on any of the three."""
     got = [(played(n)[0].tick, played(n)[0].suspended) for n in ("L-0061", "L-0084", "cover")]
-    assert got == [(2136, {}), (3923, {}), (847, {})]
+    assert got == [(2136, {}), (3923, {}), (801, {})]
 
 
 def test_R_096_08_a_guard_dropping_a_target_beyond_radius_plus_range_by_slant_is_not_an_r_087_03_report_L0061():
