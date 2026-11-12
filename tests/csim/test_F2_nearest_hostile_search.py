@@ -428,9 +428,13 @@ def _state_hash(lib, w):
 # Re-recorded 2026-11-11 (engine rules Round 2, F9 a5f4084c: an attack-mover with no target leaves unseen fire, then resumes its point, R-087-01; was: 2026-11-08 recorded: clash babdc2db, spread 2a7652cc).
 # Built at each Round 2 engine commit: every one up to f917a552 reproduces the old hashes at tick 400 and at every tick before it; a5f4084c is the first to differ. Spread first differs at tick 2
 # (an attack-moving raider with no target steps away from where it was, unit 109, about 7 wu); clash at tick 83 (unit 24 drops target 581 to 0, the target it did not see, and 581 is no longer hit by it).
+# Re-recorded 2026-11-12 (engine rules Round 3, fix 3 8f825d59: no pursuit-end check while the unit is in its move away from unseen fire, R-087-01; was: 2026-11-11 recorded: clash 97289311, spread b12dcbf5).
+# Built at each Round 3 engine commit: 8f825d59 is the first to differ and 94da7493 (fix 2) and d70c8d47 (fix 1) leave its hashes as they are. Spread first differs at tick 69 (unit 578, a raider
+# flinching since tick 68 after damage from an attacker it does not see; the old pursuit-end check walked it back toward its point, so its step away went a different way, 7.5 wu off at tick 69, one unit that tick);
+# clash at tick 367 (unit 52, flinching since tick 366: 4.5 wu off at the first step away, 64 units differ at that tick). The fixed unit steps straight away from the damage.
 GOLDEN = {
-    "clash": "97289311ff46d14057a225c0e785ecc7cb5add9eb0a28711151adf28c12cdc9a",
-    "spread": "b12dcbf52a982ad69a0b1483db4ecb0ab934485ea5347281f3af07901cde2d71",
+    "clash": "f6194aa24efc6ef8aa49bb3e5cd45843f40ae070c353dafd81d0cdfbee7d5143",
+    "spread": "8c68d293ba67aa9f40042bcdc25b7bc8d516b14c40ffdaef46f418a1a84f92d3",
 }
 
 
