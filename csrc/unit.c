@@ -303,6 +303,12 @@ typedef struct {
     uint64_t excl_until[OM_GIVEUP_EXCL_SLOTS];
     int      spot_set;
     double   spot_x, spot_y;
+    /* R-087-03, R-087-08: the side's sight of the target the unit held at the start of this tick, answered once for every unit before any unit
+     * steps (om_tactical_ai_tick), so the lock check of a unit in its own AI turn does not read positions that lower ids have moved and higher
+     * ids have not. sight_tid is the target the answer is for (0 = none); per-tick scratch: not hashed, not saved, and read only inside the tick
+     * that wrote it. */
+    uint32_t sight_tid;
+    int      sight_ok;
 } om_unit_row;
 
 /* VG K-a tactical event ring: fire, ability and kill events of one om_tactical_step call. */
@@ -1218,6 +1224,13 @@ static int om_tac_by_sight(const om_world *w) {
 /* The target is usable by this unit: always at switch 0, else only when its side sees it. */
 static int om_tac_may_act_on(om_world *w, const om_unit_row *self, const om_unit_row *t) {
     return !om_tac_by_sight(w) || om_tac_faction_sees(w, self, t);
+}
+
+/* The lock check (R-087-03): may_act_on as it stood at the start of the tick for the target the unit held then (om_tactical_ai_tick's
+ * pre-pass), else, for a target taken since, as it stands now. */
+static int om_tac_lock_sees(om_world *w, const om_unit_row *self, const om_unit_row *t) {
+    if (self->sight_tid == t->unit_id) return self->sight_ok;
+    return om_tac_may_act_on(w, self, t);
 }
 
 /* The unit ids ascend in the old sorted scan and only a strictly smaller
@@ -2285,7 +2298,7 @@ static void om_tac_guard_tick(om_world *w, om_tac_state *st, om_unit_row *u, uin
     int shoot = 0, stepped = 0;
     om_unit_row *t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     if (u->target_id != 0) {
-        int drop = !t || t->hp <= 0.0 || !om_tac_hostile(u, t) || t->stealth || !om_tac_may_act_on(w, u, t)
+        int drop = !t || t->hp <= 0.0 || !om_tac_hostile(u, t) || t->stealth || !om_tac_lock_sees(w, u, t)
                    || !(om_tac_in_range(w, u, t) || om_tac_guard_engageable(w, u, t, px, py));
         if (!drop && om_tac_giveup(u, t, om_tac_shootable(w, u, t, &shoot_for, &shoot), period, tick)) drop = 1;
         if (drop) { u->target_id = 0; om_tac_giveup_clear(u); t = NULL; }
@@ -2499,7 +2512,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             }
         }
         /* G3 (R-008-04): a held target the side no longer sees is dropped on the spot, one sight check per held target */
-        if (!drop && u->order != OM_ORDER_ATTACK_TARGET && !om_tac_may_act_on(w, u, t)) drop = 1;
+        if (!drop && u->order != OM_ORDER_ATTACK_TARGET && !om_tac_lock_sees(w, u, t)) drop = 1;
         if (!drop && u->order != OM_ORDER_ATTACK_TARGET) {
             /* P1: with pursuit by steering a target that has left attack range is kept until a cohort turn finds another */
             if (!om_tac_in_reach(w, u, t) || t->stealth || ((!pursue || u->guard) && !om_tac_in_range(w, u, t))) {
@@ -2674,6 +2687,14 @@ static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
 static void om_tactical_ai_tick(om_world *w, om_tac_state *st) {
     uint64_t tick = st->current_tick + 1;
     uint32_t i;
+    /* R-087-03, R-087-08: whether the side sees each held target, asked once, in unit-id order, on the positions the previous tick ended
+     * with, before any unit steps; the lock checks below read it (om_tac_lock_sees). See also: om_tac_unit_ai, om_tac_guard_tick. */
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        om_unit_row *t = (u->in_use && u->hp > 0.0 && u->target_id != 0) ? om_registry_find_in(st, u->target_id) : NULL;
+        u->sight_tid = t ? t->unit_id : 0;
+        if (t) u->sight_ok = om_tac_may_act_on(w, u, t);
+    }
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use || u->hp <= 0.0) continue;
