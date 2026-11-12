@@ -1,6 +1,14 @@
 # Rule pins: R-087-10, R-087-05, R-005-09, R-084-03, R-098-02, R-190-04
 """E-11 R-087-10 (engine rule fixes 2026-11-08, F7; narrowed 2026-11-11): weapon reach is spherical, layer height included; sight and the leash are horizontal.
 
+DRAFT-slant-ground-only (Round 2, T8, 2026-11-11; a provisional reading pending the owner's ruling, not rule text): the slant is used only when BOTH units are
+walking units standing on ground bands (the hill the owner was looking at). When either unit is a flyer, weapon reach is the horizontal distance and the reach
+table's range multipliers, as before Round 2. Reason: the air layers' band floors are about 920 wu apart (measured band heights [60.11, 979.86, 1899.61, 2819.36,
+3739.11]), so by slant no flying unit could ever reach a unit on another air layer; tests/skilllab/ground/test_slope_top_variants.py::
+test_the_flyer_fight_still_ends_by_elimination (units 6 wu apart horizontally on layers 2 and 3, ranges 200 and 300) ran to the 12,000 tick cap instead of ending at tick 3059.
+Each test below that depends on the unit kind says so in its docstring. Unit kinds of the tests that existed before T8: the flat-plane scene S (`_world`) registers
+FLYERS (om_roster_set_movement_kind 0, the default of `_reg`); `_hill_world`, `_sight_scene` and the leash scenes register WALKERS (kind 1).
+
 Rule words proved (docs/bible/epics/E-11-units-and-combat.md, as ruled 2026-11-11, DEC-slant-is-weapon-reach-2026-11-11):
   R-087-10  "Given a test of whether a weapon reaches (a unit's attack range to its target, an area attack's radius to each unit it would hit), When it is
              evaluated, Then the distance is spherical: the horizontal distance and the height difference between the two units' layers (E-17 R-190-04 band
@@ -38,16 +46,17 @@ import math
 
 import pytest
 
-from conftest import OMFeature
+from conftest import OMFeature, OMTacParam
 from test_PP_unit_support import attack_move, hp, pos, spawn, step, target
 
 CANVAS = 4000.0
 LOW_CM, STEP_CM = 7000, 6000
-SEER, SHOOTER, TARGET, SPLASH, PASSIVE = 20, 21, 22, 23, 24
+SEER, SHOOTER, TARGET, SPLASH, PASSIVE, WALKER_T, WALKER_S = 20, 21, 22, 23, 24, 25, 26
 WALKING = 1
 TICKS = 60            # DRAFT-f7-ticks
 FULL = 1000.0
 RANGE = 300.0
+AREA = 150.0         # the walking splasher's area radius in the area tests
 LAYER_DZ = 60.0       # band_heights[1] - band_heights[0], asserted from the live world in every scene
 
 
@@ -100,22 +109,40 @@ def _premise(lib, w, flat, limit, inside_flat=True, inside_slant=True):
 
 # ------------------------------------------------------------------ attack range
 
-def test_R_087_10_attack_range_a_unit_outside_range_by_slant_does_not_fire(lib, world_factory):
-    """R-087-10 'attack range ... the distance is spherical': a shooter (range 300) on layer 1 and a target on layer 0, 299 wu apart on the
-    ground (inside 300 flat) and 305.0 apart in the air (60 wu of layer height): it does not fire in 60 ticks. The shooter cannot walk (speed 0).
-    Red today: the range test is flat, the target loses hit points from the first shot."""
-    w = _world(lib, world_factory)
-    slant = _premise(lib, w, 299.0, RANGE, inside_flat=True, inside_slant=False)
-    a = spawn(lib, w, SHOOTER, 0, 1000, 2000, 1)
-    b = spawn(lib, w, TARGET, 1, 1299, 2000, 0)
-    assert (lib.om_unit_get_layer(w, a), lib.om_unit_get_layer(w, b)) == (1, 0)
+def test_R_087_10_attack_range_two_walkers_on_a_hill_outside_range_by_slant_do_not_fire(lib, world_factory):
+    """R-087-10 'attack range ... the distance is spherical' (DRAFT-slant-ground-only: both units are walkers on ground bands, the hill case): a walking shooter
+    (range 300) on the hill (layer 1, x 950) and a walking target on the flat below (layer 0, x 1247), 297 wu apart on the ground (inside 300 flat) and 303.0 through
+    the air (60 wu of layer height): it does not fire in 60 ticks. Neither can walk (speed 0). Premises dumped from the built tree (2026-11-11): layers (1, 0);
+    band heights [70.0, 130.0, ...]; both types movement kind 1 (walking); om_unit_can_see(a, b) = 1 (sensor 600). GREEN today and after: the walker pair is the
+    case the slant exists for. (Rewritten 2026-11-11, Test-defect: it was a pair of FLYERS on a flat plane, which the provisional rule measures flat.)"""
+    w = _hill_world(lib, world_factory)
+    a = spawn(lib, w, SHOOTER, 0, 950, 2000, 1)
+    b = spawn(lib, w, TARGET, 1, 950 + 297, 2000, 0)
+    assert (lib.om_unit_get_layer(w, a), lib.om_unit_get_layer(w, b)) == (1, 0), "premise: layers"
+    assert [lib.om_unit_profile_movement_kind(w, SHOOTER), lib.om_unit_profile_movement_kind(w, TARGET)] == [WALKING, WALKING], "premise: both walkers"
+    h = _heights(lib, w)
+    assert h[:2] == [70.0, 130.0], "band heights %s, the scene assumes 70 and 130" % h
+    slant = _slant(297.0, h, 1, 0)
+    assert 297.0 <= RANGE < slant, "premise: flat 297 inside %.0f, slant %.1f outside" % (RANGE, slant)
+    assert lib.om_unit_can_see(w, a, b), "premise: the shooter sees the target"
     step(lib, w, TICKS)
-    assert hp(lib, w, b) == FULL, "fired at a target %.1f wu away through the air (range %.0f), target hp %.1f" % (slant, RANGE, hp(lib, w, b))
+    assert hp(lib, w, b) == FULL, "a walker fired at a walker %.1f wu away through the air (range %.0f), target hp %.1f" % (slant, RANGE, hp(lib, w, b))
+
+
+def test_R_087_10_attack_range_control_two_walkers_on_a_hill_inside_range_by_slant_fire(lib, world_factory):
+    """R-087-10 control for the walker test above (green today and after; DRAFT-slant-ground-only): the same walking pair 290 wu apart on the ground and 296.2 through the air,
+    both inside 300: it fires. Proves the hill scene fires, so the test above is green for the metric and not for a muted pair."""
+    w = _hill_world(lib, world_factory)
+    a = spawn(lib, w, SHOOTER, 0, 950, 2000, 1)
+    b = spawn(lib, w, TARGET, 1, 950 + 290, 2000, 0)
+    assert (lib.om_unit_get_layer(w, a), lib.om_unit_get_layer(w, b)) == (1, 0), "premise: layers"
+    step(lib, w, TICKS)
+    assert hp(lib, w, b) < FULL, "scene broken: no shot landed at 290 wu between walkers on a hill"
 
 
 def test_R_087_10_attack_range_control_a_unit_inside_range_by_slant_fires(lib, world_factory):
-    """R-087-10 control (green today and after): 290 wu on the ground, 296.2 through the air, both inside 300: the same pair fires. Proves the
-    scene fires, so the test above is red for the metric and not for a muted shooter."""
+    """R-087-10 control (green today and after; scene S, FLYERS): 290 wu on the ground, 296.2 through the air, both inside 300: the same pair fires. Proves the
+    scene fires, so the walker test above is green for the metric and not for a muted shooter."""
     w = _world(lib, world_factory)
     _premise(lib, w, 290.0, RANGE, inside_flat=True, inside_slant=True)
     a = spawn(lib, w, SHOOTER, 0, 1000, 2000, 1)
@@ -125,7 +152,7 @@ def test_R_087_10_attack_range_control_a_unit_inside_range_by_slant_fires(lib, w
 
 
 def test_R_087_10_attack_range_control_the_same_layer_is_measured_flat(lib, world_factory):
-    """R-087-10 control (green today and after): two units on the SAME layer have no height difference; 299 wu is inside 300 and fires."""
+    """R-087-10 control (green today and after; scene S, FLYERS): two units on the SAME layer have no height difference; 299 wu is inside 300 and fires."""
     w = _world(lib, world_factory)
     a = spawn(lib, w, SHOOTER, 0, 1000, 2000, 1)
     b = spawn(lib, w, TARGET, 1, 1299, 2000, 1)
@@ -142,6 +169,109 @@ def test_R_087_10_attack_range_control_a_world_with_no_terrain_measures_flat(lib
     b = spawn(lib, w, TARGET, 1, 1299, 2000, 0)
     step(lib, w, TICKS)
     assert hp(lib, w, b) < FULL, "scene broken: no shot landed at 299 wu in a world with no terrain"
+
+
+# ------------------------------------------------------------------ DRAFT-slant-ground-only: a flyer is measured flat
+
+AIR_STEP_CM = 92000   # a layer is 920 wu high: the measured air band spacing (band heights [60.11, 979.86, 1899.61, ...]), here [70, 990, 1910, ...]
+
+
+def _air_world(lib, wf):
+    """Scene S with the air layers' spacing: the flat plane of `_plane`, but the corner cell sets a 920 wu band step. Flyers (kind 0) SEER, SHOOTER (range 300, sensor 600),
+    TARGET; a walker twin of TARGET (WALKER_T) for the flyer-and-walker pair. All speed 0."""
+    w = wf(n_regions=1)
+    lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
+    assert lib.om_map_set_canvas(w, CANVAS, CANVAS) == 0
+    _plane(lib, w, step_cm=AIR_STEP_CM)
+    lib.om_set_era_kind(w, 1)
+    _reg(lib, w, SHOOTER, FULL, 10.0, 0.5, RANGE, 0.0, 600.0)
+    _reg(lib, w, TARGET, FULL, 1.0, 1.0, 10.0, 0.0, 10.0)
+    _reg(lib, w, WALKER_T, FULL, 1.0, 1.0, 10.0, 0.0, 10.0, kind=WALKING)
+    _reg(lib, w, WALKER_S, FULL, 10.0, 0.5, RANGE, 0.0, 600.0, kind=WALKING)
+    return w
+
+
+def _air_premise(lib, w, shooter, target, flat, la, lb):
+    """Dump and assert the premises of an air scene: band heights, the cross-layer range multipliers, the shooter type's reach, both movement kinds, flat and slant."""
+    h = _heights(lib, w)
+    assert h[0] == 70.0 and h[1] - h[0] == 920.0, "band heights %s, the scene assumes 70 and 920 apart" % h
+    up, down = ctypes.c_uint32(), ctypes.c_uint32()
+    assert lib.om_unit_profile_reach(w, SHOOTER if shooter is None else shooter, ctypes.byref(up), ctypes.byref(down)) == 0
+    assert (up.value, down.value) == (1, 1), "reach table (up, down) %d, %d: the pair must be allowed one layer apart" % (up.value, down.value)
+    mult = [lib.om_tactical_get_param(w, OMTacParam.RANGE_UP_1), lib.om_tactical_get_param(w, OMTacParam.RANGE_DOWN_1)]
+    assert mult == [1.0, 1.0], "range multipliers %s: the metric is the type's plain range" % mult
+    s = _slant(flat, h, la, lb)
+    return s
+
+
+def test_R_087_10_draft_slant_ground_only_two_flyers_on_adjacent_air_layers_fire_by_horizontal_distance(lib, world_factory):
+    """R-087-10 'attack range ... the distance is spherical' read DRAFT-slant-ground-only (a flyer is measured flat): a flying shooter (range 300) on air layer 2 and a
+    flying target on air layer 3, 250 wu apart horizontally (inside 300) and about 953 wu through the air (920 wu of layer height): it fires. Premises dumped from the
+    built tree (2026-11-11): band heights [70.0, 990.0, 1910.0, ...] (920 apart, as the measured air bands); reach (up 1, down 1) so one layer apart is allowed;
+    OM_TP_RANGE_UP_1 = OM_TP_RANGE_DOWN_1 = 1.0; both types movement kind 0 (flying). Red today: the range test is spherical for every unit, the target is 953 wu
+    away and nobody fires. The whole-run proof is test_the_flyer_fight_still_ends_by_elimination (tests/skilllab/ground/test_slope_top_variants.py)."""
+    w = _air_world(lib, world_factory)
+    slant = _air_premise(lib, w, SHOOTER, TARGET, 250.0, 2, 3)
+    assert slant > 900.0 > 0 and 250.0 <= RANGE, "premise: flat 250 inside %.0f, slant %.1f far outside" % (RANGE, slant)
+    a = spawn(lib, w, SHOOTER, 0, 1000, 2000, 2)
+    b = spawn(lib, w, TARGET, 1, 1250, 2000, 3)
+    assert (lib.om_unit_get_layer(w, a), lib.om_unit_get_layer(w, b)) == (2, 3), "premise: layers"
+    assert [lib.om_unit_profile_movement_kind(w, SHOOTER), lib.om_unit_profile_movement_kind(w, TARGET)] == [0, 0], "premise: both flyers"
+    step(lib, w, TICKS)
+    assert hp(lib, w, b) < FULL, "two flyers on adjacent air layers, %.0f wu apart horizontally (range %.0f), %.1f through the air: no shot landed in %d ticks" % (250.0, RANGE, slant, TICKS)
+
+
+def test_R_087_10_draft_slant_ground_only_two_flyers_on_adjacent_air_layers_do_not_fire_beyond_the_horizontal_range(lib, world_factory):
+    """R-087-10 control for the test above (green today and after; DRAFT-slant-ground-only): the same flyers 350 wu apart horizontally, outside range 300 flat as well as
+    by slant: no shot in 60 ticks. Proves the flat measure still bounds fire, so the test above is red for the metric and not for a shooter that fires at any distance."""
+    w = _air_world(lib, world_factory)
+    _air_premise(lib, w, SHOOTER, TARGET, 350.0, 2, 3)
+    a = spawn(lib, w, SHOOTER, 0, 1000, 2000, 2)
+    b = spawn(lib, w, TARGET, 1, 1350, 2000, 3)
+    step(lib, w, TICKS)
+    assert hp(lib, w, b) == FULL, "fired at a flyer 350 wu away horizontally (range %.0f), target hp %.1f" % (RANGE, hp(lib, w, b))
+
+
+def test_R_087_10_draft_slant_ground_only_control_two_flyers_on_one_air_layer_fire_at_250_wu(lib, world_factory):
+    """R-087-10 control for the air tests (green today and after; DRAFT-slant-ground-only): in the same air world (band heights 920 apart) the same flyers 250 wu apart on ONE
+    layer (no height difference) fire. Proves the air scene fires, so the cross-layer tests are red for the metric and not for a muted pair."""
+    w = _air_world(lib, world_factory)
+    _air_premise(lib, w, SHOOTER, TARGET, 250.0, 2, 2)
+    a = spawn(lib, w, SHOOTER, 0, 1000, 2000, 2)
+    b = spawn(lib, w, TARGET, 1, 1250, 2000, 2)
+    step(lib, w, TICKS)
+    assert hp(lib, w, b) < FULL, "scene broken: no shot landed at 250 wu on one air layer"
+
+
+def test_R_087_10_draft_slant_ground_only_a_flyer_above_a_walker_fires_by_horizontal_distance(lib, world_factory):
+    """R-087-10 read DRAFT-slant-ground-only (when either unit is a flyer the reach is measured flat): a flying shooter (range 300) on layer 1 and a walking target on the
+    ground (layer 0), 250 wu apart horizontally and about 953 wu through the air (920 wu of layer height): it fires. Premises dumped from the built tree (2026-11-11):
+    band heights [70.0, 990.0, ...]; reach (up 1, down 1) so the flyer reaches one layer down; OM_TP_RANGE_UP_1 = OM_TP_RANGE_DOWN_1 = 1.0; shooter movement kind 0
+    (flying), target kind 1 (walking); om_unit_can_see(shooter, target) = 1 (sensor 600). Red today: spherical for every unit, the target is 953 wu away."""
+    w = _air_world(lib, world_factory)
+    slant = _air_premise(lib, w, SHOOTER, WALKER_T, 250.0, 1, 0)
+    a = spawn(lib, w, SHOOTER, 0, 1000, 2000, 1)
+    b = spawn(lib, w, WALKER_T, 1, 1250, 2000, 0)
+    assert (lib.om_unit_get_layer(w, a), lib.om_unit_get_layer(w, b)) == (1, 0), "premise: layers"
+    assert [lib.om_unit_profile_movement_kind(w, SHOOTER), lib.om_unit_profile_movement_kind(w, WALKER_T)] == [0, WALKING], "premise: flyer above walker"
+    assert lib.om_unit_can_see(w, a, b), "premise: the flyer sees the walker below it"
+    step(lib, w, TICKS)
+    assert hp(lib, w, b) < FULL, "a flyer 250 wu horizontally from a walker below it (range %.0f, %.1f through the air): no shot landed in %d ticks" % (RANGE, slant, TICKS)
+
+
+def test_R_087_10_draft_slant_ground_only_a_walker_under_a_flyer_fires_by_horizontal_distance(lib, world_factory):
+    """R-087-10 read DRAFT-slant-ground-only, the other direction (the rule says 'either unit'): a walking shooter (range 300) on the ground (layer 0) and a flying target
+    on layer 1 above it, 250 wu apart horizontally and 953 through the air: it fires. Premises as the test above with the kinds swapped (shooter walking, target flying;
+    reach (1, 1) of the walking type). Red today for the same reason. (Not in the brief's list: added because the provisional rule is worded 'either unit'.)"""
+    w = _air_world(lib, world_factory)
+    slant = _air_premise(lib, w, WALKER_S, TARGET, 250.0, 0, 1)
+    a = spawn(lib, w, WALKER_S, 0, 1000, 2000, 0)
+    b = spawn(lib, w, TARGET, 1, 1250, 2000, 1)
+    assert (lib.om_unit_get_layer(w, a), lib.om_unit_get_layer(w, b)) == (0, 1), "premise: layers"
+    assert [lib.om_unit_profile_movement_kind(w, WALKER_S), lib.om_unit_profile_movement_kind(w, TARGET)] == [WALKING, 0], "premise: walker under flyer"
+    assert lib.om_unit_can_see(w, a, b), "premise: the walker sees the flyer above it"
+    step(lib, w, TICKS)
+    assert hp(lib, w, b) < FULL, "a walker 250 wu horizontally from a flyer above it (range %.0f, %.1f through the air): no shot landed in %d ticks" % (RANGE, slant, TICKS)
 
 
 # ------------------------------------------------------------------ sensor radius: horizontal (R-005-09)
@@ -189,36 +319,58 @@ def test_R_087_10_sensor_radius_control_a_unit_on_a_hill_does_not_see_an_enemy_b
 
 # ------------------------------------------------------------------ area radius
 
+def _cliff_world(lib, wf):
+    """A walker world for the area radius (DRAFT-slant-ground-only: walkers on ground bands): a hill (layer 1) west of x 1200 that falls in one cell to a flat plane (layer 0),
+    60 wu lower (the 60 wu band step of `_plane`, corner cell as `_hill_world`). Walker types SPLASH (range 600, area radius 150, speed 0), PASSIVE (speed 0). The cell beside the cliff is too steep to stand on (om_unit_spawn returns 0 at x 1170 to 1210, measured 2026-11-11), so the pairs below keep 50 wu clear of x 1200 on both sides."""
+    w = wf(n_regions=1)
+    lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
+    assert lib.om_map_set_canvas(w, CANVAS, CANVAS) == 0
+    assert lib.om_terrain_generate(w, 7, CANVAS, CANVAS) == 0
+    lib.om_set_era_kind(w, 1)
+    n = 40
+    cm = [LOW_CM + (2 * STEP_CM - 1 if cx < 12 else 0) for _ in range(n) for cx in range(n)]
+    cm[n * n - 1] = LOW_CM + 5 * STEP_CM
+    assert lib.om_terrain_set_heights(w, (ctypes.c_int32 * len(cm))(*cm), n, n) == 1
+    _reg(lib, w, SPLASH, FULL, 10.0, 0.5, 600.0, 0.0, 600.0, aoe=AREA, kind=WALKING)
+    _reg(lib, w, PASSIVE, FULL, 1.0, 1.0, 10.0, 0.0, 10.0, kind=WALKING)
+    return w
+
+
 def _splash_scene(lib, wf):
-    """A splasher (range 600, area radius 100, speed 0) on layer 0 ordered at B (layer 0); C 90 wu from B on the ground and on layer 1
-    (108.2 through the air: outside 100), D 70 wu from B and on layer 1 (92.2: inside). Returns (world, B, C, D) after TICKS ticks."""
-    w = _world(lib, wf)
-    _reg(lib, w, SPLASH, FULL, 10.0, 0.5, 600.0, 0.0, 600.0, aoe=100.0)
-    _reg(lib, w, PASSIVE, FULL, 1.0, 1.0, 10.0, 0.0, 10.0)
-    _premise(lib, w, 90.0, 100.0, inside_flat=True, inside_slant=False)
-    _premise(lib, w, 70.0, 100.0, inside_flat=True, inside_slant=True)
-    x = spawn(lib, w, SPLASH, 0, 500, 2000, 0)
-    b = spawn(lib, w, PASSIVE, 1, 900, 2000, 0)
-    c = spawn(lib, w, PASSIVE, 1, 900, 2090, 1)
-    d = spawn(lib, w, PASSIVE, 1, 900, 1930, 1)
+    """A walking splasher (range 600, area radius 150, speed 0) on the flat (layer 0, x 1700) ordered at B (layer 0, x 1250); C 140 wu from B on the ground and on the hill (layer 1;
+    152.3 through the air: outside 150), D 110 wu from B and on the hill (125.3: inside). Premises dumped from the built tree (2026-11-11): band heights [70.0, 130.0, ...]; all four
+    units movement kind 1 (walking); layers as listed. Returns (world, B, C, D) after TICKS ticks."""
+    w = _cliff_world(lib, wf)
+    h = _heights(lib, w)
+    assert h[:2] == [70.0, 130.0], "band heights %s, the scene assumes 70 and 130" % h
+    x = spawn(lib, w, SPLASH, 0, 1700, 2000, 0)
+    b = spawn(lib, w, PASSIVE, 1, 1250, 2000, 0)
+    c = spawn(lib, w, PASSIVE, 1, 1120, 2000 + math.sqrt(140.0 ** 2 - 130.0 ** 2), 1)
+    d = spawn(lib, w, PASSIVE, 1, 1140, 2000, 1)
+    assert [lib.om_unit_get_layer(w, u) for u in (x, b, c, d)] == [0, 0, 1, 1], "premise: layers"
+    assert {lib.om_unit_profile_movement_kind(w, t) for t in (SPLASH, PASSIVE)} == {WALKING}, "premise: walkers"
+    flat_c, flat_d = math.hypot(1250 - 1120, 2000 + math.sqrt(140.0 ** 2 - 130.0 ** 2) - 2000), 1250 - 1140
+    assert abs(flat_c - 140.0) < 1e-9 and flat_d == 110.0, "premise: C %.1f and D %.1f wu from B on the ground" % (flat_c, flat_d)
+    assert flat_c < AREA < _slant(flat_c, h, 0, 1) and _slant(flat_d, h, 0, 1) < AREA, "premise: C inside the area flat and outside by slant, D inside by both"
     lib.om_command_attack_target(w, (ctypes.c_uint32 * 1)(x), 1, b)
     step(lib, w, TICKS)
     return w, b, c, d
 
 
-def test_R_087_10_area_radius_a_unit_outside_the_area_by_slant_is_not_hurt(lib, world_factory):
-    """R-087-10 'area radius' (R-084-03): the splash around the target (area radius 100) must not hurt an enemy that is 90 wu from it on the
-    ground but on a layer 60 wu higher (108.2 away through the air). Red today: the area query is a flat circle, so it is hurt."""
+def test_R_087_10_area_radius_a_walker_outside_the_area_by_slant_is_not_hurt(lib, world_factory):
+    """R-087-10 'area radius' (R-084-03), DRAFT-slant-ground-only (splasher and victims are walkers on ground bands): the splash around the target (area radius 150) must not
+    hurt a walking enemy that is 140 wu from it on the ground but on a layer 60 wu higher (152.3 away through the air). GREEN today and after. (Rewritten 2026-11-11, Test-defect:
+    the units were flyers on a flat plane; the provisional rule measures a flyer flat, so the same geometry for flyers is a different question, see the gap in the report.)"""
     w, b, c, d = _splash_scene(lib, world_factory)
     assert hp(lib, w, b) < FULL, "scene broken: the splasher never hit its ordered target"
-    assert hp(lib, w, c) == FULL, "hurt by a splash whose centre is 108.2 wu away through the air (area radius 100), hp %.1f" % hp(lib, w, c)
+    assert hp(lib, w, c) == FULL, "hurt by a splash whose centre is 152.3 wu away through the air (area radius 150), hp %.1f" % hp(lib, w, c)
 
 
-def test_R_087_10_area_radius_control_a_unit_inside_the_area_by_slant_is_hurt(lib, world_factory):
-    """R-087-10 control (green today and after): the enemy 70 wu from the target on the ground and 92.2 through the air is inside 100 and is hurt,
-    so the splash reaches across layers in this scene and the test above is red for the metric."""
+def test_R_087_10_area_radius_control_a_walker_inside_the_area_by_slant_is_hurt(lib, world_factory):
+    """R-087-10 control (green today and after; DRAFT-slant-ground-only): the walking enemy 110 wu from the target on the ground and 125.3 through the air is inside 150 and is hurt,
+    so the splash reaches across layers in this scene and the test above is green for the metric."""
     w, b, c, d = _splash_scene(lib, world_factory)
-    assert hp(lib, w, d) < FULL, "scene broken: the splash did not reach a layer-1 enemy 92.2 wu from its centre"
+    assert hp(lib, w, d) < FULL, "scene broken: the splash did not reach a layer-1 enemy 125.3 wu from its centre"
 
 
 # ------------------------------------------------------------------ leash
