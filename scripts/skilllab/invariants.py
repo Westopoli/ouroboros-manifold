@@ -94,7 +94,8 @@ class _Checker:
         self.prev = None
         self.last_shot = {}          # unit -> tick of its last shot (R-084-04)
         self.lock = {}               # unit -> (target, (x, y) where it took that lock) (R-087-03)
-        self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09)
+        self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09), a target inside attack range: the violation check
+        self.unshot = {}             # the same run for a target at any distance: the engine's give-up window (csrc/unit.c om_tac_giveup), which the swap excuse reads
         self.breached = set()        # guards outside their radius now (R-096-08: one violation per breach, not one per frame)
         self.hit_hist = collections.deque(maxlen=RETURN_FIRE_TICKS)   # the (attacker, victim) pairs of the last frames, this one included (R-087-06)
 
@@ -257,10 +258,10 @@ class _Checker:
                 out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % r["target"]))
 
     def _gave_up(self, u, old, p, o_prev):
-        """The rule that excuses the end of a lock, or None. R-087-09: the target was held unshootable and not closed in on for the checker's own window (STUCK_TICKS; one
-        frame less is counted here because the engine drops the lock on the tick that completes the window, which is the swap frame itself). R-096-08: a guard's target
+        """The rule that excuses the end of a lock, or None. R-087-09: the target was held unshootable and not closed in on for the engine's window (STUCK_TICKS, inside attack range
+        or not: `om_tac_giveup` asks only whether the target can be shot; one frame less is counted here because the engine drops the lock on the tick that completes the window, which is the swap frame itself). R-096-08: a guard's target
         stood so far from its post (by slant, `_beyond_post`) that no spot inside the radius reaches it with the unit's attack range (an engaged guard that would leave the radius lets go)."""
-        run = self.stuck.get(u)
+        run = self.unshot.get(u)
         if run is not None and run[0] == old and run[1] >= STUCK_TICKS - 1:
             return "R-087-09"
         post = self.rules.guards.get(u)
@@ -311,21 +312,29 @@ class _Checker:
         elif tick % COHORT_SLOTS != self.rules.cohort[u]:
             out.append(_violation("R-087-03", tick, u, "acquired %d at tick %d, off its cohort turn (slot %d)" % (tgt, tick, self.rules.cohort[u])))
 
+    @staticmethod
+    def _advance(runs, u, tgt, dist):
+        """One frame of unit u's run of holding tgt unshootable: [target, frames, distance at the run's start, flagged]; it restarts on another target or when the unit closes in by more than 1 wu."""
+        run = runs.get(u)
+        if run is None or run[0] != tgt or dist < run[2] - 1.0:
+            run = runs[u] = [tgt, 0, dist, False]
+        run[1] += 1
+        return run
+
     def _held(self, units, u, r, tick, out):
         tgt = r["target"] if r["alive"] else 0
         t = units.get(tgt) if tgt else None
         if not t or not t["alive"] or r.get("shootable", True):
             self.stuck.pop(u, None)
+            self.unshot.pop(u, None)
             return
         dist = math.hypot(t["x"] - r["x"], t["y"] - r["y"])
+        self._advance(self.unshot, u, tgt, dist)     # R-087-09 as the engine counts it: whether or not the target is inside attack range (the swap excuse, `_gave_up`)
         reach = self.rules.attack_range.get(u)
         if reach is not None and dist > reach:
-            self.stuck.pop(u, None)          # R-087-09 is about a target within attack range; the 20 ticks are consecutive in-range ticks
+            self.stuck.pop(u, None)          # the R-087-09 violation is about a target within attack range; its 20 ticks are consecutive in-range ticks
             return
-        run = self.stuck.get(u)
-        if run is None or run[0] != tgt or dist < run[2] - 1.0:
-            run = self.stuck[u] = [tgt, 0, dist, False]
-        run[1] += 1
+        run = self._advance(self.stuck, u, tgt, dist)
         if run[1] > STUCK_TICKS and not run[3] and "R-087-09" in self.on:
             run[3] = True
             out.append(_violation("R-087-09", tick, u, "held target %d unshootable for %d ticks without closing in (%.0f wu away)" % (tgt, run[1], dist)))
