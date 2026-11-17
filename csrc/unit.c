@@ -266,6 +266,10 @@ typedef struct {
     int      flinching;
     double   flinch_x, flinch_y;
     uint32_t last_attacker;
+    /* G2 (R-087-03): the target a return-fire hit gave the unit (R-087-06), 0 when its lock was taken another way. While target_id equals it, the lock is
+     * exempt from the notice-distance break (the leash alone bounds that chase). Zero at rest; hashed while set; not saved (a loaded unit's lock ends at the
+     * notice distance like any other: saving it needs OM_SAVE_FORMAT_VERSION and the pipe sidecar bumped, a contract step). */
+    uint32_t rf_target;
     int      fire_pending;
     int      stealth;
     /* set each tactical tick while the unit is under an order (move,
@@ -1779,6 +1783,13 @@ static int om_tac_in_range(const om_world *w, const om_unit_row *a, const om_uni
     return om_tac_in_reach(w, a, t) && om_tac_within(w, a, t, a->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, a, t));
 }
 
+/* G2 (R-087-04, R-087-03): the target is within the unit's notice distance: its weapon reach to that target (R-087-10, the reach table's multiplier
+ * for the target's layer) times 1 + OM_NOTICE_MARGIN. Another layer is noticed only within reach. */
+static int om_tac_in_notice(const om_world *w, const om_unit_row *a, const om_unit_row *t) {
+    if (a->layer == t->layer) return om_tac_within(w, a, t, a->attack_range * (1.0 + OM_NOTICE_MARGIN));
+    return om_tac_in_reach(w, a, t) && om_tac_within(w, a, t, a->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, a, t) * (1.0 + OM_NOTICE_MARGIN));
+}
+
 /* A196: the policy for this unit's side; faction 1's own id wins unless unset (-1), then OM_TP_TARGET_POLICY. */
 static int om_tac_most_damaged_for(const om_world *w, const om_unit_row *self) {
     double p = self->faction_id == 1 ? om_tactical_get_param(w, OM_TP_TARGET_POLICY_FACTION_1) : -1.0;
@@ -2464,7 +2475,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
             if (u->guard) {
                 /* R-096-08: a guard answers only what it can shoot, and never flees or walks */
-                if (!noncombat && om_tac_in_reach(w, u, atk) && !atk->stealth && om_tac_in_range(w, u, atk)) u->target_id = atk->unit_id;
+                if (!noncombat && om_tac_in_reach(w, u, atk) && !atk->stealth && om_tac_in_range(w, u, atk)) { u->target_id = atk->unit_id; u->rf_target = atk->unit_id; }
             } else if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
                 if (u->order == OM_ORDER_NONE) {
                     om_tac_start_flinch(u, atk, 1);
@@ -2482,7 +2493,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                     om_tac_start_flinch(u, atk, resume ? 2 : 3);
                 }
             } else if (om_tac_in_range(w, u, atk)) {
-                u->target_id = atk->unit_id;
+                u->target_id = atk->unit_id; u->rf_target = atk->unit_id;
             } else {
                 u->halted = 0;
                 if (u->order == OM_ORDER_ATTACK_MOVE) {
@@ -2494,14 +2505,14 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                         }
                     }
                     u->am_gid = 0;
-                    u->target_id = atk->unit_id;
+                    u->target_id = atk->unit_id; u->rf_target = atk->unit_id;
                     u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
                 } else {
                     /* R-087-06: an idle unit's pursuit holds the attacker as its target from the hit, as an attack-mover's does; its notice distance
                      * (R-087-04) no longer reaches an attacker the leash used to take for it */
                     u->order = OM_ORDER_ATTACK_MOVE;
                     u->order_x = atk->x; u->order_y = atk->y;
-                    u->target_id = atk->unit_id;
+                    u->target_id = atk->unit_id; u->rf_target = atk->unit_id;
                     u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
                 }
                 u->issued_x = atk->x; u->issued_y = atk->y;
@@ -2516,7 +2527,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     if (u->guard && pursue) { om_tac_guard_tick(w, st, u, tick); return; }
 
     if (u->target_id != 0) {
-        int drop, leash_drop = 0;
+        int drop, leash_drop = 0, notice_drop = 0;
         t = om_registry_find_in(st, u->target_id);
         drop = !t || t->hp <= 0.0 || !om_tac_hostile(u, t);
         /* R-164-02: an attack-target order is bound by reach too; one beyond it is ended like a dead target's */
@@ -2544,6 +2555,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             } else if (!leash_first && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set == 1
                        && om_tac_leash_broken(w, u, t)) {
                 drop = 1; leash_drop = 1;
+            } else if (pursue && u->rf_target != t->unit_id && !om_tac_in_notice(w, u, t)) {
+                drop = 1; notice_drop = 1;   /* G2 (R-087-03): the target left the notice distance; a return-fire target is exempt */
             }
         }
         /* F5 (R-087-09): a target the unit holds and cannot shoot, and does not close in on, for 1 s is given up for the next 100 ticks */
@@ -2551,7 +2564,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             && om_tac_giveup(u, t, om_tac_shootable(w, u, t, &shoot_for, &shoot), om_tac_period(st), tick)) drop = 1;
         if (drop) {
             int gone = !t || t->hp <= 0.0 || (u->order == OM_ORDER_ATTACK_TARGET && !om_tac_in_reach(w, u, t));
-            u->target_id = 0;
+            u->target_id = 0; u->rf_target = 0;
             om_tac_giveup_clear(u);
             /* H-057: a leash drop starts the walk back (2); a pursuit whose target is gone keeps its anchor until the
              * next cohort turn decides (never reset while pursuing); anything else clears it */
@@ -2561,6 +2574,20 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                 u->order = OM_ORDER_NONE;
                 u->halted = 0;
                 om_unit_clear_orders(w, u->unit_id);
+            }
+            /* G2 (R-087-03, R-087-04, R-096-02): after a drop for distance an idle unit (an engagement whose point is its own anchor) holds where it
+             * stands, and an attack-mover resumes toward its point on the spot; the walk back to the anchor is for leash drops only
+             * (DEC-leash-anchor-return-2026-11-01) */
+            if (notice_drop && u->order == OM_ORDER_ATTACK_MOVE) {
+                if (u->anchor_set && u->order_x == u->anchor_x && u->order_y == u->anchor_y) {
+                    om_tac_drop_orders(u);
+                    om_unit_clear_orders(w, u->unit_id);
+                } else if (om_tac_pursuing(w, u)) {
+                    om_tac_end_pursuit(w, u);
+                } else {
+                    u->anchor_set = 0;
+                    om_tac_release(w, u);
+                }
             }
         }
     }
@@ -2582,7 +2609,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             : om_tac_nearest_actable(w, st, u, acq);
         t = om_tac_pick_across(w, st, u, t, notice);
         if (t) {
-            u->target_id = t->unit_id;
+            u->target_id = t->unit_id; u->rf_target = 0;
             if (u->order == OM_ORDER_ATTACK_MOVE && (!pursue || !u->anchor_set)) {
                 u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
             }
@@ -3601,6 +3628,7 @@ static uint64_t om_unit_ck_row(const om_unit_row *r) {
             for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS; i++) { W(excl_id[i]); W(excl_until[i]); }
         }
     }
+    if (r->rf_target) W(rf_target);   /* G2: mixed only while a return-fire lock is held, so a world that never takes one hashes as it did */
 #undef W
 #undef D
     return h;
@@ -3752,6 +3780,7 @@ static void om_unit_sr_row(om_unit_sr *s, om_unit_row *r) {
 #undef D
     /* F5: the give-up run, the exclusion and the firing spot are not saved; a loaded unit starts with none (the row memory is not zeroed here) */
     r->giveup_target = 0; r->giveup_ticks = 0; r->giveup_ref = 0.0; for (int i = 0; i < OM_GIVEUP_EXCL_SLOTS; i++) { r->excl_id[i] = 0; r->excl_until[i] = 0; } r->spot_set = 0; r->spot_x = 0.0; r->spot_y = 0.0;
+    r->rf_target = 0;   /* G2: not saved */
 }
 
 static void om_unit_sw_state(om_unit_sw *s, const om_tac_state *st) {
