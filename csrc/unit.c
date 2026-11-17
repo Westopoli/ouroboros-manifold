@@ -261,8 +261,8 @@ typedef struct {
     int      guard;
     int      anchor_set;
     double   anchor_x, anchor_y;
-    /* 0 not moving away from fire; 1 an idle unit's move (R-087-01); 2 an attack-mover's move that goes back to its order point when it ends; 3 an
-     * attack-mover that had arrived: it holds where the move ends. The value is hashed and saved as before (the field is an int). */
+    /* 0 not moving away from fire; 1 an idle unit's move (R-087-01); 3 an attack-mover that had arrived: it holds where the move ends (2, an
+     * attack-mover's move that went back to its point, is gone: one on its way is not moved, Round 5 G4). The value is hashed and saved as before (the field is an int). */
     int      flinching;
     double   flinch_x, flinch_y;
     uint32_t last_attacker;
@@ -2457,12 +2457,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         if (u->order != OM_ORDER_NONE && u->order != OM_ORDER_ATTACK_MOVE) {
             u->flinching = 0;
         } else {
-            const int resume = u->flinching == 2;
-            if (om_tac_step_toward(w, u, u->flinch_x, u->flinch_y)) {
-                u->flinching = 0;
-                /* R-087-01: an attack-mover then resumes toward its original point (R-096-02); one that had arrived holds where the move ended */
-                if (resume) om_tac_end_pursuit(w, u);
-            }
+            if (om_tac_step_toward(w, u, u->flinch_x, u->flinch_y)) u->flinching = 0;   /* R-087-01: the unit holds where the move ends */
             u->last_attacker = 0;
             u->suppress_auto = 1;
             return;
@@ -2481,18 +2476,17 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             } else if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
                 if (u->order == OM_ORDER_NONE) {
                     om_tac_start_flinch(u, atk, 1);
-                } else {
-                    /* R-087-01: an attack-mover leaves the fire as an idle unit does. Its route is dropped (a group member keeps its slot as the point
-                     * to go back to, as om_tac_chase does); it holds where the move ends when it had arrived, else it resumes toward its point. */
-                    const int resume = has_dest && !arrived;
-                    if (resume && u->am_gid != 0 && om_unit_get_group_id(w, u->unit_id) == u->am_gid) {
-                        u->order_x = dest_x; u->order_y = dest_y;
-                    }
+                } else if (!(has_dest && !arrived)) {
+                    /* R-087-01: an attack-mover that had arrived leaves the fire as an idle unit does and holds where the move ends. Its route is
+                     * dropped. One still on its way to its point is neither moved nor stopped by a hit it cannot answer: it keeps walking (Round 5 G4). */
                     u->am_gid = 0;
                     u->halted = 0;
+                    /* a group member's slot is not its point: with issued != order and no group it would read as a pursuit, and the pursuit end
+                     * (om_tactical_ai_tick) would walk it back to the point when the move away ends */
+                    u->issued_x = u->order_x; u->issued_y = u->order_y;
                     om_unit_clear_orders(w, u->unit_id);
                     om_tac_unbrace_for_walk(st, u);
-                    om_tac_start_flinch(u, atk, resume ? 2 : 3);
+                    om_tac_start_flinch(u, atk, 3);
                 }
             } else if (om_tac_in_range(w, u, atk)) {
                 u->target_id = atk->unit_id; u->rf_target = atk->unit_id;
@@ -2751,8 +2745,8 @@ static void om_tactical_ai_tick(om_world *w, om_tac_state *st) {
              * halted to fire at, or has just been sent after, a locked target has no route, which is not arrival, and
              * ending the pursuit here cleared a live, seen lock (R-087-03, R-087-08). See also: om_tac_unit_ai, which
              * ends the pursuit itself once the target is gone. Not while the unit is in its move away from unseen fire
-             * (flinching): the walk back this orders cancels the step away exactly (R-087-01); om_tac_unit_ai ends the
-             * pursuit (kind 2) or holds the unit (kind 3) when the move away ends. */
+             * (flinching): the walk back this orders cancels the step away exactly (R-087-01); om_tac_unit_ai holds the
+             * unit where the move away ends. */
             double px, py;
             if (!om_unit_get_destination(w, u->unit_id, &px, &py) || om_tac_dist_le(px - u->x, py - u->y, OM_TIE_EPSILON)) {
                 om_tac_end_pursuit(w, u);
