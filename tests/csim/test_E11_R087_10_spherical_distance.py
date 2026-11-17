@@ -377,12 +377,15 @@ def test_R_087_10_area_radius_control_a_walker_inside_the_area_by_slant_is_hurt(
 
 LEASH = 310.0
 DZ_LEASH = 100.0      # the leash scene's band step: STEP_CM 10000 (a layer is 100 wu high there)
+TARGET_SPEED = 40.0   # Test-defect 2026-11-17 (R-087-03, R-087-04): the fleeing target is slower than the pursuer (speed 100), so it stays inside the pursuer's notice distance and the leash alone ends the chase;
+SEER_RANGE = 250.0    # it fled at the pursuer's pace and left the notice distance, which ends the lock first. The pursuer's range is 250 (notice 275, measured by slant): with range 100 its notice
+                      # distance 110 could not reach a target 100 wu lower for more than 46 wu of ground distance, so no chase down the ramp could stay inside it. Measured 2026-11-17: the slant gap peaks at 268 wu
 
 
 def _leash_world(lib, wf):
     """A west plateau (layer 1, 170 wu) that falls over x 950 to 1150 to a low plane (layer 0, 70 wu); the corner cell sets a 100 wu band step.
-    P, a walker (speed 100, range 100, sensor 310, so the leash is 310), idles on the plateau at x 870; T, a walker enemy, stands 120 wu ahead at x 990 (same
-    layer). Once P holds T, T is ordered east at P's pace; P chases down the ramp and the leash (R-087-05) drops the target. Both readings of 'height'
+    P, a walker (speed 100, range 250, sensor 310, so the leash is 310), idles on the plateau at x 870; T, a walker enemy, stands 80 wu ahead at x 950 (same
+    layer, inside P's notice distance 275). Once P holds T, T is ordered east at 40% of P's pace (TARGET_SPEED); P chases down the ramp and the leash (R-087-05) drops the target. Both readings of 'height'
     agree where the leash breaks: P is on the low plane (x >= 1150) and the anchor is on the plateau (x <= 950)."""
     w = wf(n_regions=1)
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
@@ -397,8 +400,8 @@ def _leash_world(lib, wf):
             cm.append(LOW_CM + int(t * step_cm))
     cm[n * n - 1] = LOW_CM + 5 * step_cm
     assert lib.om_terrain_set_heights(w, (ctypes.c_int32 * len(cm))(*cm), n, n) == 1
-    _reg(lib, w, SEER, FULL, 1.0, 1.0, 100.0, 100.0, LEASH, kind=WALKING)
-    _reg(lib, w, TARGET, FULL, 0.0, 1.0, 10.0, 100.0, 10.0, kind=WALKING)
+    _reg(lib, w, SEER, FULL, 1.0, 1.0, SEER_RANGE, 100.0, LEASH, kind=WALKING)
+    _reg(lib, w, TARGET, FULL, 0.0, 1.0, 10.0, TARGET_SPEED, 10.0, kind=WALKING)
     return w
 
 
@@ -412,7 +415,7 @@ def test_R_087_10_leash_a_pursuer_drops_its_target_at_the_horizontal_distance_fr
     h = _heights(lib, w)
     assert h[:2] == [70.0, 170.0], "band heights %s, the scene assumes 70 and 170" % h
     p = spawn(lib, w, SEER, 0, 870, 2050, 1)
-    t = spawn(lib, w, TARGET, 1, 990, 2050, 1)
+    t = spawn(lib, w, TARGET, 1, 950, 2050, 1)
     anchor = None
     held, ordered, drop_h = False, False, None
     for k in range(400):
@@ -436,10 +439,10 @@ def test_R_087_10_leash_control_the_target_is_held_to_the_flat_limit_on_one_laye
     """R-087-05 control (green today and after): on one layer (a flat plane, no height difference) the same chase is dropped at 310 flat, within
     one step of it; the chase is real and the leash is the thing that ends it."""
     w = _world(lib, world_factory)
-    _reg(lib, w, SEER, FULL, 1.0, 1.0, 100.0, 100.0, LEASH, kind=WALKING)
-    _reg(lib, w, TARGET, FULL, 0.0, 1.0, 10.0, 100.0, 10.0, kind=WALKING)
+    _reg(lib, w, SEER, FULL, 1.0, 1.0, SEER_RANGE, 100.0, LEASH, kind=WALKING)
+    _reg(lib, w, TARGET, FULL, 0.0, 1.0, 10.0, TARGET_SPEED, 10.0, kind=WALKING)
     p = spawn(lib, w, SEER, 0, 870, 2050, 1)
-    t = spawn(lib, w, TARGET, 1, 990, 2050, 1)
+    t = spawn(lib, w, TARGET, 1, 950, 2050, 1)
     anchor, held, ordered, drop_h = None, False, False, None
     for k in range(400):
         before = pos(lib, w, p)
