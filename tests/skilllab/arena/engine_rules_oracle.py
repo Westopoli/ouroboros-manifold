@@ -74,7 +74,7 @@ class Recorder:
         self.mult_down = [1.0] + [eng.get_param(w, eng.param_id("OM_TP_RANGE_DOWN_%d" % i)) for i in range(1, 5)]
         self.flyers = {u for u in self.ids if eng.movement_kind(w, self.typ[u]) == 0}      # OM_MOVE_FLYING: reach is measured flat when either end flies
         self.canvas = None          # filled by the test when it knows it (cells outside the canvas are not tested)
-        self.ticks = []             # one dict per step: n, pre, post, fires, vis_pre, vis_post, cell
+        self.ticks = []             # one dict per step: n, pre, post, fires, hits, vis_pre, vis_post, cell
         self.n = 0
         self.blocked = set()
 
@@ -119,6 +119,18 @@ class Recorder:
         lib, w = self.eng._lib, self.w
         self.blocked = {(cx, cy, layer) for layer in range(5) for cx in range(120) for cy in range(120) if lib.om_navmesh_is_cell_blocked(w, cx, cy, layer)}
 
+    def hits_of(self, pre, post, fires):
+        """Every (attacker, victim) the step's shots damaged, as the lab checker's Monitor reads them (scripts/skilllab/invariants.py `_hits`): the target of each shot, and for an area weapon
+        each other enemy of the attacker whose hp fell and that stood within the area radius (plus 1 wu) of the target before the step. R-087-06 return fire answers splash too."""
+        out = list(fires)
+        for a, b in fires:
+            radius = self.stats[self.typ[a]]["aoe_radius"]
+            if radius > 0 and b in pre:
+                for v in self.ids:
+                    if v != b and self.side[v] != self.side[a] and pre[v]["alive"] and post[v]["hp"] < pre[v]["hp"] - 1e-9 and math.hypot(pre[b]["x"] - pre[v]["x"], pre[b]["y"] - pre[v]["y"]) <= radius + 1.0:
+                        out.append((a, v))
+        return out
+
     def step(self, orig):
         if self.n == 0:
             self.scan_blocked()
@@ -134,12 +146,13 @@ class Recorder:
         for i in range(eng._lib.om_tactical_event_count(self.w)):
             if eng._lib.om_tactical_event_get_at(self.w, i, ctypes.byref(k), ctypes.byref(a), ctypes.byref(b), ctypes.byref(t)) == 0 and k.value == 0:
                 fires.append((a.value, b.value))
+        hits = self.hits_of(pre, post, fires)
         cell = {}
         for u in self.ids:
             p = post[u]
             if p["alive"] and self.blocked_cell(p["x"], p["y"], p["layer"]):
                 cell[u] = self.depth(p["x"], p["y"], p["layer"])
-        self.ticks.append({"n": self.n, "pre": pre, "post": post, "fires": fires, "vis_pre": vis_pre, "vis_post": self.vis(post), "cell": cell})
+        self.ticks.append({"n": self.n, "pre": pre, "post": post, "fires": fires, "hits": hits, "vis_pre": vis_pre, "vis_post": self.vis(post), "cell": cell})
 
 
 @contextlib.contextmanager
@@ -291,8 +304,8 @@ def lock_swaps(rec, sensor_slack=25.0):
 
 
 def _hit_by(rec, n, attacker, victim):
-    """R-087-06: `attacker` fired at `victim` in tick n or the RETURN_FIRE_TICKS - 1 before it (return fire's window; the checker's DRAFT-inv-return-fire-ticks)."""
-    return any((attacker, victim) in tk["fires"] for tk in rec.ticks[max(0, n - RETURN_FIRE_TICKS):n])
+    """R-087-06: `attacker` hit `victim` (the target of its shot, or a splash victim of it) in tick n or the RETURN_FIRE_TICKS - 1 before it (return fire's window; the checker's DRAFT-inv-return-fire-ticks)."""
+    return any((attacker, victim) in tk["hits"] for tk in rec.ticks[max(0, n - RETURN_FIRE_TICKS):n])
 
 
 def picks_beyond_notice(rec):
@@ -369,15 +382,15 @@ def distinct_units(hits):
 
 def invariants_trace(rec):
     """The recorded fight as the trace `scripts/skilllab/invariants.check` takes (the contract is in tests/skilllab/test_invariants.py): frame 0 is the state
-    before the first step, frame k the state after step k with that step's shots; `seen` is whether the unit's side sees its target, `order` whether the
+    before the first step, frame k the state after step k with that step's shots (`fires`) and the units they damaged, splash included (`hits`); `seen` is whether the unit's side sees its target, `order` whether the
     unit has a destination."""
-    def frame(tick, snap, vis, fires):
+    def frame(tick, snap, vis, fires, hits=None):
         units = {}
         for u in rec.ids:
             r = snap[u]
             units[u] = {"x": r["x"], "y": r["y"], "layer": r["layer"], "alive": r["alive"], "hp": r["hp"], "side": rec.side[u], "target": r["tgt"],
                         "seen": vis.get((rec.side[u], r["tgt"]), True) if r["tgt"] else True, "order": r["dest"] is None}
-        return {"tick": tick, "units": units, "fires": list(fires)}
+        return {"tick": tick, "units": units, "fires": list(fires), "hits": list(fires if hits is None else hits)}
     out = [frame(0, rec.ticks[0]["pre"], rec.ticks[0]["vis_pre"], [])]
-    out += [frame(tk["n"], tk["post"], tk["vis_post"], tk["fires"]) for tk in rec.ticks]
+    out += [frame(tk["n"], tk["post"], tk["vis_post"], tk["fires"], tk["hits"]) for tk in rec.ticks]
     return out
