@@ -111,3 +111,18 @@ Rulings:
 Open, recorded for the landing and not built in this round:
 - A unit moving away that is blocked by a standing friend that does not yield (a guard) presses against it and the move away never ends.
 - A pursuer never fires at a target that walks away, however slowly: it stops at exactly its range, may not fire on a tick it moved, and the target is out of range again the next tick.
+
+## Fourth pass (2026-11-17)
+
+The third pass's ruling "a pick is judged on frame N's positions" was wrong and is withdrawn. Measured by the lab builder and by the test fixer: inside one tick the engine works unit by unit, so a picker reads a mixed state, some enemies at this tick's position and some at the last tick's, with sight to match. Judging on either whole frame reports picks the engine made correctly on what it read.
+
+Ruling, replacing it (checker `_acquire`, the notice check, and the oracle on the test side):
+- A pick is reported as "not the nearest" only when some other enemy, in the side's visible set in both frame N-1 and frame N, is nearer than the picked target under every pairing of positions: the picker at its N-1 or N position, that enemy at its N-1 or N position, the target at its N-1 or N position. In words: the other enemy is nearer whichever of the two states the engine read for each of the three units.
+- A pick is reported as "beyond the notice distance" only when the target is beyond it under every such pairing; a lock is reported as "kept beyond the notice distance" likewise; the comparison at the boundary is the engine's (a target exactly at the notice distance is inside it).
+- A pick is reported as "unseen" only when the target is in neither frame's visible set (as the R-093-02 predicate already reads).
+- No tolerance number is added. A planted case that is wrong by more than both units' steps is still reported.
+The earlier experiment that models the id order exactly is not taken: it ties the checker to the engine's loop order.
+
+That the engine reads a mixed state inside a tick, so the side with the higher unit ids sees its enemies one step fresher, is recorded as an open finding for the landing; it is older than this round and is not changed here.
+
+Also in this pass: the premises of `test_engine_rules_r3_sight_lock.py::test_control_the_fight_and_the_trace_premises_hold` (pinned on the 3,923-tick run of L-0084) are re-derived from the 1,955-tick run by a test fixer; the held run-length pins are re-pinned once the checker reports nothing on L-0061 and L-0084; the sweep and the stage 4 pictures are made whatever the checker still reports, with every report listed.
