@@ -26,10 +26,11 @@ NAV_CELL = features.NAV_CELL
 
 PIN_LAYOUT_ID = "L-9800"
 SIGHT_OFF_PIN = {   # recorded on main 240773dd, --sight off, seed 1, --cap-seconds 30 (identical across two runs in two directories); the two fight shas re-recorded 2026-11-07 for the per-unit `fired` key (the files minus every `fired` line have the old shas)
-    "fight": "02699f1dcdddb52c1e6b6b829a3df75765a4fda62fe2864a67eb92c15212cd77",
-    "control_fight": "9a25efc3a4d4aa3e47a60b536c79d5919be644b95ea2888ab6068750e0e23b78",
-    "results": "77344e7f95361548035c57835c54bf310985c7fc56a093161238e6c7f2615719",
+    "fight": "d34bb0eb03c4b971ecb590260016455734e2db297dbfca444b9147cf19994627",
+    "control_fight": "c8be77af3b321fd4f5a0be43027460c372b9042c3724e69eea63c134a36bcadb",
+    "results": "192d1cea4cf36869ac84e190c6c8ce1667fbb0ad34abb356ed4921c8f7bcc09e",
 }
+# Re-recorded 2026-11-17 (Round 5, G1 to G5 and the second-pass fixes; Test-defect): was fight 02699f1d, control_fight 9a25efc3, results 77344e7f; the files carry no `violations` or `invalid` (the lab checker reports nothing).
 # Re-recorded 2026-11-08 (engine rule fixes F1 to F4; Test-defect): was fight 37902ffe, control_fight 608e81cb, results 1903a2be. The chokepoint walkers now go through the gap instead of parking at the
 # walls (F1), a mover does not fire (F2), a lock holds (F3). The new files (600 ticks, cap) carry no `violations` or `invalid`: the run passes every check of scripts/skilllab/invariants.py.
 
