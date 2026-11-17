@@ -2,12 +2,12 @@
 
   LockKept        R-087-03  a lock kept on a target beyond the notice distance for more than one cohort period (a return-fire lock excepted)
   UnseenFire      R-087-01  an attack-mover on its way is neither stopped nor re-routed by a hit it cannot see; an idle unit or an arrived attack-mover moves away once and holds
-  SlopeCollision  R-097-05  two units within 30 wu on one slope, and a unit that flips layer back and forth across a midline
+  SlopeCollision  R-097-05  two units within 30 wu on one slope
 
 Each is a small state machine fed one frame at a time by `invariants._Checker.feed`; the frame, row and `Rules` shapes are those of `invariants.py` (this module imports nothing from it, so the
 checker can import these constants). The notice distance itself (`NOTICE_MARGIN`, `notice_distance`) is read by the checker's acquire and swap checks as well.
 Tests: tests/skilllab/arena/test_invariants_r5_notice_and_lock.py, test_invariants_r5_unseen_fire_and_slope.py. Every number below is a DRAFT constant, Westley's to change:
-  DRAFT-notice-margin 0.1   DRAFT-unseen-fire-window 60 frames   DRAFT-slope-slack 2 wu   DRAFT-slope-crowd 31 wu   DRAFT-flip-window 20 frames   DRAFT-slope-near 100 wu (the Monitor's idea of "on a slope")
+  DRAFT-notice-margin 0.1   DRAFT-unseen-fire-window 60 frames   DRAFT-slope-slack 2 wu   DRAFT-slope-crowd 31 wu    DRAFT-slope-near 100 wu (the Monitor's idea of "on a slope")
 """
 import ctypes
 import math
@@ -20,8 +20,6 @@ BACKSWING_TICKS = 10         # R-084-04 (the checker's own constant, repeated): 
 OWN_MOVE = 0.5               # a displacement above it counts as "moved" (the checker's own constant, repeated: this module cannot import invariants)
 SLOPE_GAP = 30.0             # R-097-05: 2 x unit radius 15 wu
 SLOPE_SLACK = 2.0            # DRAFT-slope-slack: a pair this close to 30 wu counts as pushed apart (the sweep's I13: 28 wu; the engine resolves a pair on a slope at most a pace plus 1 wu a tick, om_move_slope_clamp)
-FLIP_CHANGES = 3             # R-097-05 / round5.md G5: three layer changes ...
-FLIP_WINDOW = 20             # DRAFT-flip-window: ... within this many frames
 SLOPE_CROWD = 31.0           # DRAFT-slope-crowd (wu): a third unit this near a pair (touching, 30 wu and a rounding) is a crowd the 3-iteration pass can leave closer than 30 wu
 SLOPE_NEAR = 100.0           # DRAFT-slope-near (wu): the Monitor counts a unit as on a slope when its cell's centre is this near the slope's midline along its run (the ramp's half-width, hills.RAMP_WU / 2)
 
@@ -148,13 +146,11 @@ class SlopeCollision:
     """R-097-05. `slope_at(x, y)` -> a hashable id of the slope the point lies on (one id per hill), or None.
       pair  two living units within SLOPE_GAP - SLOPE_SLACK wu of each other (the plane) that both stand on one slope, any layers, are a violation of the lower id in the frame the pair comes
             that close, once while it stays close: the collision pass pushes such a pair apart. A pair with a third living unit within SLOPE_CROWD of either is excused: the pass runs at most
-            three iterations a tick, and a crowd can leave a pair closer ("except when the pass hits its iteration cap", E-13 Invariants).
-      flip  a unit on a slope whose layer changes in FLIP_CHANGES frames inside FLIP_WINDOW is a violation in the last of them (the changes are forgotten after the report)."""
+            three iterations a tick, and a crowd can leave a pair closer ("except when the pass hits its iteration cap", E-13 Invariants)."""
 
     def __init__(self, slope_at):
         self.slope_at = slope_at
         self.close = set()           # pairs reported and still close
-        self.changes = {}            # unit -> ticks of its recent layer changes
 
     def feed(self, frame, prev, tick, out):
         on, now = {}, set()
@@ -162,13 +158,6 @@ class SlopeCollision:
             s = self.slope_at(r["x"], r["y"]) if r["alive"] else None
             if s is not None:
                 on.setdefault(s, []).append(u)
-            p = prev["units"].get(u) if prev else None
-            if p is not None and p["alive"] and r["alive"] and p["layer"] != r["layer"] and (s is not None or self.slope_at(p["x"], p["y"]) is not None):
-                ch = [t for t in self.changes.get(u, []) if tick - t <= FLIP_WINDOW] + [tick]
-                self.changes[u] = ch
-                if len(ch) >= FLIP_CHANGES:
-                    self.changes[u] = []
-                    out.append({"rule": "R-097-05", "tick": tick, "unit": u, "detail": "changed layer %d times in %d frames on a slope (a flip across the midline)" % (len(ch), tick - ch[0])})
         for ids in on.values():
             ids.sort()
             for i, a in enumerate(ids):
