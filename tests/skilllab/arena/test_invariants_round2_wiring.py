@@ -48,9 +48,9 @@ def of(mon, rule):
 
 
 def test_control_the_monitor_runs_a_whole_real_fight_and_reads_its_suspensions():
-    """Control (green today): L-0039 seed 10 sight on runs to its end through the shipped Monitor; sight on suspends nothing."""
+    """Control (green today): L-0039 seed 10 sight on runs to its end through the shipped Monitor; sight on suspends nothing (2211 ticks; 2314 before Round 5, re-pinned after G1 to G5, the lab checker reports no violation of any rule on the new run)."""
     mon, rec = played("L-0039")
-    assert mon.tick == len(rec.ticks) == 2314 and mon.suspended == {}
+    assert mon.tick == len(rec.ticks) == 2211 and mon.suspended == {}
 
 
 @pytest.mark.parametrize("name", ["L-0039", "L-0061"])
