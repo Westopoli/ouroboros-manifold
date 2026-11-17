@@ -69,6 +69,10 @@ def test_R_093_02_a_visible_enemy_is_pursued_control(lib, world_factory):
 
     here = pos(lib, w, raider)
     lib.om_unit_teleport(w, enemy, here[0] + 210.0, here[1], 0)
+    # Test-defect 2026-11-17 (R-087-04, round5.md Second pass): the Raider's march runs straight away from the enemy at 7.5 wu a tick, so by its cohort turn
+    # the enemy stood up to 240 wu off, beyond the notice distance; the Raider is ordered to attack-move to where it stands (it arrives, an idle unit acquires
+    # within its notice distance), so the enemy stays 210 wu away.
+    attack_move(lib, w, [raider], here[0], here[1])
     step(lib, w, cohort_cycle(lib, w))
     assert target(lib, w, raider) == enemy, "an enemy inside the notice distance 220 (210 wu) is acquired"
 
