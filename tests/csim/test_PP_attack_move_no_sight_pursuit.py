@@ -144,7 +144,7 @@ def test_R_087_04_A199_halt_and_fire_when_an_enemy_is_in_attack_range(lib, world
 
 def test_R_087_05_A199_an_acquired_target_that_walks_out_of_range_stays_held_under_the_leash(lib, world_factory):
     """R-087-05 / A199 guard (green now and after): the Vanguard acquires a Raider 250 ahead, the Raider is moved to
-    350 ahead (out of range 300, inside sensor). While the unit is inside 200 wu of its anchor it keeps that
+    325 ahead (out of range 300, inside the notice distance 330; Test-defect 2026-11-17, was 350, beyond it). While the unit is inside 200 wu of its anchor it keeps that
     target on every tick of the next 10 and the anchor stays where it was taken."""
     import ctypes
     from conftest import OMWorldP
@@ -156,7 +156,7 @@ def test_R_087_05_A199_an_acquired_target_that_walks_out_of_range_stays_held_und
             break
     assert target(lib, w, u) == enemy, "fixture: no acquisition"
     ax, ay = pos(lib, w, u)
-    lib.om_unit_teleport(w, enemy, ax, ay + 350.0, 0)
+    lib.om_unit_teleport(w, enemy, ax, ay + 325.0, 0)
     for _ in range(10):
         step(lib, w)
         assert _d(pos(lib, w, u), (ax, ay)) < 200.0

@@ -63,9 +63,18 @@ def test_R_093_02_a_visible_enemy_is_pursued_control(lib, world_factory):
 
     step(lib, w, TICKS)
 
-    # Test-defect, H-057 (R-087-04 rev 2026-11-01): a seen enemy out of attack range is chased (was: A199, distance grows).
-    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) < start, "a seen enemy out of attack range is not chased"
+    # Test-defect 2026-11-17 (R-087-04, notice distance): an enemy seen 700 wu away is beyond the notice distance 220 and is not chased (back to A199).
+    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) > start, "a seen enemy beyond the notice distance is chased"
+    assert target(lib, w, raider) != enemy
 
+    here = pos(lib, w, raider)
+    lib.om_unit_teleport(w, enemy, here[0] + 210.0, here[1], 0)
+    step(lib, w, cohort_cycle(lib, w))
+    assert target(lib, w, raider) == enemy, "an enemy inside the notice distance 220 (210 wu) is acquired"
+
+    w = world_factory(n_regions=1)
+    raider, enemy = _scene(lib, w, 700.0)
+    step(lib, w, TICKS)
     here = pos(lib, w, raider)
     lib.om_unit_teleport(w, enemy, here[0] + 150.0, here[1], 0)
     step(lib, w, cohort_cycle(lib, w))
@@ -86,8 +95,8 @@ def test_R_089_02_a_friend_that_sees_the_enemy_lets_it_be_pursued(lib, world_fac
 
     step(lib, w, TICKS)
 
-    # Test-defect, H-057 (R-087-04: "an enemy its side can see"): the friend's sight makes it chase (was: A199, distance grows).
-    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) < start, "a friend's sight does not make it chase"
+    # Test-defect 2026-11-17 (R-087-04, notice distance): the friend sees the enemy but it stands 700 wu off, beyond the notice distance: no chase (back to A199).
+    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) > start, "a friend's sight makes it chase an enemy beyond the notice distance"
 
     w = world_factory(n_regions=1)
     raider, enemy = _scene(lib, w, 150.0)
