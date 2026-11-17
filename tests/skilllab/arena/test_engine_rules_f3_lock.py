@@ -6,8 +6,10 @@ L-0050)'). Evidence: docs/reports/2026-11-07-rule-enforcement/appendix-b-test-fo
 engine_rules_oracle.lock_swaps, per tick from engine state (not the F0 checker). The single-unit scenes are
 tests/csim/test_E11_R087_03_target_lock.py.
 
-Rule words (docs/bible/epics/E-11-*.md, rewritten 2026-11-08): a unit locks the nearest enemy its side sees and keeps the lock until the target
-dies, leaves its side's sight, or the unit gets a new order; the leash (R-087-05) and R-087-09 are their own rules and still break a lock.
+Rule words (docs/bible/epics/E-11-*.md R-087-03, as it reads since 2026-11-17): a unit locks the nearest enemy its side sees within its notice distance and keeps the lock
+"until the target dies, leaves its side's sight, leaves the unit's notice distance, or the player gives the unit a new order"; "A target taken by return fire (R-087-06) is not dropped for
+distance"; the leash (R-087-05) and R-087-09 are their own rules and still break a lock. A drop for the notice distance is a legal end, not a swap: `oracle.lock_swaps` excuses it
+(Test-defect, ruling of 2026-11-17, fourth way a lock ends).
 Oracle reading of that: the unit's target changed from a living enemy that its side still sees (before and after the step; always true with
 sight off) to another enemy, with the unit's destination neither cleared nor set across the tick (the engine re-issuing its own order is a
 new order) and the unit within its sensor radius + 25 wu of where it took that lock (outside it the leash applies, inv_check I27).
