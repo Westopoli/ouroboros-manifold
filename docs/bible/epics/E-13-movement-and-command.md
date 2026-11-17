@@ -56,9 +56,9 @@ The guard stance joined the commands 2026-10-13 (S-208, R-096-08). An attack-mov
 Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
   Proof: MISSING
-- R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); after every fight the group resumes toward the point as a unit attack-moved alone does (Westley, 2026-10-13, option (a): an attack-move is not finished until the unit reaches its point, except that a unit that gives up under R-099-05 ends where it stands (Architect decision 28, 2026-10-19); his 2026-10-02 words for the lone unit, "It should resume its prior goal after the fight is completed", now hold for a group too). The engine today ends a group once every member has engaged and never resumes it (the Architect's clause, A124 build); the resume for groups is a pending engine piece, measured 2026-10-13: two groups attack-moved to one point stalled 303 to 336 wu apart with range 300, while the same units ordered one by one fought to elimination.
+- R-096-02  Given an attack-move, When an enemy its side can see comes within the unit's notice distance (E-11 R-087-04), Then the unit closes to attack range, halts and fires; when the lock ends (E-11 R-087-03: the target dies, is lost from sight or leaves the notice distance) it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); after every fight the group resumes toward the point as a unit attack-moved alone does (Westley, 2026-10-13, option (a): an attack-move is not finished until the unit reaches its point, except that a unit that gives up under R-099-05 ends where it stands (Architect decision 28, 2026-10-19); his 2026-10-02 words for the lone unit, "It should resume its prior goal after the fight is completed", now hold for a group too). The group resume is built (2026-10-14); before it, two groups attack-moved to one point stalled 303 to 336 wu apart with range 300.
   Proof: MISSING
-- R-096-03  Given an attack-move or idle engagement, When the unit itself has pursued farther from its anchor (its position at acquisition) than its own type's sensor radius, Then it drops the target and resumes (attack-move) or holds (idle); a unit holding and firing from its anchor never drops a target for the leash, whatever its weapon range (ruled A188, 2026-10-03; the earlier text measured the target's distance). The leash was 200 wu for every type until 2026-11-01; Westley: the vision range of that specific unit, modelled on the game whose movement we follow, where a unit's leash sat at or just beyond its vision (H-057).
+- R-096-03  Given an attack-move or idle engagement, When the unit itself has pursued farther from its anchor (its position at acquisition) than its own type's sensor radius, or its attack range where that is the larger (DEC-leash-param-2026-11-01), Then it drops the target and resumes (attack-move) or holds (idle); a unit holding and firing from its anchor never drops a target for the leash, whatever its weapon range (ruled A188, 2026-10-03; the earlier text measured the target's distance). The leash was 200 wu for every type until 2026-11-01; Westley: the vision range of that specific unit, modelled on the game whose movement we follow, where a unit's leash sat at or just beyond its vision (H-057).
   Proof: MISSING
 - R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position and idles there.
   Proof: MISSING
@@ -73,7 +73,7 @@ Rules
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: none (Q-087-01 closed as moot 2026-11-17).
+Open flags: Q-096-02 (whether a guard still engages by sight, R-096-08; Q-087-01 closed as moot 2026-11-17).
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
@@ -89,7 +89,7 @@ Rules
   Proof: MISSING
 - R-097-04  Given a unit that took a deflected angle, When it moves, Then it keeps that heading for at least 60 wu before re-evaluating.
   Proof: MISSING
-- R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), or two units within 30 wu that both stand on the same slope, whichever side of its layer line each is on (E-01 R-001-06), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick. The slope case is there because a walker that crosses a slope's midline changes layer (E-01 R-004-06) and would otherwise arrive inside units of its new layer (Westley, 2026-11-17, asked whether units on one slope collide across the layer line: "All the rest go with recommended", the recommendation being yes; a lab trial removed the pile-up on all six hill fights with every winner unchanged, at the cost of queues on narrow ramps, `docs/reports/2026-11-12-engine-rules-round-3.md`). The slope case is not built: the engine today collides units of one layer only.
+- R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), or two units within 30 wu that both stand on the same slope, whichever side of its midline each is on (E-01 R-001-06), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick. The slope case is there because a walker that crosses a slope's midline changes layer (E-01 R-004-06) and would otherwise arrive inside units of its new layer (Westley, 2026-11-17, asked whether units on one slope collide across the layer line: "All the rest go with recommended", the recommendation being yes; a lab trial removed the pile-up on all six hill fights with every winner unchanged, at the cost of queues on narrow ramps, `docs/reports/2026-11-12-engine-rules-round-3.md`). The slope case is not built: the engine today collides units of one layer only.
   Proof: MISSING
 - R-097-06  Given a unit moving through terrain with obstacle density d, When d is in [0.3, 0.7], Then its speed is multiplied by (1 − 0.5 · d); below 0.3 speed is unchanged; at 0.7 and above the cell is blocked (R-097-01). The multiplier is era-uniform; an era pack may not switch it off.
   Proof: MISSING
@@ -265,7 +265,7 @@ Open flags: none.
 
 ## Invariants
 
-- No two same-layer units within 30 wu after the collision pass, except when the pass hits its iteration cap.
+- No two same-layer units, and no two units on the same slope (R-097-05), within 30 wu after the collision pass, except when the pass hits its iteration cap.
   Proof: MISSING
 - A stationary unit is never moved by a moving unit's collision; two stationary units that overlap separate.
   Proof: MISSING
