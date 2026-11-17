@@ -139,7 +139,7 @@ def test_R_097_04_it_keeps_that_heading_for(lib, world_factory):
 
 
 def test_R_097_05_they_pushed_apart_along_line(lib, world_factory):
-    """Given two units on the same layer within 30 wu (2 × radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick."""
+    """Given two units on the same layer within 30 wu (2 × radius 15), or two units within 30 wu that both stand on the same slope, whichever side of its midline each is on (E-01 R-001-06), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick."""
     w = world_factory(n_regions=1)
 
     # Two units on same layer placed 10 wu apart (less than 2 * 15 = 30 wu)
