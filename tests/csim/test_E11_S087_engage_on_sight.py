@@ -1,9 +1,13 @@
 # Rule pins: R-008-04@991c79, R-087-04@74cc9c, R-087-05@a79833, R-087-06@45fc58, R-087-08@d94418, R-093-02@652353, R-095-03@f360de, R-096-01@d86536, R-096-02@e8ae96, R-096-03@16d0c4
 """H-057 engage-on-sight (E-11 S-087, R-087-04 rewritten 2026-11-01; E-13 R-096-01/02/03; E-11 R-087-05/06/08).
 
+Test-defect 2026-11-17 (Westley: "aquire within attack radius" wins): acquisition is within the notice distance, the attack range plus a tenth
+(E-11 R-087-04), never the sensor radius; the scenes below that put an enemy 400 wu off now put it 320 wu off (a Vanguard's notice distance is 330,
+a Raider's 220). The quoted story text below is H-057's, kept as the record of the old rule.
+
 Rule (docs/stories/H-057.md, "Rule"): "An idle unit (no order, or an attack-move that has arrived) or an
 attack-moving unit with no target, when an enemy its side can see (E-12 R-093-02; reach across layers R-008-04) is
-within its sensor radius, acquires the nearest such enemy at its cohort turn (R-087-08), anchors where it stands
+within its notice distance (its attack range plus a tenth, E-11 R-087-04 as ruled 2026-11-17; never the sensor radius), acquires the nearest such enemy at its cohort turn (R-087-08), anchors where it stands
 (R-087-05), and walks toward it until the enemy is within attack range, then halts and fires (R-096-02). An
 attack-mover leaves its slot and route to do so and resumes toward its point or slot after the engagement. An idle
 unit holds where the engagement ends (R-087-06). The 200 wu leash (R-087-05, R-096-03) bounds the walk. A plain-moving
@@ -44,19 +48,18 @@ def _move(lib, w, ids, x, y):
 
 # ---- 1. idle pair --------------------------------------------------------------------------------------------
 
-def _idle_pair(lib, w, gap):
+def _idle_pair(lib, w, gap):  # gap < 330: inside a Vanguard's notice distance (range 300 + a tenth)
     a = spawn(lib, w, VANGUARD, 0, 2000.0, 1000.0)
     b = spawn(lib, w, VANGUARD, 1, 2000.0, 1000.0 + gap)
     return a, b
 
 
-def test_R_087_04_two_idle_hostile_vanguards_400_apart_engage(lib, world_factory):
-    """R-087-04 / S-087 / H-057: "An idle unit ... when an enemy its side can see ... is within its sensor radius,
-    acquires the nearest such enemy ... and walks toward it until the enemy is within attack range, then halts and
-    fires". Two idle hostile Vanguards 400 wu apart (sensor 700, range 300): within 200 ticks both hold a target,
-    within 600 ticks one has taken damage. RED now: acquisition looks only within attack range 300."""
+def test_R_087_04_two_idle_hostile_vanguards_320_apart_engage(lib, world_factory):
+    """R-087-04 / S-087: "An idle unit ... when an enemy its side can see ... is within its notice distance, acquires the nearest such enemy ... and
+    walks toward it until the enemy is within attack range, then halts and fires". Two idle hostile Vanguards 320 wu apart (range 300, notice
+    distance 330): within 200 ticks both hold a target, within 600 ticks one has taken damage."""
     w = _world(lib, world_factory)
-    a, b = _idle_pair(lib, w, 400.0)
+    a, b = _idle_pair(lib, w, 320.0)
     full = hp(lib, w, a)
     both_by, hurt_by = None, None
     for t in range(1, 601):
@@ -70,7 +73,7 @@ def test_R_087_04_two_idle_hostile_vanguards_400_apart_engage(lib, world_factory
 
 
 def test_control_R_087_04_idle_pair_900_apart_stay_apart_and_unhurt(lib, world_factory):
-    """Positive control (green now and after): 900 wu apart is outside sensor 700, so after 600 ticks neither holds a
+    """Positive control (green now and after): 900 wu apart is outside the notice distance 330, so after 600 ticks neither holds a
     target and neither is damaged; the same detector (target/hp reads) is the one in the test above."""
     w = _world(lib, world_factory)
     a, b = _idle_pair(lib, w, 900.0)
@@ -86,7 +89,7 @@ def test_control_R_087_04_idle_pair_900_apart_stay_apart_and_unhurt(lib, world_f
 def _lone_march(lib, w, plain=False, enemy_hp=20.0, enemy_faction=1, enemy_type=RAIDER):
     u = spawn(lib, w, VANGUARD, 0, 2000.0, 500.0)
     lib.om_unit_set_hp(w, u, 5000.0)    # the enemy may fight back once it too engages; the mover's life is not under test
-    enemy = spawn(lib, w, enemy_type, enemy_faction, 2400.0, 1000.0)   # 400 wu off the x=2000 route
+    enemy = spawn(lib, w, enemy_type, enemy_faction, 2320.0, 1000.0)   # 320 wu off the x=2000 route: inside the notice distance 330
     lib.om_unit_set_hp(w, enemy, enemy_hp)
     if plain:
         _move(lib, w, [u], 2000.0, 2000.0)
@@ -95,11 +98,11 @@ def _lone_march(lib, w, plain=False, enemy_hp=20.0, enemy_faction=1, enemy_type=
     return u, enemy
 
 
-def test_R_087_04_lone_attack_mover_engages_an_enemy_400_off_its_path_then_resumes(lib, world_factory):
+def test_R_087_04_lone_attack_mover_engages_an_enemy_320_off_its_path_then_resumes(lib, world_factory):
     """R-087-04 / R-096-02 / S-087 / H-057: "An attack-mover leaves its slot and route to do so and resumes toward
-    its point ... after the engagement". A lone attack-mover marching 1500 wu passes an enemy 400 wu off its path: it
+    its point ... after the engagement". A lone attack-mover marching 1500 wu passes an enemy 320 wu off its path (inside its notice distance 330): it
     acquires within 200 ticks, the enemy (low hp) dies, and the unit arrives within the plain march's ticks plus 400.
-    RED now: 400 off the path is never inside attack range 300, so no target is ever taken."""
+    (Test-defect 2026-11-17: was 400 wu off the path, inside the old sensor radius, outside the notice distance.)"""
     w = _world(lib, world_factory)
     u, enemy = _lone_march(lib, w)
     acquired = None
@@ -153,15 +156,15 @@ def _group(lib, w, enemy_xy=None):
     return ids, enemy, slots, [(ids, click)]
 
 
-def test_R_087_04_a_group_of_8_attack_movers_engages_a_lone_enemy_400_off_the_line_then_reaches_its_slots(lib, world_factory):
+def test_R_087_04_a_group_of_8_attack_movers_engages_a_lone_enemy_320_off_the_line_then_reaches_its_slots(lib, world_factory):
     """R-087-04 / R-096-02 / S-087 / H-057: "An attack-mover leaves its slot and route to do so and resumes toward its
-    point or slot after the engagement". 8 attack-movers with a lone (low hp) enemy 400 wu east of the line's east end:
+    point or slot after the engagement". 8 attack-movers with a lone (low hp) enemy 320 wu east of the line's east end (inside the notice distance 330):
     at least one member holds it as a target, the members that see it engage, it dies, and after that every member ends
     within the arrival radius of its own slot (the slot-and-shape detector of test_PP_attack_move_no_sight_pursuit.py).
-    RED now: 400 wu off the route is outside attack range 300 for every member, so nobody ever engages."""
+    (Test-defect 2026-11-17: was 400 wu, beyond the notice distance.)"""
     w = _world(lib, world_factory)
     east = GX0 + (GROUP_N - 1) * GROUP_SPACING
-    ids, enemy, slots, clicks = _group(lib, w, (east + 400.0, GY + 1000.0))
+    ids, enemy, slots, clicks = _group(lib, w, (east + 320.0, GY + 1000.0))
     engaged = set()
     for _ in range(1000):
         step(lib, w)
@@ -193,7 +196,7 @@ COLLISION_RADIUS = 15.0
 RETURN_TOL = 1.5 * COLLISION_RADIUS   # OM_ARRIVAL_TOLERANCE_MULT x OM_UNIT_COLLISION_RADIUS
 
 
-def _chase(lib, w, utype, speed, ticks, gap=400.0):
+def _chase(lib, w, utype, speed, ticks, gap=320.0):
     """An idle `utype` at its post (2000, 500) and a same-type enemy `gap` wu north that plain-moves away at the same speed.
     Returns the per-tick (pursuer position, enemy position, pursuer target, enemy id)."""
     a = spawn(lib, w, utype, 0, 2000.0, 500.0)
@@ -209,7 +212,7 @@ def _chase(lib, w, utype, speed, ticks, gap=400.0):
 def test_R_087_05_idle_pursuer_is_bounded_by_its_sensor_radius_returns_and_holds(lib, world_factory):
     """R-087-05 / R-096-03 / S-087 / H-057 + DEC-leash-anchor-return-2026-11-01: the leash is the type's own sensor
     radius, the anchor is set once on acquiring from rest and not reset while pursuing or returning, and after a drop an
-    idle unit walks back to its anchor. An idle Vanguard (sensor 700) at its post sees an enemy 400 wu off that walks away at
+    idle unit walks back to its anchor. An idle Vanguard (sensor 700) at its post sees an enemy 320 wu off (inside its notice distance 330) that walks away at
     the same speed (80 wu/s, a plain move, so it never acquires): it acquires within 200 ticks, keeps the target past 200 wu
     from its anchor, its distance from the anchor never exceeds 700 plus one tick's step, after the drop it is back within
     1.5 collision radii of its anchor, and once the enemy is out of sensor range it holds no target and does not move for 100
@@ -242,7 +245,7 @@ def test_R_087_05_the_leash_is_per_type_a_raider_drops_at_its_own_sensor_radius(
     RED now: it never acquires. (No type has a smaller effective radius than the Vanguard's 700: Bastion and Bombard have
     sensor 300 but range 800 and 1200, see the writer's report.)"""
     w = _world(lib, world_factory)
-    a, b, trace = _chase(lib, w, RAIDER, 150.0, 400)
+    a, b, trace = _chase(lib, w, RAIDER, 150.0, 400, gap=210.0)    # Raider: range 200, notice distance 220
     anchor = (2000.0, 500.0)
     step_wu = 150.0 / 20.0
     far = max(_d(t[0], anchor) for t in trace)
@@ -251,12 +254,12 @@ def test_R_087_05_the_leash_is_per_type_a_raider_drops_at_its_own_sensor_radius(
     assert far > 700.0 + step_wu, "the Raider stopped at %.1f wu: bounded by the Vanguard's 700, not its own 800" % far
 
 
-def test_R_087_04_idle_pursuer_reaches_and_shoots_a_standing_enemy_400_off(lib, world_factory):
-    """R-087-04 / S-087 / H-057 (the leash test's control, story test 4): the enemy standing still at 400 wu is reached
+def test_R_087_04_idle_pursuer_reaches_and_shoots_a_standing_enemy_320_off(lib, world_factory):
+    """R-087-04 / S-087 / H-057 (the leash test's control, story test 4): the enemy standing still at 320 wu (inside the notice distance 330) is reached
     (inside attack range 300) and shot. RED now: an idle unit never walks on a sight-range enemy."""
     w = _world(lib, world_factory)
     a = spawn(lib, w, VANGUARD, 0, 2000.0, 500.0)
-    b = spawn(lib, w, VANGUARD, 1, 2000.0, 900.0)
+    b = spawn(lib, w, VANGUARD, 1, 2000.0, 820.0)
     full = hp(lib, w, b)
     step(lib, w, 400)
     assert _d(pos(lib, w, a), pos(lib, w, b)) <= 300.0, "it did not close to attack range"
@@ -307,9 +310,9 @@ def test_R_087_05_the_leash_is_the_max_of_sensor_and_range_a_bombard_keeps_a_tar
 
 # ---- 5. plain move -------------------------------------------------------------------------------------------
 
-def test_control_R_096_01_a_plain_move_past_an_enemy_400_off_takes_no_target_and_arrives(lib, world_factory):
+def test_control_R_096_01_a_plain_move_past_an_enemy_320_off_takes_no_target_and_arrives(lib, world_factory):
     """R-096-01 / S-087 / H-057 (green now and after): "A plain-moving unit never acquires". The unit of test 2 on a
-    plain move past the enemy 400 wu off its path holds no target on any tick and arrives."""
+    plain move past the enemy 320 wu off its path holds no target on any tick and arrives."""
     w = _world(lib, world_factory)
     u, enemy = _lone_march(lib, w, plain=True, enemy_hp=5000.0)
     for _ in range(MOVE_FIRST_TICKS + 400):
