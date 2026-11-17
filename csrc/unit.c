@@ -2473,7 +2473,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             if (u->guard) {
                 /* R-096-08: a guard answers only what it can shoot, and never flees or walks */
                 if (!noncombat && om_tac_in_reach(w, u, atk) && !atk->stealth && om_tac_in_range(w, u, atk)) { u->target_id = atk->unit_id; u->rf_target = atk->unit_id; }
-            } else if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
+            } else if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth
+                       || (u->order == OM_ORDER_ATTACK_MOVE && !om_tac_may_act_on(w, u, atk))) {   /* R-087-01: an attack-mover cannot answer an attacker its side does not see, so it is not moved or stopped by the hit on its way and moves away from it once arrived; without this it took the unseen attacker as a pursuit target, a turn toward it that the lock check undid a tick later (an idle unit still does: PP baseline, test_PP_unit_return_fire) */
                 if (u->order == OM_ORDER_NONE) {
                     om_tac_start_flinch(u, atk, 1);
                 } else if (!(has_dest && !arrived)) {
