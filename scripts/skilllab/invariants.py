@@ -111,7 +111,7 @@ class _Checker:
         self.hit_hist = collections.deque(maxlen=RETURN_FIRE_TICKS)   # the (attacker, victim) pairs of the last frames, this one included (R-087-06)
         self.rf = {}                 # unit -> whether its current lock was taken by return fire: not dropped for distance (R-087-03, R-087-06)
         self._lock_kept = LockKept(self._notice_gap, lambda u: self.rf.get(u, False))
-        self._unseen_fire = UnseenFire(rules.guards, self._pushed, self._disp)
+        self._unseen_fire = UnseenFire(rules.guards, self._pushed, self._disp, lambda u, mine, theirs: self.rules.reach.get(u) is None or self._in_reach(self.rules.reach[u], mine, theirs))
         self._slope = SlopeCollision(rules.slope_at) if rules.slope_at is not None else None
 
     # -- helpers
@@ -281,20 +281,29 @@ class _Checker:
             if slant > reach + SLANT_SLACK:
                 out.append(_violation("R-087-10", tick, a, "fired at %d, %.1f wu away by slant (%.1f horizontal, %.0f in height), range %.0f" % (b, slant, self._disp(ra, rb), dz, reach)))
 
+    @staticmethod
+    def _seen(frame, prev_visible, side, e):
+        """Whether `side` sees unit `e` when the tick's picks and shots read it. The engine moves every unit before the cohort picks and the shots of a tick (om_tactical_step), so a unit
+        that came into sight this tick is seen by them (L-0084 tick 1691: the frame's set holds it, the previous frame's does not); deaths come after the picks, so a spotter that dies this
+        tick still saw it for the pick (L-0084 tick 1255: unit 92 picks and fires at 28, the previous frame's set holds it, the frame's does not). So `e` is seen when either frame's set
+        holds it; the frame's set counts only for a unit alive in the frame (a target that died this frame is in no set of its own frame)."""
+        row = frame["units"].get(e)
+        now = frame.get("visible")
+        return e in prev_visible.get(side, ()) or (now is not None and row is not None and row["alive"] and e in now.get(side, ()))
+
     def _sight(self, frame, visible, tick, out):
-        """R-093-02. A unit that fires at, or holds, a living target has it in its side's visible set of the previous frame (the state before the step that decided
-        it; a shot that kills the target takes it out of the set of its own frame). One violation per unit and frame. The engine validates a lock against sight at the start of
+        """R-093-02. A unit that fires at, or holds, a living target has it in its side's visible set when the tick's picks and shots read it: the previous frame's set or this frame's (`_seen`). One violation per unit and frame. The engine validates a lock against sight at the start of
         its tick and drops an unseen target on the next one, so a unit that already held the target in the previous frame is excused the first frame in which the previous
         frame's set lacks it; an acquisition of an unseen target, a shot at one, and a second such frame are violations at once."""
         units, said, prev = frame["units"], set(), self.prev["units"]
         for a, b in frame.get("fires", []):
-            if a in units and b not in visible.get(units[a]["side"], ()):
+            if a in units and not self._seen(frame, visible, units[a]["side"], b):
                 said.add(a)
-                out.append(_violation("R-093-02", tick, a, "fired at %d, which its side did not see before the step" % b))
+                out.append(_violation("R-093-02", tick, a, "fired at %d, which its side did not see when it fired" % b))
         for u, r in units.items():
             tgt = r["target"] if r["alive"] else 0
             t = units.get(tgt) if tgt else None
-            if t is None or not t["alive"] or tgt in visible.get(r["side"], ()):
+            if t is None or not t["alive"] or self._seen(frame, visible, r["side"], tgt):
                 self.unseen.pop(u, None)
                 continue
             run = self.unseen.get(u)
@@ -302,7 +311,7 @@ class _Checker:
             self.unseen[u] = (tgt, n)
             held_before = u in prev and prev[u]["alive"] and prev[u]["target"] == tgt
             if u not in said and not (held_before and n == 1):
-                out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see before the step" % tgt))
+                out.append(_violation("R-093-02", tick, u, "holds %d, which its side did not see" % tgt))
 
     def _gave_up(self, u, old, p, o_prev):
         """The rule that excuses the end of a lock, or None. R-087-09: the target was held unshootable and not closed in on for the engine's window (STUCK_TICKS, inside attack range
@@ -334,7 +343,7 @@ class _Checker:
 
     def _acquire(self, frame, u, r, p, tick, out):
         """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
-        judged on the previous frame (the state before the step): the target is the nearest enemy that frame's visible set of the unit's side holds within the unit's notice distance
+        judged on the previous frame's positions and the sight of either frame (`_seen`): the target is the nearest enemy the unit's side sees within the unit's notice distance
         (R-087-04: attack range times the reach multiplier times 1 + NOTICE_MARGIN, by `_notice_gap`; planar distance, within the unit's layer reach), within NEAREST_TOL (a target the unit gave up in the last GIVEUP_EXCLUSION_TICKS frames is not a candidate), and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
         frame or the RETURN_FIRE_TICKS - 1 before it is return fire, which excuses both."""
         tgt = r["target"] if r["alive"] else 0
@@ -346,14 +355,14 @@ class _Checker:
             return
         if any((tgt, u) in hits for hits in self.hit_hist):
             return
-        side, vis = p["side"], prev.get("visible")
+        side, vis = p["side"], prev.get("visible")      # `_seen` reads this frame's set as well
         reach = self.rules.reach.get(u)
         rng = self.rules.attack_range.get(u)
         mine = None                      # planar distance to the target when it is seen, alive and in reach
         mine_gap = None                  # (reach distance, notice distance) to the target, when the unit has an attack range
         eligible = []                    # (planar distance, distance from where the unit stands as stage 1 measures it) of every enemy within the notice distance that is not given up
         for e, row in prev["units"].items():
-            if not row["alive"] or row["side"] == side or (vis is not None and e not in vis.get(side, ())):
+            if not row["alive"] or row["side"] == side or (vis is not None and not self._seen(frame, vis, side, e)):
                 continue
             if reach is not None and not self._in_reach(reach, p["layer"], row["layer"]):
                 continue

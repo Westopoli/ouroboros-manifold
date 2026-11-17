@@ -16,6 +16,7 @@ NOTICE_MARGIN = 0.1          # DRAFT-notice-margin (R-087-04): a unit's notice d
 KEPT_FRAMES = 4              # R-087-08: one cohort period; a lock is reported in the frame after this many frames beyond the notice distance
 UNSEEN_WINDOW = 60           # DRAFT-unseen-fire-window: frames after an unseen hit in which an attack-mover on its way must keep walking (the 60-tick HIT_GAP of the Round 4 unseen oracle)
 PURSUIT_MEMORY = 8           # DRAFT-pursuit-memory (frames): a unit that held a target this recently is ending a pursuit, whose destination was the target's place; the walk back to its point (R-087-06) is no re-route by a hit
+BACKSWING_TICKS = 10         # R-084-04 (the checker's own constant, repeated): ticks 1 to 9 after a shot are the pause, in which a unit that fired stands
 OWN_MOVE = 0.5               # a displacement above it counts as "moved" (the checker's own constant, repeated: this module cannot import invariants)
 SLOPE_GAP = 30.0             # R-097-05: 2 x unit radius 15 wu
 SLOPE_SLACK = 2.0            # DRAFT-slope-slack: a pair this close to 30 wu counts as pushed apart (the sweep's I13: 28 wu; the engine resolves a pair on a slope at most a pace plus 1 wu a tick, om_move_slope_clamp)
@@ -62,21 +63,23 @@ class LockKept:
 
 class UnseenFire:
     """R-087-01. Rows carry "dest" ((x, y) or None) and "attack_move" (True when the standing order is an attack-move); a row without "attack_move" is not judged.
-    An unseen hit is a (attacker, victim) of the frame's "hits" (or "fires") with the victim alive and holding no target in the previous frame, the attacker in neither the previous nor this
-    frame's visible set of the victim's side.
+    An unanswerable hit is a (attacker, victim) of the frame's "hits" (or "fires") with the victim alive and holding no target in the previous frame, the attacker either outside the victim's
+    layer reach ("see or reach", R-087-01: `in_reach(victim, victim layer, attacker layer)` false) or in neither the previous nor this frame's visible set of the victim's side.
       on the way  an attack-mover with a destination and no target, in the UNSEEN_WINDOW frames after an unseen hit on it (the hit frame excluded), is a violation in a frame in which it
                   did not move (no unit within the push radius) or its destination changed under an unchanged order token, unless it held a target in the PURSUIT_MEMORY frames before (a pursuit
-                  ending: the walk back to its point): "neither moved nor stopped by such a hit". A unit that
+                  ending: the walk back to its point): "neither moved nor stopped by such a hit". A unit that held a target after the hit, or is within BACKSWING_TICKS - 1 frames of its own
+                  shot, stands for that reason (R-084-04, R-087-06), not for the hit. A unit that
                   was standing in the frame of the hit and the frame before it (between two targets, waiting its cohort turn) was not stopped by the hit and is not judged for standing.
       once        a run is a stretch of frames in which a unit with no target and no guard post moves under its own power (not a collision push, no new order), begun from no destination. A run
                   that begins when the unit's previous run followed an unseen hit and no unseen hit has landed on it since that run began is a violation in its first frame: "it holds where
                   the move away ends". A unit whose first run followed no hit (a leash return, a new order) is not judged; a target or a new order forgets the previous run."""
 
-    def __init__(self, guards, pushed, disp):
-        self.guards, self.pushed, self.disp = guards, pushed, disp
+    def __init__(self, guards, pushed, disp, in_reach=None):
+        self.guards, self.pushed, self.disp, self.in_reach = guards, pushed, disp, in_reach
         self.last_hit = {}           # unit -> tick of the latest unseen hit on it
         self.prev_run = {}           # unit -> (tick its previous run began, whether that run followed an unseen hit)
         self.running = set()         # units inside a run now
+        self.shot = {}               # unit -> the last frame in which it fired (the backswing of R-084-04 holds it standing)
         self.held = {}               # unit -> the last frame in which it held a target (R-087-06: a pursuit ends at the next cohort turn after its target is gone, and the unit walks back to its point)
         self.moving = {}             # unit -> whether it moved under no push in the previous frame, the frame of the latest unseen hit on it
         self.walking_at_hit = {}     # unit -> whether it was walking in the frame of its latest unseen hit or the one before
@@ -88,7 +91,11 @@ class UnseenFire:
         out = set()
         for a, b in frame.get("hits", frame.get("fires", [])):
             v, pv = units.get(b), prev["units"].get(b)
-            if v is None or not v["alive"] or pv is None or pv["target"] or a in vis_now.get(v["side"], ()) or a in vis_prev.get(v["side"], ()):
+            if v is None or not v["alive"] or pv is None or pv["target"]:
+                continue
+            at = units.get(a)
+            reachable = self.in_reach is None or at is None or self.in_reach(b, v["layer"], at["layer"])
+            if reachable and (a in vis_now.get(v["side"], ()) or a in vis_prev.get(v["side"], ())):
                 continue
             out.add(b)
         return out
@@ -97,6 +104,8 @@ class UnseenFire:
         if prev is None:
             return
         hit = self._unseen_hits(frame, prev)
+        for a, _ in frame.get("fires", []):
+            self.shot[a] = tick
         for u, r in frame["units"].items():
             p = prev["units"].get(u)
             if "attack_move" not in r or p is None or not p["alive"] or not r["alive"]:
@@ -114,7 +123,8 @@ class UnseenFire:
                 self.held[u] = tick
             hit_at = self.last_hit.get(u)
             if r["attack_move"] and dest is not None and not r["target"] and hit_at is not None and 0 < tick - hit_at <= UNSEEN_WINDOW:
-                stopped = moved <= OWN_MOVE and not self.pushed(frame, u) and self.walking_at_hit.get(u, True)
+                stopped = (moved <= OWN_MOVE and not self.pushed(frame, u) and self.walking_at_hit.get(u, True)
+                           and not self.held.get(u, -1) > hit_at and tick - self.shot.get(u, -BACKSWING_TICKS) > BACKSWING_TICKS - 1)
                 rerouted = p.get("dest") is not None and p["dest"] != dest and not p["target"] and tick - self.held.get(u, -PURSUIT_MEMORY - 1) > PURSUIT_MEMORY
                 if stopped or rerouted:
                     out.append({"rule": "R-087-01", "tick": tick, "unit": u, "detail": "an attack-mover on its way %s %d frames after a hit it could not see" % (
