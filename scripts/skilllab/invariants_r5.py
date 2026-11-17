@@ -33,21 +33,24 @@ def notice_distance(rules, u, layer, other_layer):
 
 class LockKept:
     """R-087-03 (G7 lock): "a lock kept on a target beyond the notice distance for more than one cohort period is reported, except a return-fire lock". A unit that holds a living, seen target
-    standing beyond its notice distance in each of more than KEPT_FRAMES consecutive frames is reported once, in the fifth. `gap(u, row, target id, target row)` -> (distance, notice distance)
-    or None; `return_fire(u)` -> whether u's current lock was taken by return fire (R-087-06), which the leash alone bounds (R-087-05)."""
+    standing beyond its notice distance in each of more than KEPT_FRAMES consecutive frames is reported once, in the fifth. "Beyond" is judged as the engine can read it inside one tick
+    (round5.md "Fourth pass"): the unit at its position of frame N-1 or N, the target at its position of frame N-1 or N, and it counts only when it holds in all four readings.
+    `beyond(u, row N-1, row N, target id, target row N-1, target row N)` -> (distance, notice distance) of the reading nearest the notice distance when the target is beyond it in every reading,
+    else None; `return_fire(u)` -> whether u's current lock was taken by return fire (R-087-06), which the leash alone bounds (R-087-05)."""
 
-    def __init__(self, gap, return_fire):
-        self.gap, self.return_fire = gap, return_fire
+    def __init__(self, beyond, return_fire):
+        self.beyond, self.return_fire = beyond, return_fire
         self.run = {}                # unit -> [target, frames beyond the notice distance, reported]
 
-    def feed(self, frame, tick, out):
+    def feed(self, frame, prev, tick, out):
         units, visible = frame["units"], frame.get("visible")
+        before = prev["units"] if prev else {}
         for u, r in units.items():
             tgt = r["target"] if r["alive"] else 0
             t = units.get(tgt) if tgt else None
-            g = self.gap(u, r, tgt, t) if t is not None and t["alive"] else None
+            g = self.beyond(u, before.get(u, r), r, tgt, before.get(tgt, t), t) if t is not None and t["alive"] else None
             seen = r.get("seen", True) if visible is None else tgt in visible.get(r["side"], ())
-            if g is None or not seen or g[0] <= g[1]:
+            if g is None or not seen:
                 self.run.pop(u, None)
                 continue
             run = self.run.get(u)
