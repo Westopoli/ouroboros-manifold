@@ -19,7 +19,7 @@ Scenes: a 2000 x 2000 canvas, the shipped tactical parameters (targeting by sigh
 notice distance is 300 x 1.1 = 330 wu. Enemies are Supplies (they never fire, so only the test changes what the unit does) or, where an enemy must walk,
 a Raider that plain-moves (a plain mover never acquires and never fires). Every scene asserts that its side sees the enemy, so a red test is red for the
 notice distance and not for sight.
-Detector bounds (not rules): ACQUIRE_TICKS 12 (a cohort turn comes within OM_TARGETING_COHORT_COUNT ticks; measured 7), the run lengths, ARRIVE 20 wu.
+Detector bounds (not rules): ACQUIRE_TICKS 12 (a cohort turn comes within OM_TARGETING_COHORT_COUNT ticks; measured 7), the run lengths, ARRIVE 30 wu.
 """
 import ctypes
 
@@ -31,7 +31,7 @@ RANGE = 300.0             # Vanguard attack range
 NOTICE = RANGE * (1.0 + NOTICE_MARGIN)
 ACQUIRE_TICKS = 12
 IDLE_TICKS = 200
-ARRIVE = 20.0             # detector bound
+ARRIVE = 30.0             # R-099-04: a unit that followed route waypoints has arrived within 30 wu of its point, and its destination is cleared
 BIG_HP = 1.0e6
 ENEMY_STEP = 7.5          # a Raider's wu a tick (speed 150)
 
@@ -199,7 +199,7 @@ def _march(lib, wf, off, plain=False):
 def test_R_096_02_an_attack_mover_passing_an_enemy_at_340_walks_on(lib, world_factory):
     """R-096-02 "When an enemy its side can see comes within the unit's notice distance, Then the unit closes": an enemy 340 wu off the route is never
     within 330. The attack-mover marches 1600 wu: on every tick it holds no target, its goal is its ordered point, it keeps to the route (within 5 wu
-    of x 1000) and the enemy is unhurt; it arrives. Red today: it leaves the route at the sensor radius."""
+    of x 1000) and the enemy is unhurt; it arrives (within 30 wu, its destination cleared from then on, R-099-04). Red today: it leaves the route at the sensor radius."""
     w, u, e = _march(lib, world_factory, 340.0)
     full = hp(lib, w, e)
     for n in range(1, 481):
@@ -207,9 +207,13 @@ def test_R_096_02_an_attack_mover_passing_an_enemy_at_340_walks_on(lib, world_fa
         assert _none(target(lib, w, u)), "tick %d: the marching unit took target %s from 340 wu, beyond its notice distance" % (n, target(lib, w, u))
         assert abs(pos(lib, w, u)[0] - 1000.0) <= 5.0, "tick %d: the unit left its route (at %s)" % (n, pos(lib, w, u))
         has, gx, gy = dest(lib, w, u)
-        assert has == 1 and abs(gx - 1000.0) <= 1e-6 and abs(gy - 1800.0) <= 1e-6, "tick %d: the unit's goal is %s, not its ordered point" % (n, (has, gx, gy))
+        if has == 0:    # R-099-04: the destination is cleared on arrival, and only then
+            assert _d(pos(lib, w, u), (1000.0, 1800.0)) <= ARRIVE, "tick %d: the unit's goal is gone %.1f wu from its ordered point (at %s)" % (n, _d(pos(lib, w, u), (1000.0, 1800.0)), pos(lib, w, u))
+        else:
+            assert abs(gx - 1000.0) <= 1e-6 and abs(gy - 1800.0) <= 1e-6, "tick %d: the unit's goal is %s, not its ordered point" % (n, (has, gx, gy))
     assert hp(lib, w, e) == full, "the enemy beyond the notice distance was hurt"
     assert _d(pos(lib, w, u), (1000.0, 1800.0)) <= ARRIVE, "the unit did not arrive: at %s" % (pos(lib, w, u),)
+    assert dest(lib, w, u)[0] == 0, "the unit arrived and its destination is still set: %s" % (dest(lib, w, u),)
 
 
 def test_R_096_02_control_an_attack_mover_passing_an_enemy_at_320_closes_and_fires(lib, world_factory):
