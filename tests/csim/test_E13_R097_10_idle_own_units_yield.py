@@ -4,9 +4,9 @@ Rule words proved, word for word (docs/bible/epics/E-13-movement-and-command.md)
   R-097-10  "Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement, except that an idle unit (no move
             target, not engaged) takes the full displacement from a mover of its own side and none from an enemy mover, which takes all of it; given both are stationary and either was displaced earlier in the
             tick, they split the displacement equally. Every unit starts pair checks, moving or stopped, so a unit that walks into a stopped one is pushed out; ..."
-  R-097-03  "Given a moving unit, When it steps, Then it probes 40 wu ahead; if a unit on its layer blocks the probe (an idle unit of its own side does not block: idle means no move target and not engaged; an
+  R-097-03  "Given a moving unit, When it steps, Then it probes 40 wu ahead; if a unit on its layer, or on the same slope (R-097-05), blocks the probe (an idle unit of its own side does not block: idle means no move target and not engaged; an
             enemy always does) it tries +30, -30, +60, -60, +90 and -90 degrees from its heading, in that order, and takes the first clear one; if none is clear it continues straight."
-  R-097-05  "Given two units on the same layer within 30 wu (2 x radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick."
+  R-097-05  "Given two units on the same layer within 30 wu (2 x radius 15), or two units within 30 wu that both stand on the same slope, whichever side of its midline each is on (E-01 R-001-06), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick."
   R-097-08  "Given enemy units, When colliding, Then they collide like allies; nobody passes through anybody."
   R-096-08  (the guard clause) "... a collision push never carries a guard past the radius (DRAFT readings, DEC-engine-rules-round2-2026-11-11, Westley may veto)."
 Owner's words behind R-097-10 and R-097-03 (decisions.md, DEC-Q087-02-2026-10-22): "Idle own units are not walls: a moving unit passes through idle units of its own side, which step aside (soft collision), as in the
@@ -279,7 +279,7 @@ def test_control_an_idle_own_unit_left_alone_stays_idle(lib, world_factory):
 
 
 def test_control_R_097_05_two_own_movers_are_still_pushed_apart_to_30_wu_and_both_give(lib, world_factory):
-    """R-097-05: "Given two units on the same layer within 30 wu (2 x radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart ..." and R-097-10 "both are
+    """R-097-05: "Given two units on the same layer within 30 wu (2 x radius 15), or two units within 30 wu that both stand on the same slope, whichever side of its midline each is on (E-01 R-001-06), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart ..." and R-097-10 "both are
     moving" (neither is idle: each is a mover). Two side 0 Vanguards 20 wu apart, (400,500) and (400,520), both ordered +x: on every one of 30 ticks they are at least 30 wu apart (POS_TOL), at 30 wu on the first,
     and both have moved from where they started (neither takes the whole push). Green today (measured: 30.000 on the first tick, both give); must stay green."""
     w = _world(lib, world_factory)
