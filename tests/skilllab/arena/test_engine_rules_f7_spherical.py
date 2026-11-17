@@ -27,7 +27,7 @@ test_R_098_02_i11nl_the_sweeps_pair_can_shoot_when_it_sees_and_is_in_range_by_sl
   is 1. No planar obstacle exists in L-0061 (its only feature is the vantage). The fire side's blocked-cell walk (om_move_los_clear on the lower layer of the pair) says blocked
   where the sight side (fog.c om_fog_grid_blocks, which skips a hill's ground cells) says clear. Measured, not fixed: the cause is the implementer's to confirm.
 Detector bounds (not rules; Westley's to change): DRAFT-f7-slant-slack 1.0 wu; the layer-floor reading of the height of a layer (spec F7: om_terrain_band_heights; a unit on a slope
-at its slope height is the implementer's reading, report_gap); MIN_CROSS 50 cross-layer shots (a fix that stopped every cross-layer shot would pass the rule and fail the control).
+at its slope height is the implementer's reading, report_gap); MIN_CROSS 20 cross-layer shots, DRAFT-f7-min-cross-shots, a premise floor of the detector set from the Round 5 run (39 shots in 1415 ticks; was 50 on the 2136-tick run): a fix that stopped every cross-layer shot would pass the rule and fail the control.
 """
 import pytest
 
@@ -37,7 +37,7 @@ SLACK = probe.SLANT_SLACK
 FIGHT = "L-0061"
 PAIR = (2, 26)
 WATCH = ((59, PAIR), (60, PAIR), (61, PAIR), (62, PAIR), (63, PAIR), (64, PAIR))
-MIN_CROSS = 50
+MIN_CROSS = 20          # DRAFT-f7-min-cross-shots, the detector's premise floor, not a rule: set 2026-11-17 (Round 5) from the new run, 39 cross-layer shots in 1415 ticks of L-0061 (the run was 2136 ticks before Round 5; the old floor was 50)
 
 
 @pytest.fixture(scope="module")
