@@ -19,6 +19,9 @@ Red today: unit 13's three runs.
 Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47): 737 ticks (741 on the Round 4 tip 6d3d7635, R-097-10: an idle unit steps aside for a mover of its own side; the lab checker reports no violation of any rule on it, seed 1 sight on, and the flinch run is unchanged); flinch flag on unit 13 only, 87 unit-ticks, one run (ticks 182 to 268), no stall; the lab checker reports no violation of any rule. In the
 flinch the unit has no destination (the recorder's `dest` is None), so the stall detector below is blind to a fixed unit by construction and sees only the old state, a destination ordered by the
 pursuit-end check and a unit that stands: that is what the red test judged and what the fake-tick control proves it reads.
+
+Re-dumped 2026-11-17 on the Round 5 tip: 2750 ticks; the flinch flag is carried by units 34 (ticks 1120 to 1170) and 40 (ticks 1180 to 1230) only, both idle, 200 wu away and holding; unit 13, an attack-mover on its way,
+is not moved by unseen fire any more (R-087-01 as ruled 2026-11-17), so the Round 3 run of unit 13 is gone and the stall detector reads nothing in the fight.
 """
 import contextlib
 import ctypes
@@ -103,20 +106,31 @@ def test_control_the_measure_flags_a_flinching_unit_that_stands_and_not_one_that
     assert stalls_in_move_away(*_fake(0.0, dest=None), [1]) == []
 
 
-def test_control_L0081_runs_to_the_measured_end_and_unit_13_flinches():
+def test_control_L0081_runs_to_the_measured_end():
     """Control (the premise of the red test; re-dumped 2026-11-12 on the Round 3 tip d70c8d47, Test-defect: the premises were dumped on the engine before the fixes): L-0081 seed 1 sight on runs
-    741 ticks (2,560 before; fix 3, 8f825d59, moves it to 831 and fix 2, 94da7493, to 737; d70c8d47 leaves it; Round 4, 6d3d7635, R-097-10: 741, checker reports none; Test-defect); the only unit that ever carries the flinch flag is unit 13, on 87 unit-ticks in one run from
-    tick 182 to tick 268, with no destination while it moves away, and it ends the run 196 wu from where it began (R-087-01 'moves 200 wu directly away', the step is 2 wu a tick), so the move
-    away is made and is not a run on the spot; at tick 269 the attack-mover has its destination back."""
+    741 ticks (2,560 before; fix 3, 8f825d59, moves it to 831 and fix 2, 94da7493, to 737; d70c8d47 leaves it; Round 4, 6d3d7635, R-097-10: 741, checker reports none; Test-defect). Round 5 (G1 to G5)
+    moved the length to 2750 ticks on the branch tip: the number is left here as it was, for the verifier to re-pin once the lab checker reports nothing on the new run."""
     rec, flinch = played()
     assert len(rec.ticks) == 741, len(rec.ticks)
+
+
+def test_control_L0081_the_move_away_is_made_by_idle_units_and_ends_where_it_holds():
+    """Control (the premise of the red test; re-derived 2026-11-17 on the Round 5 tip, Test-defect: R-087-01 as ruled that day, an attack-mover on its way is neither moved nor stopped, so unit 13, an attack-mover
+    on its way, no longer carries the flinch flag, and the run of ticks 182 to 268 is not in the fight): in L-0081 seed 1 sight on the units that ever carry the flinch flag are 34 and 40, each on 51 unit-ticks in
+    one run (unit 34 from tick 1120 to 1170, unit 40 from tick 1180 to 1230), idle (no destination and no target at the start of the run, no destination during it), each ends its run 200 wu from where it began
+    (R-087-01 'moves 200 wu directly away', the step is 4 wu a tick), so the move away is made and is not a run on the spot, and holds there: no destination and no target on the tick after the run."""
+    rec, flinch = played()
     units = {u for d in flinch for u, v in d.items() if v}
-    assert units == {13}, units
-    ticks = [n + 1 for n, d in enumerate(flinch) if d.get(13)]
-    assert ticks == list(range(182, 269)), (ticks[0], ticks[-1], len(ticks))
-    p0, p1 = rec.ticks[181]["pre"][13], rec.ticks[267]["post"][13]
-    assert 190.0 < math.hypot(p1["x"] - p0["x"], p1["y"] - p0["y"]) < 200.0
-    assert rec.ticks[268]["post"][13]["dest"] is not None
+    assert units == {34, 40}, units
+    for u, first, last in ((34, 1120, 1170), (40, 1180, 1230)):
+        ticks = [n + 1 for n, d in enumerate(flinch) if d.get(u)]
+        assert ticks == list(range(first, last + 1)), (u, ticks[0], ticks[-1], len(ticks))
+        before, after = rec.ticks[first - 1]["pre"][u], rec.ticks[last]["post"][u]
+        assert before["dest"] is None and not before["tgt"], (u, before)
+        assert all(rec.ticks[k - 1]["post"][u]["dest"] is None for k in range(first, last + 1)), u
+        p1 = rec.ticks[last - 1]["post"][u]
+        assert 199.0 < math.hypot(p1["x"] - before["x"], p1["y"] - before["y"]) < 200.5, (u, p1, before)
+        assert after["dest"] is None and not after["tgt"], (u, after)
 
 
 # ------------------------------------------------------------------ red today
