@@ -10,6 +10,7 @@ Two layers:
                                                  fight of 12,000 ticks is not re-scanned every tick
   Monitor(engine, world, width, height, sight)  the online wrapper `run.fight` uses: reads the engine after each step, builds the frame, feeds `_Checker`
 
+Round 5 (2026-11-17) adds R-087-01 (unseen fire) and R-097-05 (slope collision), makes R-087-03 know the notice distance (a pick or a lock beyond it) and judges a guard's pick from where it stands.
 Round 2 (engine rules, 2026-11-11) adds: R-087-03 acquisitions (nearest seen enemy, cohort turn, return fire), R-093-02 (fire only at the side's visible set of the previous
 frame), R-087-09 only within attack range, continuity judging layer changes (not every push), R-096-08 (guard leash) and R-087-10 (spherical range of a shot). `watch` is the entry the lab
 fights use (fight.fight, search.run_search); `Blind` stands in for an engine the checker cannot read. A violation is {"rule", "tick", "unit", "detail"}. The cell test of R-207-06 is the engine's own `om_navmesh_is_cell_blocked` (the Monitor binds it),
@@ -17,6 +18,8 @@ never a Python re-derivation. Every number below is a DRAFT constant, Westley's 
   DRAFT-inv-cell-depth 1 wu     DRAFT-inv-push-radius 40 wu     DRAFT-inv-stuck-ticks 20     DRAFT-inv-step-slack 1.3 wu
 and, Round 2: DRAFT-inv-nearest-tol 1 wu  DRAFT-inv-return-fire-ticks 4  DRAFT-guard-radius 200 wu  DRAFT-guard-leash-slack 1 wu  DRAFT-f7-slant-slack 1 wu
 and, Round 2b: DRAFT-giveup-exclusion-ticks 100 (a given-up target is not the nearest for that long), DRAFT-slant-ground-only (R-087-10 is measured flat when either unit is a flyer)
+and and, Round 5 (engine rules, 2026-11-17, `invariants_r5.py`): DRAFT-notice-margin 0.1 (a unit acquires and keeps a lock only within its attack range times 1.1, R-087-04 / R-087-03),
+DRAFT-unseen-fire-window 60 frames (R-087-01), DRAFT-slope-slack 1 wu, DRAFT-flip-window 20 frames, DRAFT-slope-near 150 wu (R-097-05)
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
 (R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
@@ -24,7 +27,9 @@ import collections
 import ctypes
 import math
 
-RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02", "R-096-08", "R-087-10")
+from scripts.skilllab.invariants_r5 import NOTICE_MARGIN, LockKept, SlopeCollision, UnseenFire, notice_distance, slope_at_for  # noqa: F401  NOTICE_MARGIN: DRAFT-notice-margin, read by the tests
+
+RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02", "R-096-08", "R-087-10", "R-087-01", "R-097-05")
 
 CELL = 100.0                 # the engine's cell, wu (OM_NAVMESH_CELL_SIZE)
 DEPTH_TOL = 1.0              # DRAFT-inv-cell-depth
@@ -51,10 +56,11 @@ UNBOUNDED_CANVAS = "canvas unbounded (no terrain)"    # the reason R-207-07 is s
 class Rules:
     """What the checks need to know about the world. blocked_cell(cx, cy, layer) -> bool; max_step {unit id: wu a tick}; sensor_radius {unit id: wu}, the radius a unit
     may walk from its anchor before the leash (R-087-05) drops its target, the Monitor passes max(sensor radius, weapon range); suspended {rule: switch};
-    cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one)."""
+    cohort {unit id: slot 0..3} (R-087-03 / R-087-08 acquisitions are checked only for units that have one); attack_range {unit id: wu} also gives the unit its notice distance (R-087-04)."""
 
     def __init__(self, width, height, blocked_cell=None, max_step=None, sensor_radius=None, suspended=None, reach=None, cohort=None, attack_range=None, guards=None, layer_heights=None,
-                 range_mult=None, flyers=None):
+                 range_mult=None, flyers=None, slope_at=None):
+        self.slope_at = slope_at    # callable (x, y) -> a hashable id of the slope the point lies on (one id per hill), or None: R-097-05 is judged only when given
         self.flyers = set(flyers or ())      # {unit id} whose type moves by flying (om_unit_profile_movement_kind 0): R-087-10 measures a shot with a flyer on either end flat (DRAFT-slant-ground-only)
         self.range_mult = range_mult or (lambda la, lb: 1.0)   # (shooter layer, target layer) -> the reach table's range multiplier (OM_TP_RANGE_UP_n / DOWN_n); 1.0 on one layer
         self.guards = guards if guards is not None else {}     # {unit id: (post x, post y)}: R-096-08 judges these units only (the Monitor shares the engine's live dict)
@@ -103,6 +109,10 @@ class _Checker:
         self.unseen = {}             # unit -> (target, consecutive frames it was held while its side's previous visible set lacked it) (R-093-02)
         self.breached = set()        # guards outside their radius now (R-096-08: one violation per breach, not one per frame)
         self.hit_hist = collections.deque(maxlen=RETURN_FIRE_TICKS)   # the (attacker, victim) pairs of the last frames, this one included (R-087-06)
+        self.rf = {}                 # unit -> whether its current lock was taken by return fire: not dropped for distance (R-087-03, R-087-06)
+        self._lock_kept = LockKept(self._notice_gap, lambda u: self.rf.get(u, False))
+        self._unseen_fire = UnseenFire(rules.guards, self._pushed, self._disp)
+        self._slope = SlopeCollision(rules.slope_at) if rules.slope_at is not None else None
 
     # -- helpers
     @staticmethod
@@ -193,6 +203,12 @@ class _Checker:
                 self._held(units, u, r, tick, out)
         if "R-087-10" in on:
             self._slant(frame, tick, out)
+        if "R-087-03" in on:
+            self._lock_kept.feed(frame, tick, out)
+        if "R-087-01" in on:
+            self._unseen_fire.feed(frame, prev, tick, out)
+        if "R-097-05" in on and self._slope is not None:
+            self._slope.feed(frame, prev, tick, out)
         if "R-093-02" in on and prev is not None and "visible" in prev:
             self._sight(frame, prev["visible"], tick, out)
         for a in shooters:
@@ -226,16 +242,28 @@ class _Checker:
             walked = math.hypot(r["x"] - anchor[0], r["y"] - anchor[1])
             reach = self.rules.reach.get(u)
             out_of_reach = reach is not None and any(not self._in_reach(reach, a["layer"], o["layer"]) for a, o in ((p, o_prev), (r, o_now)) if o)
-            if (o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not out_of_reach
+            gap = self._notice_gap(u, p, old, o_prev) if o_prev else None
+            left_notice = gap is not None and gap[0] > gap[1] and not self.rf.get(u, False)    # R-087-03: the lock ends where the target leaves the notice distance (a return-fire lock does not)
+            if (o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not out_of_reach and not left_notice
                     and not (leash is not None and walked > leash - LEASH_SLACK)):
                 why = self._gave_up(u, old, p, o_prev)
                 if why is None:
                     out.append(_violation("R-087-03", tick, u, "target %d -> %d while %d was alive and seen" % (old, tgt, old)))
+        if tgt and (p is None or not p["alive"] or p["target"] != tgt):
+            self.rf[u] = any((tgt, u) in hits for hits in self.hit_hist)     # R-087-06: a hit by the target in this frame or the 3 before it makes this a return-fire lock
         if p is not None and p.get("order") != r.get("order"):
             held = None                      # a new order starts a new anchor
             self.lock.pop(u, None)
         if tgt and (not held or held[0] != tgt):
             self.lock[u] = (tgt, held[1] if held else (r["x"], r["y"]))   # the anchor stays through a pause with no target: an attack-mover keeps it while it pursues
+
+    def _notice_gap(self, u, a, e, b):
+        """R-087-04: (distance from unit u's row `a` to enemy e's row `b`, u's notice distance to it), or None when u has no attack range. The distance is the weapon's reach measure of R-087-10
+        (spherical, flat when either end flies); the notice distance is the attack range times the reach table's multiplier for the two layers times (1 + NOTICE_MARGIN)."""
+        notice = notice_distance(self.rules, u, a["layer"], b["layer"])
+        if notice is None:
+            return None
+        return self._spherical((a["x"], a["y"]), a["layer"], b, u in self.rules.flyers or e in self.rules.flyers), notice
 
     def _slant(self, frame, tick, out):
         """R-087-10. A shot's distance is spherical: the horizontal distance and the band-height difference of the two layers together (both units walkers; a flyer on either
@@ -306,8 +334,8 @@ class _Checker:
 
     def _acquire(self, frame, u, r, p, tick, out):
         """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
-        judged on the previous frame (the state before the step): the target is the nearest enemy that frame's visible set of the unit's side holds (planar distance,
-        within the unit's layer reach), within NEAREST_TOL (a target the unit gave up in the last GIVEUP_EXCLUSION_TICKS frames is not a candidate), and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
+        judged on the previous frame (the state before the step): the target is the nearest enemy that frame's visible set of the unit's side holds within the unit's notice distance
+        (R-087-04: attack range times the reach multiplier times 1 + NOTICE_MARGIN, by `_notice_gap`; planar distance, within the unit's layer reach), within NEAREST_TOL (a target the unit gave up in the last GIVEUP_EXCLUSION_TICKS frames is not a candidate), and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
         frame or the RETURN_FIRE_TICKS - 1 before it is return fire, which excuses both."""
         tgt = r["target"] if r["alive"] else 0
         prev = self.prev
@@ -320,37 +348,38 @@ class _Checker:
             return
         side, vis = p["side"], prev.get("visible")
         reach = self.rules.reach.get(u)
-        rng, post = self.rules.attack_range.get(u), self.rules.guards.get(u)
+        rng = self.rules.attack_range.get(u)
         mine = None                      # planar distance to the target when it is seen, alive and in reach
-        eligible = []                    # (planar distance, distance from where the unit stands as stage 1 measures it, slant from the post) of every enemy that is not given up
+        mine_gap = None                  # (reach distance, notice distance) to the target, when the unit has an attack range
+        eligible = []                    # (planar distance, distance from where the unit stands as stage 1 measures it) of every enemy within the notice distance that is not given up
         for e, row in prev["units"].items():
             if not row["alive"] or row["side"] == side or (vis is not None and e not in vis.get(side, ())):
                 continue
             if reach is not None and not self._in_reach(reach, p["layer"], row["layer"]):
                 continue
             d = self._disp(p, row)
+            gap = self._notice_gap(u, p, e, row)
             if e == tgt:
-                mine = d
+                mine, mine_gap = d, gap
+            if gap is not None and gap[0] > gap[1]:
+                continue                     # R-087-04: an enemy the side sees beyond the notice distance is not acquired, so it is not a candidate for "the nearest"
             if tick - self.gave_up.get((u, e), -GIVEUP_EXCLUSION_TICKS) < GIVEUP_EXCLUSION_TICKS:
                 continue                     # R-087-09: given up by this unit within the exclusion window, so not a candidate for "the nearest"
             flat = u in self.rules.flyers or e in self.rules.flyers          # DRAFT-slant-ground-only
-            eligible.append((d, self._spherical((p["x"], p["y"]), p["layer"], row, flat),
-                             self._spherical(post, p["layer"], row) if post is not None else None))
+            eligible.append((d, self._spherical((p["x"], p["y"]), p["layer"], row, flat)))
+        if mine_gap is not None and mine_gap[0] > mine_gap[1]:
+            out.append(_violation("R-087-03", tick, u, "acquired %d, %.1f wu away, beyond its notice distance %.1f (R-087-04); not return fire" % (tgt, mine_gap[0], mine_gap[1])))
+            return
         nearest = None
         if eligible:
-            nearest = min(d for d, _, _ in eligible)
+            nearest = min(d for d, _ in eligible)
             if rng is not None:
-                # R-087-03 with R-087-10: stage 1, what the unit can shoot from where it stands (same layer: planar within range; another layer in reach: within range by slant, a flyer
-                # on either end measured flat); the nearest of those wins and may skip a nearer enemy that is out of range by slant.
-                in_range = [d for d, sl, _ in eligible if sl <= rng]
+                # R-087-03 with R-087-10: what the unit can shoot from where it stands (same layer: planar within range; another layer in reach: within range by slant, a flyer
+                # on either end measured flat); the nearest of those wins and may skip a nearer enemy that is out of range by slant. A guard is judged the same way, from where it
+                # stands: it acquires as every unit does (R-096-08, Round 5; the Round 2 second stage, from its post within radius plus range, is gone).
+                in_range = [d for d, sl in eligible if sl <= rng]
                 if in_range:
                     nearest = min(in_range)
-                elif post is not None:
-                    # R-087-03 with R-096-08: stage 2, a guard with nothing in range takes the nearest enemy it can engage from its post (slant from the post at most GUARD_RADIUS + range),
-                    # and may skip a nearer one that is beyond that. A unit that is not a guard keeps the nearest seen.
-                    engageable = [d for d, _, sp in eligible if sp <= GUARD_RADIUS + rng]
-                    if engageable:
-                        nearest = min(engageable)
         if mine is None or (nearest is not None and mine > nearest + NEAREST_TOL):
             out.append(_violation("R-087-03", tick, u, "acquired %d, not the nearest enemy its side sees (%s; nearest %s wu)" % (
                 tgt, "unseen, dead or out of reach" if mine is None else "%.1f wu" % mine, "none" if nearest is None else "%.1f" % nearest)))
@@ -452,9 +481,10 @@ class Monitor:
         self._enemies = {s: [u for u in self._ids if self._side[u] != s] for s in set(self._side.values())}
         self._cache = {}
         self._terrain = bool(engine._lib.om_terrain_band_at(world, 0.0, 0.0) > 0)   # a world with no terrain reads band 0 everywhere
+        self._attack_movers = set()  # units whose standing order is an attack-move (R-087-01), from the order log
         self._posts = {}            # {guard id: (x, y)} where each stood when the lab ordered it to guard; the checker's Rules.guards
         self._chk = _Checker(Rules(width, height, self._blocked, self._max_step, self._sensor, suspended_for(sight), self._reach, cohort, self._range,
-                                   self._posts, heights, self._range_mult, self._flyers))
+                                   self._posts, heights, self._range_mult, self._flyers, slope_at_for(engine, world) if self._terrain else None))
         self.suspended = dict(self._chk.suspended)
         self.violations = []
         self.tick = 0
@@ -508,6 +538,8 @@ class Monitor:
         prev = self._frame["units"] if getattr(self, "_frame", None) else {}
         ordered = e.__dict__.get("order_log", {}).pop(w.value, {})     # {unit id: "guard" | "order"}: ordered since the last frame (those before frame 0 included)
         self._ordered |= set(ordered)
+        for u, kind in ordered.items():
+            (self._attack_movers.add if kind == "attack_move" else self._attack_movers.discard)(u)
         units = {}
         see_unit = e._lib.om_unit_can_see
         for u in self._ids:
@@ -518,6 +550,9 @@ class Monitor:
             if tgt < 0 or tgt > 0xFFFFFF00:
                 tgt = 0
             row = {"x": x, "y": y, "layer": max(0, int(e.unit_layer(w, u))), "alive": alive, "hp": hp, "side": self._side[u], "target": tgt}
+            if alive:        # R-087-01: the destination and whether the standing order is an attack-move, arrived or not (the lab's own order log: `Engine.order_attack_move`)
+                row["dest"] = e.unit_destination(w, u)
+                row["attack_move"] = u in self._attack_movers
             token = self._token[u] + (1 if u in self._ordered else 0)
             self._token[u] = token
             row["order"] = token
