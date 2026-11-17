@@ -50,6 +50,7 @@
 #include "om_internal.h"
 #include "om_constants.h"
 #include "move_commit.h"
+#include "move_slope.h"
 #include <math.h>
 #include <stddef.h>
 #include <string.h>
@@ -1760,12 +1761,14 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
     double bx = om_move_grid_x(ms, ib), by = om_move_grid_y(ms, ib);
     const double oax = ax, oay = ay, obx = bx, oby = by;
     int changed = 0, routed = 0;
-    if (ms->col_pursue && ms->start_layer[ia] != ms->start_layer[ib]) return 0;
     dx = bx - ax; dy = by - ay;
     target = ms->rad_n ? om_move_unit_radius(w, ms, ia) + om_move_unit_radius(w, ms, ib) : 2.0 * ms->radius;
     if (dx * dx + dy * dy >= target * target) return 0;
     dist = sqrt(dx * dx + dy * dy);
     if (dist >= target) return 0;
+    /* R-097-05: units on different layers pass through each other unless both stand on one slope (asked only of a pair that overlaps) */
+    if (ms->col_pursue && ms->start_layer[ia] != ms->start_layer[ib]
+        && !om_move_same_slope(w, ax, ay, ms->start_layer[ia], bx, by, ms->start_layer[ib])) return 0;
     if (dist < OM_COLLISION_EXACT_EPS) {
         /* R-097-07: exact overlap -- the lower unit id (a, since
          * a's id < b's always here) moves in the canonical +x
@@ -2044,10 +2047,10 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
 }
 
 /* PP-move P8 (PURSUE_BY_STEERING): the units a probe from (x, y) can touch, as their start-of-tick
- * positions, into scan_x/scan_y: same layer only, group mates and idle friends included, the unit itself
+ * positions, into scan_x/scan_y: same layer, or on the same slope as the unit (R-097-03, R-097-05), group mates and idle friends included, the unit itself
  * not. The grid was filed at the start of the tick, so a unit still in a cell is in the cell of its
  * start-of-tick position; a unit in the spill list is always a candidate. Returns the count. */
-static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, double x, double y) {
+static uint32_t om_move_probe_gather_start(const om_world *w, om_move_state *ms, uint32_t self_id, double x, double y) {
     const double r = OM_STEERING_PROBE_DIST + 2.0 * ms->radius + OM_MOVE_GRID_BOUND_PAD;
     const double r2 = r * r;
     const int32_t layer = ms->start_layer[self_id];
@@ -2056,7 +2059,8 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
     for (slot = ms->slot_base; slot < ms->slot_base + ms->n_spill; slot++) {
         cid = ms->slot_id[slot];
         double dx = ms->start_x[cid] - x, dy = ms->start_y[cid] - y;
-        if (cid == self_id || ms->start_layer[cid] != layer || dx * dx + dy * dy > r2) continue;
+        if (cid == self_id || dx * dx + dy * dy > r2) continue;
+        if (ms->start_layer[cid] != layer && !om_move_same_slope(w, x, y, layer, ms->start_x[cid], ms->start_y[cid], ms->start_layer[cid])) continue;
         ms->scan_x[n] = ms->start_x[cid];
         ms->scan_y[n] = ms->start_y[cid];
         n++;
@@ -2069,7 +2073,8 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
             for (; mask; mask &= mask - 1) {
                 slot = base + om_move_lowest_bit(mask);
                 cid = ms->slot_id[slot];
-                if (ms->unit_slot[cid] != slot || cid == self_id || ms->start_layer[cid] != layer) continue;
+                if (ms->unit_slot[cid] != slot || cid == self_id) continue;
+                if (ms->start_layer[cid] != layer && !om_move_same_slope(w, x, y, layer, ms->slot_sx[slot], ms->slot_sy[slot], ms->start_layer[cid])) continue;
                 ms->scan_x[n] = ms->slot_sx[slot];
                 ms->scan_y[n] = ms->slot_sy[slot];
                 n++;
@@ -2282,7 +2287,7 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
         steer_x = mu->detour_dx;
         steer_y = mu->detour_dy;
     } else {
-        uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather_start(ms, id, mu->x, mu->y);
+        uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather_start(w, ms, id, mu->x, mu->y);
         mu->deflecting = 0;
         if (n_near && !om_move_probe_clear(ms, n_near, hints, mu->x + OM_STEERING_PROBE_DIST * steer_x, mu->y + OM_STEERING_PROBE_DIST * steer_y)) {
             double seek_x = steer_x, seek_y = steer_y;
