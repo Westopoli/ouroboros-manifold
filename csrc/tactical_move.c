@@ -174,8 +174,9 @@ typedef struct {
     double   pushed_x, pushed_y;
     double   facing;
     double   prev_x, prev_y, prev_facing;
+    double   walker_x, walker_y;         /* R-004-06: the position om_move_walker_tick judged the layer at this tick; not saved or hashed, rewritten every tick */
+    int      walker_on_slope;            /* R-004-06: 1 when that judgement found the walker on a slope; not saved or hashed, rewritten every tick */
     uint64_t moved_own_tick;             /* F2 (R-087-04): the last tick this unit's own movement step changed its position; not saved or hashed, rewritten every tick */
-    uint64_t layer_chg[2];               /* R-097-05: the ticks of the last two layer changes om_move_walker_tick made, newest first; not saved or hashed (a load starts with none) */
     int      has_dest;
     uint32_t giveup_near;
     double   dest_x, dest_y;
@@ -2784,6 +2785,8 @@ static void om_move_slope_clamp(om_world *w, om_move_state *ms, uint32_t period)
     }
 }
 
+static void om_move_walker_tick_moved(om_world *w, om_move_state *ms);   /* body after om_move_walker_tick */
+
 static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick, uint32_t period) {
     uint32_t id;
     om_move_discover(w, ms);
@@ -2814,6 +2817,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     om_move_walker_tick(w);
     om_move_collision_pass_internal(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_slope_clamp(w, ms, period);
+    om_move_walker_tick_moved(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_face_pass(w, ms, period);
     om_move_groups_check_arrival(ms);
 }
@@ -3595,30 +3599,46 @@ int om_unit_profile_movement_kind(const om_world *w, int type) {
 
 /* R-004-06: a walker on a slope is on the lower band below the slope's midline and the upper band at or above it.
  * See also: om_move_walker_step, which moves the walker. */
+static void om_move_walker_layer(om_world *w, om_move_state *ms, uint32_t id) {
+    om_move_unit *mu = &ms->units[id];
+    om_slope s;
+    double dot;
+    int32_t band;
+    mu->walker_x = mu->x;
+    mu->walker_y = mu->y;
+    mu->walker_on_slope = 0;
+    if (!mu->in_use || !om_unit_alive(w, id) || !om_move_is_walker(w, id) || om_terrain_slope_at(w, mu->x, mu->y, &s) < 0) return;
+    mu->walker_on_slope = 1;
+    dot = (mu->x - s.mx) * (s.x1 - s.x0) + (mu->y - s.my) * (s.y1 - s.y0);
+    band = (dot < 0.0 ? s.lower_band : s.upper_band) - 1;
+    if (om_move_layer(w, id) != band) {
+        /* The walker's own crossing of a slope: its route already runs over the link, and a replan from mid-slope on the
+         * new layer finds no route (tests/csim/test_E01_R004_07_slope_time.py). So the plan follows the layer here and the
+         * stored route is dropped (Architect 2026-10-14): route_n 0 with the aim kept is the pre-W2 plan, which replans at the
+         * next waypoint arrival; the layer trigger in om_move_walker_step covers every other change. */
+        if (mu->plan_valid && mu->plan_layer == (uint32_t)om_move_layer(w, id)) {
+            mu->plan_layer = (uint32_t)band;
+            om_move_route_drop(mu); /* stale: the aim stays, the next waypoint arrival replans on this layer like the old walker */
+        }
+        om_tac_unit_set_layer(w, id, (uint32_t)band);
+    }
+}
+
 void om_move_walker_tick(om_world *w) {
     om_move_state *ms = om_ms(w);
     uint32_t id;
     if (!om_terrain_present(w)) return;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) om_move_walker_layer(w, ms, id);
+}
+
+/* The collision pass and the slope clamp may carry a walker across a midline after om_move_walker_tick judged it: its layer is its side of the midline at the end of the tick (R-004-06),
+ * so a unit that stood on a slope at that judgement and has moved since is judged again (the lookup is the cost; flat ground is not looked up twice). See also: om_move_walker_tick; om_move_tick_once, which calls it after the clamp. */
+static void om_move_walker_tick_moved(om_world *w, om_move_state *ms) {
+    uint32_t id;
+    if (!om_terrain_present(w)) return;
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
-        om_move_unit *mu = &ms->units[id];
-        om_slope s;
-        double dot;
-        int32_t band;
-        if (!mu->in_use || !om_unit_alive(w, id) || !om_move_is_walker(w, id) || om_terrain_slope_at(w, mu->x, mu->y, &s) < 0) continue;
-        dot = (mu->x - s.mx) * (s.x1 - s.x0) + (mu->y - s.my) * (s.y1 - s.y0);
-        band = (dot < 0.0 ? s.lower_band : s.upper_band) - 1;
-        if (om_move_layer(w, id) != band && om_move_layer_flip_allowed(mu->layer_chg, om_tactical_tick(w))) {
-            om_move_layer_flip_note(mu->layer_chg, om_tactical_tick(w));   /* a third change inside the window waits (R-097-05); see also: om_move_layer_flip_allowed */
-            /* The walker's own crossing of a slope: its route already runs over the link, and a replan from mid-slope on the
-             * new layer finds no route (tests/csim/test_E01_R004_07_slope_time.py). So the plan follows the layer here and the
-             * stored route is dropped (Architect 2026-10-14): route_n 0 with the aim kept is the pre-W2 plan, which replans at the
-             * next waypoint arrival; the layer trigger in om_move_walker_step covers every other change. */
-            if (mu->plan_valid && mu->plan_layer == (uint32_t)om_move_layer(w, id)) {
-                mu->plan_layer = (uint32_t)band;
-                om_move_route_drop(mu); /* stale: the aim stays, the next waypoint arrival replans on this layer like the old walker */
-            }
-            om_tac_unit_set_layer(w, id, (uint32_t)band);
-        }
+        const om_move_unit *mu = &ms->units[id];
+        if (mu->in_use && mu->walker_on_slope && (mu->x != mu->walker_x || mu->y != mu->walker_y)) om_move_walker_layer(w, ms, id);
     }
 }
 

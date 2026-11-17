@@ -3,9 +3,6 @@
 #include "ouroboros_sim.h"
 #include "move_slope.h"
 
-/* DRAFT-flip-window (Westley's to change): the lab checker reads three changes within 20 ticks as a flip (scripts/skilllab/invariants_r5.py FLIP_WINDOW, FLIP_CHANGES) */
-#define OM_SLOPE_FLIP_WINDOW 20u
-
 /* The slope index the unit stands on, or -1: inside a slope record, on a layer the slope joins, with ground that is not flat along the slope's axis.
  * The probe is half a terrain cell either side along the axis (the slopes are axis-aligned, so the step is a unit vector times 50 wu, no sqrt). */
 static int om_move_slope_under(const om_world *w, double x, double y, int32_t layer) {
@@ -27,13 +24,4 @@ int om_move_same_slope(const om_world *w, double ax, double ay, int32_t layer_a,
     if (sa < 0) return 0;
     sb = om_move_slope_under(w, bx, by, layer_b);
     return sa == sb;
-}
-
-int om_move_layer_flip_allowed(const uint64_t chg[2], uint64_t tick) {
-    return chg[1] == 0u || tick - chg[1] > OM_SLOPE_FLIP_WINDOW;
-}
-
-void om_move_layer_flip_note(uint64_t chg[2], uint64_t tick) {
-    chg[1] = chg[0];
-    chg[0] = tick;
 }
