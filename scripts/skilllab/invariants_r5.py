@@ -7,8 +7,9 @@
 Each is a small state machine fed one frame at a time by `invariants._Checker.feed`; the frame, row and `Rules` shapes are those of `invariants.py` (this module imports nothing from it, so the
 checker can import these constants). The notice distance itself (`NOTICE_MARGIN`, `notice_distance`) is read by the checker's acquire and swap checks as well.
 Tests: tests/skilllab/arena/test_invariants_r5_notice_and_lock.py, test_invariants_r5_unseen_fire_and_slope.py. Every number below is a DRAFT constant, Westley's to change:
-  DRAFT-notice-margin 0.1   DRAFT-unseen-fire-window 60 frames   DRAFT-slope-slack 1 wu   DRAFT-flip-window 20 frames   DRAFT-slope-near 150 wu (the Monitor's idea of "on a slope")
+  DRAFT-notice-margin 0.1   DRAFT-unseen-fire-window 60 frames   DRAFT-slope-slack 1 wu   DRAFT-flip-window 20 frames   DRAFT-slope-near 100 wu (the Monitor's idea of "on a slope")
 """
+import ctypes
 import math
 
 NOTICE_MARGIN = 0.1          # DRAFT-notice-margin (R-087-04): a unit's notice distance is its attack range times (1 + this), measured as weapon reach is (R-087-10)
@@ -19,7 +20,7 @@ SLOPE_GAP = 30.0             # R-097-05: 2 x unit radius 15 wu
 SLOPE_SLACK = 1.0            # DRAFT-slope-slack: a pair this close to 30 wu counts as pushed apart
 FLIP_CHANGES = 3             # R-097-05 / round5.md G5: three layer changes ...
 FLIP_WINDOW = 20             # DRAFT-flip-window: ... within this many frames
-SLOPE_NEAR = 150.0           # DRAFT-slope-near (wu): the Monitor counts a unit as on a slope when it is this near the slope's midline along its run (ramp half-width 100 wu plus half a cell)
+SLOPE_NEAR = 100.0           # DRAFT-slope-near (wu): the Monitor counts a unit as on a slope when its cell's centre is this near the slope's midline along its run (the ramp's half-width, hills.RAMP_WU / 2)
 
 
 def notice_distance(rules, u, layer, other_layer):
@@ -158,3 +159,51 @@ class SlopeCollision:
                             out.append({"rule": "R-097-05", "tick": tick, "unit": a, "detail": "%d and %d stand %.1f wu apart on one slope (layers %d and %d), under %.0f wu after the collision pass" % (
                                 a, b, d, ra["layer"], rb["layer"], SLOPE_GAP)})
         self.close = now
+
+
+class _Slope(ctypes.Structure):
+    """csrc/ouroboros_sim.h om_slope."""
+    _fields_ = [("x0", ctypes.c_double), ("y0", ctypes.c_double), ("x1", ctypes.c_double), ("y1", ctypes.c_double), ("mx", ctypes.c_double), ("my", ctypes.c_double),
+                ("length", ctypes.c_double), ("lower_band", ctypes.c_int32), ("upper_band", ctypes.c_int32)]
+
+
+def slope_at_for(engine, world, cell=100.0):
+    """The `Rules.slope_at` of a world with terrain: (x, y) -> an id shared by every point of one hill's slopes, or None.
+    The engine lists a slope as a straight run of cells across one band boundary (om_terrain_slope_get, up to 64 cells a side), so `om_terrain_slope_at` answers for flat ground far
+    from the ramp too. A point counts as on a slope here only when its cell's centre lies within SLOPE_NEAR of the record's midline (mx, my) along the run, and the records of one hill
+    (a radial hill is many one-cell strips) are joined into one id when their near cells touch, diagonals included. Built once, read as a dict."""
+    lib = engine._lib
+    lib.om_terrain_slope_count.argtypes = [ctypes.c_void_p]
+    lib.om_terrain_slope_count.restype = ctypes.c_uint32
+    lib.om_terrain_slope_get.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.POINTER(_Slope)]
+    lib.om_terrain_slope_get.restype = ctypes.c_int
+    cells = {}                               # (cx, cy) -> record indices
+    for i in range(lib.om_terrain_slope_count(world)):
+        s = _Slope()
+        if lib.om_terrain_slope_get(world, i, ctypes.byref(s)) != 0:
+            continue
+        lox, hix = sorted((int(s.x0 // cell), int(s.x1 // cell)))
+        loy, hiy = sorted((int(s.y0 // cell), int(s.y1 // cell)))
+        for cx in range(lox, hix + 1):
+            for cy in range(loy, hiy + 1):
+                along = abs((cx + 0.5) * cell - s.mx) if hix > lox else abs((cy + 0.5) * cell - s.my)
+                if along <= SLOPE_NEAR:
+                    cells.setdefault((cx, cy), []).append(i)
+    parent = {}
+
+    def find(i):
+        while parent.setdefault(i, i) != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+    for (cx, cy), ids in cells.items():
+        for i in ids[1:]:
+            parent[find(i)] = find(ids[0])
+        for dx, dy in ((1, -1), (1, 0), (1, 1), (0, 1)):          # each pair of neighbouring cells once
+            for j in cells.get((cx + dx, cy + dy), ()):
+                parent[find(j)] = find(ids[0])
+    ident = {c: find(ids[0]) for c, ids in cells.items()}
+
+    def slope_at(x, y):
+        return ident.get((int(x // cell), int(y // cell))) if x >= 0.0 and y >= 0.0 else None
+    return slope_at
