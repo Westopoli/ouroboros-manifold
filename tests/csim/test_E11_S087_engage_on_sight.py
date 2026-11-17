@@ -21,7 +21,7 @@ Plain-march tick counts are 20 ticks per second at 80 wu/s, i.e. 4 wu per tick.
 import ctypes
 
 from test_PP_attack_move_no_sight_pursuit import ARRIVAL, _centroid, _d, _shape_error
-from test_PP_unit_support import (BOMBARD, RAIDER, VANGUARD, attack_move, dest, hp, pos, set_param, spawn, step, target)
+from test_PP_unit_support import (BASTION, BOMBARD, RAIDER, VANGUARD, attack_move, dest, hp, pos, set_param, spawn, step, target)
 
 SIGHT = "OM_TP_TARGET_BY_SIGHT"
 PURSUE = "OM_TP_PURSUE_BY_STEERING"
@@ -193,14 +193,17 @@ def test_control_R_096_02_group_of_8_without_an_enemy_reaches_its_slots_in_shape
 # ---- 4. leash ------------------------------------------------------------------------------------------------
 
 COLLISION_RADIUS = 15.0
+NO_BRACE_VANGUARD = 30     # a custom type id, registered by the leash scene below
 RETURN_TOL = 1.5 * COLLISION_RADIUS   # OM_ARRIVAL_TOLERANCE_MULT x OM_UNIT_COLLISION_RADIUS
 
 
-def _chase(lib, w, utype, speed, ticks, gap=320.0):
-    """An idle `utype` at its post (2000, 500) and a same-type enemy `gap` wu north that plain-moves away at the same speed.
+def _chase(lib, w, utype, ticks, gap=320.0, ttype=BASTION):
+    """An idle `utype` at its post (2000, 500) and an enemy `ttype` `gap` wu north that plain-moves away. Test-defect 2026-11-17 (R-087-03 / R-087-04, round5.md
+    Second pass): the enemy is a Bastion (2 wu a tick) against a pursuer of 4 to 7.5, not a same-type enemy at the pursuer's own speed, which leaves the notice
+    distance and ends the lock before the leash can; the pursuer is a type that does not auto-Brace (a braced halt costs about 15 ticks of walking, R-086-03).
     Returns the per-tick (pursuer position, enemy position, pursuer target, enemy id)."""
     a = spawn(lib, w, utype, 0, 2000.0, 500.0)
-    b = spawn(lib, w, utype, 1, 2000.0, 500.0 + gap)
+    b = spawn(lib, w, ttype, 1, 2000.0, 500.0 + gap)
     _move(lib, w, [b], 2000.0, 3900.0)
     trace = []
     for _ in range(ticks):
@@ -212,13 +215,18 @@ def _chase(lib, w, utype, speed, ticks, gap=320.0):
 def test_R_087_05_idle_pursuer_is_bounded_by_its_sensor_radius_returns_and_holds(lib, world_factory):
     """R-087-05 / R-096-03 / S-087 / H-057 + DEC-leash-anchor-return-2026-11-01: the leash is the type's own sensor
     radius, the anchor is set once on acquiring from rest and not reset while pursuing or returning, and after a drop an
-    idle unit walks back to its anchor. An idle Vanguard (sensor 700) at its post sees an enemy 320 wu off (inside its notice distance 330) that walks away at
-    the same speed (80 wu/s, a plain move, so it never acquires): it acquires within 200 ticks, keeps the target past 200 wu
+    idle unit walks back to its anchor. An idle unit of a Vanguard's numbers without Brace (range 300, sensor 700, speed 80) at its post sees an enemy 320 wu off (inside its notice distance 330) that walks away at
+    2 wu a tick (a Bastion on a plain move, so it never acquires): it acquires within 200 ticks, keeps the target past 200 wu
     from its anchor, its distance from the anchor never exceeds 700 plus one tick's step, after the drop it is back within
     1.5 collision radii of its anchor, and once the enemy is out of sensor range it holds no target and does not move for 100
     ticks. RED now: it never acquires and never moves."""
     w = _world(lib, world_factory)
-    a, b, trace = _chase(lib, w, VANGUARD, 80.0, 700)
+    # a Vanguard's numbers without its Brace (R-086-03: a Vanguard that halts in range braces and walks again about 15 ticks later, which a target walking away
+    # outruns beyond the notice distance): range 300, sensor 700, speed 80, a walker's movement kind as the Vanguard's
+    assert lib.om_roster_register_custom_unit(w, NO_BRACE_VANGUARD, 0, b"s087_vanguard_no_brace", 5000.0, 1.0, 1.0, 300.0, 80.0, 700.0, 1.0, 0.0, 0) == 0
+    assert lib.om_roster_set_reach(w, NO_BRACE_VANGUARD, 1, 1) == 0
+    assert lib.om_roster_set_movement_kind(w, NO_BRACE_VANGUARD, lib.om_unit_profile_movement_kind(w, VANGUARD)) == 0
+    a, b, trace = _chase(lib, w, NO_BRACE_VANGUARD, 700)
     anchor = (2000.0, 500.0)
     acquired = next((i + 1 for i, t in enumerate(trace) if t[2] == b), None)
     assert acquired is not None and acquired <= 200, "no target within 200 ticks (got %s)" % acquired
@@ -240,12 +248,12 @@ def test_R_087_05_idle_pursuer_is_bounded_by_its_sensor_radius_returns_and_holds
 
 def test_R_087_05_the_leash_is_per_type_a_raider_drops_at_its_own_sensor_radius(lib, world_factory):
     """R-087-05 / S-087 / H-057 + DEC-leash-anchor-return-2026-11-01: "every read of OM_ATTACK_MOVE_LEASH_DIST becomes the
-    unit's profile sensor_radius" (per type, not one number). A Raider (sensor 800, speed 150) chasing a Raider that walks
-    away at its speed reaches 800 wu from its anchor, past the Vanguard's 700, and no further than 800 plus one tick's step.
+    unit's profile sensor_radius" (per type, not one number). A Raider (sensor 800, speed 150) chasing a Bastion that walks
+    away at 2 wu a tick reaches 800 wu from its anchor, past the Vanguard's 700, and no further than 800 plus one tick's step.
     RED now: it never acquires. (No type has a smaller effective radius than the Vanguard's 700: Bastion and Bombard have
     sensor 300 but range 800 and 1200, see the writer's report.)"""
     w = _world(lib, world_factory)
-    a, b, trace = _chase(lib, w, RAIDER, 150.0, 400, gap=210.0)    # Raider: range 200, notice distance 220
+    a, b, trace = _chase(lib, w, RAIDER, 400, gap=210.0)    # Raider: range 200, notice distance 220; the Bastion walks away at 2 wu a tick
     anchor = (2000.0, 500.0)
     step_wu = 150.0 / 20.0
     far = max(_d(t[0], anchor) for t in trace)
@@ -358,16 +366,56 @@ def _run_blobs(lib, w, ticks):
     return a_ids, b_ids, None
 
 
-def test_R_087_04_two_16_unit_blobs_attack_moved_to_one_point_fight_to_elimination(lib, world_factory):
-    """R-087-04 / R-096-02 / S-087 / H-057, the L-0054 stall in miniature: two 16-unit blobs attack-moved to the same
-    point, the 12 units nearest the point of each removed by script at tick 900 (after first contact); the fight ends by
-    elimination (one side wiped) within 6000 ticks, not by a standoff. RED now: the survivors stand at their slots outside
-    attack range 300 and inside sensor 700, and nobody walks the last wu."""
+def _min_pair(lib, w, a_ids, b_ids):
+    """The least distance between a living unit of A and a living unit of B, or None when a side is gone."""
+    la, lb = _alive(lib, w, a_ids), _alive(lib, w, b_ids)
+    if not la or not lb:
+        return None
+    return min(_d(pos(lib, w, x), pos(lib, w, y)) for x in la for y in lb)
+
+
+def test_R_087_04_two_16_unit_blobs_attack_moved_to_one_point_fight_while_in_notice_distance_survivors_beyond_it_do_not(lib, world_factory, record_property):
+    """R-087-04 / R-096-02 / S-087 / H-057, the L-0054 stall in miniature. Test-defect 2026-11-17 (R-087-04 last sentence, "Two forces standing beyond each other's
+    notice distance do not fight until one is ordered or attack-moved closer"; round5.md Second pass): the blobs fight while enemies stand inside a unit's notice
+    distance (330 wu for a Vanguard); the 12 units nearest the point of each side are removed at tick 900 (after first contact); survivors that have arrived at
+    their slots and stand beyond each other's notice distance do not fight. Asserted: (1) the blobs did fight before the removal (a unit was hurt); (2) on every tick after
+    it, while every enemy pair stands beyond the notice distance at both ends of the tick, no unit loses hit points and none holds a target; (3) the run
+    either ends by one side wiped, or ends in a stand-off in which every survivor has arrived (its destination cleared, R-099-04) and every enemy pair stands beyond
+    330 wu. The survivors and their distance are recorded (record_property) and named in the report as a stand-off for Westley. Measured 2026-11-17: 3 against 3, the nearest pair about 500 wu apart."""
     w = _world(lib, world_factory)
-    a_ids, b_ids, done = _run_blobs(lib, w, 6000)
-    assert done is not None, "standoff: %d vs %d survivors, %.0f wu apart at tick 6000" % (
-        len(_alive(lib, w, a_ids)), len(_alive(lib, w, b_ids)),
-        _d(_centroid([pos(lib, w, u) for u in _alive(lib, w, a_ids)]), _centroid([pos(lib, w, u) for u in _alive(lib, w, b_ids)])))
+    a_ids, b_ids = _blobs(lib, w)
+    notice = 300.0 * 1.1
+    full = hp(lib, w, a_ids[0])
+    for t in range(1, KILL_TICK):
+        step(lib, w)
+    assert any(hp(lib, w, u) < full for u in a_ids + b_ids), "scene broken: nobody was hurt before the removal at tick %d: the blobs never fought" % KILL_TICK
+    step(lib, w)
+    for ids in (a_ids, b_ids):
+        for u in sorted(_alive(lib, w, ids), key=lambda u: abs(pos(lib, w, u)[0] - 4000.0))[:12]:
+            lib.om_unit_set_hp(w, u, 0.0)
+    step(lib, w)
+    wiped = None
+    for t in range(KILL_TICK + 2, 6001):
+        before = _min_pair(lib, w, a_ids, b_ids)
+        hp_before = {u: hp(lib, w, u) for u in _alive(lib, w, a_ids) + _alive(lib, w, b_ids)}
+        step(lib, w)
+        after = _min_pair(lib, w, a_ids, b_ids)
+        if after is None:
+            wiped = t
+            break
+        if before > notice and after > notice:
+            for u, h in hp_before.items():
+                assert hp(lib, w, u) >= h, "tick %d: unit %d lost hit points with every enemy pair beyond the notice distance %.0f (nearest pair %.1f then %.1f wu)" % (t, u, notice, before, after)
+                assert target(lib, w, u) in (-1, 0), "tick %d: unit %d holds target %s with every enemy pair beyond the notice distance %.0f" % (t, u, target(lib, w, u), notice)
+    la, lb = _alive(lib, w, a_ids), _alive(lib, w, b_ids)
+    if wiped is None:
+        near = _min_pair(lib, w, a_ids, b_ids)
+        record_property("standoff_survivors", "%d vs %d" % (len(la), len(lb)))
+        record_property("standoff_nearest_pair_wu", "%.1f" % near)
+        record_property("standoff_centroids_apart_wu", "%.1f" % _d(_centroid([pos(lib, w, u) for u in la]), _centroid([pos(lib, w, u) for u in lb])))
+        assert near > notice, "no elimination, and the survivors (%d vs %d) stand %.1f wu apart, inside the notice distance %.0f, yet did not fight" % (len(la), len(lb), near, notice)
+        walking = [u for u in la + lb if dest(lib, w, u)[0] == 1]
+        assert not walking, "no elimination, and units %s have not arrived at their points (destination still set): a stand-off by a stalled walk, not by the notice distance" % walking
 
 
 def test_control_R_087_04_miniature_scene_does_contact_and_script_kill_removes_12_a_side(lib, world_factory):
