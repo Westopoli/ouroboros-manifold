@@ -35,7 +35,7 @@ import engine_rules_r2_probe as probe
 
 SLACK = probe.SLANT_SLACK
 FIGHT = "L-0061"
-PAIR = (12, 25)
+PAIR = (2, 26)
 WATCH = ((59, PAIR), (60, PAIR), (61, PAIR), (62, PAIR), (63, PAIR), (64, PAIR))
 MIN_CROSS = 50
 
@@ -90,13 +90,16 @@ def test_R_087_10_no_unit_fires_at_a_target_beyond_its_range_by_slant(run):
 
 
 def test_R_098_02_i11nl_the_sweeps_pair_can_shoot_when_it_sees_and_is_in_range_by_slant(run):
-    """R-098-02 / R-087-10, the open case of the sweep (I11nl): L-0061 ticks 59 to 64, Warden 12 (layer 1) and Warden 25 (layer 0). Every tick on which 12 sees 25, the pair
+    """R-098-02 / R-087-10, the open case of the sweep (I11nl): L-0061 ticks 59 to 64, Warden 2 (layer 1) and Warden 26 (layer 0). Every tick on which 2 sees 26, the pair
     is inside 12's range 350 by slant, and no planar obstacle stands between them (L-0061 has none), 12 must be able to shoot 25. The failing line prints the measured premises.
     Pair re-chosen 2026-11-11 (Test-defect, Round 2): the sweep's pair was Wardens 2 and 26 at ticks 57 to 63 of the Round 1 fight; in the Round 2 fight (F9, a5f4084c) Warden 26 leaves
     fire it cannot see from tick 41 and the pair is 421 wu apart then. Measured on the Round 2 tree, L-0061 seed 1 sight on: Warden 12 (type 3, range 350, layer 1 at (1286.2, 1857.5)) and Warden 25
     (layer 0, (975.1, 1941.3) walking to (955.9, 1946.9)): sees on all six ticks, can_shoot true on all six, flat 322.2 to 342.2, slant 327.7 to 347.4 (inside 350 by slant on every tick, the same
     edge-of-range situation as the sweep's pair). The same fight run on the engine before the F7 fire-side fix (787a766c, whole fight) has 20,484 held-target unit-ticks that see across layers
-    inside range by slant and cannot shoot, none of which shoots; the Round 2 tree has 0 of them and 26,001 that do shoot (see the whole-fight test below)."""
+    inside range by slant and cannot shoot, none of which shoots; the Round 2 tree has 0 of them and 26,001 that do shoot (see the whole-fight test below).
+    Pair re-chosen again 2026-11-17 (Test-defect: Round 5, G1 to G5 moved the fight to 1408 ticks and Wardens 12 and 25 are 409 to 384 wu apart at ticks 59 to 64, outside range 350 by slant: the premise below
+    found no tick inside range): the sweep's own pair, Warden 2 (type 3, range 350, layer 1) and Warden 26 (layer 0), on the Round 5 tip: 2 holds 26 from tick 59 to 104, sees it on every tick, can_shoot true
+    on every tick, flat 341.7 at tick 59, slant 346.9 (inside 350 by slant, the same edge-of-range situation)."""
     a, b = PAIR
     rows = []
     for n in sorted(run.dumps):
