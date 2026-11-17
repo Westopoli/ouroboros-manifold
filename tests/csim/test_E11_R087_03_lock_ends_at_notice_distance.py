@@ -18,7 +18,7 @@ Rule words proved, from docs/bible/epics/E-11-units-and-combat.md on this branch
 Scenes: a 2000 x 2000 canvas, the shipped tactical parameters (targeting by sight on). The Vanguard U has attack range 300 (notice distance 330), sensor 700
 (its leash, R-087-05) and walks 4 wu a tick. Enemies: a Raider that plain-moves away at 7.5 wu a tick (a plain mover never acquires and never returns
 fire), a Bastion that plain-moves away at 2 wu a tick, Supplies, and a Warden (range 350, notice 385, sensor 800) as the attacker of the return-fire scene.
-Detector bounds (not rules): ACQUIRE_TICKS 12 (a cohort turn comes within 4 ticks), HOLD_TICKS 100, STEP 4 (one tick's walk), ARRIVE 20 wu, EPS 0.5 wu.
+Detector bounds (not rules): ACQUIRE_TICKS 12 (a cohort turn comes within 4 ticks), HOLD_TICKS 100, STEP 4 (one tick's walk), ARRIVE 30 wu, EPS 0.5 wu.
 """
 import ctypes
 
@@ -32,7 +32,7 @@ LEASH = 700.0             # Vanguard sensor radius, the leash of R-087-05
 ACQUIRE_TICKS = 12
 HOLD_TICKS = 100
 STEP = 4.0                # detector bound: a Vanguard's walk in one tick
-ARRIVE = 20.0             # detector bound
+ARRIVE = 30.0             # R-099-04: a unit that followed route waypoints has arrived within 2 collision radii (30 wu) of its point
 EPS = 0.5                 # detector bound
 BIG_HP = 1.0e6
 
@@ -120,7 +120,7 @@ def test_R_087_03_a_locked_target_that_outruns_the_unit_is_dropped_the_tick_it_i
 def test_R_087_03_an_attack_mover_whose_target_outruns_it_resumes_toward_its_point(lib, world_factory):
     """R-087-03 / R-096-02: the same chase with the Vanguard attack-moving to (200, 1900), a point 900 wu south of it. On the tick the lock goes for
     distance it resumes: from the second tick after the drop, for 40 ticks, no target, its goal is its ordered point, and every tick it is nearer to it
-    and no farther east than it was; it arrives. Red today: the lock is not dropped, the unit runs east after the Raider."""
+    and no farther east than it was; it arrives (within 30 wu, R-099-04, its destination cleared). Red today: the lock is not dropped, the unit runs east after the Raider."""
     point = (200.0, 1900.0)
     w, u, e = _runner_scene(lib, world_factory, march_to=point)
     assert _lock(lib, w, u, e) is not None, "scene broken: the attack-mover never locked the Raider"
@@ -139,6 +139,7 @@ def test_R_087_03_an_attack_mover_whose_target_outruns_it_resumes_toward_its_poi
         last = p
     step(lib, w, 200)
     assert _d(pos(lib, w, u), point) <= ARRIVE, "the attack-mover did not arrive: at %s" % (pos(lib, w, u),)
+    assert dest(lib, w, u)[0] == 0, "the attack-mover arrived and its destination is still set: %s (R-099-04 clears it)" % (dest(lib, w, u),)
 
 
 def test_R_087_03_a_target_at_329_is_kept_and_a_target_at_331_is_dropped_and_held_against(lib, world_factory):
@@ -201,22 +202,22 @@ def test_R_087_03_control_a_target_that_is_slower_than_the_unit_is_followed_unti
 def test_R_087_03_a_target_taken_by_return_fire_is_not_dropped_for_distance(lib, world_factory):
     """R-087-03 "A target taken by return fire (R-087-06) is not dropped for distance: the leash alone bounds that chase": an idle Warden (range 350,
     notice 385) 345 wu from an idle Vanguard (notice 330) fires on it; the Vanguard does not notice the Warden itself, it is hit and returns fire.
-    From the tick it is first hit, on every tick it holds the Warden as its target until it is within attack range 300, though the Warden stands beyond
+    The gap is measured at the first hit, the one that lands in the first tick (the Vanguard's hit points are read before any tick). From the tick after it is first hit, on every tick it holds the Warden as its target until it is within attack range 300, though the Warden stands beyond
     its notice distance; then the Warden loses hit points. Green today, red against an engine that drops every lock at the notice distance."""
     w = _world(lib, world_factory)
     u = spawn(lib, w, VANGUARD, 0, 500.0, 1000.0)
     a = spawn(lib, w, WARDEN, 1, 845.0, 1000.0)
+    full_a = hp(lib, w, a)    # the Warden's maximum, read at spawn (the engine holds it to that on the first tick)
     lib.om_unit_set_hp(w, u, 5000.0)
     lib.om_unit_set_hp(w, a, BIG_HP)
-    step(lib, w)    # the engine clamps the scene's hit points to the type's maximum; the baseline is read after it has
-    full_u, full_a = hp(lib, w, u), hp(lib, w, a)
+    full_u = hp(lib, w, u)    # read before any tick: the Warden's first hit lands in the first tick, so a baseline read after a step would be the second hit's
     hit, first_gap = None, None
     for n in range(1, 400):
         gap = _d(pos(lib, w, u), pos(lib, w, a))
         step(lib, w)
         if hit is None and hp(lib, w, u) < full_u:
             hit, first_gap = n, gap
-        if hit is not None and _d(pos(lib, w, u), pos(lib, w, a)) > RANGE + 1.0:
+        if hit is not None and n > hit and _d(pos(lib, w, u), pos(lib, w, a)) > RANGE + 1.0:    # the engine takes the attacker as target on the tick after the hit's damage lands
             assert target(lib, w, u) == a, "tick %d (hit at %d): the return-fire target went with the Warden %.1f wu away" % (n, hit, _d(pos(lib, w, u), pos(lib, w, a)))
     assert hit is not None, "scene broken: the Warden never hit the Vanguard"
     assert first_gap > NOTICE, "scene broken: the Vanguard was hit from %.1f wu, inside its notice distance %.0f" % (first_gap, NOTICE)
