@@ -5,6 +5,12 @@ cross-layer target "only if the enemy unit is within vision"). Bug fix, not a st
 csrc/unit.c); tests/csim/test_PP_unit_guard.py pins that old behaviour (see the report: some of its tests contradict the rule below and need
 `Test-defect:` rewrites when F6 lands). The whole-fight twin is tests/skilllab/arena/test_engine_rules_f6_guard.py.
 
+Test-defect 2026-11-17 (Westley, Q-096-02: "the unit only steps out when the enemy unit enters it's firing radius, and it only runs after it for 200 leash";
+R-096-08 and R-208-01 now read: a guard acquires within its notice distance, the attack range plus a tenth, 330 wu for a Vanguard, and returns when the lock ends):
+the scenes that had the guard step out to a static enemy at +480, +600 or +690 now use an enemy at +320 or +325 (inside 330) or a Bastion that plain-moves
+away at 2 wu a tick from +320, which the guard follows up to the radius (_chase_scene). Rule words proved below are the 2026-11-08 text, kept as the record;
+the current text is quoted in tests/csim/test_E13_R096_08_guard_notice_distance.py.
+
 Rule words proved, word for word:
   R-096-08  "Given a guard order, When issued to a selection, Then each unit takes its position as its post and engages any target its side can
             see (E-12 R-093-02), stepping toward it no farther than `GUARD_RADIUS` = 200 wu from the post (DRAFT-guard-radius: the attack-move leash
@@ -35,7 +41,7 @@ import ctypes
 import pytest
 
 from conftest import OMFeature, OMWorldP
-from test_PP_unit_support import SUPPLY, VANGUARD, attack_move, hp, pos, spawn, step
+from test_PP_unit_support import BASTION, SUPPLY, VANGUARD, attack_move, hp, pos, spawn, step
 
 POST = (1000.0, 1000.0)
 GUARD_RADIUS = 200.0                # R-096-08 (DRAFT-guard-radius, Westley's)
@@ -71,19 +77,26 @@ def remove(lib, w, uid):
     lib.om_unit_set_hp(w, uid, 0.0)
 
 
-def _scene(lib, wf, dx, g_layer=0, e_layer=0, guarded=True):
-    """(world, guard, enemy). Guard at the post on g_layer, ordered to guard; enemy at (post.x + dx, post.y) on e_layer."""
+def _scene(lib, wf, dx, g_layer=0, e_layer=0, guarded=True, etype=SUPPLY, flee_to=None):
+    """(world, guard, enemy). Guard at the post on g_layer, ordered to guard; enemy at (post.x + dx, post.y) on e_layer, plain-moving to `flee_to` if given."""
     w = wf(n_regions=1)
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
     assert lib.om_map_set_canvas(w, 2000.0, 2000.0) == 0
     assert lib.om_roster_set_movement_kind(w, VANGUARD, WALKING) == 0
     assert lib.om_roster_set_reach(w, VANGUARD, REACH_UP, REACH_DOWN) == 0
     g = spawn(lib, w, VANGUARD, 0, *POST, g_layer)
-    e = spawn(lib, w, SUPPLY, 1, POST[0] + dx, POST[1], e_layer)
+    e = spawn(lib, w, etype, 1, POST[0] + dx, POST[1], e_layer)
     lib.om_unit_set_hp(w, e, BIG_HP)
+    if flee_to is not None:
+        assert move(lib, w, [e], *flee_to) == 0
     if guarded:
         assert guard(lib, w, [g]) == 0
     return w, g, e
+
+
+def _chase_scene(lib, wf, guarded=True):
+    """A Bastion at +320 (inside the notice distance 330) that plain-moves east at 2 wu a tick while the guard walks 4: the guard follows it out of the post."""
+    return _scene(lib, wf, 320.0, etype=BASTION, flee_to=(1900.0, 1000.0), guarded=guarded)
 
 
 def _d(a, b):
@@ -117,7 +130,7 @@ def _fired(rows):
 
 def _out(lib, w, g, dx_out):
     """Run until the guard stands at least dx_out wu from the post; returns the ticks run, or None."""
-    for n in range(1, STEP_CAP * 3):
+    for n in range(1, 400):
         step(lib, w)
         if _d(pos(lib, w, g), POST) >= dx_out:
             return n
@@ -125,7 +138,7 @@ def _out(lib, w, g, dx_out):
 
 
 def _stepped_out(lib, w, g, dx_out):
-    assert _out(lib, w, g, dx_out) is not None, "the guard never stepped %.0f wu out of its post in %d ticks (at %s)" % (dx_out, STEP_CAP * 3, pos(lib, w, g))
+    assert _out(lib, w, g, dx_out) is not None, "the guard never stepped %.0f wu out of its post in %d ticks (at %s)" % (dx_out, 400, pos(lib, w, g))
 
 
 # ------------------------------------------------------------------ controls: green today
@@ -152,11 +165,10 @@ def test_R_096_08_control_a_cross_layer_enemy_out_of_vision_is_not_engaged(lib, 
 
 
 def test_R_096_08_control_an_unguarded_idle_unit_leaves_its_post_for_the_same_enemy(lib, world_factory):
-    """Control for the leash tests (green today): the same scene with no guard order, the enemy at +690 (seen, 390 wu beyond range): the idle unit
-    walks out past 200 wu from the post (H-057, it pursues as an attack-mover). The detector that reads 'farther than 200 wu from the post' can
-    read a breach."""
-    w, g, e = _scene(lib, world_factory, 690.0, guarded=False)
-    rows = _run(lib, w, g, e, 200)
+    """Control for the leash tests: the same chase with no guard order (the Bastion retreating from +320, inside the notice distance): the idle unit
+    walks out past 200 wu from the post. The detector that reads 'farther than 200 wu from the post' can read a breach."""
+    w, g, e = _chase_scene(lib, world_factory, guarded=False)
+    rows = _run(lib, w, g, e, 400)
     assert _leash(rows), "scene broken: the unguarded unit never went farther than %.0f wu from its post (max %.1f)" % (GUARD_RADIUS, max(r[2] for r in rows))
 
 
@@ -175,11 +187,11 @@ def test_R_096_08_control_a_guard_given_a_move_or_attack_move_order_walks_there_
 # ------------------------------------------------------------------ red today: the guard steps, fires, returns
 
 def test_R_096_08_a_guard_with_a_seen_enemy_beyond_range_steps_toward_it(lib, world_factory):
-    """R-096-08: 'engages any target its side can see ... stepping toward it'. The enemy 480 wu east, seen, 180 wu out of range: within STEP_CAP ticks
+    """R-096-08: 'engages any target its side can see ... stepping toward it'. The enemy 325 wu east, seen, inside the notice distance 330 and 25 wu out of range: within STEP_CAP ticks
     the guard is at least STEP_MIN wu closer to it. Red today: the guard holds the post for ever (0.0 wu)."""
-    w, g, e = _scene(lib, world_factory, 480.0)
+    w, g, e = _scene(lib, world_factory, 325.0)
     step(lib, w)
-    assert _seen(lib, w, e), "scene broken: the enemy at +480 is not seen"
+    assert _seen(lib, w, e), "scene broken: the enemy at +325 is not seen"
     start = _d(pos(lib, w, g), pos(lib, w, e))
     rows = _run(lib, w, g, e, STEP_CAP)
     closest = min(_d(p, pos(lib, w, e)) for _, p, _, _ in rows)
@@ -187,38 +199,34 @@ def test_R_096_08_a_guard_with_a_seen_enemy_beyond_range_steps_toward_it(lib, wo
 
 
 def test_R_096_08_a_stepping_guard_fires_when_reach_and_range_allow(lib, world_factory):
-    """R-096-08: 'it fires when reach and range allow'. Enemy at +480 (180 wu out of range, inside the 200 wu radius): within FIRE_CAP ticks the
+    """R-096-08: 'it fires when reach and range allow'. Enemy at +325 (25 wu out of range, inside the 200 wu radius and the notice distance): within FIRE_CAP ticks the
     enemy's hp has fallen, and on that tick the guard was within attack range of it. Red today: the guard never steps, the enemy is never hurt."""
-    w, g, e = _scene(lib, world_factory, 480.0)
+    w, g, e = _scene(lib, world_factory, 325.0)
     rows = _run(lib, w, g, e, FIRE_CAP)
     n = _fired(rows)
     assert n is not None, "the enemy was never hurt in %d ticks (guard at %s)" % (FIRE_CAP, rows[-1][1])
-    gap = _d(rows[n - 1][1], (POST[0] + 480.0, POST[1]))
+    gap = _d(rows[n - 1][1], (POST[0] + 325.0, POST[1]))
     assert gap <= RANGE + 1.0, "the enemy was hurt at tick %d from %.1f wu, beyond the attack range %.0f" % (n, gap, RANGE)
 
 
-@pytest.mark.parametrize("dx", [480.0, 600.0, 690.0])
-def test_R_096_08_a_guard_never_ends_a_tick_more_than_200_wu_from_its_post(lib, world_factory, dx):
-    """R-096-08: 'it never crosses the radius and never marches', every tick of 300. The enemy is seen at +480 (reachable from 180 wu out),
-    +600 (needs 300 wu out of the post: beyond the radius) and +690 (seen, 390 wu out of range). For the last two the rule leaves open whether the
-    guard walks to the radius and holds or stays at the post (see the report); both keep the leash. Green today (the guard holds still); it is the
-    never rule, and it goes red against a guard that steps without the clamp (the break the report names)."""
-    w, g, e = _scene(lib, world_factory, dx)
-    step(lib, w)
-    assert _seen(lib, w, e), "scene broken: the enemy at +%.0f is not seen" % dx
-    rows = _run(lib, w, g, e, 300)
+def test_R_096_08_a_guard_never_ends_a_tick_more_than_200_wu_from_its_post(lib, world_factory):
+    """R-096-08: 'it never crosses the radius and never marches', every tick of 700. The enemy is a Bastion retreating from +320 at half the guard's speed,
+    which the guard follows; it ends no tick farther than 200 wu from the post (it goes red against a guard that follows without the clamp)."""
+    w, g, e = _chase_scene(lib, world_factory)
+    rows = _run(lib, w, g, e, 700)
     bad = _leash(rows)
     assert not bad, "%d ticks beyond %.0f wu from the post, first %s" % (len(bad), GUARD_RADIUS, bad[:3])
 
 
 def test_R_096_08_a_guard_that_stepped_out_never_follows_a_second_target_past_the_radius(lib, world_factory):
-    """R-096-08 'never chasing past it': the guard has stepped 100 wu out toward the enemy at +480; that enemy dies and a second one stands at
-    +690 (seen from the guard, 390 wu out of range): the guard does not follow past 200 wu. Every tick of 400. Red today at the first assertion
-    (the guard never stepped out)."""
-    w, g, e = _scene(lib, world_factory, 480.0)
+    """R-096-08 'never chasing past it': the guard has followed the retreating Bastion 100 wu out; it dies and a second enemy, a Bastion retreating from 320 wu
+    east of the guard, comes in its notice distance: the guard does not follow past 200 wu from the post. Every tick of 400."""
+    w, g, e = _chase_scene(lib, world_factory)
     _stepped_out(lib, w, g, 100.0)
     remove(lib, w, e)
-    far = spawn(lib, w, SUPPLY, 1, POST[0] + 690.0, POST[1])
+    gx, gy = pos(lib, w, g)
+    far = spawn(lib, w, BASTION, 1, gx + 320.0, gy)
+    assert move(lib, w, [far], 1900.0, gy) == 0
     lib.om_unit_set_hp(w, far, BIG_HP)
     rows = _run(lib, w, g, far, 400)
     bad = _leash(rows)
@@ -234,20 +242,20 @@ def _returns(rows_after):
 
 
 def test_R_096_08_a_guard_returns_to_its_post_when_the_target_dies(lib, world_factory):
-    """R-096-08 'returning to the post when the target dies': after the guard has stepped at least 100 wu out toward the enemy at +480, the enemy
+    """R-096-08 'returning to the post when the target dies': after the guard has followed the retreating Bastion at least 100 wu out, the enemy
     dies; within RETURN_CAP ticks the guard is back within ARRIVE wu of the post and stays there STAY ticks, never past the radius. Red today: it
     never stepped out (the first assertion)."""
-    w, g, e = _scene(lib, world_factory, 480.0)
+    w, g, e = _chase_scene(lib, world_factory)
     _stepped_out(lib, w, g, 100.0)
     remove(lib, w, e)
     _returns(_run(lib, w, g, e, RETURN_CAP + STAY))
 
 
 def test_R_208_01_a_guard_returns_to_its_post_when_the_target_leaves(lib, world_factory):
-    """R-208-01 'returning to the post when the target dies or leaves the radius': after the guard has stepped 100 wu out, the enemy is moved to
+    """R-208-01 'returning to the post when the target dies or leaves the radius': after the guard has followed the Bastion 100 wu out, the enemy is moved to
     (1900, 1900), out of sight and far outside the radius; within RETURN_CAP ticks the guard is back at the post and stays. Red today: it never
     stepped out."""
-    w, g, e = _scene(lib, world_factory, 480.0)
+    w, g, e = _chase_scene(lib, world_factory)
     _stepped_out(lib, w, g, 100.0)
     lib.om_unit_teleport(w, e, *FAR, 0)
     _returns(_run(lib, w, g, e, RETURN_CAP + STAY))
@@ -255,9 +263,9 @@ def test_R_208_01_a_guard_returns_to_its_post_when_the_target_leaves(lib, world_
 
 @pytest.mark.parametrize("kind", ["move", "attack_move"])
 def test_R_096_08_a_move_or_attack_move_order_ends_a_guard_that_stepped_out(lib, world_factory, kind):
-    """R-096-08 'a move, attack-move ... order ends the guard': a guard that has stepped out toward the enemy at +480 (which then dies) is ordered
+    """R-096-08 'a move, attack-move ... order ends the guard': a guard that has followed the retreating Bastion out (which then dies) is ordered
     to a point 500 wu south of the post; it walks there, far past 200 wu, and stays. Red today: it never stepped out."""
-    w, g, e = _scene(lib, world_factory, 480.0)
+    w, g, e = _chase_scene(lib, world_factory)
     _stepped_out(lib, w, g, 100.0)
     remove(lib, w, e)
     goal = (POST[0], POST[1] + 500.0)
@@ -271,11 +279,11 @@ def test_R_096_08_a_move_or_attack_move_order_ends_a_guard_that_stepped_out(lib,
 
 def test_R_096_08_a_guard_steps_toward_a_seen_cross_layer_enemy_and_fires(lib, world_factory):
     """R-096-08 (Westley, 2026-11-08): 'the walk is toward any target its side can see within vision, on its own layer or another ... and it fires
-    when reach and range allow'. The guard on layer 1, the enemy on layer 0 at +340 (seen, 40 wu beyond range): within FIRE_CAP ticks the guard has
+    when reach and range allow'. The guard on layer 1, the enemy on layer 0 at +325 (seen, 25 wu beyond range, inside the notice distance 330): within FIRE_CAP ticks the guard has
     stepped toward it, the enemy's hp has fallen, and the guard never ended a tick beyond 200 wu from the post. Red today: the guard holds."""
-    w, g, e = _scene(lib, world_factory, 340.0, g_layer=1, e_layer=0)
+    w, g, e = _scene(lib, world_factory, 325.0, g_layer=1, e_layer=0)
     step(lib, w)
-    assert _seen(lib, w, e), "scene broken: the enemy at +340 down one layer is not seen"
+    assert _seen(lib, w, e), "scene broken: the enemy at +325 down one layer is not seen"
     rows = _run(lib, w, g, e, FIRE_CAP)
     stepped = max(p[0] - POST[0] for _, p, _, _ in rows)
     assert stepped >= STEP_MIN, "the guard did not step toward the cross-layer enemy: %.1f wu east after %d ticks" % (stepped, FIRE_CAP)
@@ -284,9 +292,9 @@ def test_R_096_08_a_guard_steps_toward_a_seen_cross_layer_enemy_and_fires(lib, w
 
 
 def test_R_096_08_a_guard_returns_when_its_cross_layer_target_dies(lib, world_factory):
-    """R-096-08 / R-208-01: the cross-layer case of the return. The guard has stepped 30 wu out toward the layer-0 enemy at +340; the enemy dies; the
+    """R-096-08 / R-208-01: the cross-layer case of the return. The guard has stepped 20 wu out toward the layer-0 enemy at +325; the enemy dies; the
     guard is back at the post within RETURN_CAP ticks and stays. Red today: it never stepped out."""
-    w, g, e = _scene(lib, world_factory, 340.0, g_layer=1, e_layer=0)
-    _stepped_out(lib, w, g, 30.0)
+    w, g, e = _scene(lib, world_factory, 325.0, g_layer=1, e_layer=0)
+    _stepped_out(lib, w, g, 20.0)
     remove(lib, w, e)
     _returns(_run(lib, w, g, e, RETURN_CAP + STAY))
