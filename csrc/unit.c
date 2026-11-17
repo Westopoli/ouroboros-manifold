@@ -35,6 +35,7 @@
 #include "ouroboros_sim.h"
 #include "om_internal.h"
 #include "move_commit.h"
+#include "notice_internal.h"
 #include "economy_internal.h"
 #include "om_constants.h"
 #include <math.h>
@@ -1040,8 +1041,8 @@ static int om_tac_leash_broken(const om_world *w, const om_unit_row *u, const om
     return !om_tac_dist_le(p->x - u->anchor_x, p->y - u->anchor_y, om_tac_leash(w, u));
 }
 
-/* H-057 (DEC-leash-param-2026-11-01): the leash and the acquisition radius are the unit's own type's
- * max(sensor_radius, attack_range); OM_TP_ATTACK_MOVE_LEASH 0 (the default) means that, non-zero overrides in wu. */
+/* H-057 (DEC-leash-param-2026-11-01): the leash is the unit's own type's max(sensor_radius, attack_range); OM_TP_ATTACK_MOVE_LEASH 0 (the
+ * default) means that, non-zero overrides in wu. It no longer sets the acquisition radius, the notice distance does (R-087-04). */
 static double om_tac_leash(const om_world *w, const om_unit_row *u) {
     double p = om_tactical_get_param(w, OM_TP_ATTACK_MOVE_LEASH), r;
     const om_unit_type_profile *prof;
@@ -1787,8 +1788,9 @@ static int om_tac_most_damaged_for(const om_world *w, const om_unit_row *self) {
 
 /* Acquisition for a unit whose type has reach: the better of the same-layer pick `same` and the best cross-layer
  * candidate in reach and in range at its offset (nearest, or per TARGET_POLICY 1 the most damaged). The cross-layer
- * pick replaces the same-layer one only when strictly better by OM_TIE_EPSILON. */
-static om_unit_row *om_tac_pick_across(om_world *w, om_tac_state *st, const om_unit_row *self, om_unit_row *same) {
+ * pick replaces the same-layer one only when strictly better by OM_TIE_EPSILON. `reach_scale` widens the reach the candidate must be within:
+ * 1 + OM_NOTICE_MARGIN for a unit that acquires at its notice distance (R-087-04), 1 for one that acquires within attack range only. */
+static om_unit_row *om_tac_pick_across(om_world *w, om_tac_state *st, const om_unit_row *self, om_unit_row *same, double reach_scale) {
     uint32_t up, down, n, id;
     double widest = 0.0, best_frac = 0.0, best_d2 = 0.0, same_frac, same_d2 = 0.0, m;
     int most_damaged = om_tac_most_damaged_for(w, self);
@@ -1800,13 +1802,14 @@ static om_unit_row *om_tac_pick_across(om_world *w, om_tac_state *st, const om_u
         if (n <= down && (m = om_tac_offset_param(w, OM_REACH_RANGE, 0, n)) > widest) widest = m;
     }
     if (widest <= 0.0) return same;
-    om_grid_iter_begin_other_st(&it, st, self->faction_id, self->x, self->y, self->attack_range * widest);
+    om_grid_iter_begin_other_st(&it, st, self->faction_id, self->x, self->y, self->attack_range * widest * reach_scale);
     while ((id = om_grid_iter_next(&it)) != 0) {
         om_unit_row *cand = &st->units[id - 1];
         double dx = cand->x - self->x, dy = cand->y - self->y, d2 = dx * dx + dy * dy;
         double frac = cand->max_hp > 0.0 ? cand->hp / cand->max_hp : 1.0;
         if (cand->hp <= 0.0 || cand->stealth || cand->layer == self->layer || !om_tac_hostile(self, cand) || om_tac_excluded(self, cand->unit_id)) continue;
-        if (!om_tac_in_range(w, self, cand)) continue;
+        if (!om_tac_in_reach(w, self, cand)
+            || !om_tac_within(w, self, cand, self->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, self, cand) * reach_scale)) continue;
         if (!om_tac_may_act_on(w, self, cand)) continue;
         if (best) {
             int better = most_damaged
@@ -2306,7 +2309,7 @@ static void om_tac_guard_tick(om_world *w, om_tac_state *st, om_unit_row *u, uin
     if (!t && cohort_turn && u->attack_range > 0.0) {
         t = om_tac_most_damaged_for(w, u) ? om_tac_most_damaged_hostile(w, st, u, u->attack_range)
                                           : om_tac_nearest_actable(w, st, u, u->attack_range);
-        t = om_tac_pick_across(w, st, u, t);
+        t = om_tac_pick_across(w, st, u, t, 1.0);
         if (!t) t = om_tac_guard_seen(w, st, u, px, py);
         if (t) u->target_id = t->unit_id;
     }
@@ -2494,8 +2497,12 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                     u->target_id = atk->unit_id;
                     u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
                 } else {
+                    /* R-087-06: an idle unit's pursuit holds the attacker as its target from the hit, as an attack-mover's does; its notice distance
+                     * (R-087-04) no longer reaches an attacker the leash used to take for it */
                     u->order = OM_ORDER_ATTACK_MOVE;
                     u->order_x = atk->x; u->order_y = atk->y;
+                    u->target_id = atk->unit_id;
+                    u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
                 }
                 u->issued_x = atk->x; u->issued_y = atk->y;
                 om_command_move(w, &u->unit_id, 1, atk->x, atk->y);
@@ -2566,17 +2573,14 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
      * for the nearest; it leaves the lock only by dying, leaving the side's sight, the leash or a new order. */
     if ((u->target_id == 0 || most_damaged) && u->order != OM_ORDER_ATTACK_TARGET
         && cohort_turn) {
-        /* H-057: an idle or attack-moving unit looks as far as it can be led, the type's leash; a guard, and a unit on
-         * its way back to its anchor, only as far as it can shoot */
-        double acq = u->attack_range;
-        if (pursue && !u->guard && u->anchor_set != 2) {
-            acq = om_tac_leash(w, u);
-            if (acq < u->attack_range) acq = u->attack_range;
-        }
+        /* G1 (R-087-04, R-096-02): an idle or attack-moving unit acquires within its notice distance, its reach times 1 + OM_NOTICE_MARGIN, never
+         * the leash or the sensor radius; a guard, and a unit on its way back to its anchor, only as far as it can shoot */
+        const double notice = (pursue && !u->guard && u->anchor_set != 2) ? 1.0 + OM_NOTICE_MARGIN : 1.0;
+        const double acq = u->attack_range * notice;
         t = most_damaged
             ? om_tac_most_damaged_hostile(w, st, u, u->attack_range)
             : om_tac_nearest_actable(w, st, u, acq);
-        t = om_tac_pick_across(w, st, u, t);
+        t = om_tac_pick_across(w, st, u, t, notice);
         if (t) {
             u->target_id = t->unit_id;
             if (u->order == OM_ORDER_ATTACK_MOVE && (!pursue || !u->anchor_set)) {
