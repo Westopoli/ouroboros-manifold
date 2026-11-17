@@ -10,6 +10,9 @@ R-096-08 and R-208-01 now read: a guard acquires within its notice distance, the
 the scenes that had the guard step out to a static enemy at +480, +600 or +690 now use an enemy at +320 or +325 (inside 330) or a Bastion that plain-moves
 away at 2 wu a tick from +320, which the guard follows up to the radius (_chase_scene). Rule words proved below are the 2026-11-08 text, kept as the record;
 the current text is quoted in tests/csim/test_E13_R096_08_guard_notice_distance.py.
+Test-defect 2026-11-17 (second pass; R-086-03, a Vanguard that halts in range braces and needs about 15 ticks to walk again): the scene turns abilities off
+(om_tactical_disable_abilities, as the lab's `fight` does), so the guard that follows a retreating target is not pinned by a Brace of its own; the leash and
+return clauses are unchanged.
 
 Rule words proved, word for word:
   R-096-08  "Given a guard order, When issued to a selection, Then each unit takes its position as its post and engages any target its side can
@@ -84,6 +87,7 @@ def _scene(lib, wf, dx, g_layer=0, e_layer=0, guarded=True, etype=SUPPLY, flee_t
     assert lib.om_map_set_canvas(w, 2000.0, 2000.0) == 0
     assert lib.om_roster_set_movement_kind(w, VANGUARD, WALKING) == 0
     assert lib.om_roster_set_reach(w, VANGUARD, REACH_UP, REACH_DOWN) == 0
+    lib.om_tactical_disable_abilities(w)    # as the lab's `fight`: a Vanguard that halts in range would Brace (R-086-03) and stand about 15 ticks before it walks again
     g = spawn(lib, w, VANGUARD, 0, *POST, g_layer)
     e = spawn(lib, w, etype, 1, POST[0] + dx, POST[1], e_layer)
     lib.om_unit_set_hp(w, e, BIG_HP)
