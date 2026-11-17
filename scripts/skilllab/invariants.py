@@ -343,7 +343,7 @@ class _Checker:
 
     def _acquire(self, frame, u, r, p, tick, out):
         """R-087-03 / R-087-08 / R-087-06. An acquisition is a target other than the previous one when the previous one was none or dead in the previous frame. It is
-        judged on the previous frame's positions and the sight of either frame (`_seen`): the target is the nearest enemy the unit's side sees within the unit's notice distance
+        judged on frame N's positions (the frame of the pick: the engine moves every unit before the cohort picks, om_tactical_step) and the sight of either frame (`_seen`): the target is the nearest enemy the unit's side sees within the unit's notice distance
         (R-087-04: attack range times the reach multiplier times 1 + NOTICE_MARGIN, by `_notice_gap`; planar distance, within the unit's layer reach), within NEAREST_TOL (a target the unit gave up in the last GIVEUP_EXCLUSION_TICKS frames is not a candidate), and it comes on the unit's cohort turn (tick % 4 == its slot). A hit by the target on the unit in this
         frame or the RETURN_FIRE_TICKS - 1 before it is return fire, which excuses both."""
         tgt = r["target"] if r["alive"] else 0
@@ -355,19 +355,21 @@ class _Checker:
             return
         if any((tgt, u) in hits for hits in self.hit_hist):
             return
-        side, vis = p["side"], prev.get("visible")      # `_seen` reads this frame's set as well
+        side, vis = p["side"], prev.get("visible")      # `_seen` reads this frame's set as well; p is the unit's row of the previous frame (side, whether it lived), r its row of frame N (where it stands when it picks)
+        units = frame["units"]
         reach = self.rules.reach.get(u)
         rng = self.rules.attack_range.get(u)
         mine = None                      # planar distance to the target when it is seen, alive and in reach
         mine_gap = None                  # (reach distance, notice distance) to the target, when the unit has an attack range
         eligible = []                    # (planar distance, distance from where the unit stands as stage 1 measures it) of every enemy within the notice distance that is not given up
-        for e, row in prev["units"].items():
-            if not row["alive"] or row["side"] == side or (vis is not None and not self._seen(frame, vis, side, e)):
+        for e, was in prev["units"].items():
+            if not was["alive"] or was["side"] == side or (vis is not None and not self._seen(frame, vis, side, e)):
+                continue                     # alive at the start of the tick: deaths come after the picks
+            row = units.get(e, was)          # where e stands when the unit picks: frame N
+            if reach is not None and not self._in_reach(reach, r["layer"], row["layer"]):
                 continue
-            if reach is not None and not self._in_reach(reach, p["layer"], row["layer"]):
-                continue
-            d = self._disp(p, row)
-            gap = self._notice_gap(u, p, e, row)
+            d = self._disp(r, row)
+            gap = self._notice_gap(u, r, e, row)
             if e == tgt:
                 mine, mine_gap = d, gap
             if gap is not None and gap[0] > gap[1]:
@@ -375,7 +377,7 @@ class _Checker:
             if tick - self.gave_up.get((u, e), -GIVEUP_EXCLUSION_TICKS) < GIVEUP_EXCLUSION_TICKS:
                 continue                     # R-087-09: given up by this unit within the exclusion window, so not a candidate for "the nearest"
             flat = u in self.rules.flyers or e in self.rules.flyers          # DRAFT-slant-ground-only
-            eligible.append((d, self._spherical((p["x"], p["y"]), p["layer"], row, flat)))
+            eligible.append((d, self._spherical((r["x"], r["y"]), r["layer"], row, flat)))
         if mine_gap is not None and mine_gap[0] > mine_gap[1]:
             out.append(_violation("R-087-03", tick, u, "acquired %d, %.1f wu away, beyond its notice distance %.1f (R-087-04); not return fire" % (tgt, mine_gap[0], mine_gap[1])))
             return
