@@ -47,6 +47,7 @@ HIT_GAP = 60                # DRAFT-f9-hit-gap
 OWN_MOVE = oracle.OWN_MOVE
 PUSH_RADIUS = oracle.PUSH_RADIUS
 LAYOUTS = ["L-0061", "L-0080"]
+MOVE_AWAY_LAYOUTS = ["L-0080"]      # layouts where idle or arrived units are hit by unseen fire: on L-0061 every victim is an attack-mover on its way (Round 5)
 
 
 # ------------------------------------------------------------------ the recorder: the oracle's rows plus the engine's own move-away flag
@@ -265,8 +266,20 @@ def test_control_the_stand_measure_flags_a_walker_with_a_destination_that_stands
 # ------------------------------------------------------------------ the premise: the fights exercise the rule (green today)
 
 @pytest.mark.parametrize("name", LAYOUTS)
-def test_premise_the_fight_has_units_hit_by_enemies_their_side_does_not_see_and_units_that_move_away(name):
-    """Premise (green today): the layout, fought to the end in the lab configuration, has unseen hits and at least one unit in a move away: the rule is exercised. Counts are dumped in the message, not pinned."""
+def test_premise_the_fight_has_units_hit_by_enemies_their_side_does_not_see(name):
+    """Premise (green today): the layout, fought to the end in the lab configuration, has unseen hits: the rule is exercised. Counts are dumped in the message, not pinned. On L-0061 every victim is an
+    attack-mover on its way (38 unseen hits, all from a higher layer, none moved away), which is what the rule says is neither moved nor stopped: that layout is the case of the first test below, and
+    only the layouts of MOVE_AWAY_LAYOUTS are the case of a unit that moves away."""
+    rec, flinch = played(name)
+    s = unseen.summary(rec)
+    assert s["unseen_hits"] > 0, "scene broken: no unseen hits in %s: %s" % (name, s)
+
+
+@pytest.mark.parametrize("name", MOVE_AWAY_LAYOUTS)
+def test_premise_the_fight_has_idle_or_arrived_units_that_move_away_under_unseen_fire(name):
+    """Premise (green today; was part of the premise of every layout until Round 5, Test-defect: R-087-01 as ruled 2026-11-17, an attack-mover on its way is not moved, so on L-0061, where every victim is
+    one, no unit ever moves away): the layout has an unseen hit and at least one unit in a move away, the unit the rule does move (an idle unit, or an attack-mover that has arrived). It is the control
+    that the three tests below about a move away can fail: they are not silent for want of a move away in the fight."""
     rec, flinch = played(name)
     s = unseen.summary(rec)
     starts = _starts(flinch, rec.ids)
