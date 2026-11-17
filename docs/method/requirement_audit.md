@@ -54,4 +54,4 @@ The Architect sets `verified <sha> <date>` on the PROVEN rows, rewrites every ot
 
 ## Log
 
-Last run: none yet. The backfill of 2026-11-11 (H-090, `docs/reports/2026-11-11-proof-backfill/`) read every epic once and is the starting state. Next rotating epic: E-01.
+Last run: 2026-11-17 at `2845f88f7` (`docs/reports/2026-11-17-requirement-audit.md`): the lab stage 4 rules and E-01; the beta stage was left out on Westley's word of 2026-11-11. Next rotating epic: E-02.

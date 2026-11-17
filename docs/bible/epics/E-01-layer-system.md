@@ -395,7 +395,7 @@ Open flags: Q-166-04 (numbers that assume a standard layer step scale with the s
 - On a land map the ground fills every layer below its surface, and no unit occupies a filled layer.
   Proof: MISSING
 - No unit ever occupies a position and layer the mask marks blocked.
-  Proof: tests/csim/test_E13_R207_06_never_enter_blocked.py::test_R_207_06_twelve_attack_moving_walkers_never_end_a_tick_in_a_blocked_cell | whole-run | verified 53f6b053 2026-11-11
+  Proof: MISSING
 - Visible set is symmetric in rule, not in outcome: A sees B does not imply B sees A.
   Proof: MISSING
 - Same seed and command stream produce identical layer, visibility, and transition traces.
