@@ -58,15 +58,17 @@ def _first_hit(lib, w, vs, limit=400):
 
 
 def _pursuing(lib, wf):
-    """An attack-mover chasing a visible Supply 550 wu west; 12 ticks into the chase the Supply dies, and the GUN appears on the hill. Returns (world, victim, gun)."""
+    """An attack-mover chasing a visible Supply 320 wu west; 12 ticks into the chase the Supply dies, and the GUN appears on the hill. Returns (world, victim, gun).
+    Test-defect 2026-11-17 (R-087-04, round5.md Second pass): the Supply stood 550 wu west, beyond the Vanguard's notice distance 330, so the unit never chased it; it stands 320 wu west
+    (measured: acquired at tick 5, the Vanguard reaches attack range 300 about tick 13, still chasing at tick 12)."""
     w = base._world(lib, wf)
     u = spawn(lib, w, VANGUARD, 0, *base.V0, 0)
-    s = spawn(lib, w, SUPPLY, 1, 1250.0, 2000.0)
+    s = spawn(lib, w, SUPPLY, 1, base.V0[0] - 320.0, 2000.0)
     lib.om_unit_set_hp(w, s, 1.0e6)
     attack_move(lib, w, [u], *base.POINT)
     for _ in range(12):
         step(lib, w)
-    assert target(lib, w, u) == s and dest(lib, w, u)[0] == 1 and dest(lib, w, u)[1:] == pytest.approx((1250.0, 2000.0)), \
+    assert target(lib, w, u) == s and dest(lib, w, u)[0] == 1 and dest(lib, w, u)[1:] == pytest.approx((base.V0[0] - 320.0, 2000.0)), \
         "premise: the unit chases the Supply (target %s, destination %s)" % (target(lib, w, u), dest(lib, w, u))
     lib.om_unit_set_hp(w, s, 0.0)
     step(lib, w)
