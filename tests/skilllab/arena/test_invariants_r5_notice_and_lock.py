@@ -215,7 +215,7 @@ def _oracle():
 
 def record(gaps, targets, hits=(), dead_before=None):
     """A fake Recorder of unit 1 (side 0, range 300, sensor radius 300, at the origin) and enemies 2 and 4 (side 1): `gaps[k]` is enemy 2's distance after tick k + 1 (and before tick
-    k + 2), enemy 4 stands 100 wu away; `targets[k]` is unit 1's target after tick k + 1; `hits` the ticks in which enemy 2 fired at unit 1."""
+    k + 2), enemy 4 stands 100 wu away; `targets[k]` is unit 1's target after tick k + 1; `hits` the ticks in which enemy 2 fired at and hit unit 1 (each planted tick carries "fires" and "hits", as the Recorder's do)."""
     from types import SimpleNamespace
 
     def snap(k, tgt):
@@ -226,6 +226,7 @@ def record(gaps, targets, hits=(), dead_before=None):
     ticks, prev = [], 0
     for k, tgt in enumerate(targets):
         ticks.append({"n": k + 1, "pre": snap(k, prev), "post": snap(k + 1, tgt), "fires": [(2, 1)] if (k + 1) in hits else [],
+                      "hits": [(2, 1)] if (k + 1) in hits else [],
                       "vis_pre": {(0, 2): True, (0, 4): True}, "vis_post": {(0, 2): True, (0, 4): True}})
         prev = tgt
     return SimpleNamespace(ticks=ticks, ids=[1, 2, 4], side={1: 0, 2: 1, 4: 1}, typ={1: 0, 2: 0, 4: 0}, stats={0: {"attack_range": 300.0, "sensor_radius": 300.0}}, heights=[],
