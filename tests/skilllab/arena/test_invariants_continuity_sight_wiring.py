@@ -116,9 +116,9 @@ def test_R_093_02_suspended_for_names_both_sight_rules_for_the_control_as_for_of
 
 
 def test_R_093_02_control_the_sight_on_run_of_l0039_judges_both_rules_and_breaks_neither():
-    """Control (green today): L-0039 seed 1 sight on, the whole fight (2314 ticks): nothing suspended, and no violation of R-087-03 or R-093-02."""
+    """Control (green today): L-0039 seed 1 sight on, the whole fight (2211 ticks; 2314 before Round 5, re-pinned after G1 to G5, the lab checker reports no violation of any rule on the new run): nothing suspended, and no violation of R-087-03 or R-093-02."""
     mon, _ = played("L-0039", 1, "on")
-    assert mon.tick == 2314 and mon.suspended == {} and of(mon, "R-087-03") == [] and of(mon, "R-093-02") == []
+    assert mon.tick == 2211 and mon.suspended == {} and of(mon, "R-087-03") == [] and of(mon, "R-093-02") == []
 
 
 def test_R_093_02_the_control_run_of_l0039_lists_both_sight_rules_as_suspended():
