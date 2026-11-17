@@ -23,6 +23,7 @@ import pytest
 import engine_rules_oracle as oracle
 
 FIGHTS = [("L-0039", "on"), ("L-0050", "on"), ("L-0050", "off")]
+DRAFT_LOCK_CHANGES_FLOOR = 32   # was 50 (Round 5 re-pin, see test_R_087_03_control_units_lock_and_re_lock_in_these_fights)
 
 
 @pytest.mark.parametrize("name,sight", FIGHTS)
@@ -43,7 +44,9 @@ def test_R_087_03_control_units_lock_and_re_lock_in_these_fights(name, sight):
     # Test-defect (F3 with F1, 2026-11-08): the bound was 100, measured on the unfixed tree where L-0039 units swapped targets 694 (sight off) and 6121 (sight on)
     # times with no shot fired. With locks held and walkers routed round the box the 8 v 8 fights change targets 70 (off) and 84 (on) times while
     # firing 626 and 521 shots; 50 is three changes a unit, so a fight where nobody locked still fails.
-    assert changes > 50, "only %d target changes" % changes
+    # Test-defect (Round 5, 2026-11-17): L-0039 sight off now changes targets 42 times (the notice distance ends a lock, R-087-03, so units stand and are not re-assigned; the lab checker
+    # reports nothing on the run). DRAFT-lock-changes-floor = 32, two changes a unit of the 16, Westley's to set; a fight where nobody locked still fails.
+    assert changes > DRAFT_LOCK_CHANGES_FLOOR, "only %d target changes" % changes
 
 
 def test_R_087_03_control_sight_off_open_fight_with_boxes_has_no_swaps_today():
