@@ -102,8 +102,9 @@ def test_R_097_10_a_stopped_unit_starts_a_pair_check(lib, tw):
 
 
 def test_R_097_05_other_layer_units_do_not_collide(lib, tw):
-    """R-097-05: same-layer pairs only. M at (100,0) on layer 0 goes -x over an idle unit on layer 1 at (110,0):
-    no push, M simply ends its step at (92.5,0). Control: the same scene with S on layer 0 is the stationary-pair
+    """R-097-05: "Given two units on the same layer within 30 wu (2 x radius 15), or two units within 30 wu that both stand on the same slope, whichever side of its midline each is on (E-01 R-001-06), When the collision
+    pass runs, Then they are pushed apart ...": units on different layers that are not on one slope do not collide. M at (100,0) on layer 0 goes -x over an idle unit on layer 1 at (110,0), in a world with no terrain
+    (nothing is a slope; the slope case is tests/csim/test_E13_R097_05_slope_collision.py): no push, M simply ends its step at (92.5,0). Control: the same scene with S on layer 0 is the stationary-pair
     test above, where M ends at (80,0)."""
     m = lib.om_unit_spawn(tw, RAIDER, FRIEND, 100.0, 0.0, 0)
     s = lib.om_unit_spawn(tw, RAIDER, FRIEND, 110.0, 0.0, 1)
