@@ -114,6 +114,18 @@ def _unshot(r, n, u, t):
     return k
 
 
+def _left_notice(rec, n, tk, u, t):
+    """R-087-03 (Round 5) "keeps it ... until the target dies, leaves its side's sight, ... or leaves the unit's notice distance" (R-087-04: attack range times the layer multiplier times 1.1): the
+    target stood beyond the unit's notice distance in a state the tick decided on, and did not hit the unit within the return-fire window (R-087-06: return fire is exempt). The engine reads a
+    mix of the tick's states (units step in id order; L-0084 tick 809: unit 74 against enemy 13, 328.7 wu before the tick and 327.8 after, 332.2 with enemy 13 stepped and unit 74 not), so the
+    four pairings of the pre-step and post-step rows count: beyond in any is a legal end. The control is the unexplained-drop test below: a drop of a target inside the notice distance in all four
+    states is not excused."""
+    pre, post = tk["pre"], tk["post"]
+    if oracle._hit_by(rec, n, t, u):
+        return False
+    return any(d > limit for d, limit in (oracle.notice(rec, u, a, t, b) for a in (pre[u], post[u]) for b in (pre[t], post[t])))
+
+
 def drops_of_a_seen_target(r):
     """[(tick, unit, target, new target, reason)]: every tick a unit stopped holding a living target its side saw at both ends of the tick; reason is the excuse or None."""
     rec, out = r.rec, []
@@ -138,6 +150,8 @@ def drops_of_a_seen_target(r):
                 limit = GUARD_RADIUS + rec.stats[rec.typ[u]]["attack_range"] * r.mult(la, lb)
                 if math.hypot(math.hypot(q0["x"] - r.post[u][0], q0["y"] - r.post[u][1]), dz) > limit:
                     why = "guard post"
+            if why is None and _left_notice(rec, n, tk, u, t):
+                why = "notice distance"
             out.append((n, u, t, p1["tgt"], why))
     return out
 
@@ -161,12 +175,13 @@ def test_control_the_fight_and_the_trace_premises_hold():
     reasons = {}
     for d in drops_of_a_seen_target(r):
         reasons[d[4]] = reasons.get(d[4], 0) + 1
-    assert set(reasons) == {"reach", "give-up", "guard post"}, reasons
+    assert set(reasons) == {"reach", "give-up", "guard post", "notice distance"}, reasons
     assert reasons == {"reach": 118, "give-up": 157, "guard post": 473}, reasons
 
 
 def held_after_sight_loss(r, lag):
-    """([(tick n, unit, target)], number of cases): a unit held a living target at the end of tick n-1, its side no longer sees it at the end of tick n, and the unit still holds it at the end of tick n + lag."""
+    """([(tick n, unit, target)], number of cases): a unit held a living target at the end of tick n-1, its side no longer sees it at the end of tick n, and the unit holds it at the end of every tick n to n + lag. A target unseen for one tick and seen again is a lock that ended and a new pick (L-0084 tick 1255: unit 82 drops 25 at
+    1256 and takes it again at 1257, the side seeing it again at the end of 1256): not a lock held through; only an unbroken hold counts."""
     rec, late, cases = r.rec, [], 0
     for tk in rec.ticks:
         n = tk["n"]
@@ -177,8 +192,8 @@ def held_after_sight_loss(r, lag):
             if not (t and tk["pre"][u]["alive"] and tk["post"][u]["alive"] and tk["post"][t]["alive"]) or tk["vis_post"].get((rec.side[u], t)):
                 continue
             cases += 1
-            nxt = rec.ticks[n + lag - 1]
-            if nxt["post"][u]["alive"] and nxt["post"][t]["alive"] and nxt["post"][u]["tgt"] == t:
+            held = [rec.ticks[m - 1] for m in range(n, n + lag + 1)]
+            if all(h["post"][u]["alive"] and h["post"][t]["alive"] and h["post"][u]["tgt"] == t for h in held):
                 late.append((n, u, t))
     return late, cases
 
