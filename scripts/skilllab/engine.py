@@ -277,7 +277,8 @@ class Engine:
 
     def _ordered(self, w, unit_ids, kind="order"):
         """Tell the rule checker (scripts/skilllab/invariants.py Monitor) which units were ordered: `order_log` {world address: {unit id: kind of its last order since the
-        checker looked}}, kind "guard" for order_guard (R-096-08 takes the guard's post from where it stood), "order" otherwise (R-087-03 forgives a retarget that follows one)."""
+        checker looked}}, kind "guard" for order_guard (R-096-08 takes the guard's post from where it stood), "attack_move" for order_attack_move (R-087-01 judges attack-movers; the C side has no getter
+        for the standing attack-move, om_unit_get_order_kind reads 0 for it), "order" otherwise (R-087-03 forgives a retarget that follows one)."""
         log = self.__dict__.setdefault("order_log", {}).setdefault(getattr(w, "value", w), {})
         for u in unit_ids:
             log.pop(int(u), None)
@@ -285,7 +286,7 @@ class Engine:
 
     @_bumps
     def order_attack_move(self, w, unit_ids, x, y):
-        self._ordered(w, unit_ids)
+        self._ordered(w, unit_ids, "attack_move")
         self._order(self._lib.om_command_attack_move, w, unit_ids, x, y)
 
     @_bumps
