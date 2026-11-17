@@ -68,12 +68,12 @@ Rules
   Proof: MISSING
 - R-096-07  Given commands for tick t, When the tick runs, Then all of them are applied before any state advances, in arrival order, and recorded with the tick number for replay.
   Proof: MISSING
-- R-096-08  Given a guard order, When issued to a selection, Then each unit takes its position as its post and engages any target its side can see (E-12 R-093-02), stepping toward it no farther than `GUARD_RADIUS` = 200 wu from the post (DRAFT-guard-radius: the attack-move leash of R-087-05, Westley's number to change; the radius bounds the guard's own walk, measured post to the guard's centre, ruled 2026-10-14 for E4), firing whenever the target is in range, returning to the post when the target dies or when engaging it would take the guard past the radius; it never crosses the radius and never marches; the walk is toward any target its side can see within vision, on its own layer or another, as far as the radius allows, and it fires when reach and range allow (Westley, 2026-11-08: a guard engages a cross-layer target "only if the enemy unit is within vision"; before then the built walk was same-layer only); a move, attack-move, attack-target or layer order ends the guard; return fire (R-087-06) is untouched. Ruled by Westley, 2026-10-13: a guard stance as a radius (option b of Q-096-01), "for the whole game, not just the simulator". A seen enemy the guard cannot engage even from the edge of its radius leaves it at its post; a collision push never carries a guard past the radius (DRAFT readings, DEC-engine-rules-round2-2026-11-11, Westley may veto).
+- R-096-08  Given a guard order, When issued to a selection, Then each unit takes its position as its post and acquires as every unit does, an enemy its side can see (E-12 R-093-02) within its notice distance (E-11 R-087-04), stepping toward it no farther than `GUARD_RADIUS` = 200 wu from the post (DRAFT-guard-radius, Westley's number to change; the radius bounds the guard's own walk, measured post to the guard's centre, ruled 2026-10-14 for E4), firing whenever the target is in range, returning to the post when the lock ends (E-11 R-087-03) or when engaging the target would take the guard past the radius; it never crosses the radius and never marches; the target may be on its own layer or another, where reach and range allow (Westley, 2026-11-08, on a cross-layer target: "only if the enemy unit is within vision"; 2026-11-17, Q-096-02: "the unit only steps out when the enemy unit enters it's firing radius, and it only runs after it for 200 leash"; before then a guard walked toward any target its side saw); a move, attack-move, attack-target or layer order ends the guard; return fire (R-087-06) is untouched. Ruled by Westley, 2026-10-13: a guard stance as a radius (option b of Q-096-01), "for the whole game, not just the simulator". A seen enemy the guard cannot engage even from the edge of its radius leaves it at its post; a collision push never carries a guard past the radius (DRAFT readings, DEC-engine-rules-round2-2026-11-11, Westley may veto).
   Proof: MISSING
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: Q-096-02 (whether a guard still engages by sight, R-096-08; Q-087-01 closed as moot 2026-11-17).
+Open flags: none (Q-087-01 closed as moot and Q-096-02 answered, 2026-11-17).
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
@@ -85,7 +85,7 @@ Rules
   Proof: MISSING
 - R-097-02  Given a destination shared by several units, When routes are computed, Then the route is computed once and cached.
   Proof: MISSING
-- R-097-03  Given a moving unit, When it steps, Then it probes 40 wu ahead; if a unit on its layer blocks the probe (an idle unit of its own side does not block: idle means no move target and not engaged; an enemy always does) it tries +30, -30, +60, -60, +90 and -90 degrees from its heading, in that order, and takes the first clear one; if none is clear it continues straight.
+- R-097-03  Given a moving unit, When it steps, Then it probes 40 wu ahead; if a unit on its layer, or on the same slope (R-097-05), blocks the probe (an idle unit of its own side does not block: idle means no move target and not engaged; an enemy always does) it tries +30, -30, +60, -60, +90 and -90 degrees from its heading, in that order, and takes the first clear one; if none is clear it continues straight.
   Proof: MISSING
 - R-097-04  Given a unit that took a deflected angle, When it moves, Then it keeps that heading for at least 60 wu before re-evaluating.
   Proof: MISSING
@@ -219,7 +219,7 @@ As a commander, I want to put units on guard at a post, so that I can hold a cho
 The guard stance is decided (Westley, 2026-10-01: "Yes a guard stance is fine"; 2026-10-13: a radius guard, option (b), for the whole game). Its rule is R-096-08.
 
 Rules
-- R-208-01  Given selected units, When the player gives the guard order at a post, Then the units hold the post and engage what their side can see (E-12 R-093-02) within `GUARD_RADIUS` of it, returning to the post when the target dies or leaves the radius, never chasing past it (R-096-08). Guard is the fifth unit command, not a mode of attack-move; R-096-06 keeps rejecting patrol, hold, stop and follow.
+- R-208-01  Given selected units, When the player gives the guard order at a post, Then the units hold the post and engage what comes within their notice distance (E-11 R-087-04), following it no farther than `GUARD_RADIUS` from the post and returning to the post when the lock ends or the chase would pass the radius (R-096-08). Guard is the fifth unit command, not a mode of attack-move; R-096-06 keeps rejecting patrol, hold, stop and follow.
   Proof: MISSING
 - R-208-02  Given a force waiting for an enemy to come inside its ground, When the enemy is within its reach and has not seen it, Then [Q-208-01: whether a unit can be ordered to hold fire so that it stays unseen and the ambush is not spoiled, and whether that is the guard stance or a second order].
   Proof: unbuilt
