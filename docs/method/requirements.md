@@ -36,7 +36,7 @@ Ways this could be wrong: visibility identical across layers; cone drawn but set
 Open flags: none.
 ```
 
-Rules use concrete values, never adjectives. "Sees further" is not a rule; "sees at 14, not at 8" is.
+Rules use concrete values, never adjectives. "Sees further" is not a rule; "sees at 14, not at 8" is. A statement with no testable outcome (a direction, a quoted decision) is prose in its story and carries no rule id.
 
 ## Proof
 
@@ -46,24 +46,26 @@ The pointer is its own line directly under the rule in the epic file, never on t
 
 ```
   Proof: <test file>::<test name> | scenario, whole-run or client | verified <sha> <date>
+  Proof: <test script>::<check name> | client | verified <sha> <date>     (a Godot test)
   Proof: unbuilt        (no code claims the rule)
   Proof: MISSING        (code exists and no test qualifies)
 ```
 
 Each bullet of an epic's Invariants section carries a Proof line too; a test cites it as "E-13 Invariant 2". A rule is built only when its Proof line names a test, and a story is Tested or Seen only when every one of its rules has one. `MISSING` and `unbuilt` are written out so that a gap shows in the epic.
 
-A test qualifies as proof when all six hold:
+A test qualifies as proof when all seven hold:
 
-1. It is one named test function that names the rule id and quotes the rule's current text. A mention of the id elsewhere in a file is not a proof.
+1. It is one named test function that names the rule id and quotes the rule's current text. A mention of the id elsewhere in a file is not a proof. A Godot test is a script and not a named function: the pointer names the script and the check inside it, and the script quotes the rule at that check.
 2. It asserts the rule's Then, not that something happened nearby (hit points fell, a distance closed). A hash or golden is never a proof: it detects change, not a broken rule.
 3. It runs in the shipped configuration, the settings the lab batch and `scripts/play.sh` launch today (walking units, obstacles, sight on), or the Proof line names the switch that differs and why.
 4. A rule worded never, always or every tick, and every Invariant, is proved by a whole-run test that checks each tick of a fight, not the final state.
 5. It goes red against wrong code: a filled control or a recorded break of the rule's code turns it red. A placeholder control does not count.
 6. It is not skipped, not xfail and not on a known-red list. A known-red proof means the rule is unproven.
+7. It reaches the behaviour the way play does, through the tick, the jump or a pipe handler, or the Proof line names a second test that does. A test that calls an inner function play never calls that way proves the function, not the rule.
 
 A `Test-defect:` commit that touches a proof test updates the `verified` sha, and never weakens a per-tick check to a final-state check without naming the invariant test that replaces it. The weekly check of rules and proofs is `requirement_audit.md`.
 
-Backfill: done 2026-11-11 (H-090). All 1,314 rules and Invariants of the 22 epics carry a Proof line: 15 name a test, 920 are MISSING, 379 unbuilt. The reading behind each line (candidate test, the qualifications it fails) is `docs/reports/2026-11-11-proof-backfill/all.csv`.
+Backfill: done 2026-11-11 (H-090). All 1,314 rules and Invariants of the 22 epics carry a Proof line: 15 name a test, 920 are MISSING, 379 unbuilt. The reading behind each line (candidate test, the qualifications it fails) is `docs/reports/2026-11-11-proof-backfill/all.csv`. Qualification 7, the Godot pointer and the prose line were added 2026-11-17 (DEC-proof-method-2026-11-17); the backfill was read against the first six.
 
 ## Status
 

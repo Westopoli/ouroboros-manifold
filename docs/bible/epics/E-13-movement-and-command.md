@@ -73,7 +73,7 @@ Rules
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: Q-087-01 (whether the 200 wu leash of R-096-03 is tested before or after damage; E-11 S-087).
+Open flags: none (Q-087-01 closed as moot 2026-11-17).
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
@@ -89,7 +89,7 @@ Rules
   Proof: MISSING
 - R-097-04  Given a unit that took a deflected angle, When it moves, Then it keeps that heading for at least 60 wu before re-evaluating.
   Proof: MISSING
-- R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick.
+- R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), or two units within 30 wu that both stand on the same slope, whichever side of its layer line each is on (E-01 R-001-06), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick. The slope case is there because a walker that crosses a slope's midline changes layer (E-01 R-004-06) and would otherwise arrive inside units of its new layer (Westley, 2026-11-17, asked whether units on one slope collide across the layer line: "All the rest go with recommended", the recommendation being yes; a lab trial removed the pile-up on all six hill fights with every winner unchanged, at the cost of queues on narrow ramps, `docs/reports/2026-11-12-engine-rules-round-3.md`). The slope case is not built: the engine today collides units of one layer only.
   Proof: MISSING
 - R-097-06  Given a unit moving through terrain with obstacle density d, When d is in [0.3, 0.7], Then its speed is multiplied by (1 − 0.5 · d); below 0.3 speed is unchanged; at 0.7 and above the cell is blocked (R-097-01). The multiplier is era-uniform; an era pack may not switch it off.
   Proof: MISSING
@@ -301,7 +301,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-101-02, Q-207-01, Q-208-01, and from other epics Q-087-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-101-02, Q-207-01, Q-208-01, and from other epics Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
