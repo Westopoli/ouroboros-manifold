@@ -175,6 +175,7 @@ typedef struct {
     double   facing;
     double   prev_x, prev_y, prev_facing;
     uint64_t moved_own_tick;             /* F2 (R-087-04): the last tick this unit's own movement step changed its position; not saved or hashed, rewritten every tick */
+    uint64_t layer_chg[2];               /* R-097-05: the ticks of the last two layer changes om_move_walker_tick made, newest first; not saved or hashed (a load starts with none) */
     int      has_dest;
     uint32_t giveup_near;
     double   dest_x, dest_y;
@@ -3606,7 +3607,8 @@ void om_move_walker_tick(om_world *w) {
         if (!mu->in_use || !om_unit_alive(w, id) || !om_move_is_walker(w, id) || om_terrain_slope_at(w, mu->x, mu->y, &s) < 0) continue;
         dot = (mu->x - s.mx) * (s.x1 - s.x0) + (mu->y - s.my) * (s.y1 - s.y0);
         band = (dot < 0.0 ? s.lower_band : s.upper_band) - 1;
-        if (om_move_layer(w, id) != band) {
+        if (om_move_layer(w, id) != band && om_move_layer_flip_allowed(mu->layer_chg, om_tactical_tick(w))) {
+            om_move_layer_flip_note(mu->layer_chg, om_tactical_tick(w));   /* a third change inside the window waits (R-097-05); see also: om_move_layer_flip_allowed */
             /* The walker's own crossing of a slope: its route already runs over the link, and a replan from mid-slope on the
              * new layer finds no route (tests/csim/test_E01_R004_07_slope_time.py). So the plan follows the layer here and the
              * stored route is dropped (Architect 2026-10-14): route_n 0 with the aim kept is the pre-W2 plan, which replans at the
