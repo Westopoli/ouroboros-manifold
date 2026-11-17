@@ -142,13 +142,15 @@ def test_R_087_04_visible_means_the_sides_set(lib, world_factory):
     on it. Preconditions are asserted (the friend sees the enemy, the Raider does not). The Raider walks toward
     the enemy its friend sees (R-087-04, H-057); with the enemy brought into its attack range, the side's
     sight is enough to acquire it.
-    TD-PP-C-r08704-sideset (A185) and TD-PP-A199-repin: the pursuit half is superseded."""
+    TD-PP-C-r08704-sideset (A185) and TD-PP-A199-repin: the pursuit half is superseded.
+    Test-defect 2026-11-17 (R-087-04, round5.md Second pass): the Raider's attack-move runs south, not west: marching west it walked 7.5 wu a tick away from the enemy,
+    which stood 232 wu off by the first cohort turn, beyond its notice distance 220, so a unit that follows the rule never turned east."""
     w = world_factory(n_regions=1)
     u = spawn(lib, w, RAIDER, 0, 0.0, 0.0)
     spotter = spawn(lib, w, INTERCEPTOR, 0, 0.0, 700.0)
     enemy = spawn(lib, w, SUPPLY, 1, 210.0, 0.0)
     lib.om_map_add_interference_zone(w, 0.0, 0.0, 0, 1.0, 100.0)
-    attack_move(lib, w, [u], -3000.0, 0.0)
+    attack_move(lib, w, [u], 0.0, -3000.0)
     assert lib.om_unit_can_see(w, spotter, enemy) == 1, "fixture: the spotter should see the enemy"
     assert lib.om_unit_can_see(w, u, enemy) == 0, "fixture: the interference zone should blind the Raider"
 
