@@ -3,10 +3,13 @@
 Holds no tests. The lab checker (scripts/skilllab/invariants.py) has no check for this rule, so the measurement is written here, on the Recorder of
 engine_rules_oracle.py (per tick: the unit rows before and after the step, the fire events, who sees whom).
 
-Rule word for word (docs/bible/epics/E-11-units-and-combat.md, R-087-01): "Given an idle or attack-moving unit with no target that takes damage from an
-attacker it cannot see or cannot reach, When the loop runs, Then it leaves the line of fire instead of standing or walking on blindly: it moves 200 wu
-directly away from the damage direction and stops, and an attack-mover then resumes its attack-move toward its original point (R-096-02); once the attacker
-is visible and in range it stands and fights."
+Rule word for word (docs/bible/epics/E-11-units-and-combat.md, R-087-01, as it reads since 2026-11-17): "Given an idle unit, or an attack-moving unit that has arrived at its point, with no
+target, that takes damage from an attacker it cannot see or cannot reach, When the loop runs, Then it leaves the line of fire instead of standing in it: it moves 200 wu directly away from the
+damage direction and stops, and it holds where the move away ends; it does not walk back into the fire ... While it holds it acquires and returns fire as any idle unit does (R-087-04,
+R-087-06), and a repeat hit it still cannot answer moves it again. An attack-moving unit still on its way to its point is neither moved nor stopped by such a hit: it keeps walking its attack-move
+... A plain-moving unit and a guard (R-096-08, never walks off) ignore the hit".
+Test-defect (ruling of 2026-11-17: the unit holds after the move away; an attack-mover still on its way is not moved): the quoted text was the old rule; the measure below is unchanged (a hold ends
+in a new move on the next hit, so a unit that stands in repeated unseen fire is still the fault).
 
 The measure (`standing_in_unseen_fire`): an UNSEEN HIT is a fire event (attacker a, victim v) on a tick on which v is alive, hostile to a, holds no target at the
 start of the tick, and a is seen by v's side neither before nor after the tick (om_player_can_see). A run of unseen hits on one victim starts at the first one,
