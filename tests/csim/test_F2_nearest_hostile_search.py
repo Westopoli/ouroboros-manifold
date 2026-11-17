@@ -435,9 +435,10 @@ def _state_hash(lib, w):
 # Re-recorded 2026-11-12 (engine rules Round 4, R-097-10: an idle unit takes the push of a mover of its own side and steps aside; was: 2026-11-12 recorded: clash f6194aa2, spread 8c68d293).
 # Built on the Round 3 tip e2dcee93 and on 6d3d7635 in lock step: the first step to differ is step 1 in both scenes. Clash: 11 idle units are moved on step 1 (unit 69 by 0.4 wu: unit 86, of its own side,
 # takes a target that tick and walks 7.4 wu into it at 32.7 wu; 22 units differ in all). Spread: unit 51 is moved 7.8 wu by unit 418 of its own side, 16.4 wu away (2 units differ).
+# Re-recorded 2026-11-17 (engine rules Round 5, G1 to G5: a lock ends at the notice distance, a guard acquires within it, an attack-mover is not moved by unseen fire, layer by side of the midline on a slope; was: 2026-11-12 recorded: clash 8c76ebb2, spread fad7b9eb; green on main b23e605c9).
 GOLDEN = {
-    "clash": "8c76ebb28e7f99bd9a455fbd6058990e099d80cef50817fa6697902fadf96931",
-    "spread": "fad7b9ebc023cd0dd3a4c084c5b5c4a3f3900e185e5e61abc5f1e103e79bda65",
+    "clash": "26872cedcc6e42806415bc5710e63ce7ab025a3ab397f31ba21e0a68c6c53601",
+    "spread": "62acb1209322a40ef0285a93885ee4483d588bcf3b912bc66489c66018b87f0f",
 }
 
 
