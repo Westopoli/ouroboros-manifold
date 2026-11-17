@@ -178,16 +178,18 @@ def keep(inv, n, hits=None, back_at=None):
 
 
 def test_R_087_03_a_lock_kept_beyond_the_notice_distance_for_more_than_a_cohort_period_is_reported_once(inv):
-    """R-087-03 (G7 lock): "a lock kept on a target beyond the notice distance for more than one cohort period is reported". Planted: the unit takes an enemy at 250 wu (legal) in tick 1;
-    from tick 2 it stands at 400 (notice 330) and the unit still holds it in tick 12. Reported once, in the fifth frame it held it beyond the distance (tick 6), not every frame.
-    Red today: no such check."""
-    assert keys(keep(inv, 12)) == [("R-087-03", 6, 1)]
-    assert keys(keep(inv, 6)) == [("R-087-03", 6, 1)]      # held through tick 6 (the fifth frame beyond) and dropped in tick 7: reported all the same
+    """R-087-03 (G7 lock): "a lock kept on a target beyond the notice distance for more than one cohort period is reported". "Beyond" is beyond in every reading of the tick (round5.md
+    "Fourth pass": the unit and the target each at their position of frame N-1 or N). Planted: the unit takes an enemy at 250 wu (legal) in tick 1; the enemy stands at 400 (notice 330)
+    from frame 2 on, so frame 2 has a reading at 250 (inside, frame 1's position) and the first frame beyond in every reading is 3; the unit still holds it in tick 12. Reported once, in the
+    fifth such frame (tick 7), not every frame."""
+    assert keys(keep(inv, 12)) == [("R-087-03", 7, 1)]
+    assert keys(keep(inv, 7)) == [("R-087-03", 7, 1)]      # held through tick 7 (the fifth frame beyond in every reading) and dropped in tick 8: reported all the same
 
 
 def test_R_087_03_control_a_lock_dropped_within_one_cohort_period_is_silent(inv):
-    """R-087-03 control (green today, red if the allowance is dropped): the same enemy beyond the distance in ticks 2 to 5 (4 frames, one cohort period) and the lock dropped in tick 6
-    is silent."""
+    """R-087-03 control (green today, red if the allowance is dropped): the same enemy beyond the distance in every reading in ticks 3 to 6 (4 frames, one cohort period; tick 2 has a reading
+    inside) and the lock dropped in tick 7 is silent; so is a lock dropped earlier."""
+    assert keep(inv, 6) == []
     assert keep(inv, 5) == []
 
 
@@ -234,28 +236,35 @@ def record(gaps, targets, hits=(), dead_before=None):
 
 
 def test_R_087_04_the_oracle_reports_a_pick_beyond_the_notice_distance_and_passes_one_inside_it():
-    """R-087-04 (oracle): unit 1 takes enemy 2 in tick 2, judged on the state before the step (tick 1's post). Enemy 2 at 340 wu (notice 330): reported with its distance and the notice
-    distance; at 320: nothing; at 340 after enemy 2 hit the unit in tick 2 (return fire): nothing. Green (the oracle is rewritten with these tests; the old oracle has no such function)."""
+    """R-087-04 (oracle, round5.md "Fourth pass"): unit 1 takes enemy 2 in tick 2; the pick is reported only when enemy 2 is beyond the notice distance in every reading of the tick (the unit and
+    the enemy each at their pre-step or post-step position). Enemy 2 at 340 wu (notice 330) before and after the step: reported with its distance and the notice distance; at 320: nothing; at 340 after
+    enemy 2 hit the unit in tick 2 (return fire): nothing; at 320 before the step and 340 after it (a reading inside, which the engine may have taken): nothing, though the post-step state alone is beyond."""
     o = _oracle()
-    assert [(t, u, tg) for t, u, tg, _, _ in o.picks_beyond_notice(record([340.0, 340.0], [0, 2]))] == [(2, 1, 2)]
-    assert o.picks_beyond_notice(record([320.0, 320.0], [0, 2])) == []
-    assert o.picks_beyond_notice(record([340.0, 340.0], [0, 2], hits=(2,))) == []
+    assert [(t, u, tg) for t, u, tg, _, _ in o.picks_beyond_notice(record([340.0, 340.0, 340.0], [0, 2]))] == [(2, 1, 2)]
+    assert o.picks_beyond_notice(record([320.0, 320.0, 320.0], [0, 2])) == []
+    assert o.picks_beyond_notice(record([340.0, 340.0, 340.0], [0, 2], hits=(2,))) == []
+    assert o.picks_beyond_notice(record([340.0, 340.0, 320.0], [0, 2])) == []
+    assert o.picks_beyond_notice(record([320.0, 320.0, 340.0], [0, 2])) == []
+    assert o.picks_beyond_notice(record([330.0, 330.0, 330.0], [0, 2])) == []      # exactly at the notice distance: inside it
 
 
 def test_R_087_03_the_oracle_does_not_call_a_lock_dropped_for_the_notice_distance_a_swap():
-    """R-087-03 (oracle): unit 1 holds enemy 2 and in tick 3 holds enemy 4. Enemy 2 at 340 wu before that step (beyond notice 330): a legal end, no swap; at 320 (inside): a swap; at 340
-    after it hit the unit in tick 2 (return fire, exempt from the distance end): a swap. Green (the old oracle reports the first as a swap)."""
+    """R-087-03 (oracle, round5.md "Fourth pass"): unit 1 holds enemy 2 and in tick 3 holds enemy 4. Enemy 2 beyond 330 in some reading of that step (340 before, 320 after; or the reverse; or both): a legal
+    end, no swap; at 320 in every reading (inside): a swap; at 340 after it hit the unit in tick 2 (return fire, exempt from the distance end): a swap."""
     o = _oracle()
-    assert o.lock_swaps(record([340.0, 340.0, 340.0], [2, 2, 4])) == []
-    assert [(t, u) for t, u, _ in o.lock_swaps(record([320.0, 320.0, 320.0], [2, 2, 4]))] == [(3, 1)]
-    assert [(t, u) for t, u, _ in o.lock_swaps(record([340.0, 340.0, 340.0], [2, 2, 4], hits=(2,)))] == [(3, 1)]
+    assert o.lock_swaps(record([340.0, 340.0, 340.0, 340.0], [2, 2, 4])) == []
+    assert o.lock_swaps(record([340.0, 340.0, 340.0, 320.0], [2, 2, 4])) == []
+    assert o.lock_swaps(record([320.0, 320.0, 320.0, 340.0], [2, 2, 4])) == []
+    assert [(t, u) for t, u, _ in o.lock_swaps(record([320.0, 320.0, 320.0, 320.0], [2, 2, 4]))] == [(3, 1)]
+    assert [(t, u) for t, u, _ in o.lock_swaps(record([340.0, 340.0, 340.0, 340.0], [2, 2, 4], hits=(2,)))] == [(3, 1)]
 
 
 def test_R_087_03_the_oracle_reports_a_lock_kept_beyond_the_notice_distance_for_more_than_a_cohort_period():
-    """R-087-03 (oracle, G7 lock): enemy 2 locked from tick 1 stands at 250 after tick 1 and at 400 from tick 2: the unit still holds it in tick 6, the fifth tick beyond: reported once; dropped
-    in tick 6 (four ticks beyond): nothing; a lock taken by return fire (enemy 2 fired in tick 1): nothing. Green (the old oracle has no such function)."""
+    """R-087-03 (oracle, G7 lock, round5.md "Fourth pass"): enemy 2 locked from tick 1 stands at 250 after tick 1 and at 400 from tick 2; tick 2 has a reading at 250, so the first tick beyond in every
+    reading is 3. The unit still holds it in tick 7, the fifth such tick: reported once; dropped in tick 7 (ticks 3 to 6, four ticks beyond): nothing; a lock taken by return fire (enemy 2 fired in tick 1):
+    nothing."""
     o = _oracle()
     gaps = [250.0, 250.0] + [400.0] * 10
-    assert [(t, u) for t, u, *_ in o.locks_beyond_notice(record(gaps, [2] * 10))] == [(6, 1)]
-    assert o.locks_beyond_notice(record(gaps, [2] * 5 + [0] * 5)) == []
+    assert [(t, u) for t, u, *_ in o.locks_beyond_notice(record(gaps, [2] * 10))] == [(7, 1)]
+    assert o.locks_beyond_notice(record(gaps, [2] * 6 + [0] * 4)) == []
     assert o.locks_beyond_notice(record(gaps, [2] * 10, hits=(1,))) == []
