@@ -2421,6 +2421,16 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
             mu->plan_epoch = ms->terrain_epoch;
             mu->plan_layer = (uint32_t)om_move_layer(w, id);
         }
+        /* R-099-04 for a walker, as for the steering path (om_move_steer_step): a group slot is reached within 1.5 radii; a lone move keeps its exact finish
+         * (tests/csim/test_E01_T2_walker_waypoint_arrival.py). Without it a walker held short of its slot by a ring of units was pushed back every tick for the rest of the fight. */
+        if (mu->group_id != 0
+            && sqrt((mu->dest_x - mu->x) * (mu->dest_x - mu->x) + (mu->dest_y - mu->y) * (mu->dest_y - mu->y)) < OM_ARRIVAL_TOLERANCE_MULT * ms->radius) {
+            mu->has_dest = 0;
+            mu->plan_valid = 0;
+            om_move_route_drop(mu);
+            mu->deflecting = 0;
+            return;
+        }
         dx = mu->aim_x - mu->x;
         dy = mu->aim_y - mu->y;
         d = sqrt(dx * dx + dy * dy);
