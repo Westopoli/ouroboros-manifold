@@ -166,11 +166,12 @@ def test_R_087_03_control_a_dead_target_is_replaced_by_the_nearest_remaining(lib
 
 def test_R_087_03_control_a_target_that_leaves_the_sides_sight_is_dropped_and_the_next_visible_one_taken(lib, world_factory):
     """R-087-03 'until the target ... leaves its side's sight' (control, green today): a wall built between U and its locked Supply (cell column x 300..400)
-    blinds the side to it; within ACQUIRE_TICKS the unit holds the other Supply, which is still visible."""
+    blinds the side to it; within ACQUIRE_TICKS the unit holds the other Supply, which is still visible. Test-defect 2026-11-17 (R-087-03, R-087-04: the pick is the
+    nearest enemy the side sees within the notice distance): the other Supply stands 210 wu from the Raider, inside its notice distance 220 (it stood 240 wu away, beyond it)."""
     w = _world(lib, world_factory)
     u = spawn(lib, w, RAIDER, 0, 260, 400)
     behind = spawn(lib, w, SUPPLY, 1, 440, 400)
-    other = spawn(lib, w, SUPPLY, 1, 260, 640)
+    other = spawn(lib, w, SUPPLY, 1, 260, 610)
     _tough(lib, w, behind, other)
     assert _wait_for_lock(lib, w, u) == behind
     assert lib.om_map_block_rect(w, 310.0, 310.0, 390.0, 490.0, 0, 4) == 0
