@@ -11,4 +11,10 @@
  * ground that joins two layers", R-001-06; the record itself can run the whole row, so the record alone is not membership). Else 0, also when there is no terrain. */
 int om_move_same_slope(const om_world *w, double ax, double ay, int32_t layer_a, double bx, double by, int32_t layer_b);
 
+/* R-097-05 / round5.md G5: a unit does not change layer across a slope's midline a third time inside OM_SLOPE_FLIP_WINDOW ticks of the one before the last (up and back is a
+ * legal pass, a jitter of pushes and route changes at the line is not). `chg` holds the ticks of the unit's last two such changes, newest first, 0 for none.
+ * See also: om_move_walker_tick in csrc/tactical_move.c, which asks before it changes a layer and notes the change. */
+int om_move_layer_flip_allowed(const uint64_t chg[2], uint64_t tick);
+void om_move_layer_flip_note(uint64_t chg[2], uint64_t tick);
+
 #endif
