@@ -275,11 +275,26 @@ def notice(rec, u, a, b, brow):
     return dist, rec.stats[rec.typ[u]]["attack_range"] * mult * (1 + NOTICE_MARGIN)
 
 
+def beyond_notice(rec, tk, u, t):
+    """(distance, notice distance) of the reading nearest the notice distance when enemy `t` is beyond unit `u`'s notice distance in every reading of tick `tk` (the unit at its pre-step or post-step
+    position, the enemy likewise: four readings; round5.md "Fourth pass"), else None. A target exactly at the notice distance is inside it."""
+    worst = None
+    for a in (tk["pre"][u], tk["post"][u]):
+        for b in (tk["pre"][t], tk["post"][t]):
+            g = notice(rec, u, a, t, b)
+            if g[0] <= g[1]:
+                return None
+            if worst is None or g[0] - g[1] < worst[0] - worst[1]:
+                worst = g
+    return worst
+
+
 def lock_swaps(rec, sensor_slack=25.0):
     """R-087-03 / R-087-08 (rewritten for Round 5): a unit's target changed to another living enemy while the old target was alive and still seen by the unit's side, with no
     new order (the destination is not cleared or set across the tick: the lab gives its own orders once, at tick 0). Two ends are legal and not swaps: the leash (R-087-05: a unit
     that has walked farther than its sensor radius + slack since it took the old lock, inv_check I27) and the notice distance (R-087-03 "leaves the unit's notice distance": the old
-    target stood beyond the unit's notice distance in the state the step decided on, the pre-step state; R-087-06 return fire is exempt from the distance end, so a target that hit the
+    target stood beyond the unit's notice distance in some reading of the tick (the engine may have read it there; `beyond_notice` is the every-reading test for the reports, so a lock is excused here when
+    the target is beyond in any pairing of the two states, not only in all of them); R-087-06 return fire is exempt from the distance end, so a target that hit the
     unit within RETURN_FIRE_TICKS before the step never ends it)."""
     out = []
     for tk in rec.ticks:
@@ -296,9 +311,8 @@ def lock_swaps(rec, sensor_slack=25.0):
                 continue   # the engine is re-issuing the unit's own order this tick (a lost target's last position, unit.c:2207): a new order breaks a lock
             if _walked_since_lock(rec, u, tk) > rec.stats[rec.typ[u]]["sensor_radius"] + sensor_slack:
                 continue
-            dist, limit = notice(rec, u, p0, old, pre[old])
-            if dist > limit and not _hit_by(rec, tk["n"], old, u):
-                continue   # the target left the notice distance: the lock ended there, the pick after it is a new one
+            if any(d > lim for d, lim in (notice(rec, u, a, old, b) for a in (p0, p1) for b in (pre[old], post[old]))) and not _hit_by(rec, tk["n"], old, u):
+                continue   # the target left the notice distance in some reading the engine could have taken: the lock ended there, the pick after it is a new one
             out.append((tk["n"], u, "target %d -> %d while %d alive and seen" % (old, new, old)))
     return out
 
@@ -309,8 +323,8 @@ def _hit_by(rec, n, attacker, victim):
 
 
 def picks_beyond_notice(rec):
-    """R-087-04 (Round 5): a unit with no living target before the step ends it holding an enemy that stood beyond its notice distance in the pre-step state, and that enemy did
-    not hit it within RETURN_FIRE_TICKS (R-087-06). [(tick, unit, target, distance, notice distance)]."""
+    """R-087-04 (Round 5, Fourth pass): a unit with no living target before the step ends it holding an enemy that stood beyond its notice distance in every reading of the tick (`beyond_notice`),
+    and that enemy did not hit it within RETURN_FIRE_TICKS (R-087-06). [(tick, unit, target, distance, notice distance)]."""
     out = []
     for tk in rec.ticks:
         pre, post = tk["pre"], tk["post"]
@@ -321,14 +335,14 @@ def picks_beyond_notice(rec):
                 continue
             if p0["tgt"] and pre[p0["tgt"]]["alive"]:
                 continue   # a swap, not a pick: lock_swaps judges it
-            dist, limit = notice(rec, u, p0, new, pre[new])
-            if dist > limit and not _hit_by(rec, tk["n"], new, u):
-                out.append((tk["n"], u, new, round(dist, 1), round(limit, 1)))
+            g = beyond_notice(rec, tk, u, new)
+            if g is not None and not _hit_by(rec, tk["n"], new, u):
+                out.append((tk["n"], u, new, round(g[0], 1), round(g[1], 1)))
     return out
 
 
 def locks_beyond_notice(rec):
-    """R-087-03 (G7 lock): a unit holds a living enemy that stands beyond its notice distance (post-tick state) in more than COHORT_PERIOD consecutive ticks, and the lock was not
+    """R-087-03 (G7 lock): a unit holds a living enemy that stands beyond its notice distance in every reading of the tick (`beyond_notice`) in more than COHORT_PERIOD consecutive ticks, and the lock was not
     taken by return fire (the target hit the unit within RETURN_FIRE_TICKS up to the tick the lock began; return fire is exempt until the lock ends). One entry per run, in its
     COHORT_PERIOD + 1 th tick: [(tick, unit, target, distance, notice distance)]."""
     out, run, began = [], {}, {}
@@ -342,14 +356,14 @@ def locks_beyond_notice(rec):
                 continue
             if began.get(u, (None,))[0] != t:
                 began[u] = (t, _hit_by(rec, tk["n"], t, u))
-            dist, limit = notice(rec, u, post[u], t, post[t])
-            if dist <= limit or began[u][1]:
+            g = beyond_notice(rec, tk, u, t) if pre[t]["alive"] and pre[u]["alive"] else None
+            if g is None or began[u][1]:
                 run.pop(u, None)
                 continue
             r = run.get(u)
             r = run[u] = (t, r[1] + 1) if r and r[0] == t else (t, 1)
             if r[1] == COHORT_PERIOD + 1:
-                out.append((tk["n"], u, t, round(dist, 1), round(limit, 1)))
+                out.append((tk["n"], u, t, round(g[0], 1), round(g[1], 1)))
     return out
 
 
