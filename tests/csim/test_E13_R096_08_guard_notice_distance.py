@@ -17,7 +17,8 @@ Rule words proved, from docs/bible/epics/E-13-movement-and-command.md on this br
 Scene: a 2000 x 2000 canvas, one guard Vanguard (attack range 300, notice distance 330, sensor 700, 4 wu a tick, walking kind, as the lab sets it) whose post is
 (1000, 1000), ordered with om_command_guard; enemies are Supplies (never fire) or a Bastion that plain-moves away at 2 wu a tick; targeting by sight on. Every
 scene asserts that the guard's side sees the enemy. The lab twin is tests/skilllab/arena/test_engine_rules_f6_guard.py; the older radius geometry is
-tests/csim/test_E13_R096_08_guard_steps_and_returns.py.
+tests/csim/test_E13_R096_08_guard_steps_and_returns.py. Abilities are off (om_tactical_disable_abilities, as the lab's `fight`), so the guard is not pinned by
+the Brace a Vanguard starts when it halts in range (R-086-03; second pass, 2026-11-17).
 Detector bounds (not rules; Westley's to change): LEASH_SLACK 1 wu (DRAFT-guard-leash-slack), ARRIVE 5 wu (a step is 4 wu), REACH_SLACK 10 wu (how near the
 radius a following guard must get), FIRE_CAP 100 ticks, RETURN_CAP 120 ticks, STAY 40 ticks.
 """
@@ -67,6 +68,7 @@ def _scene(lib, wf, dx, etype=SUPPLY, flee_to=None):
     assert lib.om_map_set_canvas(w, 2000.0, 2000.0) == 0
     assert lib.om_roster_set_movement_kind(w, VANGUARD, WALKING) == 0
     assert lib.om_roster_set_reach(w, VANGUARD, REACH_UP, REACH_DOWN) == 0
+    lib.om_tactical_disable_abilities(w)    # as the lab's `fight`: a Vanguard that halts in range would Brace (R-086-03) and stand about 15 ticks before it walks again
     g = spawn(lib, w, VANGUARD, 0, *POST)
     e = spawn(lib, w, etype, 1, POST[0] + dx, POST[1])
     lib.om_unit_set_hp(w, e, BIG_HP)
@@ -132,13 +134,19 @@ def test_R_096_08_control_an_enemy_at_320_is_engaged_stepped_to_range_and_fired_
 
 def test_R_096_08_a_guard_follows_a_retreating_enemy_to_200_wu_from_its_post_and_no_farther_and_returns(lib, world_factory):
     """R-096-08 "stepping toward it no farther than GUARD_RADIUS ... returning to the post when the lock ends or when engaging the target would take the
-    guard past the radius; it never crosses the radius", every tick of 700: a Bastion at +320 (inside the notice distance) plain-moves east at 2 wu a
-    tick, the guard 4. The guard fires on it, follows to within REACH_SLACK of 200 wu from the post, never ends a tick beyond 200 + LEASH_SLACK, and
-    stands at its post for the last STAY ticks of the run, the Bastion having gone out of its notice distance."""
-    w, g, e = _scene(lib, world_factory, 320.0, etype=BASTION, flee_to=(1900.0, 1000.0))
+    guard past the radius; it never crosses the radius", every tick of 700: a Bastion stands at +320 (inside the notice distance); the guard steps to range
+    and fires on it (checked before the Bastion moves); then the Bastion plain-moves east at 2 wu a tick, the guard 4. The guard follows to within
+    REACH_SLACK of 200 wu from the post, never ends a tick beyond 200 + LEASH_SLACK, and stands at its post for the last STAY ticks of the run, the Bastion
+    having gone out of its notice distance. (The Bastion is ordered to leave only after the first shot: a guard that follows a target in lockstep at the
+    edge of its range is at 300 wu at the end of a tick and 302 at the next; see the report of the second pass.)"""
+    w, g, e = _scene(lib, world_factory, 320.0, etype=BASTION)
     full = hp(lib, w, e)
+    pre = _run(lib, w, g, e, FIRE_CAP)
+    shot = next((r[0] for r in pre if r[3] < full), None)
+    assert shot is not None, "the guard never fired on the enemy at +320 before it left"
+    arr = (ctypes.c_uint32 * 1)(e)
+    assert lib.om_command_move.raw(w, arr, 1, 1900.0, 1000.0) == 0
     rows = _run(lib, w, g, e, 700)
-    assert rows[-1][3] < full, "the guard never fired on the retreating enemy"
     far = max(r[2] for r in rows)
     assert far >= GUARD_RADIUS - REACH_SLACK, "the guard followed only %.1f wu from its post (the radius is %.0f)" % (far, GUARD_RADIUS)
     assert not _beyond(rows), "%d ticks beyond %.0f wu from the post, first %s" % (len(_beyond(rows)), GUARD_RADIUS, _beyond(rows)[:3])
