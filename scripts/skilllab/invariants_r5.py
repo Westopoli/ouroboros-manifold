@@ -7,7 +7,7 @@
 Each is a small state machine fed one frame at a time by `invariants._Checker.feed`; the frame, row and `Rules` shapes are those of `invariants.py` (this module imports nothing from it, so the
 checker can import these constants). The notice distance itself (`NOTICE_MARGIN`, `notice_distance`) is read by the checker's acquire and swap checks as well.
 Tests: tests/skilllab/arena/test_invariants_r5_notice_and_lock.py, test_invariants_r5_unseen_fire_and_slope.py. Every number below is a DRAFT constant, Westley's to change:
-  DRAFT-notice-margin 0.1   DRAFT-unseen-fire-window 60 frames   DRAFT-slope-slack 1 wu   DRAFT-flip-window 20 frames   DRAFT-slope-near 100 wu (the Monitor's idea of "on a slope")
+  DRAFT-notice-margin 0.1   DRAFT-unseen-fire-window 60 frames   DRAFT-slope-slack 2 wu   DRAFT-slope-crowd 31 wu   DRAFT-flip-window 20 frames   DRAFT-slope-near 100 wu (the Monitor's idea of "on a slope")
 """
 import ctypes
 import math
@@ -15,11 +15,13 @@ import math
 NOTICE_MARGIN = 0.1          # DRAFT-notice-margin (R-087-04): a unit's notice distance is its attack range times (1 + this), measured as weapon reach is (R-087-10)
 KEPT_FRAMES = 4              # R-087-08: one cohort period; a lock is reported in the frame after this many frames beyond the notice distance
 UNSEEN_WINDOW = 60           # DRAFT-unseen-fire-window: frames after an unseen hit in which an attack-mover on its way must keep walking (the 60-tick HIT_GAP of the Round 4 unseen oracle)
+PURSUIT_MEMORY = 8           # DRAFT-pursuit-memory (frames): a unit that held a target this recently is ending a pursuit, whose destination was the target's place; the walk back to its point (R-087-06) is no re-route by a hit
 OWN_MOVE = 0.5               # a displacement above it counts as "moved" (the checker's own constant, repeated: this module cannot import invariants)
 SLOPE_GAP = 30.0             # R-097-05: 2 x unit radius 15 wu
-SLOPE_SLACK = 1.0            # DRAFT-slope-slack: a pair this close to 30 wu counts as pushed apart
+SLOPE_SLACK = 2.0            # DRAFT-slope-slack: a pair this close to 30 wu counts as pushed apart (the sweep's I13: 28 wu; the engine resolves a pair on a slope at most a pace plus 1 wu a tick, om_move_slope_clamp)
 FLIP_CHANGES = 3             # R-097-05 / round5.md G5: three layer changes ...
 FLIP_WINDOW = 20             # DRAFT-flip-window: ... within this many frames
+SLOPE_CROWD = 31.0           # DRAFT-slope-crowd (wu): a third unit this near a pair (touching, 30 wu and a rounding) is a crowd the 3-iteration pass can leave closer than 30 wu
 SLOPE_NEAR = 100.0           # DRAFT-slope-near (wu): the Monitor counts a unit as on a slope when its cell's centre is this near the slope's midline along its run (the ramp's half-width, hills.RAMP_WU / 2)
 
 
@@ -63,7 +65,9 @@ class UnseenFire:
     An unseen hit is a (attacker, victim) of the frame's "hits" (or "fires") with the victim alive and holding no target in the previous frame, the attacker in neither the previous nor this
     frame's visible set of the victim's side.
       on the way  an attack-mover with a destination and no target, in the UNSEEN_WINDOW frames after an unseen hit on it (the hit frame excluded), is a violation in a frame in which it
-                  did not move (no unit within the push radius) or its destination changed under an unchanged order token: "neither moved nor stopped by such a hit".
+                  did not move (no unit within the push radius) or its destination changed under an unchanged order token, unless it held a target in the PURSUIT_MEMORY frames before (a pursuit
+                  ending: the walk back to its point): "neither moved nor stopped by such a hit". A unit that
+                  was standing in the frame of the hit and the frame before it (between two targets, waiting its cohort turn) was not stopped by the hit and is not judged for standing.
       once        a run is a stretch of frames in which a unit with no target and no guard post moves under its own power (not a collision push, no new order), begun from no destination. A run
                   that begins when the unit's previous run followed an unseen hit and no unseen hit has landed on it since that run began is a violation in its first frame: "it holds where
                   the move away ends". A unit whose first run followed no hit (a leash return, a new order) is not judged; a target or a new order forgets the previous run."""
@@ -73,6 +77,9 @@ class UnseenFire:
         self.last_hit = {}           # unit -> tick of the latest unseen hit on it
         self.prev_run = {}           # unit -> (tick its previous run began, whether that run followed an unseen hit)
         self.running = set()         # units inside a run now
+        self.held = {}               # unit -> the last frame in which it held a target (R-087-06: a pursuit ends at the next cohort turn after its target is gone, and the unit walks back to its point)
+        self.moving = {}             # unit -> whether it moved under no push in the previous frame, the frame of the latest unseen hit on it
+        self.walking_at_hit = {}     # unit -> whether it was walking in the frame of its latest unseen hit or the one before
 
     def _unseen_hits(self, frame, prev):
         units, vis_now, vis_prev = frame["units"], frame.get("visible"), prev.get("visible") if prev else None
@@ -98,13 +105,18 @@ class UnseenFire:
                 for d in (self.last_hit, self.prev_run):
                     d.pop(u, None)
                 self.running.discard(u)
+            dest, moved = r.get("dest"), self.disp(p, r)
             if u in hit:
                 self.last_hit[u] = tick
-            dest, moved = r.get("dest"), self.disp(p, r)
+                self.walking_at_hit[u] = moved > OWN_MOVE or self.moving.get(u, False)
+            self.moving[u] = moved > OWN_MOVE
+            if r["target"]:
+                self.held[u] = tick
             hit_at = self.last_hit.get(u)
             if r["attack_move"] and dest is not None and not r["target"] and hit_at is not None and 0 < tick - hit_at <= UNSEEN_WINDOW:
-                stopped = moved <= OWN_MOVE and not self.pushed(frame, u)
-                if stopped or (p.get("dest") is not None and p["dest"] != dest and not p["target"]):
+                stopped = moved <= OWN_MOVE and not self.pushed(frame, u) and self.walking_at_hit.get(u, True)
+                rerouted = p.get("dest") is not None and p["dest"] != dest and not p["target"] and tick - self.held.get(u, -PURSUIT_MEMORY - 1) > PURSUIT_MEMORY
+                if stopped or rerouted:
                     out.append({"rule": "R-087-01", "tick": tick, "unit": u, "detail": "an attack-mover on its way %s %d frames after a hit it could not see" % (
                         "stood still" if stopped else "was given another destination", tick - hit_at)})
             if r["target"] or u in self.guards:
@@ -125,7 +137,8 @@ class UnseenFire:
 class SlopeCollision:
     """R-097-05. `slope_at(x, y)` -> a hashable id of the slope the point lies on (one id per hill), or None.
       pair  two living units within SLOPE_GAP - SLOPE_SLACK wu of each other (the plane) that both stand on one slope, any layers, are a violation of the lower id in the frame the pair comes
-            that close, once while it stays close: the collision pass pushes such a pair apart.
+            that close, once while it stays close: the collision pass pushes such a pair apart. A pair with a third living unit within SLOPE_CROWD of either is excused: the pass runs at most
+            three iterations a tick, and a crowd can leave a pair closer ("except when the pass hits its iteration cap", E-13 Invariants).
       flip  a unit on a slope whose layer changes in FLIP_CHANGES frames inside FLIP_WINDOW is a violation in the last of them (the changes are forgotten after the report)."""
 
     def __init__(self, slope_at):
@@ -153,12 +166,25 @@ class SlopeCollision:
                 for b in ids[i + 1:]:
                     rb = frame["units"][b]
                     d = math.hypot(ra["x"] - rb["x"], ra["y"] - rb["y"])
-                    if d < SLOPE_GAP - SLOPE_SLACK:
+                    if d < SLOPE_GAP - SLOPE_SLACK and not self._crowded(frame, a, b):
                         now.add((a, b))
                         if (a, b) not in self.close:
                             out.append({"rule": "R-097-05", "tick": tick, "unit": a, "detail": "%d and %d stand %.1f wu apart on one slope (layers %d and %d), under %.0f wu after the collision pass" % (
                                 a, b, d, ra["layer"], rb["layer"], SLOPE_GAP)})
         self.close = now
+
+
+    @staticmethod
+    def _crowded(frame, a, b):
+        """A third living unit within SLOPE_CROWD of a or b (the pass's 3-iteration cap can leave such a pair closer than 30 wu)."""
+        units = frame["units"]
+        for c, rc in units.items():
+            if c in (a, b) or not rc["alive"]:
+                continue
+            for e in (a, b):
+                if math.hypot(rc["x"] - units[e]["x"], rc["y"] - units[e]["y"]) < SLOPE_CROWD:
+                    return True
+        return False
 
 
 class _Slope(ctypes.Structure):

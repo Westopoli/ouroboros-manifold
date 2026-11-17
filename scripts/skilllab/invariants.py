@@ -20,6 +20,7 @@ and, Round 2: DRAFT-inv-nearest-tol 1 wu  DRAFT-inv-return-fire-ticks 4  DRAFT-g
 and, Round 2b: DRAFT-giveup-exclusion-ticks 100 (a given-up target is not the nearest for that long), DRAFT-slant-ground-only (R-087-10 is measured flat when either unit is a flyer)
 and and, Round 5 (engine rules, 2026-11-17, `invariants_r5.py`): DRAFT-notice-margin 0.1 (a unit acquires and keeps a lock only within its attack range times 1.1, R-087-04 / R-087-03),
 DRAFT-unseen-fire-window 60 frames (R-087-01), DRAFT-slope-slack 1 wu, DRAFT-flip-window 20 frames, DRAFT-slope-near 150 wu (R-097-05)
+and DRAFT-notice-slack 1 wu (a lock swap with the old target this close to the notice distance in either frame is its end for distance),
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
 (R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
@@ -47,6 +48,7 @@ TICK_RATE = 20               # scripts/skilllab/fight.py TICKS_PER_SECOND
 NEAREST_TOL = 1.0            # DRAFT-inv-nearest-tol: an acquired target within this much of the nearest eligible enemy counts as the nearest (R-087-03)
 RETURN_FIRE_TICKS = 4        # DRAFT-inv-return-fire-ticks: a hit by the target in the frame of the acquisition or the 3 before it is return fire (R-087-06)
 GIVEUP_EXCLUSION_TICKS = 100  # DRAFT-giveup-exclusion-ticks (csrc/unit.c OM_GIVEUP_EXCLUSION_TICKS): a target a unit gave up is not eligible for it for this long (R-087-09)
+NOTICE_SLACK = 1.0           # DRAFT-notice-slack: a target within this much of the notice distance at a frame of the swap may have left it at the engine's mid-tick test (positions move after it)
 COHORT_SLOTS = 4             # R-087-08: a unit acquires at its cohort turn on every 4th tick
 
 
@@ -243,7 +245,8 @@ class _Checker:
             reach = self.rules.reach.get(u)
             out_of_reach = reach is not None and any(not self._in_reach(reach, a["layer"], o["layer"]) for a, o in ((p, o_prev), (r, o_now)) if o)
             gap = self._notice_gap(u, p, old, o_prev) if o_prev else None
-            left_notice = gap is not None and gap[0] > gap[1] and not self.rf.get(u, False)    # R-087-03: the lock ends where the target leaves the notice distance (a return-fire lock does not)
+            gap_now = self._notice_gap(u, r, old, o_now) if o_now else None   # the engine tests the lock mid-tick, after some of the tick's movement: the target may have left in this frame
+            left_notice = ((gap is not None and gap[0] > gap[1] - NOTICE_SLACK) or (gap_now is not None and gap_now[0] > gap_now[1] - NOTICE_SLACK)) and not self.rf.get(u, False)    # R-087-03: the lock ends where the target leaves the notice distance (a return-fire lock does not)
             if (o_prev and o_now and o_prev["alive"] and o_now["alive"] and seen and same_order and not out_of_reach and not left_notice
                     and not (leash is not None and walked > leash - LEASH_SLACK)):
                 why = self._gave_up(u, old, p, o_prev)
