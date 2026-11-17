@@ -98,3 +98,16 @@ The first run built G1 to G7 and six of the seven proofs of G8; verification fou
 - The return-fire mark on a lock is not saved in save files; a loaded game ends that lock at the notice distance (as the give-up state, DEC-engine-rules-round2-2026-11-11 reading 8).
 - L-0083 has two overlapping hill records that give opposite layers at one point: a layout defect, listed for Westley.
 - `tests/skilllab/integration/test_speed.py` (1.6 s against a mark of 1.5 s): Westley's threshold; measured three times without the memory cap's `nice`, and reported.
+
+## Third pass (2026-11-17)
+
+The second pass left csim, integration, ground, qa and method clean, and twelve reds in the lab arena plus the speed mark. The tracer found the engine right and the checker wrong in all three traced reports: the engine moves every unit, then the cohort picks, then shots are fired, all in one tick, and sight is read live; so a pick or a shot on tick N is judged against frame N's positions and visible set.
+
+Rulings:
+- Checker (`scripts/skilllab/invariants.py`, `invariants_r5.py`): the predicate that reports "changed layer N times in M frames on a slope" is removed (withdrawn in the second pass). The nearest enemy and the notice distance of a pick are judged on frame N's positions, as the visible set already is. The slope pair predicate reports a pair under 30 wu only when it has stayed under 30 wu for more than `DRAFT-slope-settle-ticks` = 3 ticks.
+- Tests: `test_invariants_visible.py::test_R_093_02_the_set_before_the_step_decides` follows the tracer's verdict (frame N's set decides). The planted ticks of `test_invariants_r5_notice_and_lock.py` carry `hits`. In `test_engine_rules_r3_sight_lock.py` a lock that ends because the target left the notice distance is a legal end. The floor of cross-layer shots in `test_engine_rules_f7_spherical.py` is a premise floor of the detector, not Westley's threshold: it is set from the new run as a named `DRAFT-` with the old and new fight length beside it. The L-0045 control of `test_engine_rules_r4_idle_yield.py` counts a stall only when the unit in the walker's way is idle; a walker queued behind friends that hold a target is the queue on a narrow ramp that Westley accepted with the slope collision (DEC-slope-collision-2026-11-17). Planted cases are added for the two checker excuses the tracer named (a halt to fire at a seen target after an unseen hit; a hit from an attacker the side sees and the unit cannot reach).
+- Speed: `tests/skilllab/integration/test_speed.py` (1.6 s against 1.5 s, green in Round 4). One attempt to win it back in the engine without changing behaviour: every recorded hash stays as re-pinned. The mark is not changed.
+
+Open, recorded for the landing and not built in this round:
+- A unit moving away that is blocked by a standing friend that does not yield (a guard) presses against it and the move away never ends.
+- A pursuer never fires at a target that walks away, however slowly: it stops at exactly its range, may not fire on a tick it moved, and the target is out of range again the next tick.
