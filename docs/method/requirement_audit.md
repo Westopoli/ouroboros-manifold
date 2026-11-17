@@ -26,7 +26,7 @@ For each rule, with file and line for anything that fails:
 For each Proof line, at `origin/main`, with the sha in the report:
 
 - The pointer resolves to a test function, and the test quotes the rule's text as it reads today.
-- The six qualifications of `requirements.md` Proof, one by one. The one that fails is named.
+- The seven qualifications of `requirements.md` Proof, one by one. The one that fails is named.
 - The test is run and is green. It is not skipped, xfail or known-red.
 - Its configuration is set beside the lab's and the beta's current launch settings, read from the files that launch them (`scripts/skilllab/`, `scripts/play.sh`), never from memory. Each switch that differs is listed.
 - Where a control or a recorded break exists, it is run and turns the test red. Where none exists, the row says so.
