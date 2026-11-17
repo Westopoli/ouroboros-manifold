@@ -19,7 +19,7 @@ never a Python re-derivation. Every number below is a DRAFT constant, Westley's 
 and, Round 2: DRAFT-inv-nearest-tol 1 wu  DRAFT-inv-return-fire-ticks 4  DRAFT-guard-radius 200 wu  DRAFT-guard-leash-slack 1 wu  DRAFT-f7-slant-slack 1 wu
 and, Round 2b: DRAFT-giveup-exclusion-ticks 100 (a given-up target is not the nearest for that long), DRAFT-slant-ground-only (R-087-10 is measured flat when either unit is a flyer)
 and and, Round 5 (engine rules, 2026-11-17, `invariants_r5.py`): DRAFT-notice-margin 0.1 (a unit acquires and keeps a lock only within its attack range times 1.1, R-087-04 / R-087-03),
-DRAFT-unseen-fire-window 60 frames (R-087-01), DRAFT-slope-slack 2 wu, DRAFT-slope-near 100 wu (R-097-05)
+DRAFT-unseen-fire-window 60 frames (R-087-01), DRAFT-slope-slack 2 wu, DRAFT-slope-settle-ticks 3, DRAFT-slope-near 100 wu (R-097-05)
 and OWN_MOVE 0.5 wu (a displacement above it counts as "moved"), BACKSWING_TICKS 10 (ticks 1 to 9 after a shot are the pause, R-084-04), HEAL_ONE 0.075 hp
 (R-083-03), LEASH_SLACK 25 wu (a unit this close to its leash, or past it, is excused: the engine drops the lock at the leash itself).
 """
