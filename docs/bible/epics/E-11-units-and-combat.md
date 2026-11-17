@@ -204,7 +204,7 @@ Rules
 
 Inputs: unit states; visibility (E-12); orders (E-13).
 Outputs: target ids and attack events in the tick delta.
-Open flags: Q-087-01 (whether the 200 wu leash of R-087-05 is tested before or after damage; the skill lab runs both and Westley picks). Q-008-05 (the nearest enemy stays the game's target rule; a lab-only setting measures focus fire).
+Open flags: Q-008-05 (the nearest enemy stays the game's target rule; a lab-only setting measures focus fire).
 The move away of R-087-01 is built for a unit with no order and for an attack-mover, arrived or not (2026-11-11). The engine starts it when return fire cannot reach or see the attacker.
 Ruled 2026-11-17 and not built (DEC-targeting-sc2-2026-11-17, DEC-unseen-fire-holds-2026-11-17): the notice distance of R-087-04 and the lock ending when the target leaves it (R-087-03); the hold after a move away for an attack-mover still on its way (R-087-01). The engine today acquires within the larger of the type's sensor radius and attack range, keeps a lock at any distance its side sees, and sends an attack-mover that had not arrived back toward its point after a move away.
 
@@ -348,7 +348,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-082-03, Q-083-03 and Q-087-01 (the rest closed 2026-10-21). Details in `docs/northstar/ambiguity_register.md`.
+Q-082-03 and Q-083-03 (the rest closed 2026-10-21; Q-087-01 closed as moot 2026-11-17). Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

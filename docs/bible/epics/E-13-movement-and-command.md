@@ -73,7 +73,7 @@ Rules
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: Q-087-01 (whether the 200 wu leash of R-096-03 is tested before or after damage; E-11 S-087).
+Open flags: none (Q-087-01 closed as moot 2026-11-17).
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
@@ -301,7 +301,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-101-02, Q-207-01, Q-208-01, and from other epics Q-087-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-101-02, Q-207-01, Q-208-01, and from other epics Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
