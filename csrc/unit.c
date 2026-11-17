@@ -256,8 +256,8 @@ typedef struct {
      * a member resumes toward the point after every engagement). */
     uint32_t am_gid;
     int      am_engaged;
-    /* R-096-08: set by om_command_guard (tactical_move.c); the post is anchor_x/y. With pursuit by steering the guard steps toward what it sees inside
-     * GUARD_RADIUS of the post and returns (om_tac_guard_tick); with it off (PP baseline) the unit holds, fires in range, never walks */
+    /* R-096-08: set by om_command_guard (tactical_move.c); the post is anchor_x/y. With pursuit by steering the guard steps toward what it sees within its notice distance, inside
+     * GUARD_RADIUS of the post, and returns (om_tac_guard_tick); with it off (PP baseline) the unit holds, fires in range, never walks */
     int      guard;
     int      anchor_set;
     double   anchor_x, anchor_y;
@@ -2270,7 +2270,8 @@ static int om_tac_guard_engageable(const om_world *w, const om_unit_row *u, cons
         && om_tac_dist_le_layers(w, u, t, t->x - px, t->y - py, OM_GUARD_RADIUS + u->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, u, t));
 }
 
-/* F6 (R-096-08): the nearest enemy the guard's side sees that it can engage from its radius (lowest id on a tie), on its layer or another within reach. */
+/* F6 (R-096-08): the nearest enemy the guard's side sees within its notice distance (G3, R-087-04) that it can engage from its radius (lowest id on a
+ * tie), on its layer or another within reach. */
 static om_unit_row *om_tac_guard_seen(om_world *w, om_tac_state *st, const om_unit_row *u, double px, double py) {
     om_unit_row *best = NULL;
     double best_d2 = 0.0, widest = 1.0, m;
@@ -2286,7 +2287,7 @@ static om_unit_row *om_tac_guard_seen(om_world *w, om_tac_state *st, const om_un
         double dx = cand->x - u->x, dy = cand->y - u->y, d2 = dx * dx + dy * dy;
         if (cand->hp <= 0.0 || cand->stealth || !om_tac_hostile(u, cand) || om_tac_excluded(u, cand->unit_id)) continue;
         if (best && (d2 > best_d2 || (d2 == best_d2 && id > best->unit_id))) continue;
-        if (!om_tac_guard_engageable(w, u, cand, px, py) || !om_tac_may_act_on(w, u, cand)) continue;
+        if (!om_tac_in_notice(w, u, cand) || !om_tac_guard_engageable(w, u, cand, px, py) || !om_tac_may_act_on(w, u, cand)) continue;
         best = cand; best_d2 = d2;
     }
     return best;
@@ -2300,10 +2301,10 @@ static int om_tac_guard_step(om_world *w, om_unit_row *u, double tx, double ty, 
     return u->x != bx || u->y != by;
 }
 
-/* F6 (R-096-08, R-208-01): a guard's tick under pursuit by steering. It engages what its side sees that it can reach from inside GUARD_RADIUS of its
- * post (the post is anchor_x/y, set when the order was given), steps toward it no farther than the radius, fires when in range, and walks back to the
- * post when it has no target. The lock is as any unit's (R-087-03): kept until the target dies, leaves sight or reach, or can no longer be engaged
- * from the radius; R-087-09 applies to a guard as to any unit. A guard that moved this tick does not fire (R-087-04). */
+/* F6 (R-096-08, R-208-01): a guard's tick under pursuit by steering. It engages what its side sees within its notice distance (R-087-04) that it can reach
+ * from inside GUARD_RADIUS of its post (the post is anchor_x/y, set when the order was given), steps toward it no farther than the radius, fires when in
+ * range, and walks back to the post when it has no target. The lock is as any unit's (R-087-03): kept until the target dies, leaves sight, reach or the
+ * notice distance, or can no longer be engaged from the radius; R-087-09 applies to a guard as to any unit. A guard that moved this tick does not fire (R-087-04). */
 static void om_tac_guard_tick(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
     const double px = u->anchor_x, py = u->anchor_y;
     const uint32_t period = om_tac_period(st);
@@ -2313,16 +2314,17 @@ static void om_tac_guard_tick(om_world *w, om_tac_state *st, om_unit_row *u, uin
     om_unit_row *t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     if (u->target_id != 0) {
         int drop = !t || t->hp <= 0.0 || !om_tac_hostile(u, t) || t->stealth || !om_tac_lock_sees(w, u, t)
-                   || !(om_tac_in_range(w, u, t) || om_tac_guard_engageable(w, u, t, px, py));
+                   || !(om_tac_in_range(w, u, t) || om_tac_guard_engageable(w, u, t, px, py))
+                   || (u->rf_target != t->unit_id && !om_tac_in_notice(w, u, t));   /* G3 (R-087-03): the lock ends at the notice distance as any unit's does */
         if (!drop && om_tac_giveup(u, t, om_tac_shootable(w, u, t, &shoot_for, &shoot), period, tick)) drop = 1;
-        if (drop) { u->target_id = 0; om_tac_giveup_clear(u); t = NULL; }
+        if (drop) { u->target_id = 0; u->rf_target = 0; om_tac_giveup_clear(u); t = NULL; }
     }
     if (!t && cohort_turn && u->attack_range > 0.0) {
         t = om_tac_most_damaged_for(w, u) ? om_tac_most_damaged_hostile(w, st, u, u->attack_range)
                                           : om_tac_nearest_actable(w, st, u, u->attack_range);
         t = om_tac_pick_across(w, st, u, t, 1.0);
         if (!t) t = om_tac_guard_seen(w, st, u, px, py);
-        if (t) u->target_id = t->unit_id;
+        if (t) { u->target_id = t->unit_id; u->rf_target = 0; }
     }
     if (t) {
         if (!om_tac_in_range(w, u, t)) stepped = om_tac_guard_step(w, u, t->x, t->y, px, py, OM_GUARD_RADIUS);
