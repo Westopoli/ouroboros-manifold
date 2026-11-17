@@ -8,8 +8,8 @@ CL-3 `--from-tick A --to-tick B` keeps A <= tick <= B (tick 0 not forced).     C
 CL-5 K < 1 is an error (non-zero exit, stderr, no file).     CL-6 frames at ticks the normal file has equal the normal file's frames.
 CL-7 the existing path (`run.fight`, `run._document`, `run.main`) is byte for byte what it was.     CL-8 the module runs as `python -m` (one slow test).
 
-Fixtures: OPEN = h088 open field, side A Raider vs side B Vanguard, both_same_point, seed 1 (premises dumped on base 633ea3e4: sight off 585 ticks, on 575, control 575; re-dumped 2026-11-08: 576 / 557 / 557, all
-wipe; normal frames at 0, 100 .. 500, last). COVER = the h088 cover fixture with side A Raiders, hold:A, sight on (801 ticks since the Round 4 tip 6d3d7635, R-097-10: an idle unit steps aside for a mover of its own side, first different tick 575, the checker reports no violation, seed 1 sight on; 847 from the Round 3 chase fix 94da7493 to then, 1086 from the Round 2 F5/F6 re-record to then, 1941 before that, 1285 before that, 4490 before; the Round 3 chase fix 94da7493 (the chase orders the move again when the unit has no route) moved 1086 -> 847, fixes 8f825d59 and d70c8d47 leave it (the checker reports no violation on it); wipe, snapshot_every 400, `built_features`,
+Fixtures: OPEN = h088 open field, side A Raider vs side B Vanguard, both_same_point, seed 1 (premises dumped on base 633ea3e4: sight off 585 ticks, on 575, control 575; re-dumped 2026-11-08: 576 / 557 / 557, 2026-11-17 (Round 5): 576 / 558 / 558, all
+wipe; normal frames at 0, 100 .. 500, last). COVER = the h088 cover fixture with side A Raiders, hold:A, sight on (957 ticks since the Round 5 tip fd342241c, 801 on the Round 4 tip 6d3d7635, R-097-10: an idle unit steps aside for a mover of its own side, first different tick 575, the checker reports no violation, seed 1 sight on; 847 from the Round 3 chase fix 94da7493 to then, 1086 from the Round 2 F5/F6 re-record to then, 1941 before that, 1285 before that, 4490 before; the Round 3 chase fix 94da7493 (the chase orders the move again when the unit has no route) moved 1086 -> 847, fixes 8f825d59 and d70c8d47 leave it (the checker reports no violation on it); wipe, snapshot_every 400, `built_features`,
 `blocked`). Both end by themselves, so nothing here needs `--cap-seconds` (closeup is not specified to take one).
 Controls (green today, must stay green): the CL-7 pins and signatures, the normal runs the closeup tests compare with."""
 import contextlib
@@ -31,14 +31,14 @@ from scripts.skilllab.arena import run as arena_run, snapshot
 from scripts.skilllab.fight import TICKS_PER_SECOND
 
 ROOT = Path(__file__).resolve().parents[3]
-OPEN_TICKS = {"off": 576, "on": 557, "control": 557}   # dumped 2026-11-07 on base 633ea3e4: 585 / 575 / 575; re-dumped 2026-11-08 (engine rule fixes F2, F3: a mover does not fire, the lock holds; Test-defect)
-OPEN_NORMAL_FRAMES = {"off": [0, 100, 200, 300, 400, 500, 576], "on": [0, 100, 200, 300, 400, 500, 557]}
+OPEN_TICKS = {"off": 576, "on": 558, "control": 558}   # dumped 2026-11-07 on base 633ea3e4: 585 / 575 / 575; re-dumped 2026-11-08 (engine rule fixes F2, F3: a mover does not fire, the lock holds; Test-defect)
+OPEN_NORMAL_FRAMES = {"off": [0, 100, 200, 300, 400, 500, 576], "on": [0, 100, 200, 300, 400, 500, 558]}
 # CL-7 pins: sha256 of run.main's fight file (layout_path replaced by "layout_path_pinned", as h088_fixtures.sight_off_digests) and results.md, recorded on base 633ea3e4;
 # the fight-file shas re-recorded 2026-11-07 for the per-unit `fired` key (replay-firing-lines; the file minus every `fired` line has the old sha, results.md is unchanged).
 PINS = {
-    ("open", "off"): ("29edc69b5672a9e016377a206fe30d8afc05f1a96aab295fd7f26baf2f46a496", "82b05a22c96b1bd63181299a87b7a49d96a8571f2fe1340f8eee00ff04150c92"),
-    ("open", "on"): ("d6662e1d209a5b877ab0e1576e01c2cf87d6902a932757a1bfe028f5c400ec9c", "9bb793a3f096263bad6306eca371a573028a9d4169ada7fadcbbee527d94fb66"),
-    ("cover", "on"): ("39d6a56de70089fe2ccc9d439c724dc142da7684c08499a1497c38c048283973", "8d72a35cc5590e50f8bf6acb63b066cbc7dc24ebbdcc7c261a31032fd41614c3"),   # re-recorded 2026-11-12 (Round 4 idle-yield 6d3d7635, R-097-10: 847 -> 801 ticks, first different tick 575, checker reports none, seed 1 sight on; Test-defect); was 3b558888.. / 303193f2.. (Round 3 chase fix 94da7493: 1086 -> 847 ticks, checker reports none, seed 1 sight on; Test-defect); was b4d52723.. / b6fa72d3.. (2026-11-11, Round 2 F5 and F6: 1941 -> 1086), c29bb91c.. / 4a167ece.. before
+    ("open", "off"): ("69a6e91a4de93812df866ab2e7b1b916aba68a8ed35a92af75accebeaed34393", "82b05a22c96b1bd63181299a87b7a49d96a8571f2fe1340f8eee00ff04150c92"),
+    ("open", "on"): ("f9a03b60a43afcaf81dfceac7f6481ad7747b8856ce74cb302c67e7ee96a454f", "834adbf48902f73dedc3ed596e1c33945363f9b45ef6886fc4dfc2d9fee1224d"),
+    ("cover", "on"): ("41ceb0cc99a2af9b064777dfe2d5d888a2d2272ce652bedb371cd794a9c3fa13", "3d924ab0408d5ce6c8180fd0a5772f2c2787cb23b882f0e4f3edd2679fa75877"),   # re-recorded 2026-11-17 (Round 5 G1 to G7: 801 -> 957 ticks, checker reports none, seed 1 sight on; Test-defect); was 39d6a56d.. / 8d72a35c.. re-recorded 2026-11-12 (Round 4 idle-yield 6d3d7635, R-097-10: 847 -> 801 ticks, first different tick 575, checker reports none, seed 1 sight on; Test-defect); was 3b558888.. / 303193f2.. (Round 3 chase fix 94da7493: 1086 -> 847 ticks, checker reports none, seed 1 sight on; Test-defect); was b4d52723.. / b6fa72d3.. (2026-11-11, Round 2 F5 and F6: 1941 -> 1086), c29bb91c.. / 4a167ece.. before
 }
 
 
@@ -128,14 +128,14 @@ def by_tick(doc):
 # ---------------------------------------------------------------- controls: the existing path
 
 def test_control_the_normal_runs_the_closeup_tests_compare_with_have_the_dumped_premises(lab):
-    """CONTROL (green today, must stay green), the premises of CL-1 to CL-6: the normal runner on OPEN gives 576 / 557 / 557 ticks (sight off / on / control), all wipes, normal
-    frames at 0, 100 ... and the last tick; on COVER 801 ticks with `built_features` and per-frame `blocked`."""
+    """CONTROL (green today, must stay green), the premises of CL-1 to CL-6: the normal runner on OPEN gives 576 / 558 / 558 ticks (sight off / on / control), all wipes, normal
+    frames at 0, 100 ... and the last tick; on COVER 957 ticks with `built_features` and per-frame `blocked`."""
     got = {s: lab.normal("open", s)[0] for s in ("off", "on", "control")}
     cover = lab.normal("cover", "on")[0]
     assert ({s: (d["result"]["ticks"], d["result"]["end"]) for s, d in got.items()},
             {s: [f["tick"] for f in d["frames"]] for s, d in got.items() if s != "control"},
             cover["result"]["ticks"], "built_features" in cover, all("blocked" in f for f in cover["frames"])) == (
-        {s: (t, "wipe") for s, t in OPEN_TICKS.items()}, OPEN_NORMAL_FRAMES, 801, True, True)
+        {s: (t, "wipe") for s, t in OPEN_TICKS.items()}, OPEN_NORMAL_FRAMES, 957, True, True)
 
 
 @pytest.mark.parametrize("case,sight", sorted(PINS))
@@ -181,17 +181,17 @@ def test_cl1_frames_are_at_0_k_2k_and_the_last_tick(lab, sight, k):
 
 
 def test_cl1_k_larger_than_the_fight_gives_tick_0_and_the_last_tick(lab):
-    """CL-1: with K 1000 (longer than the 557-tick fight) the frames are at ticks 0 and 557 and `snapshot_every` is 1000."""
+    """CL-1: with K 1000 (longer than the 558-tick fight) the frames are at ticks 0 and 558 and `snapshot_every` is 1000."""
     doc = lab.ok("open", "on", 1000)
-    assert ([f["tick"] for f in doc["frames"]], doc["snapshot_every"]) == ([0, 557], 1000)
+    assert ([f["tick"] for f in doc["frames"]], doc["snapshot_every"]) == ([0, 558], 1000)
 
 
 def test_cl1_cover_fight_keeps_a_frame_every_k_ticks_with_blocked_and_built_features(lab):
-    """CL-1 and "same per-frame/unit keys including ... built_features": on COVER (801 ticks, ground fight) K 50 gives 0, 50 ... 800 and 801, every frame carries `blocked`,
+    """CL-1 and "same per-frame/unit keys including ... built_features": on COVER (957 ticks, ground fight) K 50 gives 0, 50 ... 950 and 957, every frame carries `blocked`,
     and the document carries `built_features`, `sights`, `movement_kind`."""
     doc = lab.ok("cover", "on", 50)
     assert ([f["tick"] for f in doc["frames"]], all("blocked" in f for f in doc["frames"]), {"built_features", "sights", "movement_kind"} <= set(doc)) == (
-        expected_ticks(801, 50), True, True)
+        expected_ticks(957, 50), True, True)
 
 
 # ---------------------------------------------------------------- CL-2 result unchanged
@@ -207,7 +207,7 @@ def test_cl2_result_equals_the_normal_runners_for_every_k(lab, sight):
 
 
 def test_cl2_cover_result_equals_the_normal_runners(lab):
-    """CL-2 on the ground-fight fixture: COVER at K 50 and K 100 gives the normal runner's result (801 ticks, first_seen included)."""
+    """CL-2 on the ground-fight fixture: COVER at K 50 and K 100 gives the normal runner's result (957 ticks, first_seen included)."""
     normal = lab.normal("cover", "on")[0]["result"]
     assert [lab.ok("cover", "on", k)["result"] for k in (50, 100)] == [normal, normal]
 
@@ -244,13 +244,13 @@ def test_cl2_two_closeup_runs_are_byte_identical(tmp_path):
     (1, 20, 7, [7, 14]),                          # tick 0 is not forced when a window is given
     (0, 20, 7, [0, 7, 14]),
     (None, 40, 7, [0, 7, 14, 21, 28, 35]),        # only --to-tick: from the start, tick 0 included
-    (500, None, 10, list(range(500, 551, 10)) + [557]),   # only --from-tick: to the end, the last tick included
-    (500, 9999, 10, list(range(500, 551, 10)) + [557]),
-    (553, 557, 10, [557]),                        # nothing but the last tick lies in the window
+    (500, None, 10, list(range(500, 551, 10)) + [558]),   # only --from-tick: to the end, the last tick included
+    (500, 9999, 10, list(range(500, 551, 10)) + [558]),
+    (553, 558, 10, [558]),                        # nothing but the last tick lies in the window
 ])
 def test_cl3_window_keeps_only_frames_between_from_and_to(lab, a, b, k, want):
     """CL-3 ("If `--from-tick`/`--to-tick` are given, only frames with A <= tick <= B are written (tick 0 is not forced then)"): the frame ticks of the OPEN sight-on fight
-    (last tick 557) are the multiples of K (and the last tick) inside the window; `snapshot_every` stays K and `result` is the normal runner's."""
+    (last tick 558) are the multiples of K (and the last tick) inside the window; `snapshot_every` stays K and `result` is the normal runner's."""
     extra = (["--from-tick", a] if a is not None else []) + (["--to-tick", b] if b is not None else [])
     doc = lab.ok("open", "on", k, *extra)
     assert ([f["tick"] for f in doc["frames"]], doc["snapshot_every"], doc["result"]) == (want, k, lab.normal("open", "on")[0]["result"])
@@ -289,11 +289,11 @@ def test_cl5_every_ticks_below_one_is_an_error_and_writes_nothing(lab, k):
 def test_cl6_frames_at_ticks_the_normal_file_has_are_the_normal_frames(lab, case, sight, k):
     """CL-6 ("frames in the dense file at the ticks that the normal file also has are equal to the normal file's frames (same units, positions, target, seen)"): every frame
     of the normal file whose tick the dense file also has is equal, whole (units with `seen`, `blocked`, alive counts). For K that divides the normal spacing that is every
-    normal frame; for K 7 it is at least tick 0 (and the last tick, 557 not being a multiple of 7 but kept as the last)."""
+    normal frame; for K 7 it is at least tick 0 (and the last tick, 558 not being a multiple of 7 but kept as the last)."""
     normal, dense = by_tick(lab.normal(case, sight)[0]), by_tick(lab.ok(case, sight, k))
     common = sorted(set(normal) & set(dense))
     unfired = lambda f: dict(f, units=[{key: v for key, v in u.items() if key != "fired"} for u in f["units"]])   # `fired` is the window since the previous frame, which differs (test_replay_firing_record RF-4)
-    assert (all(unfired(normal[t]) == unfired(dense[t]) for t in common), set(common) >= (set(normal) if k != 7 else {0, 557}), len(common) >= 2) == (True, True, True)
+    assert (all(unfired(normal[t]) == unfired(dense[t]) for t in common), set(common) >= (set(normal) if k != 7 else {0, 558}), len(common) >= 2) == (True, True, True)
 
 
 # ---------------------------------------------------------------- CL-8 the module runs as a CLI
