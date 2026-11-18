@@ -19,7 +19,7 @@ def tasks():
         else:
             n = int(row["situation"].split("-")[1])
             src = os.path.join(work, row["situation"]); os.makedirs(src)
-            shutil.copy(glob.glob(os.path.join(SITUATIONS, row["situation"] + "-*.md"))[0], os.path.join(src, "sit.md"))
+            shutil.copy(glob.glob(os.path.join(SITUATIONS, row["situation"] + "-*.md"))[0], src)
             situations.convert(src, os.path.join(work, "out"), "L-%04d" % n)
             path = os.path.join(work, "out", "L-%04d.toml" % n)
         t.append((path, 1, row["sight"], "main"))

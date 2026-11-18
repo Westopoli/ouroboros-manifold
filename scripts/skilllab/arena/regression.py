@@ -34,7 +34,8 @@ def _layout(row, catalogue, sit_dir, work):
         number = int(row["situation"].split("-")[1])
         src = Path(work) / ("src-" + row["situation"])
         src.mkdir()
-        (src / "sit.md").write_text(next(Path(sit_dir).glob(row["situation"] + "-*.md")).read_text())
+        text = next(Path(sit_dir).glob(row["situation"] + "-*.md"))
+        (src / text.name).write_text(text.read_text())
         lines, rejected = situations.convert(src, Path(work) / ("out-" + row["situation"]), "L-%04d" % number)
         if rejected:
             raise ValueError(lines[0].split(" ", 2)[2])
@@ -55,9 +56,10 @@ def _refused(layout, sight):
     return "%s unreachable: %s" % (run.REACH_RULE, miss) if miss else None
 
 
-def _play(label, layout, path, sight, expected):
-    """Run one fight; returns (its printed line, whether it passes). `sight` is "off", "on" or "control" (run.fight's names)."""
-    refused = _refused(layout, "off" if sight == "control" else sight)
+def _play(label, layout, path, sight, expected, control=False):
+    """Run one fight; returns (its printed line, whether it passes). `sight` is "off", "on" or "control" (run.fight's names). A control is not held to the catalogue's rules, as `run.main` does
+    not hold one: the ground control's twin has no features, which R6 (a layout carries its feature) refuses."""
+    refused = None if control else _refused(layout, "off" if sight == "control" else sight)
     if refused:
         return "%s sight=%s REJECT %s" % (label, "on" if sight == "on" else "off", refused), False
     frames, last, end, orders = run.fight(layout, SEED, sight, snapshot.CAP_SECONDS)
@@ -105,7 +107,7 @@ def main(argv=None):
                     print("%s-control sight=%s REJECT no control twin: the engine is given nothing by this layout's features" % (label, sight), flush=True)
                     failed += 1
                     continue
-            line, ok = _play(label + "-control", twin, twin_path, sight, None)
+            line, ok = _play(label + "-control", twin, twin_path, sight, None, control=True)
             print(line, flush=True)
             failed += not ok
     print("regression: %d fights, %d failed" % (len(fights), failed))
