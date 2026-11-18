@@ -2742,14 +2742,18 @@ static void om_move_layer_pass(om_world *w, om_move_state *ms, uint32_t period) 
     }
 }
 
-/* PP-move R-099-05, A169 (PURSUE_BY_STEERING): a unit under a group move (or ordered alone, E2 below) that has been within GROUP_GIVEUP_RADIUS of
- * its slot for GROUP_GIVEUP_TICKS consecutive ticks without arriving ends its order where it stands; leaving the
- * disc or arriving resets the count. Runs at the top of the tick, on the positions the last tick ended with. */
+/* PP-move R-099-05, A169 (PURSUE_BY_STEERING): a unit under a group move (or ordered alone) ends its order where it stands when it has been
+ * within GROUP_GIVEUP_RADIUS of its point (its slot, for a group member) for GROUP_GIVEUP_TICKS counted ticks without arriving. Each tick is judged by its own two
+ * ends (DEC-giveup-progress-2026-11-18): d0, the distance where the tick began (ms->start_x/start_y, written at the top of this same tick), and d1, where it ended.
+ * d0 over the radius resets the count; d0 inside it and d1 nearer by more than COLLISION_SETTLE_EPS is not counted and leaves the count as it is (the unit is
+ * still walking in); otherwise the tick is counted. Nothing is carried from one tick to the next but the saved count giveup_near. Runs at the END of the tick, on
+ * the positions the tick ended with, so the order is cleared on the tick that makes the count 40 (the destination reported after that tick is none).
+ * See also: the start_x/start_y write in om_move_tick_once; tests/csim/test_E13_R099_05_giveup_counts_only_ticks_without_progress.py. */
 static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
     uint32_t id;
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
         om_move_unit *mu = &ms->units[id];
-        double dx, dy;
+        double dx, dy, d0, d1;
         if (!mu->in_use || !mu->has_dest || !om_unit_alive(w, id)) { if (mu->in_use) mu->giveup_near = 0; continue; }
         /* E2 (R-099-05, Round 6): a unit ordered alone counts as a member does, but only while it is trying to move: on a tick it holds a target or is in the
          * pause after its own shot the count is zero, since a unit that pursues or stands to shoot is a lone walker whose destination is its target's place.
@@ -2757,9 +2761,14 @@ static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
          * the group give-up's own, so nothing new is saved. See also: the lone-unit "no progress" pass put off in DEC-audit-fixes-2026-10-23,
          * tests/csim/test_E13_R099_05_lone_walker_arrives_and_gives_up.py. */
         if (mu->group_id == 0 && (mu->direct_move || mu->kiting || om_unit_get_target(w, id) != 0 || om_unit_in_backswing(w, id))) { mu->giveup_near = 0; continue; }
+        dx = mu->dest_x - ms->start_x[id];
+        dy = mu->dest_y - ms->start_y[id];
+        d0 = sqrt(dx * dx + dy * dy);
+        if (d0 > (double)OM_GROUP_GIVEUP_RADIUS) { mu->giveup_near = 0; continue; }
         dx = mu->dest_x - mu->x;
         dy = mu->dest_y - mu->y;
-        if (dx * dx + dy * dy > (double)OM_GROUP_GIVEUP_RADIUS * (double)OM_GROUP_GIVEUP_RADIUS) { mu->giveup_near = 0; continue; }
+        d1 = sqrt(dx * dx + dy * dy);
+        if (d0 - d1 > OM_COLLISION_SETTLE_EPS) continue;
         if (++mu->giveup_near >= OM_GROUP_GIVEUP_TICKS) {
             mu->has_dest = 0;
             om_move_route_drop(mu);
@@ -2815,9 +2824,9 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     om_move_apply_queue_for_tick(w, ms, new_tick - 1);
     if (ms->lay_any) om_move_layer_pass(w, ms, period);
     om_move_grid_rebuild(w, ms, 1);
-    if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_giveup_pass(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) {
         for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+            /* the distance the give-up pass takes as where this tick began; read only at the end of this tick. See also: om_move_giveup_pass. */
             ms->start_x[id] = ms->units[id].x;
             ms->start_y[id] = ms->units[id].y;
             ms->placed[id] = 0;
@@ -2841,6 +2850,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     om_move_walker_tick_moved(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_face_pass(w, ms, period);
     om_move_groups_check_arrival(ms);
+    if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_giveup_pass(w, ms);
 }
 
 /* R-092-02: no unit moves in the recon phase. Phase -1 (no mission) and
