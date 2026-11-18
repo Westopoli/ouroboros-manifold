@@ -361,10 +361,11 @@ def _hold_old_order(lib, w, u, c, n, what):
         assert near == t, "%s: premise: the unit's count is %d on tick %d (a held unit is counted on every tick)" % (what, near, t)
 
 
-def _run_after_new_order(lib, w, u, point, start, what):
+def _run_after_new_order(lib, w, u, point, start, what, mates=()):
     """The unit has just been given a new order (a direct command, between ticks) to `point`, from `start`. Steps asserting per tick, counted from the NEW order (R-099-05 'A new order starts the count at zero'):
     the unit holds no target; its count is the number of ticks since the new order (premise: held on every tick); its destination is still set after every tick up to the one that makes the count 39 and cleared
-    after the 40th; from then on it has no destination and does not move for 20 ticks."""
+    after the 40th; from then on it has no destination and takes no step of its own for 20 ticks: a move in a tick is allowed only when one of `mates` (units of its own side still walking) is within PUSH_REACH of it
+    at the end of that tick or, after its own step of the tick, of where the unit stood at the start (an idle unit steps aside for a mover of its own side, R-097-10; a later displacement leaves it where it is put, R-099-04); with no mates it must not move at all."""
     c = ProgressCount(point, start)
     for k in range(1, GIVE_UP_TICKS + 1):
         step(lib, w)
@@ -377,11 +378,16 @@ def _run_after_new_order(lib, w, u, point, start, what):
                 what, k, near, OLD_COUNT)
         else:
             assert not has, "%s: %d ticks after the new order: the unit still has its destination after %d counted ticks of the new order, %.1f wu from its point (R-099-05)" % (what, k, near, _dist(p, point))
-    end_pos = pos(lib, w, u)
+    last, last_mates = pos(lib, w, u), [pos(lib, w, m) for m in mates]
     for k in range(1, 21):
         step(lib, w)
+        p = pos(lib, w, u)
         assert dest(lib, w, u)[0] == 0, "%s: %d ticks after the give-up: the destination is set again" % (what, k)
-        assert _dist(pos(lib, w, u), end_pos) < POS_TOL, "%s: %d ticks after the give-up: the unit moved after ending its order" % (what, k)
+        # a mate's own step comes first in the tick: it may reach contact (and push) after stepping its net displacement toward where the unit stood, whatever the distance at either end
+        reach = min([min(_dist(p, pos(lib, w, m)), _dist(last, lm) - _dist(lm, pos(lib, w, m))) for m, lm in zip(mates, last_mates)], default=float("inf"))
+        assert _dist(p, last) < POS_TOL or reach <= PUSH_REACH, "%s: %d ticks after the give-up: the unit moved %.3f wu with no mate within %.1f wu of it (nearest %.1f wu) after ending its order (a push by a mover of its own side stands, R-099-04; a step of its own does not)" % (
+            what, k, _dist(p, last), PUSH_REACH, reach)
+        last, last_mates = p, [pos(lib, w, m) for m in mates]
 
 
 def test_R_099_05_a_walker_held_for_30_counted_ticks_and_given_a_new_move_order_keeps_it_for_40_counted_ticks_of_the_new_order(lib, world_factory):
@@ -445,7 +451,7 @@ def test_R_099_05_a_group_member_held_for_30_counted_ticks_and_given_a_new_group
     put2 = (nx - 30.0, ny)
     lib.om_unit_teleport(w, a, put2[0], put2[1], 0)
     assert dest(lib, w, a)[0] == 1, "scene broken: the put-back took the member's new destination"
-    _run_after_new_order(lib, w, a, (nx, ny), put2, "group member, new group order")
+    _run_after_new_order(lib, w, a, (nx, ny), put2, "group member, new group order", mates=(b,))
 
 
 def test_R_099_05_a_group_member_held_for_30_counted_ticks_and_given_an_order_of_its_own_keeps_it_for_40_counted_ticks_of_the_new_order(lib, world_factory):
