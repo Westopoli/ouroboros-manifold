@@ -108,7 +108,7 @@ Rules
 - R-093-01  Given two identical battles differing only in which side the player commands or in what the client draws, When resolved, Then the traces are identical.
   Proof: MISSING
 - R-093-02  Given any unit of any side, When it acquires, pursues or fires at a target, Then the target is in its side's visible set: the union of what that side's living units see (R-089-01, E-01 S-005) and what its pings reveal (E-01 S-162); the rule is the same for the player's units and the enemy's (Westley, 2026-10-02). A unit whose sensor is shorter than its range (Bombard, Bastion: sensor 300) fires beyond its sensor only at what another friendly unit or a ping sees.
-  Proof: MISSING
+  Proof: tests/skilllab/arena/test_proof_r5_g8_stage4_rules.py::test_R_093_02_every_pick_every_held_target_and_every_shot_is_in_the_sides_visible_set | whole-run | verified c7d97bb43 2026-11-17
 - R-093-03  Given the strategic sim, When faction agents decide, Then they read every neighbor region's fields without fog (E-05).
   Proof: MISSING
 
