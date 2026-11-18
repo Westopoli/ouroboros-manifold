@@ -109,9 +109,10 @@ def test_control_the_measure_flags_a_flinching_unit_that_stands_and_not_one_that
 def test_control_L0081_runs_to_the_measured_end():
     """Control (the premise of the red test; re-dumped 2026-11-12 on the Round 3 tip d70c8d47, Test-defect: the premises were dumped on the engine before the fixes): L-0081 seed 1 sight on runs
     741 ticks (2,560 before; fix 3, 8f825d59, moves it to 831 and fix 2, 94da7493, to 737; d70c8d47 leaves it; Round 4, 6d3d7635, R-097-10: 741, checker reports none; Test-defect). Round 5 (G1 to G5
-    and the later fixes of the second pass) moved the length to 1577 ticks on the branch tip fd342241c (re-pinned 2026-11-17, Test-defect: the lab checker reports no violation of any rule on the new run, seed 1 sight on)."""
+    and the later fixes of the second pass) moved the length to 1577 ticks on the branch tip fd342241c (re-pinned 2026-11-17, Test-defect: the lab checker reports no violation of any rule on the new run, seed 1 sight on). Round 6 moved it to 1921 ticks (re-pinned 2026-11-18, Test-defect: R-096-02, an order kept through the pause after the unit's own shot, 66fbc1ee9: first different
+    tick 142, unit 3 keeps its destination where main's engine cleared it; wipe, survivors 0 and 42)."""
     rec, flinch = played()
-    assert len(rec.ticks) == 1577, len(rec.ticks)
+    assert len(rec.ticks) == 1921, len(rec.ticks)
 
 
 def test_control_L0081_the_move_away_is_made_by_idle_units_and_ends_where_it_holds():
