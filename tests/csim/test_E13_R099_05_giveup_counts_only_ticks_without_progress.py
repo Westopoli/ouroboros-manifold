@@ -42,6 +42,7 @@ GIVE_UP_TICKS = 40
 ARRIVE_SLOT = 22.5                  # 1.5 x radius 15: a slot's arrival radius (R-099-04)
 CLEAR_PATH_WU = 5.0                 # DRAFT-clear-path-wu
 PROGRESS_EPS = 0.1                  # COLLISION_SETTLE_EPS
+COLLISION_SETTLE_EPS = 0.1             # the most the collision pass may push a unit whose order has ended, in total (R-097-10 clause 5)
 RUN_TICKS = 1500
 POS_TOL = 1.0e-6
 HELD_TOL = 0.05
@@ -315,18 +316,18 @@ def check_destination_by_count(has, positions, point, start, what):
     (d(0) <= 75 wu) and held from the start is counted from tick 1 and its order ends on tick 40. A unit that is put somewhere by a direct position change between two ticks is seen as beginning the next tick there.
 
     The order ends. On the tick k on which the count reaches 40 the order ends: the destination is cleared (`has` is false after tick k, so the order is still active after the tick that makes the count 39) and
-    from tick k on the unit is stationary and has no destination. (The clause that the count is zero on a tick the unit holds a target or is in the pause after its own shot is not part of this recorded-run
+    from tick k on the unit takes no step of its own and has no destination (a push by the collision pass is not a step: a held unit at rest inside a stopped neighbour is split off on the next tick, so its position may differ from the one of tick k by at most COLLISION_SETTLE_EPS, 0.1 wu, in total). (The clause that the count is zero on a tick the unit holds a target or is in the pause after its own shot is not part of this recorded-run
     helper; the scenes that use it have no target.)
 
     The check. On every tick before the count reaches 40 the destination is kept (a tick with the count at 39 included); the unit's order must end on the tick that makes the count 40; on every tick after, there is
-    no destination and the position is the one of the tick on which the order ended, to within 1e-6 wu. The run must contain the give-up. Returns its tick."""
+    no destination and the position is within COLLISION_SETTLE_EPS of the one of the tick on which the order ended. The run must contain the give-up. Returns its tick."""
     c = ProgressCount(point, start)
     ended = None
     for k, (h, p) in enumerate(zip(has, positions)):
         t = k + 1
         if ended is not None:
             assert not h, "%s: tick %d: the destination is set again after the give-up on tick %d" % (what, t, ended[0])
-            assert _dist(p, ended[1]) < POS_TOL, "%s: tick %d: the unit moved after its order ended on tick %d" % (what, t, ended[0])
+            assert _dist(p, ended[1]) <= COLLISION_SETTLE_EPS, "%s: tick %d: the unit moved %.4f wu from where its order ended on tick %d (a push by the collision pass is allowed up to %.1f wu in total)" % (what, t, _dist(p, ended[1]), ended[0], COLLISION_SETTLE_EPS)
             continue
         near = c.tick(p)
         if near < GIVE_UP_TICKS:
