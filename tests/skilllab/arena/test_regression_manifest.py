@@ -455,6 +455,21 @@ def test_L2_command_a_control_that_carries_a_checker_report_fails_the_run_though
     assert code != 0, out
 
 
+# ---- every checker report is read
+
+@pytest.mark.parametrize("late_tick", [21, 900])
+def test_L2_command_every_checker_report_is_read_not_only_the_first_twenty(planted, tmp_path, monkeypatch, late_tick):
+    """L2 'prints one line per fight (... checker reports)': the fight document keeps only the first 20 reports (`invariants.KEEP`), so a rule first broken after them must still reach the line.
+    The row L-9102 (sight off, ends by wipe), with 20 reports of `continuity` planted at ticks 1 to 20 and one of `R-096-08` at tick `late_tick` (the 21st report by tick, and one far
+    later): the line names both rule ids and the exit is non-zero. Red today: `regression._play` reads `doc["violations"]`, which `run._document` cuts at 20, so the line says
+    checker=continuity and `R-096-08` is missing."""
+    _plant_reports(monkeypatch, [(t, "continuity") for t in range(1, 21)] + [(late_tick, "R-096-08")])
+    code, out = _main(_manifest_file(tmp_path, _row("L-9102", "A")), planted)
+    (line,) = _lines_of(out, "L-9102")
+    assert _field(line, "end") == "wipe" and code != 0, (code, out)
+    assert sorted(_field(line, "checker").split(",")) == ["R-096-08", "continuity"], line
+
+
 @SLOW
 def test_L2_slow_the_real_manifest_runs_to_elimination_with_no_checker_report():
     """round6.md L2 proof, the slow test: `python -m scripts.skilllab.arena.regression` on the real manifest exits 0 (every approved fight ends by elimination under its one order per side, the
