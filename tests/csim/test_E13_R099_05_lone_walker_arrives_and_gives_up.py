@@ -222,7 +222,9 @@ def _ring_scene(lib, wf):
 
 
 def test_R_099_05_a_walker_ordered_alone_and_held_inside_75_wu_ends_its_order_on_the_40th_tick_not_the_39th(lib, world_factory):
-    """R-099-05 'A unit moving alone gives up the same way, by the same two numbers measured to its ordered point': a Raider ordered alone (plain move) is held by a ring of enemy Supplies about 53 wu from its
+    """R-099-05, as the epic reads now: "Given a unit held within 75 wu (about two slot spacings) of the place its order names (... its ordered point when it moves or attack-moves alone; walking or flying), When it has spent
+    40 ticks (2 s) there on which it came no nearer that place, Then it ends its order where it stands, the same state as an arrival: its destination is cleared and it takes no step of its own from that tick onward";
+    "A unit ordered alone has no arrival radius (R-099-04), so this rule is what ends it when something stands on its point". The lone-walker case: a Raider ordered alone (plain move) is held by a ring of enemy Supplies about 53 wu from its
     point (inside 75 wu, outside every arrival radius). Counting as the progress count does (each tick judged by its own two ends): its destination is still set after the tick that makes the count 39,
     cleared after the tick that makes it 40; it is not an arrival (more than 30 wu from the point); it holds no target on any tick; from that tick on it has no destination and does not move (20 ticks)."""
     w, m = _ring_scene(lib, world_factory)
