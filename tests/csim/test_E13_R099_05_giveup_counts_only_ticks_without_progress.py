@@ -45,6 +45,7 @@ PROGRESS_EPS = 0.1                  # COLLISION_SETTLE_EPS
 COLLISION_SETTLE_EPS = 0.1             # the most the collision pass may push a unit whose order has ended, in total (R-097-10 clause 5)
 RUN_TICKS = 1500
 POS_TOL = 1.0e-6
+PUSH_REACH = 30.5                   # a mate this near at either end of a tick (collision spacing 2 x radius 15, plus slack) may have pushed a rested member: R-097-10, an idle unit steps aside for a mover of its own side
 HELD_TOL = 0.05
 BIG_HP = 1.0e6
 
@@ -153,14 +154,14 @@ def _slow_pace_premise_trace(trace):
 def test_R_099_05_a_slow_member_of_a_group_walks_to_its_slot_and_reaches_its_arrival_radius(lib, world_factory):
     """R-099-05 (the same clause for a group member, 'measured to its slot') with R-099-04 (a unit under a group move arrives within 1.5 x radius = 22.5 wu of its slot): two slow walking units at (200,500) and
     (200,540) are given a group move to (600,500). Each walks to its slot at 1.0 wu a tick, nothing in its way. On every tick it still has its destination while farther than 22.5 wu from its slot; the order of
-    each ends only inside 22.5 wu of the slot (the arrival), and each is stationary from then on. Red today: both end on the 40th tick inside the 75 wu disc, 35 wu short of their slots (measured)."""
+    each ends only inside 22.5 wu of the slot (the arrival), and takes no step of its own from then on (a later push by the other member, still walking in, leaves it at its new position, R-099-04: measured, 0.41 wu on tick 381). Red before the rebuild: both end on the 40th tick inside the 75 wu disc, 35 wu short of their slots (measured). Red today: both end on the 40th tick inside the 75 wu disc, 35 wu short of their slots (measured)."""
     w = _world(lib, world_factory)
     a = spawn(lib, w, SLOW, 0, 200.0, 500.0)
     b = spawn(lib, w, SLOW, 0, 200.0, 540.0)
     _group_move(lib, w, [a, b], 600.0, 500.0)
     slots = {u: dest(lib, w, u)[1:] for u in (a, b)}
     assert all(dest(lib, w, u)[0] == 1 for u in (a, b)), "premise: a member has no destination after the group order"
-    cleared = {}
+    cleared, last = {}, {u: pos(lib, w, u) for u in (a, b)}
     for t in range(1, RUN_TICKS + 1):
         step(lib, w)
         for u in (a, b):
@@ -171,7 +172,12 @@ def test_R_099_05_a_slow_member_of_a_group_walks_to_its_slot_and_reaches_its_arr
                 assert d <= ARRIVE_SLOT + 1.0e-6, "tick %d: member %d's order ended %.1f wu from its slot %s, outside its arrival radius %.1f wu, with the member still walking in (R-099-05 counts only ticks without progress)" % (
                     t, u, d, slots[u], ARRIVE_SLOT)
             if u in cleared:
-                assert not has and _dist(p, cleared[u][1]) < POS_TOL, "tick %d: member %d moved or took a destination after its order ended on tick %d" % (t, u, cleared[u][0])
+                assert not has, "tick %d: member %d took a destination after its order ended on tick %d" % (t, u, cleared[u][0])
+                mate = b if u == a else a
+                near_mate = min(_dist(p, pos(lib, w, mate)), _dist(last[u], last[mate])) <= PUSH_REACH
+                assert _dist(p, last[u]) < POS_TOL or near_mate, "tick %d: member %d moved %.3f wu with no mate within %.1f wu of it, after its order ended on tick %d (a later push by a mover of its own side stands, R-099-04; a step of its own does not)" % (
+                    t, u, _dist(p, last[u]), PUSH_REACH, cleared[u][0])
+        last = {u: pos(lib, w, u) for u in (a, b)}
         if len(cleared) == 2 and t >= max(c[0] for c in cleared.values()) + 20:
             break
     assert len(cleared) == 2, "a member never reached its slot in %d ticks (cleared: %s)" % (RUN_TICKS, sorted(cleared))
