@@ -47,12 +47,16 @@ def inv():
     return _Module()
 
 
-def _planted(inv, dists, held, rng=500.0, enemy=2, shootable=False):
-    """R-087-09 violations (tick, unit) of unit 1 holding enemy 2 in frames 1..held, the enemy standing `dists[k]` wu from it in frame k (frame 0 has no target)."""
-    frames = [{1: row(100, 100), 2: row(100 + dists(0), 100, side=1)}]
+def _planted(inv, dists, held, rng=500.0, enemy=2, shootable=False, hits=None):
+    """R-087-09 violations (tick, unit) of unit 1 holding enemy 2 in frames 1..held, the enemy standing `dists[k]` wu from it in frame k (frame 0 has no target).
+    `hits` is {frame: [(attacker, victim), ...]}: the monitor's per-frame "hits" (the shots that damaged someone on that frame); enemy 4 stands by for hits by another unit."""
+    frames = [{1: row(100, 100), 2: row(100 + dists(0), 100, side=1), 4: row(500, 140, side=1)}]
     for k in range(1, held + 1):
-        frames.append({1: row(100, 100, target=enemy, shootable=shootable), 2: row(100 + dists(k), 100, side=1)})
-    rep = inv.check(trace(*frames), rules(inv, attack_range={1: rng}), only=["R-087-09"])
+        frames.append({1: row(100, 100, target=enemy, shootable=shootable), 2: row(100 + dists(k), 100, side=1), 4: row(500, 140, side=1)})
+    frames = list(trace(*frames))
+    for k, hs in (hits or {}).items():
+        frames[k]["hits"] = [tuple(h) for h in hs]
+    rep = inv.check(frames, rules(inv, attack_range={1: rng}), only=["R-087-09"])
     return [(v["tick"], v["unit"]) for v in rep.violations]
 
 
@@ -107,6 +111,51 @@ def test_R_087_09_control_a_new_target_a_clear_line_or_a_unit_closing_in_starts_
     assert inv.check(trace(*frames), rules(inv, attack_range={1: 500.0}), only=["R-087-09"]).violations == []
 
 
+# ------------------------------------------------------------------ return fire: counted from the tick it is taken
+
+# csrc/unit.c, the unit's tick in order: (1) `if (u->last_attacker != 0)` (about line 2469): an idle or attack-moving unit with no target (`u->target_id == 0`) that was
+# hit on the previous tick takes its attacker as its target and as its return-fire target (`u->target_id = atk->unit_id; u->rf_target = atk->unit_id`, lines 2494-2515);
+# (2) `if (u->target_id != 0)` (line 2540): the give-up step `om_tac_giveup` (line 2563), which counts the held target on this very tick, from the distance read at the
+# top of the tick (the previous frame's); (3) the cohort acquisition (about line 2610), which runs only when there is no target, so after the give-up step. A target taken
+# by return fire on tick M is therefore counted on tick M (reading frame M-1's distance, which is the run's reference), a target taken by acquisition on tick M from M+1.
+# The previous tick's hit is in the previous frame's "hits" (the shots that damaged someone), and the frame that first shows the target is frame M.
+
+def test_R_087_09_a_target_taken_by_return_fire_is_counted_from_the_frame_that_first_shows_it_one_frame_before_the_same_hold_by_acquisition(inv):
+    """R-087-09, the engine's count (unit.c, see the block comment above), side by side, the same distances (the enemy 400 wu away, range 500, unshootable, held from frame 1
+    on): frame 0 carries the hit (2, 1), enemy 2 hitting unit 1, and unit 1 holds 2 on frame 1: return fire, counted on frame 1 (reading frame 0), the 21st count is frame 21:
+    reported on 21. The same frames without the hit: acquisition, first count frame 2, reported on 22."""
+    hit = _planted(inv, lambda k: 400.0, 40, hits={0: [(2, 1)]})
+    ordinary = _planted(inv, lambda k: 400.0, 40)
+    assert (hit, ordinary) == ([(21, 1)], [(22, 1)])
+
+
+def test_R_087_09_control_a_return_fire_hold_of_twenty_counted_frames_is_silent(inv):
+    """R-087-09, control (green today), the same boundary as the 20 / 21 control, for return fire: the hit on frame 0, held through frame 20 (20 counted frames, 1..20): no report."""
+    assert _planted(inv, lambda k: 400.0, 20, hits={0: [(2, 1)]}) == []
+
+
+@pytest.mark.parametrize("hits", [{0: [(4, 1)]}, {0: [(4, 1), (2, 4)]}, {1: [(2, 1)]}, {2: [(2, 1)]}],
+                         ids=["hit-by-another-unit", "another-hit-and-the-target-hit-someone-else", "hit-on-the-frame-that-shows-it", "hit-after-it-is-held"])
+def test_R_087_09_a_hit_that_is_not_the_target_hitting_the_unit_on_the_frame_before_changes_nothing(inv, hits):
+    """R-087-09, the engine takes a return-fire target only from `last_attacker`, the unit hit on the previous tick, and only while it has no target (unit.c 2469-2477).
+    So the count stays the acquisition's (first count frame 2, reported on 22) when the frame before the target is first shown carries a hit on unit 1 by another unit (4),
+    or a hit by the target on another unit, or when the hit by the target comes on the frame that first shows it (the unit already holds the target that tick: the engine
+    reads the hit on the next tick, with a target in hand) or later."""
+    assert _planted(inv, lambda k: 400.0, 40, hits=hits) == [(22, 1)]
+
+
+def test_R_087_09_control_a_return_fire_run_reads_its_reference_distance_from_the_frame_before_it_is_first_shown(inv):
+    """R-087-09, control (green today, the restart is also what an acquisition run does), return fire, the run's reference: the target stood 400 wu away on frame 0 (the frame of the hit) and 398.9 wu from frame 1 on. The run began on tick 1 with
+    frame 0's 400 as its reference; tick 2 reads 398.9, 1.1 wu nearer: restart, count 1 on frame 2, the 21st count is frame 22. (A checker that took frame 1's reading as the
+    reference and counted from frame 1 would report on frame 21; one that ignored the hit would also report on 22, so the control below tells the two apart.)"""
+    assert _planted(inv, lambda k: 400.0 if k == 0 else 398.9, 40, hits={0: [(2, 1)]}) == [(22, 1)]
+
+
+def test_R_087_09_control_a_return_fire_run_does_not_restart_on_a_gain_of_one_wu_or_less_against_the_frame_before(inv):
+    """R-087-09, return fire, the same shape with a gain of 0.5 wu (no restart: the reference stays frame 0's 400): reported on 21, one frame before the 1.1 wu case."""
+    assert _planted(inv, lambda k: 400.0 if k == 0 else 399.5, 40, hits={0: [(2, 1)]}) == [(21, 1)]
+
+
 # ------------------------------------------------------------------ the two real sequences
 
 def _frames(key, repeat_last_from=None, extra=0):
@@ -114,12 +163,12 @@ def _frames(key, repeat_last_from=None, extra=0):
     fix = FIXTURES[key]
     out = []
     for f in fix["frames"]:
-        out.append({"tick": f["tick"], "units": {int(i): dict(r) for i, r in f["units"].items()}, "fires": []})
+        out.append({"tick": f["tick"], "units": {int(i): dict(r) for i, r in f["units"].items()}, "fires": [], "hits": [tuple(h) for h in f.get("hits", [])]})
     if repeat_last_from is not None:
         keep = [f for f in out if f["tick"] <= repeat_last_from]
         last = keep[-1]
         for n in range(1, extra + 1):
-            keep.append({"tick": last["tick"] + n, "units": {i: dict(r) for i, r in last["units"].items()}, "fires": []})
+            keep.append({"tick": last["tick"] + n, "units": {i: dict(r) for i, r in last["units"].items()}, "fires": [], "hits": []})
         out = keep
     return out, fix
 
@@ -130,11 +179,18 @@ def _judge(inv, key, **kw):
     return [(v["tick"], v["unit"]) for v in rep.violations if v["unit"] == fix["unit"]]
 
 
+HITS = {"L-0057": {}, "L-0046": {1586: [[115, 21]], 1611: [[112, 21]], 1634: [[123, 21]]}}
+
+
 @pytest.mark.parametrize("key,last_held", [("L-0057", 392), ("L-0046", 1632)])
 def test_R_087_09_control_the_fixtures_hold_the_target_to_the_frame_before_the_engines_give_up(key, last_held):
     """Premise of the fixtures (green today): the unit holds one unshootable target on every frame up to `last_held`, and the next frame shows none; the fixture is
-    the engine's own give-up (tick 393 for L-0057 unit 24, tick 1633 for L-0046 unit 21)."""
+    the engine's own give-up (tick 393 for L-0057 unit 24, tick 1633 for L-0046 unit 21). Each frame also carries "hits", the live monitor's own (attacker, victim) pairs
+    of that frame's damaging shots (added in Round 6 for the return-fire count, regenerated from the same two fights, units and positions identical), kept for the pairs
+    between the frame's own units: L-0057 none (unit 24 took target 12 by acquisition); L-0046 (115, 21) on 1586, the frame before unit 21 first holds 115 on 1587 (a
+    return-fire target: the engine counted it on tick 1587), (112, 21) on 1611 and (123, 21) on 1634, the frame before it first holds 123 on 1635."""
     fix = FIXTURES[key]
+    assert {f["tick"]: f["hits"] for f in fix["frames"] if f["hits"]} == HITS[key]
     by_tick = {f["tick"]: f["units"][str(fix["unit"])] for f in fix["frames"]}
     held = by_tick[last_held]
     assert held["target"] != 0 and held["shootable"] is False
