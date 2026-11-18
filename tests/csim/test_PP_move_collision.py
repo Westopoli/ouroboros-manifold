@@ -126,8 +126,8 @@ def _two_unit_group(lib, w):
 
 
 def test_R_099_04_within_slot_radius_arrives_where_it_stands(lib, tw):
-    """R-099-04: a unit within its arrival radius (1.5 x collision radius = 22.5 wu for a formation slot) has arrived
-    where it stands, without snapping to the point: its destination is cleared and it is stationary from then on.
+    """R-099-04, as the epic reads now: "Given a unit within its arrival radius of its destination (1.5 × collision radius for a formation slot, 2 × for a route waypoint), When the tick runs, Then it has arrived where it
+    stands, without snapping to the point: its destination is cleared and it is stationary from that tick onward" (this test: the slot case, 1.5 x radius = 22.5 wu; the later-displacement clause is the next test but one).
     A is put 20 wu short of its slot (980,0); after a tick it is still at (980,0), has no destination, speed 0.
     (The C moves it on and snaps it to (1000,0).)"""
     a, _b = _two_unit_group(lib, tw)
