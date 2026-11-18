@@ -2389,6 +2389,11 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
             || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y) {
             double buf[2 * OM_MOVE_WALK_PTS], secs, *pts = buf;
             const double gx = om_move_clamp_axis(mu->dest_x, ms->canvas_w), gy = om_move_clamp_axis(mu->dest_y, ms->canvas_h);
+            /* E1 (R-096-02, R-084-04; Round 6): the pause after the unit's own shot is not "no route". om_walk_route plans at the unit's speed and
+             * returns -1 at 0, which cleared the destination here and lost the order. A walker only paused by backswing (its order speed, which
+             * ignores backswing, is above 0) keeps its destination and plans when the pause ends; a braced or otherwise immobile one (order speed 0)
+             * falls through to the clearing below as before. See also: om_walk_route in csrc/walk_route.c, tests/csim/test_E13_R096_02_order_kept_through_shot_pause.py. */
+            if (speed <= 0.0 && om_unit_order_speed(w, id) > 0.0) { mu->waiting = 1; return; }
             /* om_walk_route reads the unit's row position, which this module hands over once per sync. */
             mu->pushed_x = mu->x;
             mu->pushed_y = mu->y;
