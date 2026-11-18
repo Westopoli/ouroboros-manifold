@@ -58,11 +58,11 @@ PAIRS = list(ACQUIRED)
 
 def test_control_the_monitor_runs_L0084_to_the_measured_end_and_the_engine_still_makes_the_eight_picks():
     """Control (green before and after the checker fix; re-written 2026-11-12, Test-defect: it asserted the eight false reports, the defect the fix removes; the picks re-derived 2026-11-17). Premise of the
-    tests below: L-0084 seed 1 sight on runs to the measured end with nothing suspended (the length and the survivors are the verifier's pin and are left as they were), and the Monitor judged it (its
+    tests below: L-0084 seed 1 sight on runs to the measured end with nothing suspended (the length and the survivors re-pinned 2026-11-17 by the verifier, Test-defect: 3923 ticks and [37, 0] were the fight before the notice distance; now 1955 and [15, 0]), and the Monitor judged it (its
     verdict is True or False, not None as a stand-in's is); the engine makes the 22 picks of the premise: at each (tick, unit) the unit takes the target named there (the tick before it held another or
     none). So the tests below stay about the checker: a plain frame-N nearest comparison calls each of these picks wrong; the checker as it is reports none."""
     mon = monitored()
-    assert (mon.tick, mon.suspended, mon.survivors) == (3923, {}, [37, 0])
+    assert (mon.tick, mon.suspended, mon.survivors) == (1955, {}, [15, 0])
     assert mon.verdict()["invalid"] is not None
     got = {(n, u): mon.rec.ticks[n - 1]["post"][u]["tgt"] for n, u in ACQUIRED}
     assert got == ACQUIRED and all(mon.rec.ticks[n - 1]["pre"][u]["tgt"] != t for (n, u), t in ACQUIRED.items()), got
