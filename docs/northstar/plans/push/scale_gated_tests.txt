@@ -5,8 +5,8 @@
 # gate sees both as scale-gated skips and counts them on their own line instead
 # of as ordinary skips. The gate rejects a candidate whose tree has a scale-gated
 # test that is not named here. The gate's lab stage collects tests/skilllab/integration
-# and tests/skilllab/ground only, so 87 of the 91 lab ids are the skips a landing
-# shows; the other 4 (top-level tests/skilllab files) are listed for the inventory.
+# and tests/skilllab/ground only, so 87 of the 92 lab ids are the skips a landing
+# shows; the other 5 (top-level tests/skilllab files and tests/skilllab/arena) are listed for the inventory.
 # One node id per line; lines starting with # are comments. Add a line when you
 # add a scale or SLOW test; the budget misses are tracked in the push ledger, not
 # hidden by this list.
@@ -114,6 +114,7 @@ tests/csim/scale/test_PP_C_budgets.py::test_PP_C_visibility_1000_units_2ms
 tests/csim/scale/test_PP_C_budgets.py::test_PP_C_visibility_10000_units_20ms
 tests/csim/scale/test_PP_C_budgets.py::test_PP_C_targeting_and_damage_10000_units_25ms_with_sight_and_reach
 # Lab tier: tests/skilllab, OM_LAB_SLOW
+tests/skilllab/arena/test_regression_manifest.py::test_L2_slow_the_real_manifest_runs_to_elimination_with_no_checker_report
 tests/skilllab/integration/test_attackmove_idle_cap_real.py::test_E1b_layout_192_lone_attacker_scene_ends_by_elimination_not_by_the_cap
 tests/skilllab/integration/test_attackmove_idle_cap_real.py::test_control_the_same_scene_with_the_attacker_killed_before_it_fires_ends_by_elimination
 tests/skilllab/integration/test_attackmove_idle_cap_real.py::test_the_traced_scene_is_the_one_that_capped
