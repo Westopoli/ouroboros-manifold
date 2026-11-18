@@ -51,6 +51,7 @@ import pytest
 
 from conftest import OMFeature
 from test_PP_unit_support import SUPPLY, VANGUARD, dest, pos, spawn, step
+from test_E13_R099_05_giveup_counts_only_ticks_without_progress import check_destination_by_count
 
 WALKING = 1                         # OM_MOVE_WALKING
 ERA_GROUND = 1
@@ -219,7 +220,7 @@ def _assert_stationary_moves_zero(lib, wf, kind):
         lib.om_unit_set_hp(w, ids[2], 1.0e6)
     held = []
     tr = []
-    for _ in range(100):
+    for _ in range(140):
         step(lib, w)
         tr.append({"p": {u: pos(lib, w, u) for u in ids}, "has": {u: dest(lib, w, u)[0] == 1 for u in ids}})
         held.append(lib.om_unit_get_target(w, s))
@@ -234,7 +235,8 @@ def _assert_stationary_moves_zero(lib, wf, kind):
         assert d >= DIAMETER - POS_TOL, "tick %d: the pair is %.3f wu apart after the push (the mover takes the whole overlap)" % (k + 1, d)
         pushed += abs(d - DIAMETER) <= POS_TOL            # a tick on which the mover was pressed to the circle
     assert pushed >= 5, "premise: the mover was pushed out of the stationary unit on %d ticks only" % pushed
-    assert tr[-1]["has"][m], "the mover lost its destination while held at the stationary unit"
+    goal = IDLE_XY if kind == "ENGAGED" else GOAL_BEHIND
+    check_destination_by_count([r["has"][m] for r in tr], [r["p"][m] for r in tr], goal, START, "%s: the mover held at the stationary unit" % kind)
 
 
 def _row_scene(lib, wf, mover_slot, specs_rest, ticks=90):
@@ -274,7 +276,9 @@ def test_R_097_10_proof_an_idle_unit_takes_the_full_displacement_from_a_mover_of
 def test_R_097_10_proof_a_stationary_unit_moves_0_the_other_takes_the_full_displacement_and_an_enemy_mover_takes_all(lib, world_factory, kind):
     """R-097-10 clauses 1 and 3, every tick: "Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement, except that an idle
     unit ... takes ... none from an enemy mover, which takes all of it". ENEMY: M (side 0) pushes against an idle side 1 Supply; ENGAGED: M pushes against an own Vanguard that holds a target and fires (halted by
-    engagement; not idle). The stationary unit stands where it was on every tick, bit for bit; from the first contact the pair is 30 wu apart on every tick."""
+    engagement; not idle). The stationary unit stands where it was on every tick, bit for bit; from the first contact the pair is 30 wu apart on every tick.
+    The mover is a lone mover held inside the 75 wu disc of its point (30 wu away in ENGAGED, 10 wu in ENEMY), so its order ends by R-099-05 (Round 6 E2): its destination is kept on every tick through its 39th held
+    tick (a tick on which it comes nearer is not counted), cleared on the 40th, and it is stationary after (Test-defect: until 2026-11-18 this asserted that it still had its destination at tick 100; the run is now 140 ticks)."""
     _assert_stationary_moves_zero(lib, world_factory, kind)
 
 

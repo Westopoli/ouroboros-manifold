@@ -296,3 +296,27 @@ def test_R_099_05_ticks_that_come_nearer_inside_the_disc_are_not_counted_and_do_
     assert seen["progress"] >= 5, "premise: the put-back unit came nearer on only %d ticks (it should walk 30 wu back at 4 wu a tick)" % seen["progress"]
     assert not seen["left"], "premise: the unit left the 75 wu disc"
     assert ended >= GIVE_UP_TICKS + seen["progress"] - 1, "the order ended on tick %d, before the held ticks total 40 (40 + the %d ticks of walking in, give or take the tick of the put-back)" % (ended, seen["progress"])
+
+
+# ------------------------------------------------------------------ for the tests of other files that hold a lone mover at a unit
+
+def check_destination_by_count(has, positions, point, start, what):
+    """Per tick, the rule's count applied to a recorded run (used by the R-097-10 files, which hold a lone mover at a unit): `has[k]` is whether the unit has a destination after tick k+1, `positions[k]` its position
+    then, `start` where it stood when ordered. The destination is kept on every tick on which the count (ProgressCount: ticks inside the 75 wu disc on which the unit came no nearer by more than 0.1 wu) is under 40
+    (so through the 39th), cleared on the tick that makes it 40, and from then on the unit has none and stands exactly where it stood on that tick. The run must be long enough to contain the give-up. Returns its tick."""
+    c = ProgressCount(point, start)
+    ended = None
+    for k, (h, p) in enumerate(zip(has, positions)):
+        t = k + 1
+        if ended is not None:
+            assert not h, "%s: tick %d: the destination is set again after the give-up on tick %d" % (what, t, ended[0])
+            assert _dist(p, ended[1]) < POS_TOL, "%s: tick %d: the unit moved after its order ended on tick %d" % (what, t, ended[0])
+            continue
+        near = c.tick(p)
+        if near < GIVE_UP_TICKS:
+            assert h, "%s: tick %d: the order ended with a count of %d held ticks inside the 75 wu disc (R-099-05: the 39th still keeps it; a tick that came nearer is not counted); the unit is %.1f wu from its point" % (what, t, near, _dist(p, point))
+        else:
+            assert not h, "%s: tick %d: the unit still has its destination after %d held ticks inside the 75 wu disc, %.1f wu from its point (R-099-05, the 40th ends it)" % (what, t, near, _dist(p, point))
+            ended = (t, p)
+    assert ended is not None, "%s: the run of %d ticks holds fewer than 40 counted ticks, or the order never ended (count %d)" % (what, len(has), c.near)
+    return ended[0]
