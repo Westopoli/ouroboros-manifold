@@ -3,8 +3,8 @@
 
 Rule word for word (docs/bible/epics/E-13-movement-and-command.md, R-097-10, as it reads on this branch):
   R-097-10  "Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement, except that an idle unit (no move target, not
-            engaged) takes the full displacement from a mover of its own side and none from an enemy mover, which takes all of it; given both are stationary and either was displaced earlier in the tick, they split
-            the displacement equally. Every unit starts pair checks, moving or stopped, so a unit that walks into a stopped one is pushed out; the push pass repeats up to 10 times a tick until no pair is closer than 30 wu,
+            engaged) takes the full displacement from a mover of its own side and none from an enemy mover, which takes all of it; given both are stationary, they split the displacement equally (until 2026-11-18 only
+            when either had been displaced earlier in the tick ...; DEC-draws-round6-2026-11-18). Every unit starts pair checks, moving or stopped, so a unit that walks into a stopped one is pushed out; the push pass repeats up to 10 times a tick until no pair is closer than 30 wu,
             or until a pass displaces no unit by more than `COLLISION_SETTLE_EPS = 0.1` wu (that pass is applied; ALG-68). This is a deliberate difference from the Python reference, whose rule let a higher-id unit stack on
             a stopped lower-id one (Westley, 2026-10-02)."
 The proof is the one function `test_R_097_10_proof_*` below; the controls are the `test_R_097_10_control_*` functions, each of which changes one thing of a proof scene and asserts the opposite.
@@ -15,8 +15,9 @@ Clauses and the scene that asserts each one, every tick, through om_tactical_ste
   (2) an idle unit takes the full displacement from a mover of its own side  scene OWN: M (side 0) walks to a point behind an idle side 0 Vanguard. On every tick M stands where it stands alone (the lone control run,
       same scene without the idle unit, within POS_TOL: it takes none), and the idle unit is moved along the line from M by exactly the overlap, whatever the id order.
   (3) none from an enemy mover, which takes all of it                       scene ENEMY (the idle unit and the mover are on different sides), and the control makes them one side.
-  (4) both stationary and either displaced earlier in the tick: split equally  scene SPLIT: M pushes idle own I1 into idle own I2 (both stationary; I1 was displaced earlier in the tick): on every tick the three
-      positions are those of the rule applied by the reference model below, which splits the I1/I2 overlap equally. A model that does not split gives other positions (control).
+  (4) both stationary: split equally  scene SPLIT: M pushes idle own I1 into idle own I2 (both stationary; here I1 was displaced earlier in the tick, the case the rule once required; the rule no longer asks it, and a pair nothing
+      has displaced is the scene of tests/csim/test_E13_R097_10_halted_pair_separates.py): on every tick the three positions are those of the rule applied by the reference model below, which splits the I1/I2 overlap equally.
+      A model that does not split gives other positions (control).
   (5) the pass repeats until no pair is closer than 30 wu, or a pass moves no unit by more than 0.1 wu         scene ROW: M walks into a row of four idle own units that are only 1 wu apart beyond 30; the model runs up to 10
       passes and stops by the two ends of the rule; on every tick the engine agrees with it to MODEL_TOL, and the model with 3 passes, or without the settle stop, or with a stricter one, disagrees (control).
   (Every unit starts pair checks: in OWN the mover is the one that walks into the stopped unit, whichever id is lower.)
@@ -294,7 +295,7 @@ def _check_against_model(tr, ids, model):
 
 @pytest.mark.parametrize("slot", [0, 2], ids=["mover_lowest_id", "mover_highest_id"])
 def test_R_097_10_proof_two_stationary_units_split_a_displacement_the_mover_gave_one_of_them(lib, world_factory, slot):
-    """R-097-10 clause 4, every tick: "given both are stationary and either was displaced earlier in the tick, they split the displacement equally". M walks to the side 0 idle Vanguard I1 at (560,549); I2, also idle side 0,
+    """R-097-10 clause 4, every tick: "given both are stationary, they split the displacement equally" (the clause no longer asks that either was displaced earlier in the tick; this scene is one in which I1 was). M walks to the side 0 idle Vanguard I1 at (560,549); I2, also idle side 0,
     stands at (585,569), 32 wu from I1. M pushes I1 (the idle unit takes the full displacement), which brings I1 within 30 wu of I2: both stationary, I1 displaced earlier in the tick, so each takes half of that overlap, and the pass
     repeats. On every tick the three positions are the reference model's to MODEL_TOL (model: ids ascending, up to 10 passes). Premise: the model resolves a pair of two stationary units on 4 ticks or more of the run
     (the control tells the split from the lower id taking all)."""
