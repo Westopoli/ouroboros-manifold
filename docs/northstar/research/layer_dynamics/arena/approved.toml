@@ -1,0 +1,148 @@
+# The approved fights: the lab's standing set (round6.md L2, DEC-regression-set-2026-11-18). One [[fight]] per fight his stage decisions approved:
+# stage 1 (DEC-stage1-seen-2026-11-01), stage 2 (DEC-stage2-seen-2026-11-02; SIT-0102 was denied as a roster finding), stage 3 (DEC-stage3-layouts-2026-11-05),
+# stage 4 (DEC-stage4-layouts-2026-11-05). `python -m scripts.skilllab.arena.regression` runs every row at seed 1 with the orders its layout names and nothing more
+# (docs/northstar/plans/engine-rules-2026-11-08/round6.md, DEC-one-click-2026-11-18); a row with a control (ground: the twin with the features emptied; sight: targeting by sight off) also runs it.
+# expected_winner and predict_rate are his own file's `predict` and side A's rate (the layout's predict_rate; a situation's `Expected win rate:` as the converter turns it into side A's).
+
+[[fight]]
+stage = 1
+layout = "L-0054"
+sight = "off"
+control = "none"
+expected_winner = "draw"
+decision = "DEC-stage1-seen-2026-11-01"
+
+[[fight]]
+stage = 2
+situation = "SIT-0101"
+sight = "off"
+control = "none"
+expected_winner = "B"
+predict_rate = 0.25
+decision = "DEC-stage2-seen-2026-11-02"
+
+[[fight]]
+stage = 2
+situation = "SIT-0103"
+sight = "off"
+control = "none"
+expected_winner = "draw"
+predict_rate = 0.5
+decision = "DEC-stage2-seen-2026-11-02"
+
+[[fight]]
+stage = 2
+situation = "SIT-0104"
+sight = "off"
+control = "none"
+expected_winner = "A"
+predict_rate = 0.6
+decision = "DEC-stage2-seen-2026-11-02"
+
+[[fight]]
+stage = 2
+situation = "SIT-0105"
+sight = "off"
+control = "none"
+expected_winner = "A"
+predict_rate = 0.8
+decision = "DEC-stage2-seen-2026-11-02"
+
+[[fight]]
+stage = 2
+situation = "SIT-0106"
+sight = "off"
+control = "none"
+expected_winner = "B"
+predict_rate = 0.4
+decision = "DEC-stage2-seen-2026-11-02"
+
+[[fight]]
+stage = 2
+situation = "SIT-0107"
+sight = "off"
+control = "none"
+expected_winner = "B"
+predict_rate = 0.4
+decision = "DEC-stage2-seen-2026-11-02"
+
+[[fight]]
+stage = 2
+situation = "SIT-0108"
+sight = "off"
+control = "none"
+expected_winner = "draw"
+predict_rate = 0.5
+decision = "DEC-stage2-seen-2026-11-02"
+
+[[fight]]
+stage = 3
+layout = "L-0055"
+sight = "off"
+control = "ground"
+expected_winner = "A"
+predict_rate = 0.98
+decision = "DEC-stage3-layouts-2026-11-05"
+
+[[fight]]
+stage = 3
+layout = "L-0073"
+sight = "off"
+control = "ground"
+expected_winner = "A"
+predict_rate = 0.75
+decision = "DEC-stage3-layouts-2026-11-05"
+
+[[fight]]
+stage = 3
+layout = "L-0084"
+sight = "off"
+control = "ground"
+expected_winner = "A"
+predict_rate = 0.6
+decision = "DEC-stage3-layouts-2026-11-05"
+
+[[fight]]
+stage = 3
+layout = "L-0039"
+sight = "off"
+control = "ground"
+expected_winner = "B"
+predict_rate = 0.25
+decision = "DEC-stage3-layouts-2026-11-05"
+
+[[fight]]
+stage = 4
+layout = "L-0061"
+sight = "on"
+control = "sight"
+expected_winner = "A"
+predict_rate = 0.98
+decision = "DEC-stage4-layouts-2026-11-05"
+
+[[fight]]
+stage = 4
+layout = "L-0080"
+sight = "on"
+control = "sight"
+expected_winner = "A"
+predict_rate = 0.75
+decision = "DEC-stage4-layouts-2026-11-05"
+
+[[fight]]
+stage = 4
+layout = "L-0083"
+sight = "on"
+control = "sight"
+expected_winner = "A"
+predict_rate = 0.75
+decision = "DEC-stage4-layouts-2026-11-05"
+
+[[fight]]
+stage = 4
+layout = "L-0039"
+sight = "on"
+control = "sight"
+expected_winner = "B"
+predict_rate = 0.25
+decision = "DEC-stage4-layouts-2026-11-05"
