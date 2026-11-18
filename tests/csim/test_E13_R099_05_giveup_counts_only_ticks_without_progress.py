@@ -343,3 +343,116 @@ def check_destination_by_count(has, positions, point, start, what):
             ended = (t, p)
     assert ended is not None, "%s: the run of %d ticks holds fewer than 40 counted ticks, or the order never ended (count %d)" % (what, len(has), c.near)
     return ended[0]
+
+
+# ------------------------------------------------------------------ a new order starts the count at zero (Round 6 piece E2, added 2026-11-18)
+
+OLD_COUNT = 30                      # DRAFT-old-count: counted ticks a unit is held before its order is replaced (the recorded scene carried 37)
+SECOND_POINT = (606.0, 500.0)       # the lone Vanguard's second point: east of FRIEND's west side as the first, so the walker is pressed against FRIEND again and held (24 wu away)
+
+
+def _hold_old_order(lib, w, u, c, n, what):
+    """Steps n ticks of a held unit's FIRST order: the order stays, the unit holds no target, and (premise) it is held, so the count is the tick number."""
+    for t in range(1, n + 1):
+        step(lib, w)
+        near = c.tick(pos(lib, w, u))
+        assert dest(lib, w, u)[0] == 1, "%s: tick %d: the first order ended with a count of %d (scene broken: it should end on the 40th)" % (what, t, near)
+        assert _none(target(lib, w, u)), "%s: tick %d: the unit holds a target (scene broken)" % (what, t)
+        assert near == t, "%s: premise: the unit's count is %d on tick %d (a held unit is counted on every tick)" % (what, near, t)
+
+
+def _run_after_new_order(lib, w, u, point, start, what):
+    """The unit has just been given a new order (a direct command, between ticks) to `point`, from `start`. Steps asserting per tick, counted from the NEW order (R-099-05 'A new order starts the count at zero'):
+    the unit holds no target; its count is the number of ticks since the new order (premise: held on every tick); its destination is still set after every tick up to the one that makes the count 39 and cleared
+    after the 40th; from then on it has no destination and does not move for 20 ticks."""
+    c = ProgressCount(point, start)
+    for k in range(1, GIVE_UP_TICKS + 1):
+        step(lib, w)
+        p, has = pos(lib, w, u), dest(lib, w, u)[0] == 1
+        near = c.tick(p)
+        assert _none(target(lib, w, u)), "%s: %d ticks after the new order: the unit holds a target (scene broken)" % (what, k)
+        assert near == k, "%s: premise: %d ticks after the new order its count by the definition is %d (the unit should be held on every tick; at %s, %.1f wu from the point)" % (what, k, near, p, _dist(p, point))
+        if k < GIVE_UP_TICKS:
+            assert has, "%s: %d ticks after the new order (%d counted ticks of the NEW order): the destination is cleared (R-099-05: a new order starts the count at zero; the count of the order before it, %d, was carried over)" % (
+                what, k, near, OLD_COUNT)
+        else:
+            assert not has, "%s: %d ticks after the new order: the unit still has its destination after %d counted ticks of the new order, %.1f wu from its point (R-099-05)" % (what, k, near, _dist(p, point))
+    end_pos = pos(lib, w, u)
+    for k in range(1, 21):
+        step(lib, w)
+        assert dest(lib, w, u)[0] == 0, "%s: %d ticks after the give-up: the destination is set again" % (what, k)
+        assert _dist(pos(lib, w, u), end_pos) < POS_TOL, "%s: %d ticks after the give-up: the unit moved after ending its order" % (what, k)
+
+
+def test_R_099_05_a_walker_held_for_30_counted_ticks_and_given_a_new_move_order_keeps_it_for_40_counted_ticks_of_the_new_order(lib, world_factory):
+    """R-099-05 'A new order starts the count at zero': the held scene (a Vanguard ordered alone to (600,500), pressed against FRIEND, held from tick 1). After tick 30 (a count of 30) it is given a new move order
+    to (606,500), a point from which it is also held: pressed against FRIEND, 24 wu away, inside 75 wu, never coming nearer. On each of the 39 ticks after the new order the destination is still set; it is cleared
+    after the 40th tick counted from the new order (tick 70), not after the 10th (tick 40), which is what a count carried over from the first order gives. The unit then does not move for 20 ticks. Red today:
+    only the give-up pass resets the count, so the new order ends on tick 40 with a count of 10 of its own."""
+    w, m, e = _held_scene(lib, world_factory)
+    c = ProgressCount(HELD_POINT, HELD_REST)
+    _hold_old_order(lib, w, m, c, OLD_COUNT, "lone walker, first order")
+    assert _move(lib, w, [m], *SECOND_POINT) == 0
+    assert dest(lib, w, m)[1:] == SECOND_POINT, "premise: the new order's point is %s" % (dest(lib, w, m),)
+    _run_after_new_order(lib, w, m, SECOND_POINT, pos(lib, w, m), "lone walker, new order to another point")
+    assert _dist(pos(lib, w, m), HELD_REST) < HELD_TOL, "premise: the walker did not stay where it was held: at %s" % (pos(lib, w, m),)
+
+
+def test_R_099_05_a_walker_given_the_same_move_order_again_after_30_counted_ticks_counts_the_second_order_from_zero(lib, world_factory):
+    """R-099-05 'A new order starts the count at zero', the same order repeated: the held scene; after tick 30 (a count of 30) the unit is given the move order to the same point (600,500) again. The engine's
+    om_command_move has no test for a repeated order (csrc/tactical_move.c: it sets the destination, clears the group and the detour and touches the route, whatever the unit's order was), so the repeat is a
+    new order: the destination is still set on each of the 39 ticks after it and cleared after the 40th counted from the repeat (tick 70). Red today: it ends on tick 40 (a carried count of 30 and 10 more)."""
+    w, m, e = _held_scene(lib, world_factory)
+    c = ProgressCount(HELD_POINT, HELD_REST)
+    _hold_old_order(lib, w, m, c, OLD_COUNT, "lone walker, first order")
+    assert _move(lib, w, [m], *HELD_POINT) == 0
+    _run_after_new_order(lib, w, m, HELD_POINT, pos(lib, w, m), "lone walker, the same order again")
+
+
+def _held_member_scene(lib, wf):
+    """The group control's scene: two Raiders given a group move to (1200,500), an enemy Supply on the first member's slot, the member put 30 wu west of it. Returns (w, a, b, slot)."""
+    w = _world(lib, wf)
+    a = spawn(lib, w, RAIDER, 0, 200.0, 500.0)
+    b = spawn(lib, w, RAIDER, 0, 200.0, 540.0)
+    _group_move(lib, w, [a, b], 1200.0, 500.0)
+    _, sx, sy = dest(lib, w, a)
+    _supply(lib, w, 1, sx, sy)
+    put = (sx - 30.0, sy)
+    lib.om_unit_teleport(w, a, put[0], put[1], 0)
+    assert dest(lib, w, a)[0] == 1, "scene broken: the put-back took the member's destination"
+    return w, a, b, (sx, sy), put
+
+
+def _hold_member(lib, w, a, slot, put):
+    c = ProgressCount(slot, put)
+    _hold_old_order(lib, w, a, c, OLD_COUNT, "group member, first order")
+
+
+def test_R_099_05_a_group_member_held_for_30_counted_ticks_and_given_a_new_group_order_keeps_it_for_40_counted_ticks_of_the_new_order(lib, world_factory):
+    """R-099-05 'A new order starts the count at zero', the group: the group control's scene (member a held 30 wu from its slot by a Supply, from tick 1); after tick 30 (a count of 30) the group is given a new
+    group move to (1200,800), the other member having been put 40 wu south of it first (not scattered). Member a's new slot is read from its destination; an enemy Supply is put on it and the member is put 30 wu west of it (direct position changes, the order stays), pressed against
+    the Supply, 30 wu from the slot, inside 75 wu, never coming nearer. On each of the 39 ticks after the new order its destination is still set; cleared after the 40th counted from the new order (tick 70), not
+    after the 10th. Red today: the new group order does not reset the count carried from the first one."""
+    w, a, b, slot, put = _held_member_scene(lib, world_factory)
+    _hold_member(lib, w, a, slot, put)
+    pa = pos(lib, w, a)
+    lib.om_unit_teleport(w, b, pa[0], pa[1] + 40.0, 0)      # the other member is put beside it, so the group is not scattered (a scattered group's slots are spread wide and the order ends at once)
+    _group_move(lib, w, [a, b], 1200.0, 800.0)
+    assert dest(lib, w, a)[0] == 1, "premise: the member has no destination after the new group order"
+    _, nx, ny = dest(lib, w, a)
+    assert _dist((nx, ny), slot) > 100.0, "premise: the new slot %s is the old one %s" % ((nx, ny), slot)
+    _supply(lib, w, 1, nx, ny)
+    put2 = (nx - 30.0, ny)
+    lib.om_unit_teleport(w, a, put2[0], put2[1], 0)
+    assert dest(lib, w, a)[0] == 1, "scene broken: the put-back took the member's new destination"
+    _run_after_new_order(lib, w, a, (nx, ny), put2, "group member, new group order")
+
+
+def test_R_099_05_a_group_member_held_for_30_counted_ticks_and_given_an_order_of_its_own_keeps_it_for_40_counted_ticks_of_the_new_order(lib, world_factory):
+    """R-099-05 'A new order starts the count at zero', the member's own order: the group control's scene (member a held 30 wu from its slot, from tick 1); after tick 30 (a count of 30) member a alone is given a
+    move order to the Supply's place (its old slot): pressed against the Supply, 30 wu away, inside 75 wu, never coming nearer. Its destination is still set on each of the 39 ticks after the new order and cleared
+    after the 40th counted from it (tick 70). Red today: the count of the group order is carried over and the new order ends on tick 40."""
+    w, a, b, slot, put = _held_member_scene(lib, world_factory)
+    _hold_member(lib, w, a, slot, put)
+    assert _move(lib, w, [a], *slot) == 0
+    _run_after_new_order(lib, w, a, slot, pos(lib, w, a), "group member, an order of its own")
