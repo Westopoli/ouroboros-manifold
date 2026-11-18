@@ -2742,7 +2742,7 @@ static void om_move_layer_pass(om_world *w, om_move_state *ms, uint32_t period) 
     }
 }
 
-/* PP-move R-099-05, A169 (PURSUE_BY_STEERING): a unit under a group move that has been within GROUP_GIVEUP_RADIUS of
+/* PP-move R-099-05, A169 (PURSUE_BY_STEERING): a unit under a group move (or ordered alone, E2 below) that has been within GROUP_GIVEUP_RADIUS of
  * its slot for GROUP_GIVEUP_TICKS consecutive ticks without arriving ends its order where it stands; leaving the
  * disc or arriving resets the count. Runs at the top of the tick, on the positions the last tick ended with. */
 static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
@@ -2750,7 +2750,13 @@ static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
         om_move_unit *mu = &ms->units[id];
         double dx, dy;
-        if (!mu->in_use || !mu->has_dest || mu->group_id == 0 || !om_unit_alive(w, id)) { if (mu->in_use) mu->giveup_near = 0; continue; }
+        if (!mu->in_use || !mu->has_dest || !om_unit_alive(w, id)) { if (mu->in_use) mu->giveup_near = 0; continue; }
+        /* E2 (R-099-05, Round 6): a unit ordered alone counts as a member does, but only while it is trying to move: on a tick it holds a target or is in the
+         * pause after its own shot the count is zero, since a unit that pursues or stands to shoot is a lone walker whose destination is its target's place.
+         * A direct move (pursuit, guard return, move away from fire) and a kiter are not an order given alone and are left as before. The count is giveup_near,
+         * the group give-up's own, so nothing new is saved. See also: the lone-unit "no progress" pass put off in DEC-audit-fixes-2026-10-23,
+         * tests/csim/test_E13_R099_05_lone_walker_arrives_and_gives_up.py. */
+        if (mu->group_id == 0 && (mu->direct_move || mu->kiting || om_unit_get_target(w, id) != 0 || om_unit_in_backswing(w, id))) { mu->giveup_near = 0; continue; }
         dx = mu->dest_x - mu->x;
         dy = mu->dest_y - mu->y;
         if (dx * dx + dy * dy > (double)OM_GROUP_GIVEUP_RADIUS * (double)OM_GROUP_GIVEUP_RADIUS) { mu->giveup_near = 0; continue; }
