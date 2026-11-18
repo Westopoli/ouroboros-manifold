@@ -7,7 +7,7 @@
 Each is a small state machine fed one frame at a time by `invariants._Checker.feed`; the frame, row and `Rules` shapes are those of `invariants.py` (this module imports nothing from it, so the
 checker can import these constants). The notice distance itself (`NOTICE_MARGIN`, `notice_distance`) is read by the checker's acquire and swap checks as well.
 Tests: tests/skilllab/arena/test_invariants_r5_notice_and_lock.py, test_invariants_r5_unseen_fire_and_slope.py. Every number below is a DRAFT constant, Westley's to change:
-  DRAFT-notice-margin 0.1   DRAFT-unseen-fire-window 60 frames   DRAFT-slope-slack 2 wu   DRAFT-slope-settle-ticks 3   DRAFT-slope-crowd 31 wu    DRAFT-slope-near 100 wu (the Monitor's idea of "on a slope")
+  DRAFT-notice-margin 0.1   DRAFT-unseen-fire-window 60 frames   DRAFT-ramp-slack 2 wu   DRAFT-ramp-settle-ticks 3   DRAFT-ramp-crowd 31 wu    DRAFT-ramp-near 100 wu (the Monitor's idea of "on a slope")
 """
 import ctypes
 import math
@@ -19,10 +19,10 @@ PURSUIT_MEMORY = 8           # DRAFT-pursuit-memory (frames): a unit that held a
 BACKSWING_TICKS = 10         # R-084-04 (the checker's own constant, repeated): ticks 1 to 9 after a shot are the pause, in which a unit that fired stands
 OWN_MOVE = 0.5               # a displacement above it counts as "moved" (the checker's own constant, repeated: this module cannot import invariants)
 SLOPE_GAP = 30.0             # R-097-05: 2 x unit radius 15 wu
-SLOPE_SLACK = 2.0            # DRAFT-slope-slack: a pair this close to 30 wu counts as pushed apart (the sweep's I13: 28 wu; the engine resolves a pair on a slope at most a pace plus 1 wu a tick, om_move_slope_clamp)
-SLOPE_SETTLE_TICKS = 3       # DRAFT-slope-settle-ticks (Architect, round5.md "Third pass"): the step limit on a slope (om_move_slope_clamp) may leave a pair under 30 wu at the end of a tick; it is apart again within this many ticks
-SLOPE_CROWD = 31.0           # DRAFT-slope-crowd (wu): a third unit this near a pair (touching, 30 wu and a rounding) is a crowd the 3-iteration pass can leave closer than 30 wu
-SLOPE_NEAR = 100.0           # DRAFT-slope-near (wu): the Monitor counts a unit as on a slope when its cell's centre is this near the slope's midline along its run (the ramp's half-width, hills.RAMP_WU / 2)
+SLOPE_SLACK = 2.0            # DRAFT-ramp-slack: a pair this close to 30 wu counts as pushed apart (the sweep's I13: 28 wu; the engine resolves a pair on a slope at most a pace plus 1 wu a tick, om_move_slope_clamp)
+SLOPE_SETTLE_TICKS = 3       # DRAFT-ramp-settle-ticks (Architect, round5.md "Third pass"): the step limit on a slope (om_move_slope_clamp) may leave a pair under 30 wu at the end of a tick; it is apart again within this many ticks
+SLOPE_CROWD = 31.0           # DRAFT-ramp-crowd (wu): a third unit this near a pair (touching, 30 wu and a rounding) is a crowd the 3-iteration pass can leave closer than 30 wu
+SLOPE_NEAR = 100.0           # DRAFT-ramp-near (wu): the Monitor counts a unit as on a slope when its cell's centre is this near the slope's midline along its run (the ramp's half-width, hills.RAMP_WU / 2)
 
 
 def notice_distance(rules, u, layer, other_layer):
