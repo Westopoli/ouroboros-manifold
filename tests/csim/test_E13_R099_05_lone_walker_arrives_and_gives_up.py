@@ -163,11 +163,13 @@ def test_R_099_04_control_a_flying_unit_ordered_alone_is_unchanged(lib, world_fa
 def _friend_run(lib, w, m, point, what):
     """Counting as tests/csim/test_PP_unit_giveup.py: the order is still active after the tick that makes the consecutive count 39 and ended after the tick that makes it 40; the unit holds no target; it is not
     an arrival (a lone unit has no arrival radius, so the order ends by the count whatever the distance); from the give-up it has no destination and does
-    not move (20 ticks). Returns the tick of the give-up."""
+    not move (20 ticks). Returns (the tick of the give-up, the highest y the unit reached: `top`, which the routed test reads to see that the walker went round the wall)."""
     c = Count(point)
+    top = -math.inf
     for t in range(1, RUN_TICKS + 1):
         step(lib, w)
         p, has = pos(lib, w, m), dest(lib, w, m)[0] == 1
+        top = max(top, p[1])
         near = c.tick(p)
         assert _none(target(lib, w, m)), "%s: tick %d: a plain mover holds a target %s (scene broken)" % (what, t, target(lib, w, m))
         if near == GIVE_UP_TICKS - 1:
