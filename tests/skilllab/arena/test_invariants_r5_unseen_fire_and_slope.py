@@ -11,7 +11,7 @@ still on its way to its point is neither moved nor stopped by such a hit: it kee
 R-097-05: "Given two units on the same layer within 30 wu (2 x radius 15), or two units within 30 wu that both stand on the same slope, whichever side of its midline each is on (E-01 R-001-06),
 When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick."
 Round 5 G4 whole-run statement: "no walker with an attack-move destination stands still under unseen fire, and no unit moves away more than once without a new hit". G5: "no two units on one
-slope closer than 30 wu after the pass except at the iteration cap" (Third pass: a pair is reported only after more than DRAFT-slope-settle-ticks = 3 ticks under 30 wu). The flip clause of G5 ("no unit flips
+slope closer than 30 wu after the pass except at the iteration cap" (Third pass: a pair is reported only after more than DRAFT-ramp-settle-ticks = 3 ticks under 30 wu). The flip clause of G5 ("no unit flips
 layer back and forth across a midline") is withdrawn (second pass: a layer on a slope is its side of the midline, E-01 R-004-06): a unit that changes layer three times in 20 ticks is silent.
 
 THE API THIS FILE PINS (the lab builder builds to it; frames, `visible` and `hits` as in tests/skilllab/test_invariants_nearest.py):
@@ -29,8 +29,8 @@ THE API THIS FILE PINS (the lab builder builds to it; frames, `visible` and `hit
                               in the first frame of the run: a second move away without a new hit. A unit whose first run followed no unseen hit is not judged (a leash return, a new order).
     UNSEEN_WINDOW             60 frames, DRAFT-unseen-fire-window (the 60-tick HIT_GAP of tests/skilllab/arena/engine_rules_unseen_oracle.py); the tests keep 20 frames either side of it.
     Rules(slope_at=...)       callable (x, y) -> a hashable id of the slope the point lies on, or None off every slope. R-097-05: two living units within 30 wu - SLOPE_SLACK (2 wu,
-                              DRAFT-slope-slack) of each other that both stand on the same slope (any layers) are a violation of unit min(a, b) in the frame in which they have stayed that close for
-                              more than SLOPE_SETTLE_TICKS (3, DRAFT-slope-settle-ticks) consecutive frames (the fourth), once while they stay close. A layer change is never a violation.
+                              DRAFT-ramp-slack) of each other that both stand on the same slope (any layers) are a violation of unit min(a, b) in the frame in which they have stayed that close for
+                              more than SLOPE_SETTLE_TICKS (3, DRAFT-ramp-settle-ticks) consecutive frames (the fourth), once while they stay close. A layer change is never a violation.
 """
 import sys
 from pathlib import Path
@@ -41,7 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from test_invariants import _Module, row, rules, trace  # noqa: E402,F401
 
 UNSEEN_WINDOW = 60           # DRAFT-unseen-fire-window
-SLOPE_SLACK = 2.0            # DRAFT-slope-slack (wu): a pair this close to 30 wu counts as pushed apart
+SLOPE_SLACK = 2.0            # DRAFT-ramp-slack (wu): a pair this close to 30 wu counts as pushed apart
 FAR = (3000.0, 100.0)
 
 
@@ -184,7 +184,7 @@ def test_R_087_01_control_plain_movers_guards_pushes_and_pursuers_are_not_judged
 
 # ---------------------------------------------------------------------------------------------------------------- R-097-05
 
-SLOPE_SETTLE_TICKS = 3       # DRAFT-slope-settle-ticks: the step limit on a slope may leave a pair under 30 wu for this many ticks; the fourth is reported
+SLOPE_SETTLE_TICKS = 3       # DRAFT-ramp-settle-ticks: the step limit on a slope may leave a pair under 30 wu for this many ticks; the fourth is reported
 
 
 def pair(inv, gap, layers=(0, 1), slopes=("s1", "s1"), alive=(True, True), frames=12, close=range(1, 5), flat_gap=60.0):
@@ -202,7 +202,7 @@ def pair(inv, gap, layers=(0, 1), slopes=("s1", "s1"), alive=(True, True), frame
 
 def test_R_097_05_two_units_on_one_slope_closer_than_30_wu_for_more_than_3_ticks_are_flagged_across_the_layer_line(inv):
     """R-097-05: "two units within 30 wu that both stand on the same slope, whichever side of its midline each is on"; round5.md Third pass: a pair is reported only after more than
-    DRAFT-slope-settle-ticks = 3 ticks under 30 wu. Planted: units 1 (layer 0) and 2 (layer 1) on one slope 20 wu apart in ticks 1 to 4 (60 apart before and after): flagged once, in tick 4 (the
+    DRAFT-ramp-settle-ticks = 3 ticks under 30 wu. Planted: units 1 (layer 0) and 2 (layer 1) on one slope 20 wu apart in ticks 1 to 4 (60 apart before and after): flagged once, in tick 4 (the
     fourth), for the lower id. Controls: 3 ticks close (1 to 3) is silent, and a pair close for 3 ticks, apart for one and close for 3 more is silent (the count restarts)."""
     assert keys(pair(inv, 20.0)) == [("R-097-05", 4, 1)]
     assert pair(inv, 20.0, close=range(1, 1 + SLOPE_SETTLE_TICKS)) == []
@@ -219,7 +219,7 @@ def test_R_097_05_the_same_pair_on_one_layer_is_flagged_too(inv):
 
 @pytest.mark.parametrize("gap", [30.0, 28.5, 45.0], ids=["pushed-apart-30", "inside-the-slack", "far"])
 def test_R_097_05_control_a_pair_pushed_to_30_wu_is_silent(inv, gap):
-    """R-097-05 control (green today and after): the same two units, close for 8 ticks, 30 wu apart (the pass's result), 28.5 apart (inside the DRAFT-slope-slack of 2 wu) or 45 apart are silent."""
+    """R-097-05 control (green today and after): the same two units, close for 8 ticks, 30 wu apart (the pass's result), 28.5 apart (inside the DRAFT-ramp-slack of 2 wu) or 45 apart are silent."""
     assert pair(inv, gap, close=range(1, 9)) == []
 
 

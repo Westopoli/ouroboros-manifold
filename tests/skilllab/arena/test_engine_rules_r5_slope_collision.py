@@ -8,7 +8,7 @@ units on one slope collide across the layer line: "All the rest go with recommen
 queues on narrow ramps, docs/reports/2026-11-12-engine-rules-round-3.md)." And the invariant under E-13 (Invariants): "No two same-layer units, and no two units on the same slope (R-097-05), within 30 wu after the
 collision pass, except when the pass hits its iteration cap."
 round5.md G5 whole-run, as the Architect's second pass rules it (2026-11-17): "no two units on one slope closer than 30 wu after the pass except at the iteration cap", where the step limit on a slope (the no-jump
-rule of Round 2, `om_move_slope_clamp`) may leave a pair closer than 30 wu at the end of a tick and such a pair is apart again within DRAFT-slope-settle-ticks = 3 ticks; and, in place of "no unit flips layer back and
+rule of Round 2, `om_move_slope_clamp`) may leave a pair closer than 30 wu at the end of a tick and such a pair is apart again within DRAFT-ramp-settle-ticks = 3 ticks; and, in place of "no unit flips layer back and
 forth across a midline" (withdrawn: a push across the midline is a legal change, R-004-06), "each unit on a slope has the layer of its side of the midline on every tick"; the flips are counted and reported, not asserted.
 E-01 R-004-06: "below the midline, units on layer L may attack it and units on layer L+1 may not; at or above the midline, units on layer L+1 ... the same holds going up or down"; R-004-08: "while on the slope the unit
 counts as being on the layer on its side of the midline".
@@ -21,14 +21,14 @@ lab's cap. The six hill layouts of the Round 3 trial (appendix-slope-pileup.md, 
 lab's own setting), all catalogue layouts as they stand on this branch.
 
 THE MEASURES (DRAFT numbers are Westley's):
-  pile_up        a tick on which two living units on DIFFERENT layers that `om_terrain_slope_at` puts on the same slope (the same index, not -1) end the tick closer than PAIR 30 - SLACK wu (DRAFT-slope-slack-wu 2,
-                 the sweep's I13: "closer than 28 wu after the step (R-097-05 says 30; 2 wu slack for the push pass)"), when neither unit has a third living unit within 30 wu of it (DRAFT-slope-cap-excuse: the pass
+  pile_up        a tick on which two living units on DIFFERENT layers that `om_terrain_slope_at` puts on the same slope (the same index, not -1) end the tick closer than PAIR 30 - SLACK wu (DRAFT-ramp-slack-wu 2,
+                 the sweep's I13: "closer than 28 wu after the step (R-097-05 says 30; 2 wu slack for the push pass)"), when neither unit has a third living unit within 30 wu of it (DRAFT-ramp-cap-excuse: the pass
                  runs at most 3 iterations per tick, so a pair in a crowd may be left closer; an isolated pair is resolved by the first one). Only pairs on different layers are judged: that is the case R-097-05 adds.
                  Pairs on one layer are not, because the engine leaves isolated same-layer pairs closer than 28 wu today for reasons that are not the slope (a wall or a blocked cell the push may not enter; dumped
                  2026-11-17 on the Round 5 branch before the build, isolated same-layer pairs on a slope under 28 wu: L-0061 31, L-0062 37, L-0063 12, L-0083 73, L-0084 262, L-0045 12, and 0 to 13 of them off any
                  slope): a whole-fight "never closer than 30" cannot be asked of the slope case alone, and the spec's sentence ("no two units on one slope closer than 30 wu after the pass except at the iteration cap")
                  is reported as reading wider than the engine can meet (findings).
-  unsettled      a pile_up of a pair that is still a pair on one slope on different layers closer than 28 wu on each of the SETTLE_TICKS DRAFT-slope-settle-ticks 3 ticks after it (crowding is not asked of the
+  unsettled      a pile_up of a pair that is still a pair on one slope on different layers closer than 28 wu on each of the SETTLE_TICKS DRAFT-ramp-settle-ticks 3 ticks after it (crowding is not asked of the
                  later ticks: whether the pair is apart is a matter of distance): the step limit may leave a pair close for a tick, not for more than 3.
   off_midline    a living walker on a slope (`om_terrain_slope_at` >= 0) whose layer, at the end of a tick, is not the layer of its side of the slope's midline: the lower band's layer below the midline, the upper band's
                  at or above it (the midline and the direction of the run read from the slope record, mx, my, x0, y0, x1, y1). A flyer is not judged (its layer is its own).
@@ -51,10 +51,10 @@ from scripts.skilllab.engine import Engine  # noqa: E402
 SECONDS = 600
 HILLS = ["L-0061", "L-0062", "L-0063", "L-0083", "L-0084", "L-0045"]
 PAIR = 30.0
-SLACK = 2.0                 # DRAFT-slope-slack-wu
+SLACK = 2.0                 # DRAFT-ramp-slack-wu
 FLICKER_CHANGES = 3
 FLICKER_TICKS = 20
-SETTLE_TICKS = 3            # DRAFT-slope-settle-ticks
+SETTLE_TICKS = 3            # DRAFT-ramp-settle-ticks
 
 
 class _Slope(ctypes.Structure):
@@ -229,7 +229,7 @@ def test_control_a_fight_with_no_hill_has_no_pile_up_and_no_flicker(name):
 @pytest.mark.parametrize("name", HILLS)
 def test_R_097_05_no_two_units_on_one_slope_stay_closer_than_30_wu_beyond_the_settle_ticks(name):
     """R-097-05 / E-13 Invariants: "No two same-layer units, and no two units on the same slope (R-097-05), within 30 wu after the collision pass, except when the pass hits its iteration cap", read with the
-    Architect's second pass (2026-11-17): the step limit on a slope may leave a pair closer than 30 wu at the end of a tick, and such a pair is apart again within DRAFT-slope-settle-ticks = 3 ticks. On every tick of the
+    Architect's second pass (2026-11-17): the step limit on a slope may leave a pair closer than 30 wu at the end of a tick, and such a pair is apart again within DRAFT-ramp-settle-ticks = 3 ticks. On every tick of the
     fight, no two units that stand on the same slope on different layers (the case R-097-05 adds) end the tick closer than 28 wu (30 less the sweep's 2 wu slack) with no third unit crowding them (the 3-iteration cap) and
     still be that close on each of the 3 ticks after it. Red until Round 5 on all six (before the slope case: isolated pairs closer than 28 wu on L-0061 341, L-0062 103, L-0063 34, L-0083 1, L-0084 70, L-0045 319).
     Per tick: the pair is followed tick by tick; it is not replaced by a count at the end of the fight."""
