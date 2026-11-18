@@ -10,6 +10,7 @@ Two layers:
                                                  fight of 12,000 ticks is not re-scanned every tick
   Monitor(engine, world, width, height, sight)  the online wrapper `run.fight` uses: reads the engine after each step, builds the frame, feeds `_Checker`
 
+Round 6 (2026-11-18) adds the same-layer half of R-097-05 (`invariants_r6.py`: two units on one layer closer than 28 wu for more than 3 ticks).
 Round 5 (2026-11-17) adds R-087-01 (unseen fire) and R-097-05 (slope collision), makes R-087-03 know the notice distance (a pick or a lock beyond it) and judges a guard's pick from where it stands.
 Round 2 (engine rules, 2026-11-11) adds: R-087-03 acquisitions (nearest seen enemy, cohort turn, return fire), R-093-02 (fire only at the side's visible set of the previous
 frame), R-087-09 only within attack range, continuity judging layer changes (not every push), R-096-08 (guard leash) and R-087-10 (spherical range of a shot). `watch` is the entry the lab
@@ -28,6 +29,7 @@ import ctypes
 import math
 
 from scripts.skilllab.invariants_r5 import NOTICE_MARGIN, LockKept, SlopeCollision, UnseenFire, notice_distance, slope_at_for  # noqa: F401  NOTICE_MARGIN: DRAFT-notice-margin, read by the tests
+from scripts.skilllab.invariants_r6 import SameLayerOverlap
 
 RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02", "R-096-08", "R-087-10", "R-087-01", "R-097-05")
 
@@ -113,6 +115,7 @@ class _Checker:
         self._lock_kept = LockKept(self._beyond_notice, lambda u: self.rf.get(u, False))
         self._unseen_fire = UnseenFire(rules.guards, self._pushed, self._disp, lambda u, mine, theirs: self.rules.reach.get(u) is None or self._in_reach(self.rules.reach[u], mine, theirs))
         self._slope = SlopeCollision(rules.slope_at) if rules.slope_at is not None else None
+        self._overlap = SameLayerOverlap(rules.slope_at)
 
     # -- helpers
     @staticmethod
@@ -209,6 +212,8 @@ class _Checker:
             self._unseen_fire.feed(frame, prev, tick, out)
         if "R-097-05" in on and self._slope is not None:
             self._slope.feed(frame, prev, tick, out)
+        if "R-097-05" in on:
+            self._overlap.feed(frame, prev, tick, out)
         if "R-093-02" in on and prev is not None and "visible" in prev:
             self._sight(frame, prev["visible"], tick, out)
         for a in shooters:
