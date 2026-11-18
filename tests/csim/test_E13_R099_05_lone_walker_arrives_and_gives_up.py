@@ -21,9 +21,9 @@ default), a 2000 x 2000 canvas. Every case is asserted per tick. Units that give
           groove between two of them), inside the 75 wu disc. A flyer steers round the ring and leaves the disc now and then (measured to 88 wu), so a flyer is held by one Supply instead (see its test).
   GUARDED the same ring made of own Vanguards that hold a target (an enemy Supply 250 wu west of the point, 1e6 hp): used for an attack-mover, which would take enemy ring units as targets.
 How the count is read: as the progress count of R-099-05 (DEC-giveup-progress-2026-11-18), defined in the docstring of `check_destination_by_count` in
-tests/csim/test_E13_R099_05_giveup_counts_only_ticks_without_progress.py and kept by its `ProgressCount` (imported here): a tick is counted when the position reported by the previous tick is within 75 wu of the
-point and the unit did not come nearer by more than 0.1 wu on the tick before that; a tick that brings it nearer is not counted and does not reset the count; leaving the disc resets it. The order must still be
-active after the tick that makes the count 39 and ended after the tick that makes it 40. (Until 2026-11-18 this file counted every tick inside the disc; Test-defect: R-099-05 counts only ticks without progress.)
+tests/csim/test_E13_R099_05_giveup_counts_only_ticks_without_progress.py and kept by its `ProgressCount` (imported here): each tick is judged by its own two ends: it resets the count when it began outside the 75 wu disc, is counted when it began inside and did not bring the unit nearer by more than 0.1 wu, and is not counted,
+count unchanged, when it began inside and brought the unit nearer by more than 0.1 wu. The order must still be active after the tick that makes the count 39 and ended after the tick that makes it 40.
+(Until 2026-11-18 this file counted every tick inside the disc; Test-defect: R-099-05 counts only ticks without progress.)
 
 Detector bounds (not rules; Westley's to change): PAUSE_TICKS 9 (the nine ticks after a shot, as the E1 file), PAUSE_SLACK 3 (DRAFT-pause-slack-ticks: how many ticks either side of the exact boundary the pause case
 tolerates, the first counted tick after a pause being a convention the rule does not fix), RUN_TICKS 400 (a run limit), LOCK_END_BY 4 (DRAFT-lock-end-ticks: the premise that a lock ended within this many ticks of
@@ -223,7 +223,7 @@ def _ring_scene(lib, wf):
 
 def test_R_099_05_a_walker_ordered_alone_and_held_inside_75_wu_ends_its_order_on_the_40th_tick_not_the_39th(lib, world_factory):
     """R-099-05 'A unit moving alone gives up the same way, by the same two numbers measured to its ordered point': a Raider ordered alone (plain move) is held by a ring of enemy Supplies about 53 wu from its
-    point (inside 75 wu, outside every arrival radius). Counting as tests/csim/test_PP_unit_giveup.py does (previous tick's reported position): its destination is still set after the tick that makes the count 39,
+    point (inside 75 wu, outside every arrival radius). Counting as the progress count does (each tick judged by its own two ends): its destination is still set after the tick that makes the count 39,
     cleared after the tick that makes it 40; it is not an arrival (more than 30 wu from the point); it holds no target on any tick; from that tick on it has no destination and does not move (20 ticks)."""
     w, m = _ring_scene(lib, world_factory)
     has, ps = _record(lib, w, m, RUN_TICKS, no_target=True)

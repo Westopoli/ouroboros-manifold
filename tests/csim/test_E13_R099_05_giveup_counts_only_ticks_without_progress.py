@@ -10,11 +10,10 @@ Rule words (docs/bible/epics/E-13-movement-and-command.md):
   R-099-04  "A unit ordered alone has no arrival radius: with a clear path it walks to its point itself (tests hold a lone walker to within 1 wu of its route's end and a guard to within 5 wu of its post)", and a unit
             under a group move arrives within 1.5 x its collision radius of its slot.
 
-How the count is read (the rule's two numbers, the convention of tests/csim/test_PP_unit_giveup.py and tests/csim/test_E13_R099_05_lone_walker_arrives_and_gives_up.py): the pass runs at the top of a tick on the
-positions the last tick ended with, so a tick is "near" when the position REPORTED BY THE PREVIOUS TICK is within 75 wu of the point; the tick is "progress" when that position is nearer the point than the one before
-it (reported two ticks back) by more than 0.1 wu (COLLISION_SETTLE_EPS). `ProgressCount` below keeps that count; a tick that is near and not progress adds one, a progress tick adds none and does not reset, leaving the
-disc resets. The unit's order must still be active after the tick that makes the count 39 and ended after the tick that makes it 40. A unit that stands still from tick 1 inside the disc makes no progress on tick 1
-either (its first counted tick is tick 1; a build that read a stale "before the step" position there would count from tick 2, and the controls below catch it).
+How the count is read (the definition is the docstring of `check_destination_by_count` below; `ProgressCount` keeps it): each tick is judged by its own two ends, d(k-1) where it began and d(k) where it ended, the
+distances to the point. It resets the count when d(k-1) is over 75 wu, is counted when d(k-1) is within 75 wu and d(k-1) - d(k) is at most 0.1 wu (COLLISION_SETTLE_EPS), and is not counted, count unchanged, when
+d(k-1) is within 75 wu and the tick brought the unit nearer by more than 0.1 wu. The unit's order must still be active after the tick that makes the count 39 and ended after the tick that makes it 40. Nothing is
+carried from one tick to the next. A unit that stands still from tick 1 inside the disc is counted from tick 1.
 
 Slow unit staged: a custom walking type (id 210, line category, speed 20 wu/s = 1.0 wu a tick, measured: 0.949 wu in x and 0.316 in y a tick, 1.000 along its heading), slower than 1.875 wu a tick. Fortified
 Bastion (0.8 wu a tick) cannot be staged by a lone order: a Bastion that is ordered to move cancels its fortify (csrc/unit.c, om_ability_cancel_fortify on an order), so the custom type stands for it; the slope test
@@ -54,26 +53,25 @@ def _dist(a, b):
 
 
 class ProgressCount:
-    """The count of R-099-05 as the rule words it: a tick is counted when the position reported by the previous tick is within 75 wu of the point and did not come nearer it, by more than 0.1 wu, than the
-    position reported before that. `start` is the unit's position when the order was given (tick 1's two positions)."""
+    """The count of R-099-05, judged by each tick's own movement (the definition is the docstring of `check_destination_by_count`). `start` is the unit's position when the order was given (where tick 1 begins)."""
 
     def __init__(self, point, start):
         self.point = point
         self.near = 0
-        self.prev = _dist(start, point)
-        self.prev2 = self.prev
+        self.prev = _dist(start, point)          # d(k-1): where the next tick begins
 
     def tick(self, p):
-        """Call after each step with the position that step reported; returns the count after the tick."""
+        """Call after each step with the position that step reported (where the tick ended); returns the count after the tick."""
+        d = _dist(p, self.point)
         if self.prev > GIVE_UP_RADIUS:
             self.near = 0
-        elif self.prev2 - self.prev <= PROGRESS_EPS:
+        elif self.prev - d <= PROGRESS_EPS:
             self.near += 1
-        self.prev2, self.prev = self.prev, _dist(p, self.point)
+        self.prev = d
         return self.near
 
     def teleported(self, p):
-        """The unit was put at `p` between ticks (a direct position change): the next tick reads it as the position the last tick ended with; the one before it stays."""
+        """The unit was put at `p` between ticks (a direct position change): the next tick begins there."""
         self.prev = _dist(p, self.point)
 
 
@@ -295,7 +293,7 @@ def test_R_099_05_ticks_that_come_nearer_inside_the_disc_are_not_counted_and_do_
         pytest.fail("the count never reached 40 in %d ticks" % RUN_TICKS)
     assert seen["progress"] >= 5, "premise: the put-back unit came nearer on only %d ticks (it should walk 30 wu back at 4 wu a tick)" % seen["progress"]
     assert not seen["left"], "premise: the unit left the 75 wu disc"
-    assert ended >= GIVE_UP_TICKS + seen["progress"] - 1, "the order ended on tick %d, before the held ticks total 40 (40 + the %d ticks of walking in, give or take the tick of the put-back)" % (ended, seen["progress"])
+    assert ended == GIVE_UP_TICKS + seen["progress"], "the order ended on tick %d; the held ticks total 40 on tick %d (40 + the %d ticks of walking in, each judged by its own movement)" % (ended, GIVE_UP_TICKS + seen["progress"], seen["progress"])
 
 
 # ------------------------------------------------------------------ for the tests of other files that hold a lone mover at a unit
@@ -306,18 +304,15 @@ def check_destination_by_count(has, positions, point, start, what):
     Notation. After tick k (k = 1, 2, ...) the unit reports position P(k); P(0) is where it stood when the order was given. d(k) is the distance from P(k) to the unit's point (its ordered point for a unit
     ordered alone, its slot for a group member). `has[k-1]` is whether the unit has a destination after tick k; `positions[k-1]` is P(k).
 
-    Which two positions are compared. The count is updated once per tick k, by the pass that runs at the top of that tick on the positions the previous ticks ended with: it reads P(k-1), the position the
-    previous tick ended with, and P(k-2), the one before it (the position the unit had at the start of tick k-1). For k = 1 there is no P(-1): the unit is taken to have stood still before the first tick, so
-    d(-1) = d(0). Nothing is read from tick k's own step.
+    Which tick is judged by what. Tick k is judged by its own two ends and nothing else: d(k-1), where the tick began, and d(k), where it ended. Nothing is carried over from the tick before it (the engine keeps
+    no state between ticks for this, so a game saved between two ticks gives up on the same tick). For k = 1 the two ends are d(0), where the unit stood when ordered, and d(1): no convention is needed.
 
-    Which tick is counted. Tick k is attributed the comparison of d(k-1) with d(k-2): tick k is COUNTED (the count goes up by one) when d(k-1) <= 75 wu AND d(k-2) - d(k-1) <= 0.1 wu, that is, the unit is inside
-    the disc as the previous tick left it and the previous tick did not bring it nearer by more than 0.1 wu (a tick that took it farther, or kept it where it was, is counted). Tick k is NOT COUNTED, and the count
-    is left as it is, when d(k-1) <= 75 wu and d(k-2) - d(k-1) > 0.1 wu (it is still walking in: a progress tick neither adds nor resets). Tick k RESETS the count to zero when d(k-1) > 75 wu (the unit is outside the
-    disc, whatever it did on the tick before). A unit that arrives, or whose order ended, has no count (it is cleared when the order ends).
+    The three cases. Tick k RESETS the count to zero when d(k-1) > 75 wu (the unit began the tick outside the disc). Tick k is COUNTED (the count goes up by one) when d(k-1) <= 75 wu AND d(k-1) - d(k) <= 0.1 wu:
+    it began the tick inside the disc and the tick did not bring it nearer by more than 0.1 wu (a tick that took it farther, or left it where it was, is counted). Tick k is NOT COUNTED, and the count is left as
+    it is, when d(k-1) <= 75 wu AND d(k-1) - d(k) > 0.1 wu (it is still walking in: a progress tick neither adds nor resets). Arrival, or the end of the order, clears the count.
 
-    The first tick inside the disc. A unit that walks into the disc is coming nearer on the tick that brings it in, so the first tick for which d(k-1) <= 75 wu is a progress tick and is not counted; the count
-    starts on the first tick after the unit stopped coming nearer. A unit already inside the disc when ordered (d(0) <= 75 wu) and held from the start has its tick 1 counted: its two compared distances d(0) and
-    d(-1) = d(0) are equal. A unit that is put somewhere by a direct position change between two ticks has that position as P(k-1) on the next tick, and P(k-2) is the last one reported before.
+    The first tick inside the disc. A unit that walks into the disc during tick j began that tick outside it, so tick j resets, and the count can start at tick j+1. A unit already inside the disc when ordered
+    (d(0) <= 75 wu) and held from the start is counted from tick 1 and its order ends on tick 40. A unit that is put somewhere by a direct position change between two ticks is seen as beginning the next tick there.
 
     The order ends. On the tick k on which the count reaches 40 the order ends: the destination is cleared (`has` is false after tick k, so the order is still active after the tick that makes the count 39) and
     from tick k on the unit is stationary and has no destination. (The clause that the count is zero on a tick the unit holds a target or is in the pause after its own shot is not part of this recorded-run
