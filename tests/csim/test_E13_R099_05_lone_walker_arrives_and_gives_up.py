@@ -20,8 +20,10 @@ default), a 2000 x 2000 canvas. Every case is asserted per tick. Units that give
   RING    six enemy Supplies (1e6 hp, never fire, never move) on a circle of 30 wu round the walker's point: a walker coming from outside rests against the ring 52 to 60 wu from the point (measured: 53.3, in a
           groove between two of them), inside the 75 wu disc. A flyer steers round the ring and leaves the disc now and then (measured to 88 wu), so a flyer is held by one Supply instead (see its test).
   GUARDED the same ring made of own Vanguards that hold a target (an enemy Supply 250 wu west of the point, 1e6 hp): used for an attack-mover, which would take enemy ring units as targets.
-How the count is read, as tests/csim/test_PP_unit_giveup.py pins it: after every tick, a tick is "near" when the unit's position REPORTED BY THE PREVIOUS TICK is within 75 wu of its point (positions are reported one tick
-behind); `near` counts consecutive near ticks; the order must still be active after the tick that makes near 39 and ended after the tick that makes near 40.
+How the count is read: as the progress count of R-099-05 (DEC-giveup-progress-2026-11-18), defined in the docstring of `check_destination_by_count` in
+tests/csim/test_E13_R099_05_giveup_counts_only_ticks_without_progress.py and kept by its `ProgressCount` (imported here): a tick is counted when the position reported by the previous tick is within 75 wu of the
+point and the unit did not come nearer by more than 0.1 wu on the tick before that; a tick that brings it nearer is not counted and does not reset the count; leaving the disc resets it. The order must still be
+active after the tick that makes the count 39 and ended after the tick that makes it 40. (Until 2026-11-18 this file counted every tick inside the disc; Test-defect: R-099-05 counts only ticks without progress.)
 
 Detector bounds (not rules; Westley's to change): PAUSE_TICKS 9 (the nine ticks after a shot, as the E1 file), PAUSE_SLACK 3 (DRAFT-pause-slack-ticks: how many ticks either side of the exact boundary the pause case
 tolerates, the first counted tick after a pause being a convention the rule does not fix), RUN_TICKS 400 (a run limit), LOCK_END_BY 4 (DRAFT-lock-end-ticks: the premise that a lock ended within this many ticks of
@@ -34,6 +36,7 @@ import pytest
 
 from conftest import OMFeature
 from test_PP_unit_support import RAIDER, SUPPLY, VANGUARD, attack_move, dest, hp, kill, pos, spawn, step, target
+from test_E13_R099_05_giveup_counts_only_ticks_without_progress import ProgressCount, check_destination_by_count
 
 FLYING, WALKING = 0, 1
 CANVAS = 2000.0
@@ -100,20 +103,6 @@ def _ring(lib, w, p, kind):
     return units, _supply(lib, w, 1, p[0] - 250.0, p[1])
 
 
-class Count:
-    """The near count of tests/csim/test_PP_unit_giveup.py: a tick is near when the position reported by the previous tick is within 75 wu of the point."""
-
-    def __init__(self, point):
-        self.point = point
-        self.near = 0
-        self.prev = math.inf
-
-    def tick(self, p):
-        self.near = self.near + 1 if self.prev <= GIVE_UP_RADIUS else 0
-        self.prev = _dist(p, self.point)
-        return self.near
-
-
 def test_R_099_04_control_a_lone_walker_with_a_clear_path_walks_to_its_point_itself(lib, world_factory):
     """R-099-04 'A unit ordered alone has no arrival radius: with a clear path it walks to its point itself': a Raider ordered alone from (300,400) to (900,700), nothing in its way, ends its order within 5 wu of
     the point (CLEAR_PATH_WU: a build that gave it an arrival radius would stop it 22 or 30 wu short), never has a destination again and does not move after. On every tick that it is 40 wu or more from the
@@ -160,33 +149,32 @@ def test_R_099_04_control_a_flying_unit_ordered_alone_is_unchanged(lib, world_fa
 
 # ------------------------------------------------------------------ R-099-05: a unit ordered alone and kept from its point ends by the give-up, it does not arrive
 
-def _friend_run(lib, w, m, point, what):
-    """Counting as tests/csim/test_PP_unit_giveup.py: the order is still active after the tick that makes the consecutive count 39 and ended after the tick that makes it 40; the unit holds no target; it is not
-    an arrival (a lone unit has no arrival radius, so the order ends by the count whatever the distance); from the give-up it has no destination and does
-    not move (20 ticks). Returns (the tick of the give-up, the highest y the unit reached: `top`, which the routed test reads to see that the walker went round the wall)."""
-    c = Count(point)
-    top = -math.inf
-    for t in range(1, RUN_TICKS + 1):
+def _record(lib, w, u, max_ticks, no_target=False):
+    """Steps the world, recording after each tick whether `u` has a destination and where it is, until 20 ticks after its order ended (or `max_ticks`). With `no_target` the unit holds no target on any tick up to
+    and including the one on which its order ends (a plain mover; after it ends it is idle and may take a target, which is not this file's business). Returns (has, positions)."""
+    has, ps, ended = [], [], None
+    for t in range(1, max_ticks + 1):
         step(lib, w)
-        p, has = pos(lib, w, m), dest(lib, w, m)[0] == 1
-        top = max(top, p[1])
-        near = c.tick(p)
-        assert _none(target(lib, w, m)), "%s: tick %d: a plain mover holds a target %s (scene broken)" % (what, t, target(lib, w, m))
-        if near == GIVE_UP_TICKS - 1:
-            assert has, "%s: tick %d: the walker's order ended after %d consecutive ticks inside 75 wu of its point (before the 40th)" % (what, t, near)
-        if near == GIVE_UP_TICKS:
-            assert not has, "%s: tick %d: the walker still has its destination after %d consecutive ticks inside 75 wu of its point, %.1f wu away, and holds no target (R-099-05, lone walker; it has no arrival radius, R-099-04)" % (what, t, near, _dist(p, point))
-            end_pos, ended = p, t
+        has.append(dest(lib, w, u)[0] == 1)
+        ps.append(pos(lib, w, u))
+        if ended is None and not has[-1]:
+            ended = t
+        if no_target and (ended is None or t == ended):
+            assert _none(target(lib, w, u)), "tick %d: a plain mover holds a target %s (scene broken)" % (t, target(lib, w, u))
+        if ended is not None and t >= ended + 20:
             break
-        if not has:
-            pytest.fail("%s: tick %d: the order ended with only %d consecutive ticks inside 75 wu (%.1f wu from the point): not the give-up boundary" % (what, t, near, _dist(p, point)))
-    else:
-        pytest.fail("%s: the walker never had 40 consecutive ticks inside 75 wu in %d ticks (at %s)" % (what, RUN_TICKS, pos(lib, w, m)))
-    for k in range(1, 21):
-        step(lib, w)
-        assert dest(lib, w, m)[0] == 0, "%s: tick %d (give-up on %d): the destination is set again" % (what, ended + k, ended)
-        assert _dist(pos(lib, w, m), end_pos) < POS_TOL, "%s: tick %d (give-up on %d): the unit moved after ending its order: %s -> %s" % (what, ended + k, ended, end_pos, pos(lib, w, m))
-    return ended, top
+    return has, ps
+
+
+def _friend_run(lib, w, m, point, what):
+    """Counting as `check_destination_by_count` does (the progress count): the order is still active after the tick that makes the count 39 and ended after the one that makes it 40; the unit holds no target on any
+    tick; it is not an arrival (a lone unit has no arrival radius, so the order ends by the count whatever the distance); from the give-up it has no destination and does not move (the helper checks every tick
+    for the 20 ticks after it). Returns (the tick of the give-up, the highest y the unit reached: `top`, which the routed test reads to see that the walker went
+    round the wall)."""
+    start = pos(lib, w, m)
+    has, ps = _record(lib, w, m, RUN_TICKS, no_target=True)
+    ended = check_destination_by_count(has, ps, point, start, what)
+    return ended, max(p[1] for p in ps)
 
 
 def test_R_099_05_a_walker_ordered_alone_and_held_18_wu_from_its_point_ends_its_order_on_the_40th_tick_it_does_not_arrive(lib, world_factory):
@@ -238,27 +226,9 @@ def test_R_099_05_a_walker_ordered_alone_and_held_inside_75_wu_ends_its_order_on
     point (inside 75 wu, outside every arrival radius). Counting as tests/csim/test_PP_unit_giveup.py does (previous tick's reported position): its destination is still set after the tick that makes the count 39,
     cleared after the tick that makes it 40; it is not an arrival (more than 30 wu from the point); it holds no target on any tick; from that tick on it has no destination and does not move (20 ticks)."""
     w, m = _ring_scene(lib, world_factory)
-    c = Count(RING_POINT)
-    ended = None
-    for t in range(1, RUN_TICKS + 1):
-        step(lib, w)
-        p, has = pos(lib, w, m), dest(lib, w, m)[0] == 1
-        near = c.tick(p)
-        assert _none(target(lib, w, m)), "tick %d: a plain mover holds a target %s (scene broken)" % (t, target(lib, w, m))
-        if near == GIVE_UP_TICKS - 1:
-            assert has, "tick %d: the walker gave up after %d consecutive ticks inside 75 wu of its point (before the 40th)" % (t, near)
-        if near == GIVE_UP_TICKS:
-            assert not has, "tick %d: the walker still has its destination after %d consecutive ticks inside 75 wu of its point, %.1f wu away, and holds no target (R-099-05, lone walker)" % (t, near, _dist(p, RING_POINT))
-            assert _dist(p, RING_POINT) > NOT_AN_ARRIVAL, "scene broken: tick %d: an arrival (%.1f wu from the point), not a give-up" % (t, _dist(p, RING_POINT))
-            ended = (t, p)
-            break
-        if not has:
-            pytest.fail("tick %d: the order ended with only %d consecutive ticks inside 75 wu (%.1f wu from the point): not the give-up boundary" % (t, near, _dist(p, RING_POINT)))
-    assert ended is not None, "the walker never had 40 consecutive ticks inside 75 wu in %d ticks (at %s)" % (RUN_TICKS, pos(lib, w, m))
-    for k in range(1, 21):
-        step(lib, w)
-        assert dest(lib, w, m)[0] == 0, "tick %d (give-up on %d): the destination is set again" % (ended[0] + k, ended[0])
-        assert _dist(pos(lib, w, m), ended[1]) < POS_TOL, "tick %d (give-up on %d): the unit moved after ending its order: %s -> %s" % (ended[0] + k, ended[0], ended[1], pos(lib, w, m))
+    has, ps = _record(lib, w, m, RUN_TICKS, no_target=True)
+    ended = check_destination_by_count(has, ps, RING_POINT, RING_START, "ring-held walker alone")
+    assert _dist(ps[ended - 1], RING_POINT) > NOT_AN_ARRIVAL, "scene broken: tick %d: an arrival (%.1f wu from the point), not a give-up" % (ended, _dist(ps[ended - 1], RING_POINT))
 
 
 def test_R_099_05_the_count_of_a_walker_alone_starts_again_when_it_leaves_the_disc(lib, world_factory):
@@ -266,7 +236,7 @@ def test_R_099_05_the_count_of_a_walker_alone_starts_again_when_it_leaves_the_di
     the E1 file moves a unit; its order stays). It walks back, rests against the ring again. The order is still active after the tick that makes the new consecutive count 39 and cleared after the one that makes
     it 40, although the two visits together are more than 40 ticks."""
     w, m = _ring_scene(lib, world_factory)
-    c = Count(RING_POINT)
+    c = ProgressCount(RING_POINT, RING_START)
     first_visit, put_back, ended = 0, None, None
     for t in range(1, RUN_TICKS + 1):
         step(lib, w)
@@ -277,7 +247,7 @@ def test_R_099_05_the_count_of_a_walker_alone_starts_again_when_it_leaves_the_di
             assert has, "tick %d: the walker ended its order at count %d, before the put-back (scene broken or an early give-up)" % (t, near)
             if near == 25:
                 lib.om_unit_teleport(w, m, RING_START[0], RING_START[1], 0)
-                c.prev = _dist(RING_START, RING_POINT)
+                c.teleported(RING_START)
                 put_back = t
                 assert dest(lib, w, m)[0] == 1, "scene broken: the put-back took the destination"
             continue
@@ -324,7 +294,7 @@ def test_R_099_05_a_lone_attack_mover_holding_a_target_keeps_its_order_while_it_
     running); when the count is 20 an enemy Supply V is put 60 wu from it (inside its attack range 200, so it stands to shoot). It holds V as its target and shoots it for 120 ticks (V's hp falls). On every one of
     those ticks it still has its destination and does not move: a count that ran through the shooting would end the order on the 40th tick."""
     w, m, v, ring, s1 = _guarded_scene(lib, world_factory)
-    c = Count(RING_POINT)
+    c = ProgressCount(RING_POINT, RING_START)
     tv = _bring_victim_at_count(lib, w, m, v, c, 20)
     assert all(target(lib, w, r) == s1 for r in ring), "scene broken: a ring unit holds no target (it would be idle and step aside)"
     at_rest = pos(lib, w, m)
@@ -347,7 +317,7 @@ def test_R_099_05_the_pause_after_its_own_shot_is_not_counted(lib, world_factory
     on the first walking tick, S+10: the order is still active on every tick to S+46 (a count of 37) and ended by S+53 (a count of 44, PAUSE_SLACK 3 each way of the 40th, S+49). A count that took in the pause
     ends it about S+40."""
     w, m, v, ring, s1 = _guarded_scene(lib, world_factory)
-    c = Count(RING_POINT)
+    c = ProgressCount(RING_POINT, RING_START)
     tv = _bring_victim_at_count(lib, w, m, v, c, 20)
     shot, ended = None, None
     for t in range(tv + 1, tv + 200):
@@ -421,20 +391,10 @@ def test_R_099_05_control_a_group_members_give_up_is_unchanged_40_ticks_75_wu_to
     _group_move(lib, w, [a, b], 1200.0, 500.0)
     _, sx, sy = dest(lib, w, a)
     _supply(lib, w, 1, sx, sy)
-    c = Count((sx, sy))
-    for t in range(1, 601):
-        step(lib, w)
-        p, has = pos(lib, w, a), dest(lib, w, a)[0] == 1
-        near = c.tick(p)
-        if near == GIVE_UP_TICKS - 1:
-            assert has, "tick %d: the group member gave up before 40 ticks within 75 wu of its slot" % t
-        if near == GIVE_UP_TICKS:
-            assert not has, "tick %d: the group member still has its destination after 40 consecutive ticks within 75 wu of its slot" % t
-            assert _dist(p, (sx, sy)) > ARRIVE_SLOT, "scene broken: an arrival, not a give-up"
-            return
-        if not has:
-            pytest.fail("tick %d: the group member's order ended with only %d near ticks (%.1f wu from its slot)" % (t, near, _dist(p, (sx, sy))))
-    pytest.fail("the group member never accumulated 40 near ticks")
+    start = pos(lib, w, a)
+    has, ps = _record(lib, w, a, 600)
+    ended = check_destination_by_count(has, ps, (sx, sy), start, "group member held by a Supply on its slot")
+    assert _dist(ps[ended - 1], (sx, sy)) > ARRIVE_SLOT, "scene broken: an arrival (%.1f wu from the slot), not a give-up" % _dist(ps[ended - 1], (sx, sy))
 
 
 # ---- a saved and loaded game gives up on the same tick
@@ -468,7 +428,7 @@ def test_R_099_05_a_game_saved_and_loaded_in_the_middle_of_a_count_gives_up_on_t
     g = _give_up_tick(lib, wa, ma, 1)
     assert g is not None, "run A: the walker never gave up (R-099-05, lone walker): at %s, destination %s" % (pos(lib, wa, ma), dest(lib, wa, ma))
     wb, mb = _ring_scene(lib, world_factory)
-    c = Count(RING_POINT)
+    c = ProgressCount(RING_POINT, RING_START)
     for t in range(1, RUN_TICKS + 1):
         step(lib, wb)
         if c.tick(pos(lib, wb, mb)) == 20:
@@ -497,24 +457,7 @@ def test_R_099_05_a_flying_unit_ordered_alone_and_held_inside_75_wu_ends_its_ord
     _supply(lib, w, 1, 708.0, 500.0)
     point = (700.0, 500.0)
     assert _move(lib, w, [m], *point) == 0
-    closest = math.inf
-    c = Count(point)
-    ended = None
-    for t in range(1, RUN_TICKS + 1):
-        step(lib, w)
-        p, has = pos(lib, w, m), dest(lib, w, m)[0] == 1
-        closest = min(closest, _dist(p, point))
-        near = c.tick(p)
-        if near == GIVE_UP_TICKS - 1:
-            assert has, "tick %d: the flyer's order ended after %d consecutive ticks inside 75 wu of its point (before the 40th)" % (t, near)
-        if near == GIVE_UP_TICKS:
-            assert not has, "tick %d: the flying unit still has its destination after %d consecutive ticks inside 75 wu of its point, %.1f wu away (R-099-05, flying unit ordered alone)" % (t, near, _dist(p, point))
-            ended = (t, p)
-            break
-        if not has:
-            pytest.fail("tick %d: the flyer's order ended with only %d consecutive ticks inside 75 wu (%.1f wu from the point, closest %.1f): not the give-up boundary, or a steering arrival" % (t, near, _dist(p, point), closest))
-    assert ended is not None, "the flying unit never had 40 consecutive ticks inside 75 wu in %d ticks (at %s, closest %.1f)" % (RUN_TICKS, pos(lib, w, m), closest)
+    has, ps = _record(lib, w, m, RUN_TICKS)
+    ended = check_destination_by_count(has, ps, point, (300.0, 500.0), "flying unit alone held by a Supply")
+    closest = min(_dist(p, point) for p in ps[:ended])
     assert closest > ARRIVE_SLOT, "scene broken: the flyer came within the 22.5 wu of the steering arrival (%.1f)" % closest
-    for k in range(1, 21):
-        step(lib, w)
-        assert dest(lib, w, m)[0] == 0 and _dist(pos(lib, w, m), ended[1]) < POS_TOL, "tick %d (give-up on %d): the flyer has a destination again or moved" % (ended[0] + k, ended[0])

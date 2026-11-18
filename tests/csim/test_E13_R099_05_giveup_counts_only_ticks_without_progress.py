@@ -301,9 +301,30 @@ def test_R_099_05_ticks_that_come_nearer_inside_the_disc_are_not_counted_and_do_
 # ------------------------------------------------------------------ for the tests of other files that hold a lone mover at a unit
 
 def check_destination_by_count(has, positions, point, start, what):
-    """Per tick, the rule's count applied to a recorded run (used by the R-097-10 files, which hold a lone mover at a unit): `has[k]` is whether the unit has a destination after tick k+1, `positions[k]` its position
-    then, `start` where it stood when ordered. The destination is kept on every tick on which the count (ProgressCount: ticks inside the 75 wu disc on which the unit came no nearer by more than 0.1 wu) is under 40
-    (so through the 39th), cleared on the tick that makes it 40, and from then on the unit has none and stands exactly where it stood on that tick. The run must be long enough to contain the give-up. Returns its tick."""
+    """THE DEFINITION of the give-up count of R-099-05 (DEC-giveup-progress-2026-11-18), applied here to a recorded run and kept by `ProgressCount`. A builder implements this and nothing else.
+
+    Notation. After tick k (k = 1, 2, ...) the unit reports position P(k); P(0) is where it stood when the order was given. d(k) is the distance from P(k) to the unit's point (its ordered point for a unit
+    ordered alone, its slot for a group member). `has[k-1]` is whether the unit has a destination after tick k; `positions[k-1]` is P(k).
+
+    Which two positions are compared. The count is updated once per tick k, by the pass that runs at the top of that tick on the positions the previous ticks ended with: it reads P(k-1), the position the
+    previous tick ended with, and P(k-2), the one before it (the position the unit had at the start of tick k-1). For k = 1 there is no P(-1): the unit is taken to have stood still before the first tick, so
+    d(-1) = d(0). Nothing is read from tick k's own step.
+
+    Which tick is counted. Tick k is attributed the comparison of d(k-1) with d(k-2): tick k is COUNTED (the count goes up by one) when d(k-1) <= 75 wu AND d(k-2) - d(k-1) <= 0.1 wu, that is, the unit is inside
+    the disc as the previous tick left it and the previous tick did not bring it nearer by more than 0.1 wu (a tick that took it farther, or kept it where it was, is counted). Tick k is NOT COUNTED, and the count
+    is left as it is, when d(k-1) <= 75 wu and d(k-2) - d(k-1) > 0.1 wu (it is still walking in: a progress tick neither adds nor resets). Tick k RESETS the count to zero when d(k-1) > 75 wu (the unit is outside the
+    disc, whatever it did on the tick before). A unit that arrives, or whose order ended, has no count (it is cleared when the order ends).
+
+    The first tick inside the disc. A unit that walks into the disc is coming nearer on the tick that brings it in, so the first tick for which d(k-1) <= 75 wu is a progress tick and is not counted; the count
+    starts on the first tick after the unit stopped coming nearer. A unit already inside the disc when ordered (d(0) <= 75 wu) and held from the start has its tick 1 counted: its two compared distances d(0) and
+    d(-1) = d(0) are equal. A unit that is put somewhere by a direct position change between two ticks has that position as P(k-1) on the next tick, and P(k-2) is the last one reported before.
+
+    The order ends. On the tick k on which the count reaches 40 the order ends: the destination is cleared (`has` is false after tick k, so the order is still active after the tick that makes the count 39) and
+    from tick k on the unit is stationary and has no destination. (The clause that the count is zero on a tick the unit holds a target or is in the pause after its own shot is not part of this recorded-run
+    helper; the scenes that use it have no target.)
+
+    The check. On every tick before the count reaches 40 the destination is kept (a tick with the count at 39 included); the unit's order must end on the tick that makes the count 40; on every tick after, there is
+    no destination and the position is the one of the tick on which the order ended, to within 1e-6 wu. The run must contain the give-up. Returns its tick."""
     c = ProgressCount(point, start)
     ended = None
     for k, (h, p) in enumerate(zip(has, positions)):
