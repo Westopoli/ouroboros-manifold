@@ -2,12 +2,15 @@
 """E-13 R-099-05 / R-099-04, Round 6 piece E2 (docs/northstar/plans/engine-rules-2026-11-08/round6.md): a unit ordered alone gives up.
 
 Rule words (docs/bible/epics/E-13-movement-and-command.md):
-  R-099-05  "... When it has been within 75 wu (about two slot spacings) of its slot for 40 consecutive ticks (2 s) without arriving, Then it ends its order where it stands, the same state as an arrival (destination
-            cleared, stationary from that tick onward); the count resets when the unit leaves the 75 wu disc or arrives ... A unit moving or attack-moving alone, walking or flying, gives up the same way, by the same two
-            numbers measured to its ordered point, with the same saved count, and only while it is trying to move: a tick on which it holds a target or is in the pause after its own shot sets the count to zero, since a
-            unit that pursues or stands to shoot is itself a lone walker whose destination is its target's place (DEC-draws-round6-2026-11-18; ... not built)."
-  R-099-04  "A unit ordered alone has no arrival radius: with a clear path it walks to its point itself (tests hold a lone walker to within 1 wu of its route's end and a guard to within 5 wu of its post), and when
-            something keeps it from the point it ends by the give-up of R-099-05 (found 2026-11-18: walkers ordered alone stood 16 to 19 wu from their point with the destination still set for 10,000 ticks)".
+  R-099-05  "Given a unit held within 75 wu (about two slot spacings) of the place its order names (its slot under a group move or a group attack-move; its ordered point when it moves or attack-moves alone;
+            walking or flying), When it has spent 40 ticks (2 s) there on which it came no nearer that place, Then it ends its order where it stands, the same state as an arrival: its destination is cleared and it
+            takes no step of its own from that tick onward ... a tick that began outside the disc resets the count; arriving resets it; an order given to the unit starts it at zero, and the engine's own re-issue of a
+            move inside an order (the resume after a fight, a pursuit, a return) does not. The count is zero on any tick the unit holds a target, is in the pause after its own shot, kites or is on a direct move (a pursuit,
+            a guard's return, a move away from fire): a unit that pursues or stands to shoot is itself walking alone toward its target's place and is never ended by this rule. A walker ordered alone has no arrival radius
+            (R-099-04), so this rule is what ends it when something stands on its point."
+  R-099-04  "A walker ordered alone has no arrival radius: with a clear path it walks to its point itself (tests hold a lone walker to within 1 wu of its route's end and a guard to within 5 wu of its post), and when
+            something keeps it from the point it ends by the give-up of R-099-05; a flying unit ordered alone stops within 1.5 radii of its point, as its steering always has (found 2026-11-18: walkers ordered alone
+            stood 16 to 19 wu from their point with the destination still set for 10,000 ticks)."
   Round 6 E2: "The count is the one the group give-up already keeps, saves and hashes (giveup_near in the move state): no new saved state, and a game loaded in the middle of a count gives up on the same tick as the game
             that was never saved (determinism is a contract)."
 Cause the round names (csrc/tactical_move.c): om_move_giveup_pass skips every unit with no group, so a lone unit kept from its point by a unit that gives no ground (a walker pushed back every tick, a flyer
@@ -104,7 +107,7 @@ def _ring(lib, w, p, kind):
 
 
 def test_R_099_04_control_a_lone_walker_with_a_clear_path_walks_to_its_point_itself(lib, world_factory):
-    """R-099-04 'A unit ordered alone has no arrival radius: with a clear path it walks to its point itself': a Raider ordered alone from (300,400) to (900,700), nothing in its way, ends its order within 5 wu of
+    """R-099-04 'A walker ordered alone has no arrival radius: with a clear path it walks to its point itself': a Raider ordered alone from (300,400) to (900,700), nothing in its way, ends its order within 5 wu of
     the point (CLEAR_PATH_WU: a build that gave it an arrival radius would stop it 22 or 30 wu short), never has a destination again and does not move after. On every tick that it is 40 wu or more from the
     point (reported) it still has its destination. Green today and must stay green."""
     w = _world(lib, world_factory)
@@ -127,7 +130,7 @@ def test_R_099_04_control_a_lone_walker_with_a_clear_path_walks_to_its_point_its
 
 
 def test_R_099_04_control_a_flying_unit_ordered_alone_is_unchanged(lib, world_factory):
-    """R-099-04 / R-099-05 (a flyer with a clear path is unchanged): a flying Raider ordered alone from (300,400) to (900,700), nothing in its way, ends its order within 22.5 wu of the point (the steering arrival, 1.5 radii), keeps no
+    """R-099-04 'a flying unit ordered alone stops within 1.5 radii of its point, as its steering always has': a flying Raider ordered alone from (300,400) to (900,700), nothing in its way, ends its order within 22.5 wu of the point (the steering arrival, 1.5 radii), keeps no
     destination afterwards and does not move after. Green today and must stay green."""
     w = _world(lib, world_factory, kind=FLYING)
     m = spawn(lib, w, RAIDER, 0, 300.0, 400.0)
@@ -178,7 +181,7 @@ def _friend_run(lib, w, m, point, what):
 
 
 def test_R_099_05_a_walker_ordered_alone_and_held_18_wu_from_its_point_ends_its_order_on_the_40th_tick_it_does_not_arrive(lib, world_factory):
-    """R-099-05 'A unit moving alone gives up the same way, by the same two numbers measured to its ordered point' with R-099-04 'A unit ordered alone has no arrival radius': a Vanguard ordered alone (a plain
+    """R-099-05 'its ordered point when it moves or attack-moves alone' with R-099-04 'A walker ordered alone has no arrival radius': a Vanguard ordered alone (a plain
     move, no group) from (300,500) to (600,500); an own Vanguard that holds a target (FRIEND) stands at (612,500), 12 wu behind the point, so the walker rests 18 wu in front of it (measured on the Round 5 engine:
     it stays at (582.0, 500.0), destination set, for ever). It does not arrive at 18 wu: its destination is still set after the tick that makes the consecutive count inside the 75 wu disc 39, cleared after the
     one that makes it 40; from then on it has no destination and does not move; the friend never moves."""
@@ -224,7 +227,7 @@ def _ring_scene(lib, wf):
 def test_R_099_05_a_walker_ordered_alone_and_held_inside_75_wu_ends_its_order_on_the_40th_tick_not_the_39th(lib, world_factory):
     """R-099-05, as the epic reads now: "Given a unit held within 75 wu (about two slot spacings) of the place its order names (... its ordered point when it moves or attack-moves alone; walking or flying), When it has spent
     40 ticks (2 s) there on which it came no nearer that place, Then it ends its order where it stands, the same state as an arrival: its destination is cleared and it takes no step of its own from that tick onward";
-    "A unit ordered alone has no arrival radius (R-099-04), so this rule is what ends it when something stands on its point". The lone-walker case: a Raider ordered alone (plain move) is held by a ring of enemy Supplies about 53 wu from its
+    "A walker ordered alone has no arrival radius (R-099-04), so this rule is what ends it when something stands on its point". The lone-walker case: a Raider ordered alone (plain move) is held by a ring of enemy Supplies about 53 wu from its
     point (inside 75 wu, outside every arrival radius). Counting as the progress count does (each tick judged by its own two ends): its destination is still set after the tick that makes the count 39,
     cleared after the tick that makes it 40; it is not an arrival (more than 30 wu from the point); it holds no target on any tick; from that tick on it has no destination and does not move (20 ticks)."""
     w, m = _ring_scene(lib, world_factory)
@@ -234,7 +237,7 @@ def test_R_099_05_a_walker_ordered_alone_and_held_inside_75_wu_ends_its_order_on
 
 
 def test_R_099_05_the_count_of_a_walker_alone_starts_again_when_it_leaves_the_disc(lib, world_factory):
-    """R-099-05 'the count resets when the unit leaves the 75 wu disc': the ring scene; when the count is 25 the walker is put back at its start, 300 wu from its point (a direct position change, the way
+    """R-099-05 'a tick that began outside the disc resets the count': the ring scene; when the count is 25 the walker is put back at its start, 300 wu from its point (a direct position change, the way
     the E1 file moves a unit; its order stays). It walks back, rests against the ring again. The order is still active after the tick that makes the new consecutive count 39 and cleared after the one that makes
     it 40, although the two visits together are more than 40 ticks."""
     w, m = _ring_scene(lib, world_factory)
@@ -292,7 +295,7 @@ def _bring_victim_at_count(lib, w, m, v, c, at_count):
 
 
 def test_R_099_05_a_lone_attack_mover_holding_a_target_keeps_its_order_while_it_holds_it(lib, world_factory):
-    """R-099-05 'only while it is trying to walk: a tick on which it holds a target ... sets the count to zero': an attack-moving Raider held by a guarded ring 53 wu from its point (inside the disc, the count
+    """R-099-05 'The count is zero on any tick the unit holds a target, is in the pause after its own shot, kites or is on a direct move': an attack-moving Raider held by a guarded ring 53 wu from its point (inside the disc, the count
     running); when the count is 20 an enemy Supply V is put 60 wu from it (inside its attack range 200, so it stands to shoot). It holds V as its target and shoots it for 120 ticks (V's hp falls). On every one of
     those ticks it still has its destination and does not move: a count that ran through the shooting would end the order on the 40th tick."""
     w, m, v, ring, s1 = _guarded_scene(lib, world_factory)
@@ -314,7 +317,7 @@ def test_R_099_05_a_lone_attack_mover_holding_a_target_keeps_its_order_while_it_
 
 
 def test_R_099_05_the_pause_after_its_own_shot_is_not_counted(lib, world_factory):
-    """R-099-05 'a tick on which it ... is in the pause after its own shot sets the count to zero': the scene above; V is put 60 wu from the unit when the count is 20, the unit shoots it, and V is taken
+    """R-099-05 'The count is zero on any tick the unit ... is in the pause after its own shot': the scene above; V is put 60 wu from the unit when the count is 20, the unit shoots it, and V is taken
     from it on the tick after the unit's first shot S (hp set to 0, the way the E1 file ends a lock by another unit's kill). The nine ticks S+1 to S+9 are the pause; no tick of them is counted. The count starts
     on the first walking tick, S+10: the order is still active on every tick to S+46 (a count of 37) and ended by S+53 (a count of 44, PAUSE_SLACK 3 each way of the 40th, S+49). A count that took in the pause
     ends it about S+40."""
@@ -384,7 +387,7 @@ def test_R_099_05_a_lone_attack_mover_that_stands_to_shoot_keeps_its_order_and_w
 
 @pytest.mark.parametrize("kind", [FLYING, WALKING], ids=["flying", "walking"])
 def test_R_099_05_control_a_group_members_give_up_is_unchanged_40_ticks_75_wu_to_its_slot(lib, world_factory, kind):
-    """R-099-05 (first sentence, unchanged): two Raiders at (200,500) and (200,540) given a group move to (1200,500) (the scene of that file moved onto the canvas); the first one's slot is occupied by an enemy Supply parked on it (an own idle unit would step aside for a walker, R-097-10), so the first
+    """R-099-05 'its slot under a group move or a group attack-move' (the clause for a group member, unchanged): two Raiders at (200,500) and (200,540) given a group move to (1200,500) (the scene of that file moved onto the canvas); the first one's slot is occupied by an enemy Supply parked on it (an own idle unit would step aside for a walker, R-097-10), so the first
     member cannot reach its slot. Counted as tests/csim/test_PP_unit_giveup.py (the same scene): its order is active after the tick that makes the count 39 and ended after the tick that makes it 40, measured
     to its slot, farther than 22.5 wu from the slot. Green today and must stay green; the lone-walker build must not move this boundary."""
     w = _world(lib, world_factory, kind=kind)
@@ -450,7 +453,7 @@ def test_R_099_05_a_game_saved_and_loaded_in_the_middle_of_a_count_gives_up_on_t
 # ---- a flying unit ordered alone gives up the same way
 
 def test_R_099_05_a_flying_unit_ordered_alone_and_held_inside_75_wu_ends_its_order_on_the_40th_tick(lib, world_factory):
-    """R-099-05 'A unit moving or attack-moving alone, walking or flying, gives up the same way': a flying Raider ordered alone (plain move) from (300,500) to (700,500); an enemy Supply (1e6 hp, never moves)
+    """R-099-05 'its ordered point when it moves or attack-moves alone; walking or flying': a flying Raider ordered alone (plain move) from (300,500) to (700,500); an enemy Supply (1e6 hp, never moves)
     stands at (708,500), 8 wu past the point. The flyer steers round it and back, paces between about 26 and 52 wu from the point (measured on the Round 5 engine; it never comes within the 22.5 wu of the steering
     arrival, premise asserted) and keeps its destination for ever. A ring does not hold a flyer inside the disc: it leaves it to 88 wu from time to time. Counted as the walker: destination still set after the tick that
     makes the consecutive count 39, cleared after the one that makes it 40; it holds no target; then it has no destination and does not move (20 ticks)."""

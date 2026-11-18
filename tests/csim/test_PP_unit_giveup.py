@@ -1,8 +1,8 @@
 """PP-unit: formation arrival gives up, never mills (E-13 S-099, new R-099-05; Architect A169).
 
-R-099-05 (Addendum 62, A169): a unit under a GROUP MOVE whose own slot it cannot reach ends its order
-where it stands once it has been within 75 wu of its slot for 40 ticks (2 s) without arriving; a unit
-never paces with no end. R-099-04 (arrival radius 1.5 x collision radius = 22.5 wu for a Raider) is unchanged.
+R-099-05 (Addendum 62, A169), as the epic reads now: "Given a unit held within 75 wu (about two slot spacings) of the place its order names (its slot under a group move or a group attack-move ...), When it
+has spent 40 ticks (2 s) there on which it came no nearer that place, Then it ends its order where it stands, the same state as an arrival"; "A unit never paces with no end inside the disc". A unit under a
+GROUP MOVE whose own slot it cannot reach is the case here. R-099-04 "(1.5 x collision radius for a formation slot ...)" (22.5 wu for a Raider) is unchanged.
 
 Counting (the boundary, pinned exactly): as the progress count of R-099-05 (DEC-giveup-progress-2026-11-18), defined in the
 docstring of `check_destination_by_count` in tests/csim/test_E13_R099_05_giveup_counts_only_ticks_without_progress.py and kept
@@ -91,7 +91,7 @@ def test_R_099_05_s101_scene_every_order_ends_and_nobody_paces(lib, world_factor
 
 def test_R_099_05_blocked_slot_gives_up_at_exactly_40_ticks_within_75(lib, world_factory):
     """S-099 R-099-05: slot occupied by a stopped neighbour; the unit mills near it. Active after the
-    39th counted tick (a tick that brings it nearer by more than 0.1 wu is not counted), ended after the 40th, not arrived (still farther than 22.5 wu), and it
+    39th counted tick ('a tick that began inside the 75 wu disc and brought the unit nearer by more than 0.1 wu is not counted'), ended after the 40th, not arrived (still farther than 22.5 wu), and it
     stays where it stands afterwards."""
     w = _world(lib, world_factory)
     a, slot = _blocked_pair(lib, w)
@@ -142,7 +142,7 @@ def test_R_099_05_normal_arrival_still_ends_by_the_arrival_rule(lib, world_facto
 # ---- (4) farther than 75 wu: no give-up ----
 
 def test_R_099_05_a_unit_farther_than_75_from_its_slot_does_not_give_up(lib, world_factory):
-    """R-099-05: the clock runs only within 75 wu. A unit walking 1000 wu keeps its order for as long as it
+    """R-099-05 'a tick that began outside the disc resets the count': the clock runs only within 75 wu. A unit walking 1000 wu keeps its order for as long as it
     is farther than 75 wu from its slot (well past 40 ticks)."""
     w = _world(lib, world_factory)
     a = spawn(lib, w, RAIDER, 0, 0.0, 0.0)

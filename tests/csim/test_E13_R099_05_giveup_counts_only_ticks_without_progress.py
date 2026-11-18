@@ -2,13 +2,14 @@
 """E-13 R-099-05, Round 6 piece E2 (docs/northstar/plans/engine-rules-2026-11-08/round6.md, DEC-giveup-progress-2026-11-18): the give-up counts only ticks without progress.
 
 Rule words (docs/bible/epics/E-13-movement-and-command.md):
-  R-099-05  "... When it has been within 75 wu (about two slot spacings) of its slot for 40 consecutive ticks (2 s) without arriving, Then it ends its order where it stands ... the count resets when the unit leaves the
-            75 wu disc or arrives ... Only a tick on which the unit came no nearer its slot is counted: a tick that brings it nearer by more than 0.1 wu is not counted and does not reset the count, so a slow unit that is
-            still walking in is never stopped short (DEC-giveup-progress-2026-11-18: counting every tick inside the disc ends the order of any unit slower than 1.875 wu a tick on a clear path, a Bastion climbing a slope
-            about 2 wu short of its point and a Fortified one about 43 wu short; not built). A unit that is held makes no such tick and still ends on the 40th. A unit moving or attack-moving alone ... gives up the same
-            way, by the same two numbers measured to its ordered point."
-  R-099-04  "A unit ordered alone has no arrival radius: with a clear path it walks to its point itself (tests hold a lone walker to within 1 wu of its route's end and a guard to within 5 wu of its post)", and a unit
-            under a group move arrives within 1.5 x its collision radius of its slot.
+  R-099-05  "Given a unit held within 75 wu (about two slot spacings) of the place its order names (its slot under a group move or a group attack-move; its ordered point when it moves or attack-moves alone;
+            walking or flying), When it has spent 40 ticks (2 s) there on which it came no nearer that place, Then it ends its order where it stands, the same state as an arrival ... Each tick is judged by its own
+            two ends: a tick that began inside the 75 wu disc and brought the unit nearer by more than 0.1 wu is not counted and does not reset the count, so a slow unit that is still walking in is never stopped short;
+            a tick that began outside the disc resets the count; arriving resets it; an order given to the unit starts it at zero, and the engine's own re-issue of a move inside an order (the resume after a fight, a
+            pursuit, a return) does not."
+  R-099-04  "Given a unit within its arrival radius of its destination (1.5 x collision radius for a formation slot, 2 x for a route waypoint), When the tick runs, Then it has arrived where it stands ... A walker
+            ordered alone has no arrival radius: with a clear path it walks to its point itself (tests hold a lone walker to within 1 wu of its route's end and a guard to within 5 wu of its post), and when something
+            keeps it from the point it ends by the give-up of R-099-05".
 
 How the count is read (the definition is the docstring of `check_destination_by_count` below; `ProgressCount` keeps it): each tick is judged by its own two ends, d(k-1) where it began and d(k) where it ended, the
 distances to the point. It resets the count when d(k-1) is over 75 wu, is counted when d(k-1) is within 75 wu and d(k-1) - d(k) is at most 0.1 wu (COLLISION_SETTLE_EPS), and is not counted, count unchanged, when
@@ -117,7 +118,7 @@ def _none(t):
 # ------------------------------------------------------------------ a unit still coming nearer is not stopped short
 
 def test_R_099_05_a_slow_unit_ordered_alone_on_a_clear_path_keeps_its_destination_while_it_comes_nearer_and_reaches_its_point(lib, world_factory):
-    """R-099-05 'a tick that brings it nearer by more than 0.1 wu is not counted ... a slow unit that is still walking in is never stopped short' with R-099-04 'with a clear path it walks to its point itself': a slow
+    """R-099-05 'a tick that began inside the 75 wu disc and brought the unit nearer by more than 0.1 wu is not counted and does not reset the count, so a slow unit that is still walking in is never stopped short' with R-099-04 'with a clear path it walks to its point itself': a slow
     walking unit (1.0 wu a tick) ordered alone (a plain move) from (300,500) to (600,500), nothing in its way. On every tick on which it came nearer its point by more than 0.1 wu it still has its destination
     (it is walking in; the count of a rule that skips progress ticks stays at zero), whatever its distance (the 75 wu disc is entered with about 300 ticks to spare); the order ends only within 5 wu of the point
     (CLEAR_PATH_WU), and from then on the unit does not move. Red today: the count takes every tick inside the disc, so the order ends on the 40th, about 36 wu from the point, with the unit still coming nearer."""
@@ -152,7 +153,7 @@ def _slow_pace_premise_trace(trace):
 
 
 def test_R_099_05_a_slow_member_of_a_group_walks_to_its_slot_and_reaches_its_arrival_radius(lib, world_factory):
-    """R-099-05 (the same clause for a group member, 'measured to its slot') with R-099-04 (a unit under a group move arrives within 1.5 x radius = 22.5 wu of its slot): two slow walking units at (200,500) and
+    """R-099-05 (the same clause for a group member, 'its slot under a group move or a group attack-move') with R-099-04 'Given a unit within its arrival radius of its destination (1.5 x collision radius for a formation slot ...)' (22.5 wu of its slot): two slow walking units at (200,500) and
     (200,540) are given a group move to (600,500). Each walks to its slot at 1.0 wu a tick, nothing in its way. On every tick it still has its destination while farther than 22.5 wu from its slot; the order of
     each ends only inside 22.5 wu of the slot (the arrival), and takes no step of its own from then on (a later push by the other member, still walking in, leaves it at its new position, R-099-04: measured, 0.41 wu on tick 381). Red before the rebuild: both end on the 40th tick inside the 75 wu disc, 35 wu short of their slots (measured). Red today: both end on the 40th tick inside the 75 wu disc, 35 wu short of their slots (measured)."""
     w = _world(lib, world_factory)
@@ -225,7 +226,7 @@ def _held_scene(lib, wf):
 
 
 def test_R_099_05_control_a_held_walker_ordered_alone_still_ends_its_order_on_the_40th_tick_not_the_39th(lib, world_factory):
-    """R-099-05 'A unit that is held makes no such tick and still ends on the 40th': a Vanguard ordered alone stands pressed against an own Vanguard that holds a target (FRIEND), 18 wu from its point, inside the
+    """R-099-05 'When it has spent 40 ticks (2 s) there on which it came no nearer that place, Then it ends its order where it stands' (a unit that is held makes no tick of progress and ends on the 40th): a Vanguard ordered alone stands pressed against an own Vanguard that holds a target (FRIEND), 18 wu from its point, inside the
     75 wu disc from tick 1 and not coming nearer on any tick (premise: it never gets 0.1 wu nearer). Its destination is still set after the tick that makes the count 39 (tick 39) and cleared after tick 40;
     it then has no destination and does not move (20 ticks); the friend never moves. Green today (every tick is counted) and must stay green: the progress clause must not delay a held unit."""
     w, m, e = _held_scene(lib, world_factory)
@@ -237,7 +238,7 @@ def test_R_099_05_control_a_held_walker_ordered_alone_still_ends_its_order_on_th
 
 
 def test_R_099_05_control_a_held_group_member_still_ends_its_order_on_the_40th_tick_not_the_39th(lib, world_factory):
-    """R-099-05 'A unit that is held makes no such tick and still ends on the 40th', the group member: two Raiders at (200,500) and (200,540) are given a group move to (1200,500); an enemy Supply (1e6 hp) is
+    """R-099-05 'When it has spent 40 ticks (2 s) there on which it came no nearer that place, Then it ends its order where it stands' (a unit that is held makes no tick of progress and ends on the 40th), the group member: two Raiders at (200,500) and (200,540) are given a group move to (1200,500); an enemy Supply (1e6 hp) is
     put on the first member's slot (an own idle unit would step aside for a walker, R-097-10), and the member is put 30 wu west of its slot (a direct position change, its order stays): pressed against the
     Supply, inside the 75 wu disc, 30 wu from the slot (outside the 22.5 wu arrival radius), coming no nearer on any tick. Its destination is still set after tick 39 and cleared after tick 40; it then does not move
     (20 ticks). Green today and must stay green."""
@@ -259,7 +260,7 @@ def test_R_099_05_control_a_held_group_member_still_ends_its_order_on_the_40th_t
 # ------------------------------------------------------------------ progress ticks are not counted and do not reset
 
 def test_R_099_05_ticks_that_come_nearer_inside_the_disc_are_not_counted_and_do_not_reset_the_count(lib, world_factory):
-    """R-099-05 'a tick that brings it nearer by more than 0.1 wu is not counted and does not reset the count': the held scene above (a Vanguard pressed against FRIEND, 18 wu from its point, held from tick 1);
+    """R-099-05 'a tick that began inside the 75 wu disc and brought the unit nearer by more than 0.1 wu is not counted and does not reset the count': the held scene above (a Vanguard pressed against FRIEND, 18 wu from its point, held from tick 1);
     after tick 15 (a count of 15) the Vanguard is put 30 wu back, at (552,500), 48 wu from the point and still inside the 75 wu disc (a direct position change; its order stays). It walks back toward the point
     and rests against the friend again: about 8 ticks on each of which it comes nearer by 4 wu or less (premise: at least 5 such ticks, none of them leaving the disc). Those ticks are not counted and the count is not reset by them: the order is
     still active after the tick on which the count (the held ticks only) is 39 and ended after the one on which it is 40, which is tick 40 plus the number of progress ticks. A count that takes in the walking-in
@@ -362,7 +363,7 @@ def _hold_old_order(lib, w, u, c, n, what):
 
 
 def _run_after_new_order(lib, w, u, point, start, what, mates=()):
-    """The unit has just been given a new order (a direct command, between ticks) to `point`, from `start`. Steps asserting per tick, counted from the NEW order (R-099-05 'A new order starts the count at zero'):
+    """The unit has just been given a new order (a direct command, between ticks) to `point`, from `start`. Steps asserting per tick, counted from the NEW order (R-099-05 'an order given to the unit starts it at zero'):
     the unit holds no target; its count is the number of ticks since the new order (premise: held on every tick); its destination is still set after every tick up to the one that makes the count 39 and cleared
     after the 40th; from then on it has no destination and takes no step of its own for 20 ticks: a move in a tick is allowed only when one of `mates` (units of its own side still walking) is within PUSH_REACH of it
     at the end of that tick or, after its own step of the tick, of where the unit stood at the start (an idle unit steps aside for a mover of its own side, R-097-10; a later displacement leaves it where it is put, R-099-04); with no mates it must not move at all."""
@@ -391,7 +392,7 @@ def _run_after_new_order(lib, w, u, point, start, what, mates=()):
 
 
 def test_R_099_05_a_walker_held_for_30_counted_ticks_and_given_a_new_move_order_keeps_it_for_40_counted_ticks_of_the_new_order(lib, world_factory):
-    """R-099-05 'A new order starts the count at zero': the held scene (a Vanguard ordered alone to (600,500), pressed against FRIEND, held from tick 1). After tick 30 (a count of 30) it is given a new move order
+    """R-099-05 'an order given to the unit starts it at zero': the held scene (a Vanguard ordered alone to (600,500), pressed against FRIEND, held from tick 1). After tick 30 (a count of 30) it is given a new move order
     to (606,500), a point from which it is also held: pressed against FRIEND, 24 wu away, inside 75 wu, never coming nearer. On each of the 39 ticks after the new order the destination is still set; it is cleared
     after the 40th tick counted from the new order (tick 70), not after the 10th (tick 40), which is what a count carried over from the first order gives. The unit then does not move for 20 ticks. Red today:
     only the give-up pass resets the count, so the new order ends on tick 40 with a count of 10 of its own."""
@@ -405,7 +406,7 @@ def test_R_099_05_a_walker_held_for_30_counted_ticks_and_given_a_new_move_order_
 
 
 def test_R_099_05_a_walker_given_the_same_move_order_again_after_30_counted_ticks_counts_the_second_order_from_zero(lib, world_factory):
-    """R-099-05 'A new order starts the count at zero', the same order repeated: the held scene; after tick 30 (a count of 30) the unit is given the move order to the same point (600,500) again. The engine's
+    """R-099-05 'an order given to the unit starts it at zero', the same order repeated: the held scene; after tick 30 (a count of 30) the unit is given the move order to the same point (600,500) again. The engine's
     om_command_move has no test for a repeated order (csrc/tactical_move.c: it sets the destination, clears the group and the detour and touches the route, whatever the unit's order was), so the repeat is a
     new order: the destination is still set on each of the 39 ticks after it and cleared after the 40th counted from the repeat (tick 70). Red today: it ends on tick 40 (a carried count of 30 and 10 more)."""
     w, m, e = _held_scene(lib, world_factory)
@@ -435,7 +436,7 @@ def _hold_member(lib, w, a, slot, put):
 
 
 def test_R_099_05_a_group_member_held_for_30_counted_ticks_and_given_a_new_group_order_keeps_it_for_40_counted_ticks_of_the_new_order(lib, world_factory):
-    """R-099-05 'A new order starts the count at zero', the group: the group control's scene (member a held 30 wu from its slot by a Supply, from tick 1); after tick 30 (a count of 30) the group is given a new
+    """R-099-05 'an order given to the unit starts it at zero', the group: the group control's scene (member a held 30 wu from its slot by a Supply, from tick 1); after tick 30 (a count of 30) the group is given a new
     group move to (1200,800), the other member having been put 40 wu south of it first (not scattered). Member a's new slot is read from its destination; an enemy Supply is put on it and the member is put 30 wu west of it (direct position changes, the order stays), pressed against
     the Supply, 30 wu from the slot, inside 75 wu, never coming nearer. On each of the 39 ticks after the new order its destination is still set; cleared after the 40th counted from the new order (tick 70), not
     after the 10th. Red today: the new group order does not reset the count carried from the first one."""
@@ -455,7 +456,7 @@ def test_R_099_05_a_group_member_held_for_30_counted_ticks_and_given_a_new_group
 
 
 def test_R_099_05_a_group_member_held_for_30_counted_ticks_and_given_an_order_of_its_own_keeps_it_for_40_counted_ticks_of_the_new_order(lib, world_factory):
-    """R-099-05 'A new order starts the count at zero', the member's own order: the group control's scene (member a held 30 wu from its slot, from tick 1); after tick 30 (a count of 30) member a alone is given a
+    """R-099-05 'an order given to the unit starts it at zero', the member's own order: the group control's scene (member a held 30 wu from its slot, from tick 1); after tick 30 (a count of 30) member a alone is given a
     move order to the Supply's place (its old slot): pressed against the Supply, 30 wu away, inside 75 wu, never coming nearer. Its destination is still set on each of the 39 ticks after the new order and cleared
     after the 40th counted from it (tick 70). Red today: the count of the group order is carried over and the new order ends on tick 40."""
     w, a, b, slot, put = _held_member_scene(lib, world_factory)

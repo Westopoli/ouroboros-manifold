@@ -3,7 +3,8 @@
 
 Rule words (docs/bible/epics/E-13-movement-and-command.md, E-11-units-and-combat.md):
   R-096-02  "Given an attack-move, When an enemy its side can see comes within the unit's notice distance (E-11 R-087-04), Then the unit closes to attack range, halts and fires; when the lock ends (E-11 R-087-03:
-            the target dies, is lost from sight or leaves the notice distance) it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does ... after every fight
+            the target dies, is lost from sight or leaves the notice distance) it resumes toward the point. The pause after the unit's own shot (E-11 R-084-04) delays the resume and never cancels it: a walker that cannot step keeps its destination and walks when the pause ends, and a move or
+            attack-move order given during the pause is kept the same way. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); after every fight
             the group resumes toward the point as a unit attack-moved alone does ... an attack-move is not finished until the unit reaches its point, except that a unit that gives up under R-099-05 ends where it stands".
   R-084-04  "Given a unit fires, When the attack lands, Then the unit pauses movement for 0.5 s (backswing)." A pause, not the end of an order (round6.md E1).
 Cause the round names (csrc/walk_route.c, csrc/tactical_move.c): a walker whose speed is zero (the nine ticks after its own shot) is told "no route" and its destination is cleared, so a lock that ends within about five
@@ -154,7 +155,7 @@ def test_R_096_02_a_walking_attack_mover_whose_target_dies_resumes_to_its_point(
 @pytest.mark.parametrize("k", [1, 2, 3], ids=["1_tick_after", "2_ticks_after", "3_ticks_after"])
 @pytest.mark.parametrize("how", ["notice", "sight"], ids=["leaves_notice_distance", "lost_from_sight"])
 def test_R_096_02_a_walking_attack_mover_whose_lock_ends_by_distance_or_sight_resumes_to_its_point(lib, world_factory, how, k, group):
-    """R-096-02 / R-087-03 'the lock ends when the target ... is lost from sight or leaves the notice distance ... it resumes toward the point': the same scene as the death cases, the Supply kept alive and
+    """R-096-02 'when the lock ends (E-11 R-087-03: the target dies, is lost from sight or leaves the notice distance) it resumes toward the point': the same scene as the death cases, the Supply kept alive and
     taken from the unit k ticks after its shot, either 240 wu behind the unit (beyond the notice distance 220) or made unseen by the unit's side. Every tick: PAUSE, HOLD, WALK, ARRIVE as above."""
     w, u, v = _scene(lib, world_factory, WALKING, group, BIG_HP)
     rec, shot, point, _ = _run_case(lib, w, u, v, how, k)
@@ -166,7 +167,7 @@ def test_R_096_02_a_walking_attack_mover_whose_lock_ends_by_distance_or_sight_re
 
 @pytest.mark.parametrize("j", [1, 4, 8], ids=["1_tick_after", "4_ticks_after", "8_ticks_after"])
 def test_R_096_02_a_move_order_given_in_the_pause_after_a_shot_is_walked_when_the_pause_ends(lib, world_factory, j):
-    """R-096-02 / R-084-04 (round6.md E1: 'a walker given a move order during the pause after its shot walks to that point when the pause ends'): the Raider has shot the Supply (kept alive) and j ticks later
+    """R-096-02 'a move or attack-move order given during the pause is kept the same way' (round6.md E1: 'a walker given a move order during the pause after its shot walks to that point when the pause ends'): the Raider has shot the Supply (kept alive) and j ticks later
     is given a plain move to (900,700). Every tick: it takes no step on ticks S+1 to S+9, holds the destination from S+9, walks on and arrives within ARRIVE_TOL of (900,700)."""
     w, u, v = _scene(lib, world_factory, WALKING, False, BIG_HP)
     start_hp = hp(lib, w, v)
