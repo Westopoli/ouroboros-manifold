@@ -118,10 +118,11 @@ def test_a_violation_is_a_dict_of_rule_tick_unit_detail(inv):
     assert (v["rule"], v["tick"], v["unit"]) == ("R-207-06", 1, 1)
 
 
-def test_rules_lists_the_eleven_checks(inv):
+def test_rules_lists_the_thirteen_checks(inv):
     """F0 'Checks, each with its rule id'. Engine rules round 2: R-093-02 (fire only at what your side sees, T3) is the ninth, R-096-08 (a guard stays inside its radius) the tenth and R-087-10
-    (a shot is inside weapon reach by slant) the eleventh, each appended; the pin was nine. tests/skilllab/arena/test_engine_rules_f6_guard.py and test_engine_rules_f7_spherical.py require the last two."""
-    assert tuple(inv.RULES) == ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02", "R-096-08", "R-087-10")
+    (a shot is inside weapon reach by slant) the eleventh, each appended; the pin was nine. tests/skilllab/arena/test_engine_rules_f6_guard.py and test_engine_rules_f7_spherical.py require the last two.
+    Round 5 (G7): R-087-01 (unseen fire does not move or stop an attack-mover on its way) is the twelfth and R-097-05 (units on one slope collide) the thirteenth, each appended."""
+    assert tuple(inv.RULES) == ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02", "R-096-08", "R-087-10", "R-087-01", "R-097-05")
 
 
 # ------------------------------------------------------------------ R-207-06

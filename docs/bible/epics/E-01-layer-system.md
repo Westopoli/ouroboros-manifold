@@ -186,7 +186,7 @@ As a commander, I want a tall obstacle to hide units on more layers than a short
 
 Rules
 - R-007-01  Given an obstacle whose height reaches layer 2 between an observer and a target both on layer 1, When one tick passes, Then the target is not visible.
-  Proof: MISSING
+  Proof: tests/csim/test_E01_R007_01_cover_blocks_its_own_layer.py::test_R_007_01_an_obstacle_reaching_the_layer_between_two_units_on_it_hides_the_target_after_one_tick | scenario (the obstacle is a cover disc of height 2 on flat ground; the lab's obstacle is a box over every layer, which cannot show the height clause) | verified c7d97bb43 2026-11-17
 - R-007-02  Given the same obstacle and both units on layer 3, When one tick passes, Then the target is visible (the obstacle does not reach layer 3).
   Proof: MISSING
 - R-007-03  Given a target hidden behind cover, When it attacks an observer that cannot see it, Then the attack lands and the target stays hidden; firing never reveals.

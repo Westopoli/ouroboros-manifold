@@ -116,9 +116,9 @@ def test_R_093_02_suspended_for_names_both_sight_rules_for_the_control_as_for_of
 
 
 def test_R_093_02_control_the_sight_on_run_of_l0039_judges_both_rules_and_breaks_neither():
-    """Control (green today): L-0039 seed 1 sight on, the whole fight (2314 ticks): nothing suspended, and no violation of R-087-03 or R-093-02."""
+    """Control (green today): L-0039 seed 1 sight on, the whole fight (2213 ticks; 2314 before Round 5, 2211 on the first Round 5 run, re-pinned after G1 to G5 and the walker-arrival fix fd342241c, the lab checker reports no violation of any rule on the new run): nothing suspended, and no violation of R-087-03 or R-093-02."""
     mon, _ = played("L-0039", 1, "on")
-    assert mon.tick == 2314 and mon.suspended == {} and of(mon, "R-087-03") == [] and of(mon, "R-093-02") == []
+    assert mon.tick == 2213 and mon.suspended == {} and of(mon, "R-087-03") == [] and of(mon, "R-093-02") == []
 
 
 def test_R_093_02_the_control_run_of_l0039_lists_both_sight_rules_as_suspended():
@@ -129,8 +129,8 @@ def test_R_093_02_the_control_run_of_l0039_lists_both_sight_rules_as_suspended()
 
 
 def test_R_093_02_the_control_run_of_l0039_reports_no_violation_of_either_sight_rule():
-    """R-093-02 / R-087-03: with targeting by sight off a unit fires at what its side does not see, by design: the control of L-0039 seed 1 (2730 ticks; 2858 before the Round 3 chase fix 94da7493) reports no violation
+    """R-093-02 / R-087-03: with targeting by sight off a unit fires at what its side does not see, by design: the control of L-0039 seed 1 (2102 ticks; 2730 before Round 5, re-pinned after G1 to G5, the lab checker reports no violation of any rule on the new run; 2858 before the Round 3 chase fix 94da7493) reports no violation
     of either rule. Red today: R-087-03 12 and R-093-02 2657, the first at tick 14 for units 7 and 15."""
     mon, _ = played("L-0039", 1, "control")
     got = collections.Counter(v["rule"] for v in mon.violations if v["rule"] in SIGHT_RULES)
-    assert mon.tick == 2730 and dict(got) == {}, (dict(got), [(v["rule"], v["tick"], v["unit"]) for v in mon.violations if v["rule"] in SIGHT_RULES][:4])
+    assert mon.tick == 2102 and dict(got) == {}, (dict(got), [(v["rule"], v["tick"], v["unit"]) for v in mon.violations if v["rule"] in SIGHT_RULES][:4])

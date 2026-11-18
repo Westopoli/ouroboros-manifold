@@ -6,9 +6,8 @@ R-093-02 (docs/bible/epics/E-12-fog-and-sensors.md): "Given any unit of any side
 side's visible set: the union of what that side's living units see ... and what its pings reveal".
 
 THE API THIS FILE PINS: RULES gains "R-093-02" as its last entry. In frame k > 0, every unit in "fires" (attacker, target) and every living unit whose
-"target" is a living unit has that target in frame[k-1]["visible"][side of the unit] (the state before the step that decided it; measured on L-0039 and
-L-0061: 0 violations in 551 and 1947 shots and 22,110 and 47,862 held-target ticks against the previous frame's set, 11 and 104 shots against the
-frame's own set, because the shot killed the target). A frame with no "visible" key is not checked. violation {"rule": "R-093-02", "tick": k, "unit": u}.
+"target" is a living unit has that target in its side's visible set of frame k-1 or of frame k (Round 5, third pass: the engine moves every unit, then picks and
+fires, with sight read live, so a target that came into sight this tick is seen; a target the shot killed is in no set of its own frame, so frame k-1's set excuses it). A frame with no "visible" key is not checked. violation {"rule": "R-093-02", "tick": k, "unit": u}.
 Rules(suspended={"R-093-02": switch}) suspends it: no violation, Report.suspended names the switch (targeting by sight off).
 """
 import sys
@@ -47,8 +46,8 @@ def test_R_093_02_control_a_unit_that_sees_its_target_is_silent(inv):
 
 
 def test_R_093_02_rules_lists_it_ninth(inv):
-    """R-093-02 is one of the checks, appended to RULES as the ninth; R-096-08 and R-087-10 were appended after it (eleven checks in all)."""
-    assert tuple(inv.RULES)[8] == "R-093-02" and len(inv.RULES) == 11
+    """R-093-02 is one of the checks, appended to RULES as the ninth; R-096-08 and R-087-10 were appended after it; Round 5 appended R-087-01 and R-097-05 (thirteen checks in all)."""
+    assert tuple(inv.RULES)[8] == "R-093-02" and len(inv.RULES) == 13
 
 
 def test_R_093_02_a_unit_that_holds_an_unseen_target_is_flagged(inv):
@@ -64,12 +63,16 @@ def test_R_093_02_a_unit_that_fires_at_an_unseen_target_is_flagged(inv):
 
 
 def test_R_093_02_the_set_before_the_step_decides(inv):
-    """R-093-02 (measured): enemy 2 seen in frame 1 and gone from the set in frame 2, when unit 1 shoots it in frame 2 (a shot that kills a target takes it out of
-    the set): silent. Control: unseen in frame 1 and seen in frame 2: flagged."""
-    ok = frames(fires_at=2, visible=(), prev_visible={2})
-    bad = frames(fires_at=2, visible={2}, prev_visible=())
-    got = (inv.check(ok, rules(inv), only=["R-093-02"]).violations, [v["tick"] for v in inv.check(bad, rules(inv), only=["R-093-02"]).violations])
-    assert got == ([], [2])
+    """R-093-02 (Round 5, third pass: the tracer found the engine right): the engine moves every unit, then picks and fires, then deaths, with sight read live, so the set of
+    frame N (the frame of the shot) decides. (The test id keeps its Round 2 name; the previous frame's set no longer decides alone.)
+    Came into sight this tick (L-0084 tick 1691: not in frame N-1's set, in frame N's): silent. Seen before and killed by this frame's shots (in no set of its own frame, L-0084
+    tick 1255): silent. Control: in neither frame's set: flagged."""
+    new = frames(fires_at=2, visible={2}, prev_visible=())
+    killed = frames(fires_at=2, visible=(), prev_visible={2})
+    killed[2]["units"][2]["alive"] = False
+    never = frames(fires_at=2, visible=(), prev_visible=())
+    got = ([v["tick"] for v in inv.check(t, rules(inv), only=["R-093-02"]).violations] for t in (new, killed, never))
+    assert list(got) == [[], [], [2]]
 
 
 def test_R_093_02_a_trace_with_no_visible_set_is_not_checked(inv):

@@ -100,15 +100,33 @@ def _idle_own_near(post, side, u, p, near):
     return False
 
 
-def stalls_beside_idle_own(ticks, side, ids, radius=STALL_RADIUS, limit=STALLED_TICKS, near=IDLE_NEAR):
+def _idle_in_the_way(post, side, u, p, near):
+    """The nearest unit of its own side within `near` wu of walker u that lies ahead of it (a positive component along the way to its destination), on any layer, is idle (no destination, no target).
+    Round 5, third pass: a walker queued behind friends that hold a target is the queue on a narrow ramp that Westley accepted with the slope collision (DEC-slope-collision-2026-11-17), not a
+    stall; an idle neighbour that stands beside or behind it is not in its way."""
+    dx, dy = p["dest"][0] - p["x"], p["dest"][1] - p["y"]
+    way = math.hypot(dx, dy)
+    if way == 0.0:
+        return False
+    best = None
+    for o, q in post.items():
+        if o == u or not q["alive"] or side[o] != side[u]:
+            continue
+        d = math.hypot(q["x"] - p["x"], q["y"] - p["y"])
+        if d <= near and ((q["x"] - p["x"]) * dx + (q["y"] - p["y"]) * dy) / way > 0.0 and (best is None or d < best[0]):
+            best = (d, q)
+    return best is not None and best[1]["dest"] is None and not best[1]["tgt"]
+
+
+def stalls_beside_idle_own(ticks, side, ids, radius=STALL_RADIUS, limit=STALLED_TICKS, near=IDLE_NEAR, in_the_way=False):
     """[(unit, first tick, length)]: runs of more than `limit` consecutive ticks on which the unit has a destination, no target, stays within `radius` of the run's first position and has an idle unit
-    of its own side within `near` wu."""
+    of its own side within `near` wu (`in_the_way`: the nearest own unit ahead of it within `near` wu is idle, `_idle_in_the_way`)."""
     out, cur = [], {}
     for tk in ticks:
         post = tk["post"]
         for u in ids:
             p = post[u]
-            if p["alive"] and p["dest"] is not None and not p["tgt"] and _idle_own_near(post, side, u, p, near):
+            if p["alive"] and p["dest"] is not None and not p["tgt"] and (_idle_in_the_way(post, side, u, p, near) if in_the_way else _idle_own_near(post, side, u, p, near)):
                 c = cur.get(u)
                 if c is not None and math.hypot(p["x"] - c[1], p["y"] - c[2]) <= radius:
                     c[3] += 1
@@ -124,8 +142,8 @@ def stalls_beside_idle_own(ticks, side, ids, radius=STALL_RADIUS, limit=STALLED_
     return sorted(out)
 
 
-def _stalls(rec):
-    return stalls_beside_idle_own(rec.ticks, rec.side, rec.ids)
+def _stalls(rec, in_the_way=False):
+    return stalls_beside_idle_own(rec.ticks, rec.side, rec.ids, in_the_way=in_the_way)
 
 
 def _unit_ticks(stalls, limit=STALLED_TICKS):
@@ -157,6 +175,32 @@ def test_control_the_measure_flags_a_walker_that_stands_beside_an_idle_own_unit_
     assert stalls_beside_idle_own(*_fake(other_tgt=9), [1]) == []
 
 
+def _queue(ahead_tgt=0, ahead_dest=None, behind_dx=-30.0, n=120):
+    """Walker 1 (side 0) at (500, 500) with a destination to the east and no target; unit 2 stands 30 wu ahead of it with `ahead_tgt` and `ahead_dest`; unit 3, idle, stands at `behind_dx`."""
+    ticks = []
+    for k in range(1, n + 1):
+        ticks.append({"n": k, "post": {
+            1: {"alive": True, "x": 500.0, "y": 500.0, "layer": 0, "tgt": 0, "dest": (1000.0, 500.0)},
+            2: {"alive": True, "x": 530.0, "y": 500.0, "layer": 1, "tgt": ahead_tgt, "dest": ahead_dest},
+            3: {"alive": True, "x": 500.0 + behind_dx, "y": 500.0, "layer": 0, "tgt": 0, "dest": None}}})
+    return ticks, {1: 0, 2: 0, 3: 0}
+
+
+def test_control_the_in_the_way_measure_flags_an_idle_blocker_and_passes_a_queue():
+    """Control (green; the measure the L-0045 control reads): a walker with an idle own unit 30 wu ahead is one stall of 120 under both measures. The same walker queued behind a friend ahead that holds a
+    target, or one that walks, with an idle unit beside it 30 wu behind: a stall for the old measure (beside), none for the in-the-way measure. An idle unit ahead is a stall whether the unit behind it is 30 wu away
+    (idle) or out of range."""
+    t, s = _queue(ahead_tgt=0, ahead_dest=None)
+    assert stalls_beside_idle_own(t, s, [1], in_the_way=True) == [(1, 1, 120)]
+    t, s = _queue(ahead_tgt=9)
+    assert stalls_beside_idle_own(t, s, [1]) == [(1, 1, 120)]
+    assert stalls_beside_idle_own(t, s, [1], in_the_way=True) == []
+    t, s = _queue(ahead_dest=(900.0, 500.0))
+    assert stalls_beside_idle_own(t, s, [1], in_the_way=True) == []
+    t, s = _queue(ahead_tgt=0, behind_dx=-60.0)
+    assert stalls_beside_idle_own(t, s, [1], in_the_way=True) == [(1, 1, 120)]
+
+
 # ------------------------------------------------------------------ the premises (green today)
 
 def test_control_L0039_sight_on_runs_and_the_measure_finds_no_stall():
@@ -181,9 +225,9 @@ def test_control_L0028_unit_18_is_a_side_one_walker_and_the_fight_is_long_enough
 
 # ------------------------------------------------------------------ the rule, whole fights (red today)
 
-def _assert_no_stall(name, sight):
+def _assert_no_stall(name, sight, in_the_way=False):
     rec, last, end = played(name, sight)
-    st = _stalls(rec)
+    st = _stalls(rec, in_the_way)
     assert st == [], "%s sight %s: %d runs of more than %d ticks, %d unit-ticks, units %s, first %s" % (name, sight, len(st), STALLED_TICKS, _unit_ticks(st), sorted({u for u, _, _ in st}), st[:4])
 
 
@@ -207,5 +251,9 @@ def test_R_097_10_L0028_control_no_walker_stands_beside_an_idle_own_unit_for_mor
 
 def test_R_097_10_L0045_control_no_walker_stands_beside_an_idle_own_unit_for_more_than_40_ticks():
     """R-097-10 (text as above), L-0045 seed 1 control: a crowd of side 1 survivors converges on its slots and the late ones are held by the arrived ones: 41 runs, 10,840 unit-ticks, eleven units, today
-    (the sweep's I29 counted 9,280). The slope plays no part (x3 findings)."""
-    _assert_no_stall("L-0045", "control")
+    (the sweep's I29 counted 9,280). The slope plays no part (x3 findings).
+    Round 5, third pass (Test-defect): a stall counts only when the unit in the walker's way is idle. On the Round 5 run (2,473 ticks, wipe) the old measure finds units 58 (tick 910, 83 ticks) and 69
+    (tick 627, 91 ticks): both stand with the units ahead of them (66 and 75; 63 and 71) holding targets, on the other layer of the ramp, and the idle units within 35 wu stand beside or behind
+    them: the queue on a narrow ramp that Westley accepted with the slope collision (DEC-slope-collision-2026-11-17). The L-0028 controls above keep the old measure. The measure is proved
+    to flag an idle unit in the way and to pass a busy one in the way by test_control_the_in_the_way_measure_flags_an_idle_blocker_and_passes_a_queue."""
+    _assert_no_stall("L-0045", "control", in_the_way=True)

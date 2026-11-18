@@ -7,6 +7,7 @@ predict_why = "Side A holds the top of the slope and fires down it at side B, so
 verdict = ""
 feedback = ""
 defender = "A"
+orders_point = [2230.0, 2002.0]
 
 [side_a]
 headcount = 40

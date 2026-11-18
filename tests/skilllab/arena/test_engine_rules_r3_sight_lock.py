@@ -32,6 +32,10 @@ Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47; Test-defect: the control's pr
 fixes 2 and 3 leave it). The episode is one tick later: side A sees 71 at the end of ticks 1776 and 1777 and not at the end of 1778; guards 29 to 40 hold it through the end of 1778 and drop it
 at 1779 (29, 33 and 37 to none, 40 to 95). Drops of a target seen at both ends of the tick: 748, of which reach 118, give-up 157, guard post 473, unexplained 0. The lab checker reports no violation
 of any rule on the fight.
+
+Re-derived 2026-11-17 on the Round 5 fourth-pass tip (Test-defect: the premises were the fight before the notice distance): L-0084 seed 1 sight on is 1,955 ticks (the run length 3,923 re-pinned to 1,955 by the verifier). The guards'
+side sees 56 enemies and loses none, so the guard episode of enemy 71 is gone; the sight change the lock tests use is side B's loss of sight of the guards (units 80, 85 and 86 hold guard 8 through the end of
+tick 1233, the tick side B stops seeing it, and drop it at 1234). Drops of a target seen at both ends: 4 (notice distance 3, reach 1), unexplained 0; give-up and guard post: none.
 """
 import contextlib
 import ctypes
@@ -114,6 +118,18 @@ def _unshot(r, n, u, t):
     return k
 
 
+def _left_notice(rec, n, tk, u, t):
+    """R-087-03 (Round 5) "keeps it ... until the target dies, leaves its side's sight, ... or leaves the unit's notice distance" (R-087-04: attack range times the layer multiplier times 1.1): the
+    target stood beyond the unit's notice distance in a state the tick decided on, and did not hit the unit within the return-fire window (R-087-06: return fire is exempt). The engine reads a
+    mix of the tick's states (units step in id order; L-0084 tick 809: unit 74 against enemy 13, 328.7 wu before the tick and 327.8 after, 332.2 with enemy 13 stepped and unit 74 not), so the
+    four pairings of the pre-step and post-step rows count: beyond in any is a legal end. The control is the unexplained-drop test below: a drop of a target inside the notice distance in all four
+    states is not excused."""
+    pre, post = tk["pre"], tk["post"]
+    if oracle._hit_by(rec, n, t, u):
+        return False
+    return any(d > limit for d, limit in (oracle.notice(rec, u, a, t, b) for a in (pre[u], post[u]) for b in (pre[t], post[t])))
+
+
 def drops_of_a_seen_target(r):
     """[(tick, unit, target, new target, reason)]: every tick a unit stopped holding a living target its side saw at both ends of the tick; reason is the excuse or None."""
     rec, out = r.rec, []
@@ -138,6 +154,8 @@ def drops_of_a_seen_target(r):
                 limit = GUARD_RADIUS + rec.stats[rec.typ[u]]["attack_range"] * r.mult(la, lb)
                 if math.hypot(math.hypot(q0["x"] - r.post[u][0], q0["y"] - r.post[u][1]), dz) > limit:
                     why = "guard post"
+            if why is None and _left_notice(rec, n, tk, u, t):
+                why = "notice distance"
             out.append((n, u, t, p1["tgt"], why))
     return out
 
@@ -149,24 +167,34 @@ def unexplained(r):
 # ------------------------------------------------------------------ green first: the premises
 
 def test_control_the_fight_and_the_trace_premises_hold():
-    """Control (green after the fix, the premise of the red test below): the recorded fight is the one traced (re-dumped on the Round 3 tip; the premise before the fix was 3,718 ticks and tick 1775
-    to 1777). 3,923 ticks; side A (the guards 1 to 40) sees enemy 71 at the end of ticks 1776 and 1777 and not at the end of tick 1778; guards 29 to 40 all hold 71 at the end of tick 1777; the oracle finds
-    drops of a seen target for each of its three excuses and none unexplained (so a red below is not a detector that excuses nothing: a fix that dropped a lock early would add an unexplained one)."""
+    """Control (green after the fix, the premise of the red test below): the recorded fight is the one traced, re-derived on the Round 5 tip (the premise before was the 3,923-tick run, the guards 29 to 40
+    holding enemy 71 through its sight loss at ticks 1776 to 1778, and drops of every reason; the run length re-pinned by the verifier, 3,923 -> 1,955). Now: 1,955 ticks; the guards (1 to 40, all side A)
+    never lose sight of an enemy (56 sights gained, none lost), so the guard episode is absent from this fight; the sight change the lock test depends on is the attackers' (side B, units 41 to 96): at the
+    end of tick 1232 side B sees guard 8, at the end of 1233 and 1234 it does not; units 80, 85 and 86 hold it through the end of 1233 and none at the end of 1234; 54 unit-ticks in all hold a target through
+    the tick their side lost sight of it (ticks 1233, 1255, 1353, 1478, 1771, 1836, 1953), 95 cases of a held target that left the sight; the oracle finds drops of a seen target for the reasons that are in
+    the fight, 4 in all (notice distance 3, reach 1: the guards drop none), none unexplained (so a red below is not a detector that excuses nothing: a fix that dropped a lock early would add an unexplained one)."""
     r = played()
     rec = r.rec
-    assert len(rec.ticks) == 3923, len(rec.ticks)
-    assert [rec.ticks[n - 1]["vis_post"][(SIDE_A, 71)] for n in (1776, 1777, 1778)] == [True, True, False]
-    assert all(rec.ticks[1776]["post"][u]["tgt"] == 71 for u in range(29, 41)), {u: rec.ticks[1776]["post"][u]["tgt"] for u in range(29, 41)}
-    assert [rec.side[u] for u in range(1, 41)] == [SIDE_A] * 40
+    assert len(rec.ticks) == 1955, len(rec.ticks)
+    assert [rec.side[u] for u in range(1, 41)] == [SIDE_A] * 40 and {rec.side[u] for u in range(41, 97)} == {1}
+    changes = {s: [(tk["n"], e, tk["vis_post"][(s, e)]) for prev, tk in zip(rec.ticks, rec.ticks[1:]) for (s2, e) in tk["vis_post"] if s2 == s and prev["vis_post"].get((s, e)) != tk["vis_post"][(s, e)]] for s in (0, 1)}
+    assert (len([c for c in changes[SIDE_A] if c[2]]), len([c for c in changes[SIDE_A] if not c[2]])) == (56, 0), "the guards' side loses sight of an enemy: the guard episode is back"
+    assert [rec.ticks[n - 1]["vis_post"][(1, 8)] for n in (1232, 1233, 1234)] == [True, False, False]
+    assert [[rec.ticks[n - 1]["post"][u]["tgt"] for n in (1232, 1233, 1234)] for u in (80, 85, 86)] == [[8, 8, 0]] * 3
+    held, cases = held_after_sight_loss(r, 0)
+    assert (len(held), cases) == (54, 95) and sorted({n for n, _, _ in held}) == [1233, 1255, 1353, 1478, 1771, 1836, 1953], (len(held), cases)
     reasons = {}
     for d in drops_of_a_seen_target(r):
         reasons[d[4]] = reasons.get(d[4], 0) + 1
-    assert set(reasons) == {"reach", "give-up", "guard post"}, reasons
-    assert reasons == {"reach": 118, "give-up": 157, "guard post": 473}, reasons
+    # give-up (R-087-09) and guard post (R-096-08) drops of a seen target are absent from this fight: with the Round 5 notice distance a unit that holds a target it cannot shoot is dropped by the
+    # distance, and a guard acquires from where it stands; the two excuses stay in the oracle for the fights that still have them and are not exercised here.
+    assert reasons == {"notice distance": 3, "reach": 1}, reasons
+    assert unexplained(r) == []
 
 
 def held_after_sight_loss(r, lag):
-    """([(tick n, unit, target)], number of cases): a unit held a living target at the end of tick n-1, its side no longer sees it at the end of tick n, and the unit still holds it at the end of tick n + lag."""
+    """([(tick n, unit, target)], number of cases): a unit held a living target at the end of tick n-1, its side no longer sees it at the end of tick n, and the unit holds it at the end of every tick n to n + lag. A target unseen for one tick and seen again is a lock that ended and a new pick (L-0084 tick 1255: unit 82 drops 25 at
+    1256 and takes it again at 1257, the side seeing it again at the end of 1256): not a lock held through; only an unbroken hold counts."""
     rec, late, cases = r.rec, [], 0
     for tk in rec.ticks:
         n = tk["n"]
@@ -177,8 +205,8 @@ def held_after_sight_loss(r, lag):
             if not (t and tk["pre"][u]["alive"] and tk["post"][u]["alive"] and tk["post"][t]["alive"]) or tk["vis_post"].get((rec.side[u], t)):
                 continue
             cases += 1
-            nxt = rec.ticks[n + lag - 1]
-            if nxt["post"][u]["alive"] and nxt["post"][t]["alive"] and nxt["post"][u]["tgt"] == t:
+            held = [rec.ticks[m - 1] for m in range(n, n + lag + 1)]
+            if all(h["post"][u]["alive"] and h["post"][t]["alive"] and h["post"][u]["tgt"] == t for h in held):
                 late.append((n, u, t))
     return late, cases
 

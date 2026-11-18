@@ -57,21 +57,27 @@ def test_R_087_03_a_lock_that_ended_soon_after_it_became_unshootable_is_a_swap(i
     assert [(v["rule"], v["tick"], v["unit"]) for v in got] == [("R-087-03", stuck_frames + 1, 1)]
 
 
+# Round 5 (R-087-03 / R-087-04: a lock ends where the target leaves the notice distance, attack range times 1.1; R-096-08: a guard acquires within its notice distance as every unit does).
+# A guard standing at its post cannot hold a target that is both beyond radius + range from the post and inside its notice distance, so the excuse of R-096-08 below is only reached by a guard
+# standing at the edge of its radius: the one place where radius + range from the post and range * 1.1 from the guard overlap. The scenes put the guard there, GUARD_EDGE wu from the post.
+GUARD_EDGE = 200.0
+
+
 def _guard_swap(inv, old_at):
-    """A guard (post (100, 100), radius 200 + 1, attack range 100) holds enemy 2 standing `old_at` wu from the post (shootable), takes enemy 4 at tick 3."""
+    """A guard (post (100, 100), at the edge of its radius, 200 wu from the post, attack range 100) holds enemy 2 standing `old_at` wu from the post (shootable), takes enemy 4 at tick 3."""
     def frame(target):
-        return {1: row(100, 100, target=target), 2: row(100 + old_at, 100, side=1), 4: row(100, 140, side=1)}
+        return {1: row(100 + GUARD_EDGE, 100, target=target), 2: row(100 + old_at, 100, side=1), 4: row(100 + GUARD_EDGE, 140, side=1)}
     frames = [frame(0), frame(2), frame(2), frame(4)]
     return inv.check(trace(*frames), rules(inv, attack_range={1: 100.0}, guards={1: (100.0, 100.0)}), only=["R-087-03"]).violations
 
 
 def test_R_087_03_a_guards_lock_beyond_what_its_radius_can_reach_is_not_a_swap(inv):
-    """R-096-08 excuse: the target stands 600 wu from the post, beyond radius 200 + 1 + attack range 100 = 301; the guard letting go of it is silent."""
-    assert _guard_swap(inv, 600.0) == []
+    """R-096-08 excuse: the target stands 305 wu from the post (105 wu from the guard, inside its notice distance 110), beyond radius 200 + attack range 100 = 300; the guard letting go of it is silent."""
+    assert _guard_swap(inv, 305.0) == []
 
 
 def test_R_087_03_a_guards_lock_it_could_have_kept_is_a_swap(inv):
-    """R-096-08 excuse, the other side: the target stands 250 wu from the post, inside what the radius reaches (301): the same swap is an R-087-03 violation."""
+    """R-096-08 excuse, the other side: the target stands 250 wu from the post (50 wu from the guard), inside what the radius reaches (300): the same swap is an R-087-03 violation."""
     assert [(v["rule"], v["tick"], v["unit"]) for v in _guard_swap(inv, 250.0)] == [("R-087-03", 3, 1)]
 
 
@@ -88,13 +94,13 @@ HEIGHTS = [70.0, 130.0, 230.0]         # band floors: layer 1 is 60 wu above lay
 
 
 def _guard_slant_swap(inv, prev_slant, dz, rng, guard_layer, target_layer, now_slant=None):
-    """A guard (post (100, 100), on `guard_layer`, attack range `rng`) holds enemy 2 on `target_layer`, whose slant distance from the post is `prev_slant` in frames 0 to 2 (the
+    """A guard (post (100, 100), GUARD_EDGE wu from it so that the target stays inside its notice distance, on `guard_layer`, attack range `rng`) holds enemy 2 on `target_layer`, whose slant distance from the post is `prev_slant` in frames 0 to 2 (the
     height difference `dz` is part of it) and `now_slant` (default the same) in frame 3, the frame in which it takes enemy 4. Returns the R-087-03 violations as (rule, tick, unit)."""
     def at(slant):
         return 100.0 + math.sqrt(slant ** 2 - dz ** 2)
     now_slant = prev_slant if now_slant is None else now_slant
     def frame(target, slant):
-        return {1: row(100, 100, target=target, layer=guard_layer), 2: row(at(slant), 100, side=1, layer=target_layer), 4: row(100, 140, side=1, layer=guard_layer)}
+        return {1: row(100 + GUARD_EDGE, 100, target=target, layer=guard_layer), 2: row(at(slant), 100, side=1, layer=target_layer), 4: row(100 + GUARD_EDGE, 140, side=1, layer=guard_layer)}
     frames = [frame(0, prev_slant), frame(2, prev_slant), frame(2, prev_slant), frame(4, now_slant)]
     got = inv.check(trace(*frames), rules(inv, attack_range={1: rng}, guards={1: (100.0, 100.0)}, layer_heights=list(HEIGHTS)), only=["R-087-03"]).violations
     return [(v["rule"], v["tick"], v["unit"]) for v in got]
@@ -150,9 +156,9 @@ def test_R_087_09_control_a_target_outside_range_held_for_ten_frames_is_still_a_
 
 
 def test_R_087_09_control_a_unit_closing_in_on_a_target_outside_range_has_not_given_up(inv):
-    """R-087-09 control (green today and after): the unit walks toward enemy 2 by 2 wu a frame (350 wu at the start, 310 after 20 frames, still outside range 300): the distance keeps
-    falling, 'not closed in on' does not hold, the swap is an R-087-03 violation."""
-    assert _swap_out_of_range(inv, 20, start=350.0, closing=2.0) == [("R-087-03", 21, 1)]
+    """R-087-09 control (green today and after): the unit walks toward enemy 2 by 0.5 wu a frame (329 wu at the start, 319 after 20 frames: outside range 300 and inside its notice distance
+    330, R-087-04, for the whole run; at 350 the lock itself would be one the rule ends): the distance keeps falling, 'not closed in on' does not hold, the swap is an R-087-03 violation."""
+    assert _swap_out_of_range(inv, 20, start=329.0, closing=0.5) == [("R-087-03", 21, 1)]
 
 
 @pytest.mark.parametrize("dist,expect_report", [(301.3, False), (400.0, False), (250.0, True)], ids=["just-outside", "far-outside", "inside"])

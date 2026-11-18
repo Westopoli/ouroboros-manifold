@@ -116,19 +116,21 @@ def _watch(lib, w, u, post, ticks):
 
 
 def test_R_096_08_guard_steps_toward_a_seen_enemy_it_can_reach_from_the_radius_and_stays_within_it(lib, world_factory):
-    """R-096-08 'engages any target its side can see ... stepping toward it no farther than GUARD_RADIUS = 200 wu from the post': the enemy 500 wu
-    east is seen (sensor 700) and 200 wu out of range (300), which is exactly the radius: over 60 ticks the guard closes at least STEP_MIN wu on it
-    and no tick ends more than 200 wu (+ LEASH_SLACK) from the post. Then the enemy moves to 800 wu east (seen, and 500 wu out of range: out of the radius's
-    reach) and for 120 more ticks the guard does not follow it past the radius ('never chasing past it'). (Written as 'holds while an enemy
-    stands beyond range', R-096-05, which asserted the guard never steps; that contradicts the rule as ruled 2026-11-08.) Fails against a guard that
-    holds (no step) and against one that steps without the radius (breaks named in the report)."""
+    """R-096-08 'acquires as every unit does, an enemy its side can see within its notice distance (E-11 R-087-04), stepping toward it no farther than
+    GUARD_RADIUS = 200 wu from the post': the enemy 325 wu east is seen (sensor 700), inside the notice distance (300 plus a tenth, 330) and 25 wu out of
+    range (300): over 60 ticks the guard closes at least STEP_MIN wu on it and no tick ends more than 200 wu (+ LEASH_SLACK) from the post. Then the
+    enemy is put 800 wu east of the post (seen, and beyond the guard's notice distance: its lock ends, R-087-03) and for 120 more ticks the guard does not
+    follow it past the radius ('never chasing past it'). (Written as 'holds while an enemy stands beyond range', R-096-05, which asserted the guard never
+    steps; that contradicts the rule as ruled 2026-11-08. Test-defect, second pass 2026-11-17, ruling 'acquire within attack radius, not vision radius':
+    the enemy stood at 500 wu, beyond the notice distance, and the guard no longer steps toward it; see test_E13_R096_08_guard_notice_distance.py.) Fails
+    against a guard that holds (no step) and against one that steps without the radius (breaks named in the report)."""
     w = world_factory(n_regions=1)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
-    e = spawn(lib, w, SUPPLY, 1, 500.0, 0.0)
+    e = spawn(lib, w, SUPPLY, 1, 325.0, 0.0)
     assert guard(lib, w, [u]) == 0
     rows = _watch(lib, w, u, (0.0, 0.0), 60)
-    closest = min(dist(p, (500.0, 0.0)) for p, _ in rows)
-    assert 500.0 - closest >= STEP_MIN, f"the guard did not step toward a seen enemy: {500.0 - closest:.1f} wu closer, at {rows[-1][0]}"
+    closest = min(dist(p, (325.0, 0.0)) for p, _ in rows)
+    assert 325.0 - closest >= STEP_MIN, f"the guard did not step toward a seen enemy: {325.0 - closest:.1f} wu closer, at {rows[-1][0]}"
     lib.om_unit_teleport(w, e, 800.0, 0.0, 0)
     rows += _watch(lib, w, u, (0.0, 0.0), 120)
     over = [(n + 1, tuple(round(v, 1) for v in p), round(d, 1)) for n, (p, d) in enumerate(rows) if d > GUARD_RADIUS + LEASH_SLACK]
@@ -164,19 +166,20 @@ def test_control_R_096_08_attack_moving_unit_walks_toward_the_same_enemy(lib, wo
 
 
 def test_R_096_08_guard_steps_toward_and_fires_at_an_enemy_450_wu_off_and_never_passes_the_radius(lib, world_factory):
-    """R-096-08 'stepping toward it no farther than GUARD_RADIUS ... firing whenever the target is in range ... it never crosses the radius': the
-    enemy 450 wu east is seen and 150 wu out of range, reachable inside the radius. Over 120 ticks the guard closes on it, the enemy loses hit
-    points, and no tick ends more than 200 wu (+ LEASH_SLACK) from the post. (Written as 'does not step toward an enemy that stays out of range',
-    R-096-05, which asserted no step and no damage; the scene is reachable by the rule as ruled 2026-11-08.) Fails against a guard that holds
-    (no step, no damage) and against one that marches past the radius."""
+    """R-096-08 'acquires ... within its notice distance, stepping toward it no farther than GUARD_RADIUS ... firing whenever the target is in range ...
+    it never crosses the radius': the enemy 325 wu east is seen, inside the notice distance 330 and 25 wu out of range. Over 120 ticks the guard closes on it,
+    the enemy loses hit points, and no tick ends more than 200 wu (+ LEASH_SLACK) from the post. (The id keeps the history: written as 'does not step toward
+    an enemy that stays out of range', R-096-05, which asserted no step and no damage, then with the enemy at 450 wu. Test-defect, second pass 2026-11-17,
+    'acquire within attack radius, not vision radius': at 450 wu the enemy is beyond the notice distance and is not acquired; the scene is at 325 wu.) Fails
+    against a guard that holds (no step, no damage) and against one that marches past the radius."""
     w = world_factory(n_regions=1)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
-    enemy = spawn(lib, w, SUPPLY, 1, 450.0, 0.0)
+    enemy = spawn(lib, w, SUPPLY, 1, 325.0, 0.0)
     before = hp(lib, w, enemy)
     assert guard(lib, w, [u]) == 0
     rows = _watch(lib, w, u, (0.0, 0.0), 120)
-    closest = min(dist(p, (450.0, 0.0)) for p, _ in rows)
-    assert 450.0 - closest >= STEP_MIN, f"the guard did not step toward a seen enemy it can reach: {450.0 - closest:.1f} wu closer"
+    closest = min(dist(p, (325.0, 0.0)) for p, _ in rows)
+    assert 325.0 - closest >= STEP_MIN, f"the guard did not step toward a seen enemy it can reach: {325.0 - closest:.1f} wu closer"
     assert hp(lib, w, enemy) < before, "the guard stepped into range and never fired"
     over = [(n + 1, tuple(round(v, 1) for v in p), round(d, 1)) for n, (p, d) in enumerate(rows) if d > GUARD_RADIUS + LEASH_SLACK]
     assert not over, f"{len(over)} ticks beyond {GUARD_RADIUS:.0f} wu from the post, first {over[:3]}"

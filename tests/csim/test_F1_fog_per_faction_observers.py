@@ -304,11 +304,12 @@ def _visible_hash(lib, w):
 # the visible[] hashes are unchanged). Built on the Round 3 tip e2dcee93 and on 6d3d7635 in lock step: the first step to differ is step 1 in both scenes. Clash: 29 idle enemy units
 # are moved on step 1 (unit 41 by 2.4 wu: unit 58, of its own side, takes a target that tick and walks 5.1 wu into it at 35 wu; 58 units differ in all). Spread: unit 284 is moved 24.5 wu by unit 98
 # of its own side, 10.6 wu away (2 units differ).
+# Re-recorded 2026-11-17 (engine rules Round 5, G1 to G5: a lock ends at the notice distance, a guard acquires within it, an attack-mover is not moved by unseen fire, layer by side of the midline on a slope; was: 2026-11-12 recorded: clash state 3782ccba visible 740858b4, spread state d0b7f912 visible 4ba1758c; green on main b23e605c9).
 GOLDEN = {
-    "clash": ("3782ccbaaa316d6c3b316ec6f37a7debaf342a56b030ca15fffc4a44dc6927f5",
-              "740858b42c174da068bb0ad94b10fddef168a6b370c8b6d5f99b51e9e89b57df"),
-    "spread": ("d0b7f912fef5d5d1f39ec1c9e62ddf60927cc819c0f8799ac6ae7e1f85633345",
-               "4ba1758c6137483d99c707d0f1a69c36af48cc979dd58501d312a477bd489312"),
+    "clash": ("090c42c9c714a45fc42bf92f5eb60c9e8e31ed204a4e57182076d113c81adda8",
+              "1f1d6a2220df7ccab39779edbffd81ea77fbb5c4b3760dd2d2d33cf5941cdb03"),
+    "spread": ("f2d0a1f33e5a9aab001fee38295929dd197c1806041ebbea20e4877cf2a6548e",
+               "aa80378e03e774d93785b73289bcdfef4a6cf25c2691f80316a861d3e87dd018"),
 }
 
 

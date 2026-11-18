@@ -63,3 +63,66 @@ A builder that finds a test wrong reports it and builds the rest. A piece that n
 - Sweep: the checker reports nothing under the new predicates, or each count is explained; end reasons (wipe, cap, stand-off) set beside Round 4's.
 - Stage 4 fights re-made into `docs/northstar/story_reviews/westley/arena_stage4/`; outcome of each beside Round 4's; no fight invalid.
 - `docs/bible/algorithms.md` ALG-62 and ALG-68 rewritten by the Architect to what the engine now does; Proof lines written for every rule whose test qualifies; the "not built" notes removed from E-11 S-087 and R-097-05; report `docs/reports/2026-11-17-engine-rules-round-5.md`.
+
+## Second pass (2026-11-17, after the first run)
+
+The first run built G1 to G7 and six of the seven proofs of G8; verification found reds outside the baselines, so the pictures were not made. The Architect's rulings on what the agents reported; each agent of the second pass follows them.
+
+### Test defects accepted (the test fixers apply them, each in a `Test-defect:` commit naming the rule line)
+
+- Scenes that place an enemy beyond the notice distance and expect it acquired, chased or stepped toward: re-placed inside the notice distance, or turned into the assertion that it is not acquired. This covers the guard files (`test_E13_R096_08_guard_steps_and_returns.py`, `test_PP_unit_guard.py`), the leash scenes of `test_E11_S087_engage_on_sight.py` and `test_E11_R087_10_spherical_distance.py`, `test_PP_unit_pursuit.py`, `test_PP_C_g3_pursuit_by_sight.py`, the sight-loss control of `test_E11_R087_03_target_lock.py` and the premise of `test_E11_R087_01_move_away_completes.py`.
+- A leash scene needs a target the unit can keep inside its notice distance: one slower than the unit, or one taken by return fire.
+- A scene in which a unit must follow a target uses a type that does not auto-Brace (a Vanguard that halts in range braces and needs about 15 ticks to walk again; that is the ability's rule, R-086-03, not a defect).
+- `test_PP_C_g5_direct_fire.py` and the return-fire cases of `test_PP_C_g5_area_return_fire.py`: the engagement edge is the reach to that layer times 1.1 (the notice distance), and the firing edge stays the reach itself; assert both. An idle unit that returns fire holds its attacker as its target from the hit (R-087-06); a test that expects a destination instead is rewritten.
+- `test_R_087_04_two_16_unit_blobs_attack_moved_to_one_point_fight_to_elimination`: rewritten to the rule as it stands. The blobs fight while enemies are inside a unit's notice distance; survivors that have arrived and stand beyond each other's notice distance do not fight (R-087-04, last sentence). The test asserts that and records the survivors and their distance; the report names it as a stand-off for Westley.
+- Arrival: a unit that followed route waypoints has arrived within 30 wu and its destination is cleared (R-099-04); tests that ask for 20 wu or for a destination after arrival are corrected.
+- The return-fire exemption test of G2 measures the gap at the first hit, not the second.
+- Lab: `RULES` has 13 entries; the planted guard cases of `test_invariants_give_up.py` and `test_invariants_nearest.py` follow the notice-distance guard; the oracle's `_hit_by` counts splash hits as hits; the unseen-fire premise moves from L-0061 (where every victim is now an attack-mover on its way) to a layout where idle or arrived units are hit; pinned unit pairs that no longer describe a fight are re-derived from the new run, never deleted.
+
+### Spec statements withdrawn or changed
+
+- G5, "no unit flips layer back and forth": withdrawn. A unit's layer on a slope is its side of the midline (E-01 R-004-06), so a push across the midline is a legal change. The whole-run test asserts instead, on every tick, that each unit on a slope has the layer of its side of the midline, and reports the flip count without asserting it. The engine's wait on a third layer change within 20 ticks (`om_move_layer_flip_allowed`, commits `ec3305704` and `a2d968771`) contradicts R-004-06 and is removed.
+- G5, "no two units on one slope closer than 30 wu after the pass": the step limit on a slope (the no-jump rule of Round 2, `om_move_slope_clamp`) may leave a pair closer than 30 wu at the end of a tick; such a pair is apart again within `DRAFT-ramp-settle-ticks` = 3 ticks. The test and the checker predicate assert that.
+- Recorded csim hashes that moved: re-pinned with the trailer `Test-defect: re-pinned after Round 5 (G1 to G5), old <value>, new <value>; green on main b23e605c9`. The lab checker cannot read a csim scene, so the control is the suite's green state on main.
+- Lab pins (fight lengths, close-up files, stage 4 files): re-pinned only after the lab checker reports nothing on the new run of that fight.
+
+### Engine items found (builders, one at a time, each checked by breaking)
+
+1. The move away steps straight through a standing friend (L-0045, units 71 and 57): the move-away step goes through the same steering and collision as every other step.
+2. Walkers stand 16 wu from their attack-move point with the destination still set, beside idle friends on the other side of a slope's midline (L-0028 units 5 and 10; L-0045 units 67 and 74): arrival inside the radius of R-099-04 ends the move, and an idle unit yields (R-097-10) to a mover on the same slope as it does on the same layer.
+3. L-0084 tick 1691: three units acquire and fire at an enemy on the tick it first comes into sight. The tracer decides from the engine's own order of work in a tick whether the side saw the target when the unit picked it. If it did, the checker is wrong and reads the same tick's sight for a pick; if it did not, the engine is wrong.
+4. R-087-01 reports on L-0084 (an attack-mover standing 6 to 7 frames after a hit, unit 94) and L-0045 (unit 87 moved again with no new hit): traced, then fixed where the engine is wrong.
+
+### Not built, recorded for the landing
+
+- The return-fire mark on a lock is not saved in save files; a loaded game ends that lock at the notice distance (as the give-up state, DEC-engine-rules-round2-2026-11-11 reading 8).
+- L-0083 has two overlapping hill records that give opposite layers at one point: a layout defect, listed for Westley.
+- `tests/skilllab/integration/test_speed.py` (1.6 s against a mark of 1.5 s): Westley's threshold; measured three times without the memory cap's `nice`, and reported.
+
+## Third pass (2026-11-17)
+
+The second pass left csim, integration, ground, qa and method clean, and twelve reds in the lab arena plus the speed mark. The tracer found the engine right and the checker wrong in all three traced reports: the engine moves every unit, then the cohort picks, then shots are fired, all in one tick, and sight is read live; so a pick or a shot on tick N is judged against frame N's positions and visible set.
+
+Rulings:
+- Checker (`scripts/skilllab/invariants.py`, `invariants_r5.py`): the predicate that reports "changed layer N times in M frames on a slope" is removed (withdrawn in the second pass). The nearest enemy and the notice distance of a pick are judged on frame N's positions, as the visible set already is. The slope pair predicate reports a pair under 30 wu only when it has stayed under 30 wu for more than `DRAFT-ramp-settle-ticks` = 3 ticks.
+- Tests: `test_invariants_visible.py::test_R_093_02_the_set_before_the_step_decides` follows the tracer's verdict (frame N's set decides). The planted ticks of `test_invariants_r5_notice_and_lock.py` carry `hits`. In `test_engine_rules_r3_sight_lock.py` a lock that ends because the target left the notice distance is a legal end. The floor of cross-layer shots in `test_engine_rules_f7_spherical.py` is a premise floor of the detector, not Westley's threshold: it is set from the new run as a named `DRAFT-` with the old and new fight length beside it. The L-0045 control of `test_engine_rules_r4_idle_yield.py` counts a stall only when the unit in the walker's way is idle; a walker queued behind friends that hold a target is the queue on a narrow ramp that Westley accepted with the slope collision (DEC-slope-collision-2026-11-17). Planted cases are added for the two checker excuses the tracer named (a halt to fire at a seen target after an unseen hit; a hit from an attacker the side sees and the unit cannot reach).
+- Speed: `tests/skilllab/integration/test_speed.py` (1.6 s against 1.5 s, green in Round 4). One attempt to win it back in the engine without changing behaviour: every recorded hash stays as re-pinned. The mark is not changed.
+
+Open, recorded for the landing and not built in this round:
+- A unit moving away that is blocked by a standing friend that does not yield (a guard) presses against it and the move away never ends.
+- A pursuer never fires at a target that walks away, however slowly: it stops at exactly its range, may not fire on a tick it moved, and the target is out of range again the next tick.
+
+## Fourth pass (2026-11-17)
+
+The third pass's ruling "a pick is judged on frame N's positions" was wrong and is withdrawn. Measured by the lab builder and by the test fixer: inside one tick the engine works unit by unit, so a picker reads a mixed state, some enemies at this tick's position and some at the last tick's, with sight to match. Judging on either whole frame reports picks the engine made correctly on what it read.
+
+Ruling, replacing it (checker `_acquire`, the notice check, and the oracle on the test side):
+- A pick is reported as "not the nearest" only when some other enemy, in the side's visible set in both frame N-1 and frame N, is nearer than the picked target under every pairing of positions: the picker at its N-1 or N position, that enemy at its N-1 or N position, the target at its N-1 or N position. In words: the other enemy is nearer whichever of the two states the engine read for each of the three units.
+- A pick is reported as "beyond the notice distance" only when the target is beyond it under every such pairing; a lock is reported as "kept beyond the notice distance" likewise; the comparison at the boundary is the engine's (a target exactly at the notice distance is inside it).
+- A pick is reported as "unseen" only when the target is in neither frame's visible set (as the R-093-02 predicate already reads).
+- No tolerance number is added. A planted case that is wrong by more than both units' steps is still reported.
+The earlier experiment that models the id order exactly is not taken: it ties the checker to the engine's loop order.
+
+That the engine reads a mixed state inside a tick, so the side with the higher unit ids sees its enemies one step fresher, is recorded as an open finding for the landing; it is older than this round and is not changed here.
+
+Also in this pass: the premises of `test_engine_rules_r3_sight_lock.py::test_control_the_fight_and_the_trace_premises_hold` (pinned on the 3,923-tick run of L-0084) are re-derived from the 1,955-tick run by a test fixer; the held run-length pins are re-pinned once the checker reports nothing on L-0061 and L-0084; the sweep and the stage 4 pictures are made whatever the checker still reports, with every report listed.

@@ -11,6 +11,10 @@ number below is a detector bound named after the spec's DRAFT constants, Westley
   PUSH_RADIUS    DRAFT-inv-push-radius 40 wu     another unit this close excuses a displacement (collision push)
   OWN_MOVE       0.5 wu                           displacement above this on a tick counts as "moved"
   HEAL_ONE       0.075 hp                         R-083-03: one Warden's heal per tick, a second adds nothing
+  NOTICE_MARGIN  DRAFT-notice-margin 0.1          R-087-04 (Round 5): a unit's notice distance to an enemy is its attack range, times the reach table's multiplier for the
+                                                  enemy's layer, times 1 + 0.1, measured as weapon reach is (R-087-10, slant between two walkers)
+  RETURN_FIRE_TICKS 4                             R-087-06: a hit by the target in the 4 ticks up to a pick is return fire (the checker's DRAFT-inv-return-fire-ticks)
+  COHORT_PERIOD  4                                R-087-08: a lock kept beyond the notice distance for more than one cohort period is reported (G7)
 
 Use:
     with oracle.recording() as recs:
@@ -33,6 +37,9 @@ DEPTH_TOL = 1.0
 PUSH_RADIUS = 40.0
 OWN_MOVE = 0.5
 HEAL_ONE = 0.075
+NOTICE_MARGIN = 0.1       # DRAFT-notice-margin (round5.md G1), Westley's number to change
+RETURN_FIRE_TICKS = 4
+COHORT_PERIOD = 4
 BACKSWING_TICKS = 10      # R-084-04: the 0.5 s pause after a shot is 10 ticks; ticks 1 to 9 after the shot are inside it (inv_check I2b)
 CELL = 100.0
 TICK = 20
@@ -57,8 +64,17 @@ class Recorder:
         self.ids.sort()
         self.typ = {u: eng.unit_type(w, u) for u in self.ids}
         self.stats = {t: eng.type_stats(w, t) for t in set(self.typ.values())}
+        import ctypes
+        buf = (ctypes.c_double * 8)()
+        eng._lib.om_terrain_band_heights.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_double), ctypes.c_uint32]
+        eng._lib.om_terrain_band_heights.restype = ctypes.c_uint32
+        n_bands = eng._lib.om_terrain_band_heights(w, buf, 8)
+        self.heights = list(buf)[:n_bands]       # band floor height of each layer (a flat world: empty), for R-087-10's slant
+        self.mult_up = [1.0] + [eng.get_param(w, eng.param_id("OM_TP_RANGE_UP_%d" % i)) for i in range(1, 5)]       # the reach table, csrc/unit.c om_tac_offset_mult
+        self.mult_down = [1.0] + [eng.get_param(w, eng.param_id("OM_TP_RANGE_DOWN_%d" % i)) for i in range(1, 5)]
+        self.flyers = {u for u in self.ids if eng.movement_kind(w, self.typ[u]) == 0}      # OM_MOVE_FLYING: reach is measured flat when either end flies
         self.canvas = None          # filled by the test when it knows it (cells outside the canvas are not tested)
-        self.ticks = []             # one dict per step: n, pre, post, fires, vis_pre, vis_post, cell
+        self.ticks = []             # one dict per step: n, pre, post, fires, hits, vis_pre, vis_post, cell
         self.n = 0
         self.blocked = set()
 
@@ -103,6 +119,18 @@ class Recorder:
         lib, w = self.eng._lib, self.w
         self.blocked = {(cx, cy, layer) for layer in range(5) for cx in range(120) for cy in range(120) if lib.om_navmesh_is_cell_blocked(w, cx, cy, layer)}
 
+    def hits_of(self, pre, post, fires):
+        """Every (attacker, victim) the step's shots damaged, as the lab checker's Monitor reads them (scripts/skilllab/invariants.py `_hits`): the target of each shot, and for an area weapon
+        each other enemy of the attacker whose hp fell and that stood within the area radius (plus 1 wu) of the target before the step. R-087-06 return fire answers splash too."""
+        out = list(fires)
+        for a, b in fires:
+            radius = self.stats[self.typ[a]]["aoe_radius"]
+            if radius > 0 and b in pre:
+                for v in self.ids:
+                    if v != b and self.side[v] != self.side[a] and pre[v]["alive"] and post[v]["hp"] < pre[v]["hp"] - 1e-9 and math.hypot(pre[b]["x"] - pre[v]["x"], pre[b]["y"] - pre[v]["y"]) <= radius + 1.0:
+                        out.append((a, v))
+        return out
+
     def step(self, orig):
         if self.n == 0:
             self.scan_blocked()
@@ -118,12 +146,13 @@ class Recorder:
         for i in range(eng._lib.om_tactical_event_count(self.w)):
             if eng._lib.om_tactical_event_get_at(self.w, i, ctypes.byref(k), ctypes.byref(a), ctypes.byref(b), ctypes.byref(t)) == 0 and k.value == 0:
                 fires.append((a.value, b.value))
+        hits = self.hits_of(pre, post, fires)
         cell = {}
         for u in self.ids:
             p = post[u]
             if p["alive"] and self.blocked_cell(p["x"], p["y"], p["layer"]):
                 cell[u] = self.depth(p["x"], p["y"], p["layer"])
-        self.ticks.append({"n": self.n, "pre": pre, "post": post, "fires": fires, "vis_pre": vis_pre, "vis_post": self.vis(post), "cell": cell})
+        self.ticks.append({"n": self.n, "pre": pre, "post": post, "fires": fires, "hits": hits, "vis_pre": vis_pre, "vis_post": self.vis(post), "cell": cell})
 
 
 @contextlib.contextmanager
@@ -235,10 +264,38 @@ def moved_in_backswing(rec):
     return out
 
 
+def notice(rec, u, a, b, brow):
+    """(distance, notice distance) from unit u (row `a`) to unit b (row `brow`), both read in the same state: the distance is the weapon reach's (horizontal, and the layers' band-height
+    difference between two walkers, R-087-10); the notice distance is u's attack range times the reach table's multiplier for b's layer times 1 + NOTICE_MARGIN (R-087-04)."""
+    la, lb = a["layer"], brow["layer"]
+    horiz = _disp(a, brow)
+    flat = u in rec.flyers or b in rec.flyers or la >= len(rec.heights) or lb >= len(rec.heights)
+    dist = horiz if flat else math.hypot(horiz, rec.heights[lb] - rec.heights[la])
+    mult = 1.0 if la == lb or abs(lb - la) > 4 else (rec.mult_up if lb > la else rec.mult_down)[abs(lb - la)]
+    return dist, rec.stats[rec.typ[u]]["attack_range"] * mult * (1 + NOTICE_MARGIN)
+
+
+def beyond_notice(rec, tk, u, t):
+    """(distance, notice distance) of the reading nearest the notice distance when enemy `t` is beyond unit `u`'s notice distance in every reading of tick `tk` (the unit at its pre-step or post-step
+    position, the enemy likewise: four readings; round5.md "Fourth pass"), else None. A target exactly at the notice distance is inside it."""
+    worst = None
+    for a in (tk["pre"][u], tk["post"][u]):
+        for b in (tk["pre"][t], tk["post"][t]):
+            g = notice(rec, u, a, t, b)
+            if g[0] <= g[1]:
+                return None
+            if worst is None or g[0] - g[1] < worst[0] - worst[1]:
+                worst = g
+    return worst
+
+
 def lock_swaps(rec, sensor_slack=25.0):
-    """R-087-03 / R-087-08: a unit's target changed to another living enemy while the old target was alive and still seen by the unit's side, with no
-    new order (the destination is not cleared or set across the tick: the lab gives its own orders once, at tick 0). A unit that has walked farther than its sensor radius (+ slack, inv_check I27) since it took
-    the old lock is excused: the leash (R-087-05) is its own rule and breaks a lock."""
+    """R-087-03 / R-087-08 (rewritten for Round 5): a unit's target changed to another living enemy while the old target was alive and still seen by the unit's side, with no
+    new order (the destination is not cleared or set across the tick: the lab gives its own orders once, at tick 0). Two ends are legal and not swaps: the leash (R-087-05: a unit
+    that has walked farther than its sensor radius + slack since it took the old lock, inv_check I27) and the notice distance (R-087-03 "leaves the unit's notice distance": the old
+    target stood beyond the unit's notice distance in some reading of the tick (the engine may have read it there; `beyond_notice` is the every-reading test for the reports, so a lock is excused here when
+    the target is beyond in any pairing of the two states, not only in all of them); R-087-06 return fire is exempt from the distance end, so a target that hit the
+    unit within RETURN_FIRE_TICKS before the step never ends it)."""
     out = []
     for tk in rec.ticks:
         pre, post = tk["pre"], tk["post"]
@@ -254,7 +311,59 @@ def lock_swaps(rec, sensor_slack=25.0):
                 continue   # the engine is re-issuing the unit's own order this tick (a lost target's last position, unit.c:2207): a new order breaks a lock
             if _walked_since_lock(rec, u, tk) > rec.stats[rec.typ[u]]["sensor_radius"] + sensor_slack:
                 continue
+            if any(d > lim for d, lim in (notice(rec, u, a, old, b) for a in (p0, p1) for b in (pre[old], post[old]))) and not _hit_by(rec, tk["n"], old, u):
+                continue   # the target left the notice distance in some reading the engine could have taken: the lock ended there, the pick after it is a new one
             out.append((tk["n"], u, "target %d -> %d while %d alive and seen" % (old, new, old)))
+    return out
+
+
+def _hit_by(rec, n, attacker, victim):
+    """R-087-06: `attacker` hit `victim` (the target of its shot, or a splash victim of it) in tick n or the RETURN_FIRE_TICKS - 1 before it (return fire's window; the checker's DRAFT-inv-return-fire-ticks)."""
+    return any((attacker, victim) in tk["hits"] for tk in rec.ticks[max(0, n - RETURN_FIRE_TICKS):n])
+
+
+def picks_beyond_notice(rec):
+    """R-087-04 (Round 5, Fourth pass): a unit with no living target before the step ends it holding an enemy that stood beyond its notice distance in every reading of the tick (`beyond_notice`),
+    and that enemy did not hit it within RETURN_FIRE_TICKS (R-087-06). [(tick, unit, target, distance, notice distance)]."""
+    out = []
+    for tk in rec.ticks:
+        pre, post = tk["pre"], tk["post"]
+        for u in rec.ids:
+            p0, p1 = pre[u], post[u]
+            new = p1["tgt"]
+            if not (p0["alive"] and p1["alive"] and new and new != p0["tgt"] and new in pre and pre[new]["alive"] and rec.side[new] != rec.side[u]):
+                continue
+            if p0["tgt"] and pre[p0["tgt"]]["alive"]:
+                continue   # a swap, not a pick: lock_swaps judges it
+            g = beyond_notice(rec, tk, u, new)
+            if g is not None and not _hit_by(rec, tk["n"], new, u):
+                out.append((tk["n"], u, new, round(g[0], 1), round(g[1], 1)))
+    return out
+
+
+def locks_beyond_notice(rec):
+    """R-087-03 (G7 lock): a unit holds a living enemy that stands beyond its notice distance in every reading of the tick (`beyond_notice`) in more than COHORT_PERIOD consecutive ticks, and the lock was not
+    taken by return fire (the target hit the unit within RETURN_FIRE_TICKS up to the tick the lock began; return fire is exempt until the lock ends). One entry per run, in its
+    COHORT_PERIOD + 1 th tick: [(tick, unit, target, distance, notice distance)]."""
+    out, run, began = [], {}, {}
+    for tk in rec.ticks:
+        post, pre = tk["post"], tk["pre"]
+        for u in rec.ids:
+            t = post[u]["tgt"] if post[u]["alive"] else 0
+            if not t or not post[t]["alive"] or rec.side[t] == rec.side[u]:
+                run.pop(u, None)
+                began.pop(u, None)
+                continue
+            if began.get(u, (None,))[0] != t:
+                began[u] = (t, _hit_by(rec, tk["n"], t, u))
+            g = beyond_notice(rec, tk, u, t) if pre[t]["alive"] and pre[u]["alive"] else None
+            if g is None or began[u][1]:
+                run.pop(u, None)
+                continue
+            r = run.get(u)
+            r = run[u] = (t, r[1] + 1) if r and r[0] == t else (t, 1)
+            if r[1] == COHORT_PERIOD + 1:
+                out.append((tk["n"], u, t, round(g[0], 1), round(g[1], 1)))
     return out
 
 
@@ -287,15 +396,15 @@ def distinct_units(hits):
 
 def invariants_trace(rec):
     """The recorded fight as the trace `scripts/skilllab/invariants.check` takes (the contract is in tests/skilllab/test_invariants.py): frame 0 is the state
-    before the first step, frame k the state after step k with that step's shots; `seen` is whether the unit's side sees its target, `order` whether the
+    before the first step, frame k the state after step k with that step's shots (`fires`) and the units they damaged, splash included (`hits`); `seen` is whether the unit's side sees its target, `order` whether the
     unit has a destination."""
-    def frame(tick, snap, vis, fires):
+    def frame(tick, snap, vis, fires, hits=None):
         units = {}
         for u in rec.ids:
             r = snap[u]
             units[u] = {"x": r["x"], "y": r["y"], "layer": r["layer"], "alive": r["alive"], "hp": r["hp"], "side": rec.side[u], "target": r["tgt"],
                         "seen": vis.get((rec.side[u], r["tgt"]), True) if r["tgt"] else True, "order": r["dest"] is None}
-        return {"tick": tick, "units": units, "fires": list(fires)}
+        return {"tick": tick, "units": units, "fires": list(fires), "hits": list(fires if hits is None else hits)}
     out = [frame(0, rec.ticks[0]["pre"], rec.ticks[0]["vis_pre"], [])]
-    out += [frame(tk["n"], tk["post"], tk["vis_post"], tk["fires"]) for tk in rec.ticks]
+    out += [frame(tk["n"], tk["post"], tk["vis_post"], tk["fires"], tk["hits"]) for tk in rec.ticks]
     return out

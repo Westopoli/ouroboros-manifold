@@ -50,6 +50,7 @@
 #include "om_internal.h"
 #include "om_constants.h"
 #include "move_commit.h"
+#include "move_slope.h"
 #include <math.h>
 #include <stddef.h>
 #include <string.h>
@@ -173,6 +174,8 @@ typedef struct {
     double   pushed_x, pushed_y;
     double   facing;
     double   prev_x, prev_y, prev_facing;
+    double   walker_x, walker_y;         /* R-004-06: the position om_move_walker_tick judged the layer at this tick; not saved or hashed, rewritten every tick */
+    int      walker_on_slope;            /* R-004-06: 1 when that judgement found the walker on a slope; not saved or hashed, rewritten every tick */
     uint64_t moved_own_tick;             /* F2 (R-087-04): the last tick this unit's own movement step changed its position; not saved or hashed, rewritten every tick */
     int      has_dest;
     uint32_t giveup_near;
@@ -1760,12 +1763,14 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
     double bx = om_move_grid_x(ms, ib), by = om_move_grid_y(ms, ib);
     const double oax = ax, oay = ay, obx = bx, oby = by;
     int changed = 0, routed = 0;
-    if (ms->col_pursue && ms->start_layer[ia] != ms->start_layer[ib]) return 0;
     dx = bx - ax; dy = by - ay;
     target = ms->rad_n ? om_move_unit_radius(w, ms, ia) + om_move_unit_radius(w, ms, ib) : 2.0 * ms->radius;
     if (dx * dx + dy * dy >= target * target) return 0;
     dist = sqrt(dx * dx + dy * dy);
     if (dist >= target) return 0;
+    /* R-097-05: units on different layers pass through each other unless both stand on one slope (asked only of a pair that overlaps) */
+    if (ms->col_pursue && ms->start_layer[ia] != ms->start_layer[ib]
+        && !om_move_same_slope(w, ax, ay, ms->start_layer[ia], bx, by, ms->start_layer[ib])) return 0;
     if (dist < OM_COLLISION_EXACT_EPS) {
         /* R-097-07: exact overlap -- the lower unit id (a, since
          * a's id < b's always here) moves in the canonical +x
@@ -2044,10 +2049,10 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
 }
 
 /* PP-move P8 (PURSUE_BY_STEERING): the units a probe from (x, y) can touch, as their start-of-tick
- * positions, into scan_x/scan_y: same layer only, group mates and idle friends included, the unit itself
+ * positions, into scan_x/scan_y: same layer, or on the same slope as the unit (R-097-03, R-097-05), group mates and idle friends included, the unit itself
  * not. The grid was filed at the start of the tick, so a unit still in a cell is in the cell of its
  * start-of-tick position; a unit in the spill list is always a candidate. Returns the count. */
-static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, double x, double y) {
+static uint32_t om_move_probe_gather_start(const om_world *w, om_move_state *ms, uint32_t self_id, double x, double y) {
     const double r = OM_STEERING_PROBE_DIST + 2.0 * ms->radius + OM_MOVE_GRID_BOUND_PAD;
     const double r2 = r * r;
     const int32_t layer = ms->start_layer[self_id];
@@ -2056,7 +2061,8 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
     for (slot = ms->slot_base; slot < ms->slot_base + ms->n_spill; slot++) {
         cid = ms->slot_id[slot];
         double dx = ms->start_x[cid] - x, dy = ms->start_y[cid] - y;
-        if (cid == self_id || ms->start_layer[cid] != layer || dx * dx + dy * dy > r2) continue;
+        if (cid == self_id || dx * dx + dy * dy > r2) continue;
+        if (ms->start_layer[cid] != layer && !om_move_same_slope(w, x, y, layer, ms->start_x[cid], ms->start_y[cid], ms->start_layer[cid])) continue;
         ms->scan_x[n] = ms->start_x[cid];
         ms->scan_y[n] = ms->start_y[cid];
         n++;
@@ -2069,7 +2075,8 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
             for (; mask; mask &= mask - 1) {
                 slot = base + om_move_lowest_bit(mask);
                 cid = ms->slot_id[slot];
-                if (ms->unit_slot[cid] != slot || cid == self_id || ms->start_layer[cid] != layer) continue;
+                if (ms->unit_slot[cid] != slot || cid == self_id) continue;
+                if (ms->start_layer[cid] != layer && !om_move_same_slope(w, x, y, layer, ms->slot_sx[slot], ms->slot_sy[slot], ms->start_layer[cid])) continue;
                 ms->scan_x[n] = ms->slot_sx[slot];
                 ms->scan_y[n] = ms->slot_sy[slot];
                 n++;
@@ -2282,7 +2289,7 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
         steer_x = mu->detour_dx;
         steer_y = mu->detour_dy;
     } else {
-        uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather_start(ms, id, mu->x, mu->y);
+        uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather_start(w, ms, id, mu->x, mu->y);
         mu->deflecting = 0;
         if (n_near && !om_move_probe_clear(ms, n_near, hints, mu->x + OM_STEERING_PROBE_DIST * steer_x, mu->y + OM_STEERING_PROBE_DIST * steer_y)) {
             double seek_x = steer_x, seek_y = steer_y;
@@ -2413,6 +2420,16 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
             mu->plan_valid = 1;
             mu->plan_epoch = ms->terrain_epoch;
             mu->plan_layer = (uint32_t)om_move_layer(w, id);
+        }
+        /* R-099-04 for a walker, as for the steering path (om_move_steer_step): a group slot is reached within 1.5 radii; a lone move keeps its exact finish
+         * (tests/csim/test_E01_T2_walker_waypoint_arrival.py). Without it a walker held short of its slot by a ring of units was pushed back every tick for the rest of the fight. */
+        if (mu->group_id != 0
+            && sqrt((mu->dest_x - mu->x) * (mu->dest_x - mu->x) + (mu->dest_y - mu->y) * (mu->dest_y - mu->y)) < OM_ARRIVAL_TOLERANCE_MULT * ms->radius) {
+            mu->has_dest = 0;
+            mu->plan_valid = 0;
+            om_move_route_drop(mu);
+            mu->deflecting = 0;
+            return;
         }
         dx = mu->aim_x - mu->x;
         dy = mu->aim_y - mu->y;
@@ -2778,6 +2795,8 @@ static void om_move_slope_clamp(om_world *w, om_move_state *ms, uint32_t period)
     }
 }
 
+static void om_move_walker_tick_moved(om_world *w, om_move_state *ms);   /* body after om_move_walker_tick */
+
 static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick, uint32_t period) {
     uint32_t id;
     om_move_discover(w, ms);
@@ -2808,6 +2827,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     om_move_walker_tick(w);
     om_move_collision_pass_internal(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_slope_clamp(w, ms, period);
+    om_move_walker_tick_moved(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_face_pass(w, ms, period);
     om_move_groups_check_arrival(ms);
 }
@@ -3589,29 +3609,46 @@ int om_unit_profile_movement_kind(const om_world *w, int type) {
 
 /* R-004-06: a walker on a slope is on the lower band below the slope's midline and the upper band at or above it.
  * See also: om_move_walker_step, which moves the walker. */
+static void om_move_walker_layer(om_world *w, om_move_state *ms, uint32_t id) {
+    om_move_unit *mu = &ms->units[id];
+    om_slope s;
+    double dot;
+    int32_t band;
+    mu->walker_x = mu->x;
+    mu->walker_y = mu->y;
+    mu->walker_on_slope = 0;
+    if (!mu->in_use || !om_unit_alive(w, id) || !om_move_is_walker(w, id) || om_terrain_slope_at(w, mu->x, mu->y, &s) < 0) return;
+    mu->walker_on_slope = 1;
+    dot = (mu->x - s.mx) * (s.x1 - s.x0) + (mu->y - s.my) * (s.y1 - s.y0);
+    band = (dot < 0.0 ? s.lower_band : s.upper_band) - 1;
+    if (om_move_layer(w, id) != band) {
+        /* The walker's own crossing of a slope: its route already runs over the link, and a replan from mid-slope on the
+         * new layer finds no route (tests/csim/test_E01_R004_07_slope_time.py). So the plan follows the layer here and the
+         * stored route is dropped (Architect 2026-10-14): route_n 0 with the aim kept is the pre-W2 plan, which replans at the
+         * next waypoint arrival; the layer trigger in om_move_walker_step covers every other change. */
+        if (mu->plan_valid && mu->plan_layer == (uint32_t)om_move_layer(w, id)) {
+            mu->plan_layer = (uint32_t)band;
+            om_move_route_drop(mu); /* stale: the aim stays, the next waypoint arrival replans on this layer like the old walker */
+        }
+        om_tac_unit_set_layer(w, id, (uint32_t)band);
+    }
+}
+
 void om_move_walker_tick(om_world *w) {
     om_move_state *ms = om_ms(w);
     uint32_t id;
     if (!om_terrain_present(w)) return;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) om_move_walker_layer(w, ms, id);
+}
+
+/* The collision pass and the slope clamp may carry a walker across a midline after om_move_walker_tick judged it: its layer is its side of the midline at the end of the tick (R-004-06),
+ * so a unit that stood on a slope at that judgement and has moved since is judged again (the lookup is the cost; flat ground is not looked up twice). See also: om_move_walker_tick; om_move_tick_once, which calls it after the clamp. */
+static void om_move_walker_tick_moved(om_world *w, om_move_state *ms) {
+    uint32_t id;
+    if (!om_terrain_present(w)) return;
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
-        om_move_unit *mu = &ms->units[id];
-        om_slope s;
-        double dot;
-        int32_t band;
-        if (!mu->in_use || !om_unit_alive(w, id) || !om_move_is_walker(w, id) || om_terrain_slope_at(w, mu->x, mu->y, &s) < 0) continue;
-        dot = (mu->x - s.mx) * (s.x1 - s.x0) + (mu->y - s.my) * (s.y1 - s.y0);
-        band = (dot < 0.0 ? s.lower_band : s.upper_band) - 1;
-        if (om_move_layer(w, id) != band) {
-            /* The walker's own crossing of a slope: its route already runs over the link, and a replan from mid-slope on the
-             * new layer finds no route (tests/csim/test_E01_R004_07_slope_time.py). So the plan follows the layer here and the
-             * stored route is dropped (Architect 2026-10-14): route_n 0 with the aim kept is the pre-W2 plan, which replans at the
-             * next waypoint arrival; the layer trigger in om_move_walker_step covers every other change. */
-            if (mu->plan_valid && mu->plan_layer == (uint32_t)om_move_layer(w, id)) {
-                mu->plan_layer = (uint32_t)band;
-                om_move_route_drop(mu); /* stale: the aim stays, the next waypoint arrival replans on this layer like the old walker */
-            }
-            om_tac_unit_set_layer(w, id, (uint32_t)band);
-        }
+        const om_move_unit *mu = &ms->units[id];
+        if (mu->in_use && mu->walker_on_slope && (mu->x != mu->walker_x || mu->y != mu->walker_y)) om_move_walker_layer(w, ms, id);
     }
 }
 

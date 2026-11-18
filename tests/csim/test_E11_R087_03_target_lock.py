@@ -25,7 +25,7 @@ Detector bounds (not rules): ACQUIRE_TICKS 12 (a cohort turn comes within OM_TAR
 """
 
 from conftest import OMFeature
-from test_PP_unit_support import RAIDER, SUPPLY, VANGUARD, attack_move, kill, pos, spawn, step, target
+from test_PP_unit_support import BASTION, RAIDER, SUPPLY, VANGUARD, attack_move, kill, pos, spawn, step, target
 
 ACQUIRE_TICKS = 12
 BIG_HP = 1.0e6
@@ -62,25 +62,28 @@ def _wait_for_lock(lib, w, u, limit=ACQUIRE_TICKS):
 
 # ------------------------------------------------------------------ red today
 
-def _fleeing_scene(lib, wf):
-    """An attack-moving Raider U at (300,400); a Vanguard V 150 wu east that walks away east (3.5 wu a tick); a Supply S 160 wu south of U
-    that never moves. Both enemies are tough. U locks V first (it is the nearer)."""
+def _steps_out_scene(lib, wf):
+    """Test-defect 2026-11-17 (R-087-03: the lock ends when the target leaves the notice distance, DEC-targeting-sc2-2026-11-17): the old scene had the Vanguard
+    run off at 4 wu a tick, which leaves the notice distance 220 and ends the lock by the new rule. Now an attack-moving Raider U at (300,400) locks a Vanguard V
+    150 wu east, with a Supply S 160 wu south of U that never moves; V is then put 210 wu from U (out of attack range 200, inside the notice distance 220),
+    so S is the nearer enemy. Both enemies are tough."""
     w = _world(lib, wf)
     u = spawn(lib, w, RAIDER, 0, 300, 400)
     v = spawn(lib, w, VANGUARD, 1, 450, 400)
     s = spawn(lib, w, SUPPLY, 1, 300, 560)
     _tough(lib, w, v, s)
-    lib.om_command_move(w, [v], 1, 1200.0, 400.0)
     attack_move(lib, w, [u], 1800, 400)
+    assert _wait_for_lock(lib, w, u) == v, "scene broken: the unit did not lock the nearer Vanguard first"
+    ux, uy = pos(lib, w, u)
+    lib.om_unit_teleport(w, v, ux + 210.0, uy, 0)
     return w, u, v, s
 
 
 def test_R_087_03_a_locked_target_that_steps_out_of_attack_range_is_not_swapped_for_the_nearest(lib, world_factory):
-    """R-087-03 / R-087-08: the lock holds until the target dies, leaves the side's sight, or a new order. Per tick for 120 ticks the unit's
-    target is the Vanguard once it has locked it, never the Supply. Red today: 16 ticks after the lock, as the Vanguard passes 200 wu (the
-    attack range), the unit swaps to the Supply (unit.c:2236-2240)."""
-    w, u, v, s = _fleeing_scene(lib, world_factory)
-    assert _wait_for_lock(lib, w, u) == v, "scene broken: the unit did not lock the nearer Vanguard first"
+    """R-087-03 / R-087-08: the lock holds until the target dies, leaves the side's sight, leaves the notice distance, or a new order. Per tick for 120 ticks the
+    unit's target is the Vanguard (210 wu away, inside the notice distance 220, outside the attack range 200), never the nearer Supply. Green today (Round 1 removed the re-acquire clause); it goes red against an engine that
+    swaps on leaving attack range."""
+    w, u, v, s = _steps_out_scene(lib, world_factory)
     seen = []
     for _ in range(120):
         step(lib, w)
@@ -89,14 +92,22 @@ def test_R_087_03_a_locked_target_that_steps_out_of_attack_range_is_not_swapped_
     assert not swapped, "target swapped to the Supply at tick(s) %s after the lock (Vanguard %d, Supply %d); targets %s" % (swapped[:3], v, s, sorted(set(seen)))
 
 
-def test_R_087_04_a_locked_target_that_walks_away_is_chased_until_in_range(lib, world_factory):
-    """R-087-04 'walks toward it until the enemy is within attack range': the unit keeps closing on its locked Vanguard. After 120 ticks it
-    stands within 2 x its attack range of it (the Vanguard walked 1.5 x its own speed less than the Raider). Red today: the unit
-    stands where it swapped, 610 wu behind."""
-    w, u, v, s = _fleeing_scene(lib, world_factory)
+def test_R_087_04_a_locked_target_that_walks_away_slower_is_chased_until_in_range(lib, world_factory):
+    """R-087-04 'walks toward it until the enemy is within attack range': the unit keeps closing on its locked target. Test-defect 2026-11-17: the target is a
+    Bastion that walks away at 2 wu a tick (the Raider walks 7.5), which keeps it inside the notice distance; the old Vanguard (4 wu a tick) outran the
+    notice distance and the lock ends there (R-087-03, tests/csim/test_E11_R087_03_lock_ends_at_notice_distance.py). After 120 ticks the unit
+    stands within its attack range plus one step of the Bastion and still holds it."""
+    w = _world(lib, world_factory)
+    u = spawn(lib, w, RAIDER, 0, 300, 400)
+    v = spawn(lib, w, BASTION, 1, 450, 400)
+    s = spawn(lib, w, SUPPLY, 1, 300, 560)
+    _tough(lib, w, v, s)
+    lib.om_command_move(w, [v], 1, 1200.0, 400.0)
+    attack_move(lib, w, [u], 1800, 400)
     step(lib, w, 120)
     d = _dist(pos(lib, w, u), pos(lib, w, v))
-    assert d <= 400.0, "the unit is %.0f wu from the target it locked (Vanguard %d), target now %s" % (d, v, target(lib, w, u))
+    assert d <= 200.0 + 7.5, "the unit is %.0f wu from the target it locked (Bastion %d), target now %s" % (d, v, target(lib, w, u))
+    assert target(lib, w, u) == v, "the unit holds %s, not the Bastion %d" % (target(lib, w, u), v)
 
 
 # ------------------------------------------------------------------ green today: what must stay
@@ -155,11 +166,12 @@ def test_R_087_03_control_a_dead_target_is_replaced_by_the_nearest_remaining(lib
 
 def test_R_087_03_control_a_target_that_leaves_the_sides_sight_is_dropped_and_the_next_visible_one_taken(lib, world_factory):
     """R-087-03 'until the target ... leaves its side's sight' (control, green today): a wall built between U and its locked Supply (cell column x 300..400)
-    blinds the side to it; within ACQUIRE_TICKS the unit holds the other Supply, which is still visible."""
+    blinds the side to it; within ACQUIRE_TICKS the unit holds the other Supply, which is still visible. Test-defect 2026-11-17 (R-087-03, R-087-04: the pick is the
+    nearest enemy the side sees within the notice distance): the other Supply stands 210 wu from the Raider, inside its notice distance 220 (it stood 240 wu away, beyond it)."""
     w = _world(lib, world_factory)
     u = spawn(lib, w, RAIDER, 0, 260, 400)
     behind = spawn(lib, w, SUPPLY, 1, 440, 400)
-    other = spawn(lib, w, SUPPLY, 1, 260, 640)
+    other = spawn(lib, w, SUPPLY, 1, 260, 610)
     _tough(lib, w, behind, other)
     assert _wait_for_lock(lib, w, u) == behind
     assert lib.om_map_block_rect(w, 310.0, 310.0, 390.0, 490.0, 0, 4) == 0

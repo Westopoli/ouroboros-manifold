@@ -60,12 +60,13 @@ def at(mon, rule, tick, unit=None):
 
 
 def test_control_the_monitor_runs_the_three_fights_to_the_measured_ends():
-    """Control (green today and after, unless the engine changes): L-0061 seed 1 2136 ticks, L-0084 seed 1 3923, the cover fixture 801; sight on suspends nothing. Proves the fights below are the
+    """Control (green today and after, unless the engine changes): L-0061 seed 1 1415 ticks, L-0084 seed 1 1955, the cover fixture 957; sight on suspends nothing. Proves the fights below are the
     ones the premises were dumped on. Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47; Test-defect: dumped before the Round 3 engine fixes): was 2234 / 3718 / 1086 on 7ba38983. L-0061: 2234 -> 2025
     at fix 3 (8f825d59) -> 2136 at fix 2 (94da7493); L-0084: 3718 -> 3923 at fix 1 (d70c8d47); cover: 1086 -> 847 at fix 2 -> 801 on the Round 4 tip 6d3d7635 (R-097-10: an idle unit steps aside for a mover of its own side; first different tick 575; Test-defect: dumped
-    before it). The lab checker reports no violation of any rule on any of the three."""
+    before it). Re-pinned 2026-11-17 on the Round 5 fourth-pass tip (Test-defect: the lengths were the fights before the notice distance of R-087-04): 2136 -> 1415, 3923 -> 1955, 801 -> 957; the lab checker
+    reports no violation of any rule on any of the three."""
     got = [(played(n)[0].tick, played(n)[0].suspended) for n in ("L-0061", "L-0084", "cover")]
-    assert got == [(2136, {}), (3923, {}), (801, {})]
+    assert got == [(1415, {}), (1955, {}), (957, {})]
 
 
 def test_R_096_08_a_guard_dropping_a_target_beyond_radius_plus_range_by_slant_is_not_an_r_087_03_report_L0061():
@@ -102,37 +103,35 @@ def test_R_093_02_one_tick_of_lag_on_sight_is_not_a_report_L0084():
     assert got == [], got
 
 
-def test_R_087_04_premise_unit_13_holds_enemy_6_and_closes_on_it_in_the_cover_fixture():
-    """Premise of the test below (green; re-written 2026-11-12, Test-defect: the premise it pinned, unit 13 holding enemy 6 at 301.3 wu with range 300 and standing still on ticks 356 to 375, was the
-    engine before Round 3 fix 2, 94da7493, and is gone): on the cover fixture today unit 13 (range 300) holds enemy 6 on every tick 356 to 375 and has its attack-move destination, is 242.8 wu from
-    it at tick 356 and walks to 216.3 wu by tick 366 (about 2 wu a tick), where it stands. It is inside attack range throughout; the case 'a held target just outside attack range' does not occur in
-    this fight any more (reported)."""
+def test_R_087_04_premise_unit_13_holds_enemy_4_and_closes_on_it_in_the_cover_fixture():
+    """Premise of the test below (green; re-derived 2026-11-17 on the Round 5 tip, Test-defect: the pair it pinned, unit 13 holding enemy 6 on ticks 356 to 375, is not a fight any more: unit 13 holds enemy 2 from tick 264 to 433 at 322 wu without moving, and takes enemy 6 first at tick 780): on the cover fixture now unit 13
+    (range 300) takes enemy 4 at tick 636 (cohort turn), 320.54 wu away, outside its range and inside its notice distance 330, holds it on every tick 636 to 646 with its attack-move destination, walks
+    to 299.66 wu by tick 646 (the first tick inside range, about 2 wu a tick) and stands at 297.59 wu from tick 649."""
     _, rec = played("cover")
-    u, t = 13, 6
+    u, t = 13, 4
     rng = rec.stats[rec.typ[u]]["attack_range"]
     assert rng == 300.0
-    rows = [tk for tk in rec.ticks if 356 <= tk["n"] <= 375]
-    assert len(rows) == 20
+    rows = [tk for tk in rec.ticks if 636 <= tk["n"] <= 646]
+    assert len(rows) == 11
     dist = {}
     for tk in rows:
         q = tk["post"][u]
         dist[tk["n"]] = ((q["x"] - tk["post"][t]["x"]) ** 2 + (q["y"] - tk["post"][t]["y"]) ** 2) ** 0.5
-        assert q["tgt"] == t and q["dest"] is not None and dist[tk["n"]] <= rng, (tk["n"], q["tgt"], dist[tk["n"]], q["dest"])
-    assert abs(dist[356] - 242.8) < 0.5 and abs(dist[366] - 216.3) < 0.5 and abs(dist[375] - 216.2) < 0.5, (dist[356], dist[366], dist[375])
+        assert q["tgt"] == t and q["dest"] is not None, (tk["n"], q["tgt"], dist[tk["n"]], q["dest"])
+    assert abs(dist[636] - 320.54) < 0.5 and abs(dist[646] - 299.66) < 0.5, (dist[636], dist[646])
+    assert dist[636] > rng and all(dist[n] > rng for n in range(636, 646)), dist     # outside attack range until tick 646: the case 'a held target just outside attack range'
 
 
 def test_R_087_04_finding_a_unit_holding_a_target_just_outside_attack_range_walks_toward_it():
     """R-087-04 (E-11): "... acquires the nearest such enemy at its cohort turn (R-087-08), anchors where it stands (R-087-05) and walks toward it until the enemy is within attack range, then
-    halts and fires". Written to the rule text: unit 13 of the cover fixture holds enemy 6, 301.3 wu away with range 300, from tick 356; by tick 375 it must be closer than at tick 357 by more
-    than 1 wu. Measured: the distance is 301.3 on every one of those ticks (the unit does not move), see the premise test above. The engine, not the checker, is what differs; the cause
-    (no route is built for an out-of-range target whose line is blocked?) needs an engine trace and is not asserted here. Was an xfail (strict) while red on 7ba38983; the marker is removed
-    2026-11-12 (Test-defect: Round 3 fix 2, 94da7493, 'the chase orders the move again when the unit has no route', cured it: the strict xfail turned into a failure). The assertion is unchanged. Note: the
-    cover fight no longer holds a target outside attack range at these ticks (the premise test above), so this passes because unit 13 closes from 242.8 to 216.3 wu; the case itself is
-    tests/csim/test_E11_R087_04_chase_resumes_after_the_pause.py."""
+    halts and fires". Written to the rule text: unit 13 of the cover fixture holds enemy 4, 320.54 wu away with range 300, from tick 636; by tick 646 it must be closer than at tick 637 by more
+    than 1 wu. Re-pinned 2026-11-17 (Test-defect: the pair was unit 13 and enemy 6, ticks 357 and 375, from the fight before Round 3 fix 2 and Round 5; see the premise test above). The assertion is unchanged.
+    The case itself is tests/csim/test_E11_R087_04_chase_resumes_after_the_pause.py. Reported, not asserted: the same fixture has unit 13 (ticks 264 to 433, enemy 2) and unit 10 (265 to 433), standing
+    still 322 wu from a held enemy, with a destination, for 170 ticks."""
     _, rec = played("cover")
-    u, t = 13, 6
+    u, t = 13, 4
     def dist(n):
         tk = rec.ticks[n - 1]
         q, r = tk["post"][u], tk["post"][t]
         return ((q["x"] - r["x"]) ** 2 + (q["y"] - r["y"]) ** 2) ** 0.5
-    assert dist(375) < dist(357) - 1.0, "distance %.2f at tick 357, %.2f at tick 375: the unit stood still" % (dist(357), dist(375))
+    assert dist(646) < dist(637) - 1.0, "distance %.2f at tick 637, %.2f at tick 646: the unit stood still" % (dist(637), dist(646))

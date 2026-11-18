@@ -12,6 +12,11 @@ of 0.5 one layer up halves the distance at which it engages; a damage multiplier
 Attacker: the Vanguard (range 300, sensor 700); target: an idle Supply unit. Layers are engine layers
 0 to 4 (A132). 'Engaged' = the attacker holds the target and the target loses hp in the window.
 
+Test-defect, second pass 2026-11-17 (E-11 R-087-04, Westley 2026-11-17 "acquire within attack radius", the notice distance is the reach to that layer, multiplier
+included, times 1.1, OM_NOTICE_MARGIN): the engagement edge of a range multiplier is the reach times 1.1 and the firing edge stays the reach itself. A target
+between the two is acquired, walked to the reach and fired on; one beyond the notice distance is never acquired. The range-multiplier tests below assert both
+edges (_fight reads the gap at the first hit); they used to pin the engagement edge at the reach itself.
+
 Red today, and why: there is no cross-layer fire at all (acquisition, drop check and the fire check
 each require equal layers) and the reach and multiplier settings are not read, so every 'engaged'
 expectation fails; the attack-target order is the one exception, it fires across any layers today, so
@@ -27,7 +32,34 @@ from test_PP_C_g5_support import (
 )
 
 RANGE = 300.0  # Vanguard attack range (om_constants OM_ROSTER_VANGUARD_RANGE)
+NOTICE_MARGIN = 0.1  # DRAFT-notice-margin (round5.md G1, E-11 R-087-04): the notice distance is the reach times (1 + this)
+FIRE_SLACK = 1.0  # detector bound: the gap at the first hit is within the reach plus this (measured 147 for a reach of 150, 447 for 450)
 OFFSETS = [(d, n) for d in ("UP", "DOWN") for n in range(1, 5)]
+
+
+def _fight(lib, world_factory, direction, n, dist, mult):
+    """One Vanguard against one Supply `dist` wu away n layers up or down, reach (n, n), vision open, OM_TP_RANGE_<dir>_<n> = mult. Returns (held, gap): whether the
+    attacker held the target at some tick of the window, and the horizontal gap at the tick the target first lost hp (None when it never did)."""
+    a_layer, t_layer = layers_for(direction, n)
+    w = world_factory(n_regions=1)
+    assert set_reach(lib, w, VANGUARD, n, n) == 0
+    open_vision(lib, w, 1.0)
+    assert set_param(lib, w, f"OM_TP_RANGE_{direction}_{n}", mult) == 0
+    a, t = solo_pair(lib, w, VANGUARD, a_layer, t_layer, dist)
+    start = hp(lib, w, t)
+    held = False
+    for _ in range(WINDOW):
+        step(lib, w)
+        if target(lib, w, a) == t:
+            held = True
+        if hp(lib, w, t) < start:
+            return held, abs(pos(lib, w, t)[0] - pos(lib, w, a)[0])
+    return held, None
+
+
+def _engaged_at(lib, world_factory, direction, n, dist, mult):
+    held, gap = _fight(lib, world_factory, direction, n, dist, mult)
+    return held and gap is not None, gap
 
 
 def _in_reach(reach, direction, n):
@@ -137,49 +169,53 @@ def test_R_164_02_a_reach_fight_is_repeatable_and_reach_has_an_effect(lib, world
 
 @pytest.mark.parametrize("direction,n", OFFSETS)
 def test_Q_008_03_a_range_multiplier_of_one_half_halves_the_engagement_distance(lib, world_factory, direction, n):
-    """Brief G5: 'a range multiplier of 0.5 one layer up halves the distance at which it engages',
-    here at every signed offset. Vanguard range 300, vision opened. At the default multiplier 1.0 a
-    target at 155 wu is engaged (control); with OM_TP_RANGE_<dir>_<n> = 0.5 it is not, while one at
-    145 still is."""
+    """Brief G5: 'a range multiplier of 0.5 one layer up halves the distance at which it engages', here at every signed offset, with the notice distance of
+    E-11 R-087-04 (the reach times 1.1) as the engagement edge and the reach itself as the firing edge. Vanguard range 300, vision opened. At the default
+    multiplier 1.0 a target at 155 wu is engaged (control). With OM_TP_RANGE_<dir>_<n> = 0.5 (reach 150, notice distance 165): a target at 145 is
+    engaged and fired on from where it stands; one at 155, between the two edges, is acquired and walked to the reach before it is fired on (the gap at the
+    first hit is within the reach, not 155); one at 170 is never acquired and never hurt."""
     a_layer, t_layer = layers_for(direction, n)
     name = f"OM_TP_RANGE_{direction}_{n}"
     half = RANGE * 0.5
+    notice = half * (1.0 + NOTICE_MARGIN)
     got, _ = duel(lib, world_factory, VANGUARD, a_layer, t_layer, half + EDGE, reach=(n, n), vision=1.0)
     assert got, "control: at multiplier 1.0 the target at half range + 5 is in range"
-    got, _ = duel(lib, world_factory, VANGUARD, a_layer, t_layer, half + EDGE, reach=(n, n), vision=1.0,
-                  params={name: 0.5})
-    assert not got, f"{name} 0.5: a target at {half + EDGE} wu is beyond the halved range"
-    got, _ = duel(lib, world_factory, VANGUARD, a_layer, t_layer, half - EDGE, reach=(n, n), vision=1.0,
-                  params={name: 0.5})
-    assert got, f"{name} 0.5: a target at {half - EDGE} wu is inside the halved range"
+    got, gap = _engaged_at(lib, world_factory, direction, n, half - EDGE, 0.5)
+    assert got and gap <= half, f"{name} 0.5: a target at {half - EDGE} wu is inside the halved range; first hit at gap {gap}"
+    got, gap = _engaged_at(lib, world_factory, direction, n, half + EDGE, 0.5)
+    assert got, f"{name} 0.5: a target at {half + EDGE} wu is inside the notice distance {notice:.0f} and is acquired"
+    assert gap <= half + FIRE_SLACK, f"{name} 0.5: the first hit came from {gap} wu, beyond the halved reach {half} (the firing edge is the reach itself)"
+    held, gap = _fight(lib, world_factory, direction, n, notice + EDGE, 0.5)
+    assert not held and gap is None, f"{name} 0.5: a target at {notice + EDGE} wu is beyond the notice distance and is never acquired (held={held}, hit at gap {gap})"
 
 
 @pytest.mark.parametrize("direction,n", [("UP", 1), ("DOWN", 1), ("UP", 3), ("DOWN", 4)])
 def test_Q_008_03_a_range_multiplier_above_one_extends_acquisition_too(lib, world_factory, direction, n):
-    """The multiplier moves the whole engagement distance, acquisition included, not just the shot:
-    at 1.5 the Vanguard (range 300) engages at 445 wu and not at 455. Control: at 1.0 a target at 445
-    is out of range, never held."""
-    a_layer, t_layer = layers_for(direction, n)
+    """The multiplier moves the whole engagement distance, acquisition included, not just the shot: at 1.5 the Vanguard (range 300, reach 450, notice distance
+    495) engages at 445 wu, engages at 455 (inside the notice distance: acquired, walked to 450, fired on from within the reach) and not at 500 (never acquired).
+    Control: at 1.0 a target at 445 is beyond the notice distance 330, never held."""
     name = f"OM_TP_RANGE_{direction}_{n}"
     far = RANGE * 1.5
-    got, _ = duel(lib, world_factory, VANGUARD, a_layer, t_layer, far - EDGE, reach=(n, n), vision=1.0,
-                  params={name: 1.5})
-    assert got, f"{name} 1.5: a target at {far - EDGE} wu is inside the extended range"
-    got, _ = duel(lib, world_factory, VANGUARD, a_layer, t_layer, far + EDGE, reach=(n, n), vision=1.0,
-                  params={name: 1.5})
-    assert not got, f"{name} 1.5: a target at {far + EDGE} wu is beyond it"
-    got, _ = duel(lib, world_factory, VANGUARD, a_layer, t_layer, far - EDGE, reach=(n, n), vision=1.0)
-    assert not got, "control: at multiplier 1.0 the same target is beyond range 300"
+    notice = far * (1.0 + NOTICE_MARGIN)
+    got, gap = _engaged_at(lib, world_factory, direction, n, far - EDGE, 1.5)
+    assert got and gap <= far, f"{name} 1.5: a target at {far - EDGE} wu is inside the extended range; first hit at gap {gap}"
+    got, gap = _engaged_at(lib, world_factory, direction, n, far + EDGE, 1.5)
+    assert got, f"{name} 1.5: a target at {far + EDGE} wu is inside the notice distance {notice:.0f} and is acquired"
+    assert gap <= far + FIRE_SLACK, f"{name} 1.5: the first hit came from {gap} wu, beyond the extended reach {far} (the firing edge is the reach itself)"
+    held, gap = _fight(lib, world_factory, direction, n, notice + EDGE, 1.5)
+    assert not held and gap is None, f"{name} 1.5: a target at {notice + EDGE} wu is beyond the notice distance (held={held}, hit at gap {gap})"
+    got, _ = _engaged_at(lib, world_factory, direction, n, far - EDGE, 1.0)
+    assert not got, "control: at multiplier 1.0 the same target is beyond the notice distance 330"
 
 
 def test_Q_008_03_range_multipliers_are_per_direction_and_per_offset(lib, world_factory):
-    """Only the setting named moves. Vanguard on layer 2, reach (2, 2), RANGE_UP_1 = 0.5, a target 150
-    wu out (range 300): one layer up is not engaged; one layer down, two up and two down all are."""
+    """Only the setting named moves. Vanguard on layer 2, reach (2, 2), RANGE_UP_1 = 0.5 (reach 150, notice distance 165), a target 170 wu out (beyond that
+    notice distance, inside range 300): one layer up is not engaged; one layer down, two up and two down all are."""
     cases = {("UP", 1): False, ("DOWN", 1): True, ("UP", 2): True, ("DOWN", 2): True}
     wrong = []
     for (direction, n), want in cases.items():
         t_layer = 2 + n if direction == "UP" else 2 - n
-        got, _ = duel(lib, world_factory, VANGUARD, 2, t_layer, 150.0 + EDGE, reach=(2, 2), vision=1.0,
+        got, _ = duel(lib, world_factory, VANGUARD, 2, t_layer, 150.0 * (1.0 + NOTICE_MARGIN) + EDGE, reach=(2, 2), vision=1.0,
                       params={"OM_TP_RANGE_UP_1": 0.5})
         if got != want:
             wrong.append(f"{direction} {n}: engaged={got}, wanted {want}")
@@ -187,14 +223,13 @@ def test_Q_008_03_range_multipliers_are_per_direction_and_per_offset(lib, world_
 
 
 def test_Q_008_03_range_multiplier_does_not_touch_same_layer_range(lib, world_factory):
-    """Offset 0 has no parameter and stays 1.0: with every RANGE_* at 0.5 a same-layer target at 290 wu
-    is still engaged, a cross-layer one at 145 is engaged (control: the halved range reaches it) and
-    one at 155 is not."""
+    """Offset 0 has no parameter and stays 1.0: with every RANGE_* at 0.5 a same-layer target at 290 wu is still engaged, a cross-layer one at 145 is engaged
+    (control: the halved range reaches it) and one at 170, beyond the halved notice distance 165, is not."""
     params = {f"OM_TP_RANGE_{d}_{n}": 0.5 for d in ("UP", "DOWN") for n in range(1, 5)}
     got, _ = duel(lib, world_factory, VANGUARD, 2, 3, 145.0, reach=(1, 1), vision=1.0, params=params)
     assert got, "control: a cross-layer target at 145 is inside the halved range"
-    got, _ = duel(lib, world_factory, VANGUARD, 2, 3, 155.0, reach=(1, 1), vision=1.0, params=params)
-    assert not got, "a cross-layer target at 155 is beyond it"
+    got, _ = duel(lib, world_factory, VANGUARD, 2, 3, 150.0 * (1.0 + NOTICE_MARGIN) + EDGE, reach=(1, 1), vision=1.0, params=params)
+    assert not got, "a cross-layer target beyond the halved notice distance is not acquired"
     got, _ = duel(lib, world_factory, VANGUARD, 2, 2, 290.0, reach=(1, 1), vision=1.0, params=params)
     assert got, "same-layer range is not scaled by the cross-layer multipliers"
 

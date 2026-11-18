@@ -48,9 +48,9 @@ def of(mon, rule):
 
 
 def test_control_the_monitor_runs_a_whole_real_fight_and_reads_its_suspensions():
-    """Control (green today): L-0039 seed 10 sight on runs to its end through the shipped Monitor; sight on suspends nothing."""
+    """Control (green today): L-0039 seed 10 sight on runs to its end through the shipped Monitor; sight on suspends nothing (2213 ticks; 2314 before Round 5, 2211 on the first Round 5 run, re-pinned after G1 to G5 and the walker-arrival fix fd342241c, the lab checker reports no violation of any rule on the new run)."""
     mon, rec = played("L-0039")
-    assert mon.tick == len(rec.ticks) == 2314 and mon.suspended == {}
+    assert mon.tick == len(rec.ticks) == 2213 and mon.suspended == {}
 
 
 @pytest.mark.parametrize("name", ["L-0039", "L-0061"])
@@ -129,17 +129,19 @@ def test_continuity_control_L0039_has_no_leap_even_beside_a_friend():
     assert of(mon, "continuity") == []
 
 
-@pytest.mark.xfail(strict=True, reason="GAP: R-087-04 says 'within its sensor radius'; the engine (and R-093-02's Bombard/Bastion sentence) acquires out to the attack range. "
-                   "The rule text and the measured engine differ; the Architect raises a Q- row. Strict, so a change in either shows up.")
-def test_R_087_04_gap_acquisitions_beyond_the_units_own_sensor_radius():
-    """R-087-04: 'is within its sensor radius, Then it acquires the nearest such enemy'. Measured on L-0039 seed 10: 30 of 60 acquisitions are beyond the unit's own
-    sensor radius (21 Bombard, 6 Bastion, 3 Vanguard return fire). Written to the rule text, so red until the rule or the engine changes; NOT for the checker's implementer."""
+def test_R_087_04_no_acquisition_is_beyond_the_units_notice_distance():
+    """R-087-04 (current text): "When an enemy its side can see ... is within its notice distance, Then it acquires the nearest such enemy ... The notice distance is the unit's own attack range
+    plus a margin of one tenth of that range (`DRAFT-notice-margin`) ... It is never the sensor radius: an enemy the side sees beyond the notice distance is not acquired" (R-087-06: a target
+    taken by return fire is not judged). Replaces the strict xfail that pinned the old words "within its sensor radius" (Test-defect, ruling of 2026-11-17: acquire within attack range, never the
+    sensor radius). L-0039 seed 10 sight on, per tick through the independent oracle: no pick of an enemy that stood beyond the notice distance in the state before the step. Red today for
+    Bombard and Bastion, whose sensor radius is the larger and which the engine lets acquire out to it."""
     mon, rec = played("L-0039")
-    beyond = 0
-    for tk in rec.ticks:
-        for u in rec.ids:
-            p, r = tk["pre"][u], tk["post"][u]
-            if p["alive"] and r["alive"] and r["tgt"] and r["tgt"] != p["tgt"]:
-                if math.hypot(p["x"] - tk["pre"][r["tgt"]]["x"], p["y"] - tk["pre"][r["tgt"]]["y"]) > rec.stats[rec.typ[u]]["sensor_radius"]:
-                    beyond += 1
-    assert beyond == 0
+    bad = oracle.picks_beyond_notice(rec)
+    assert not bad, "%d picks beyond the notice distance (%d units), first %s" % (len(bad), len({b[1] for b in bad}), bad[:3])
+
+
+def test_R_087_04_control_the_oracle_sees_picks_in_this_fight():
+    """Control (green today): L-0039 seed 10 has more than 50 acquisitions (the premise above: 60), so a zero count above means the picks stayed inside the distance, not that none happened."""
+    mon, rec = played("L-0039")
+    picks = sum(1 for tk in rec.ticks for u in rec.ids if tk["pre"][u]["alive"] and tk["post"][u]["alive"] and tk["post"][u]["tgt"] and tk["post"][u]["tgt"] != tk["pre"][u]["tgt"])
+    assert picks > 50, picks

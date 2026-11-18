@@ -113,7 +113,7 @@ Rules
 - R-084-03  Given a Bombard attack centered on a target, When resolved, Then every enemy on the Bombard's layer within 150 wu of the target takes full per-target damage, and the total across all targets is capped at 4 × base damage (70), applied in target order until the cap.
   Proof: MISSING
 - R-084-04  Given a unit fires, When the attack lands, Then the unit pauses movement for 0.5 s (backswing).
-  Proof: MISSING
+  Proof: tests/skilllab/arena/test_proof_r5_g8_stage4_rules.py::test_R_084_04_a_unit_that_fired_does_not_move_under_its_own_power_for_the_next_nine_ticks | whole-run | verified c7d97bb43 2026-11-17
 - R-084-05  Given a target behind cover, When hit by an attacker who can see it, Then damage is unmodified (E-01 R-007-04).
   Proof: MISSING
 - R-084-06  Given elevation, When damage is computed, Then no elevation bonus applies in any era: in the Settled Reach elevation affects sensors only (E-12 R-091-03), and the ground eras have no elevation tiers (E-12 R-091-02, Q-091-01); the era pack's elevation-damage flag is off everywhere and nothing reads a tier for damage. The flag `om_era_elevation_damage_bonus_enabled` stays a dead API until the contract piece HARNESS-dead-elevation-flag removes it (Architect reading 2026-10-23; Westley may veto).
@@ -206,7 +206,7 @@ Inputs: unit states; visibility (E-12); orders (E-13).
 Outputs: target ids and attack events in the tick delta.
 Open flags: Q-008-05 (the nearest enemy stays the game's target rule; a lab-only setting measures focus fire).
 The move away of R-087-01 is built for a unit with no order and for an attack-mover, arrived or not (2026-11-11). The engine starts it when return fire cannot reach or see the attacker.
-Ruled 2026-11-17 and not built (DEC-targeting-sc2-2026-11-17, DEC-unseen-fire-attack-move-2026-11-17): the notice distance of R-087-04 and the lock ending when the target leaves it (R-087-03); an attack-mover still on its way keeping its attack-move under fire it cannot answer (R-087-01). The engine today acquires within the larger of the type's sensor radius and attack range, keeps a lock at any distance its side sees, and moves an attack-mover that has not arrived 200 wu away before sending it back toward its point. The build is `docs/northstar/plans/engine-rules-2026-11-08/round5.md`.
+Built 2026-11-17 in Round 5 of the engine rule fixes (`docs/reports/2026-11-17-engine-rules-round-5.md`): the notice distance of R-087-04, the lock ending when the target leaves it (R-087-03), and an attack-mover on its way keeping its attack-move under fire it cannot answer (R-087-01). Threat first is not built. The mark that a lock was taken by return fire is not saved in a save file: a loaded game ends that lock at the notice distance (DEC-engine-rules-round5-2026-11-17).
 
 ### S-088 — Reading units on screen
 As a commander, I want a Strike squad to read as a small group, a Siege unit as a single heavy asset, and every ability to have an unmistakable cue, so that I never misjudge what I am looking at.

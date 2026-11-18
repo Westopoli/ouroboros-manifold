@@ -198,8 +198,8 @@ def test_R_087_03_after_the_exclusion_window_the_given_up_enemy_is_eligible_agai
 # given up by this unit (R-087-09, tested above) and seen by the side. Then
 #   stage 1   in range from where the unit stands: the same layer, planar distance within the attack range; another layer within the unit's reach, SLANT distance within the range (walkers only; a
 #             flyer on either end is measured flat, R-087-10, DRAFT-slant-ground-only). The nearest by planar distance wins.
-#   stage 2   guards only, and only when stage 1 finds nothing: any layer in reach, SLANT distance from the guard's POST at most GUARD_RADIUS 200 + the attack range (R-096-08, csrc/unit.c
-#             om_tac_guard_engageable); the nearest to the unit by planar distance wins.
+#   stage 2   (Round 2 only; gone in Round 5, R-096-08 as ruled 2026-11-17: a guard acquires within its notice distance as every unit does, so only stage 1 is left, bounded by the notice distance.)
+#             Guards only, when stage 1 found nothing: SLANT distance from the guard's POST at most GUARD_RADIUS 200 + the attack range. The guard cases below are the Round 5 ones.
 # Reported today as "not the nearest" although legal, on L-0084 seed 1 (the whole fight is tests/skilllab/arena/test_engine_rules_r3_checker_nearest.py): six guard cases (tick/unit 1083/16, 1086/15,
 # 1556/25, 1557/26, 1558/27, 1559/24: the nearer enemy was over 500 wu from the post by slant) and two slant cases (1270/15, 1271/16: the nearer enemy, 95 wu away, was 327.6 and 330.0 wu away by slant
 # against a range of 300, and a same-layer enemy in range was taken).
@@ -234,38 +234,40 @@ def pick(inv, units, chose, *, at=5, slot=1, guard=None, heights=None, reach=Non
     return keys(inv.check(tr, rules(inv, **kw), only=["R-087-03"]).violations)
 
 
-# -- guards: stage 2 measures from the post, not from where the guard stands
+# -- guards: Round 5 (R-096-08, R-208-01): a guard acquires within its notice distance as every unit does, from where it stands; the stage 2 of Round 2 (anything its side sees within radius plus range of the post) is gone
 
-# The guard stands 150 wu east of its post (100, 100), at (250, 100). N: 420 wu from the guard, 570 wu from the post (limit 200 + 300 = 500): not engageable. F: 460 wu from the guard, 484 from the post:
-# engageable. Nothing is within 300 wu of the guard, so stage 1 finds nothing and stage 2 picks the nearest engageable: F.
-GUARD_AT, POST = (250, 100), (100, 100)
-N_FAR_FROM_POST = {2: row(670, 100, side=1)}         # 420 from the guard, 570 from the post
-F_ENGAGEABLE = {3: row(250, 560, side=1)}            # 460 from the guard, 484 from the post
-
-
-def test_R_087_03_control_a_guard_taking_the_nearest_enemy_it_can_engage_from_its_post_is_silent(inv):
-    """R-087-03 control (green today and after): the same guard with enemy E at 400 wu from it and 446 from the post (engageable) as well as F (460, 484): taking E, the nearest it can engage, is silent."""
-    e = {4: row(250, 500, side=1)}                    # 400 from the guard, 446 from the post
-    assert pick(inv, {**e, **F_ENGAGEABLE}, chose=4, guard=POST, unit=GUARD_AT) == []
+# The guard stands 200 wu east of its post (100, 100), at (300, 100), the edge of its radius; range 300, notice distance 330. N: 305 wu from the guard, 505 from the post (beyond 200 + 300 = 500).
+# F: 320 wu from the guard, 377 from the post. E: 280 wu from the guard. FAR: 460 wu from the guard, beyond its notice distance.
+GUARD_AT, POST = (250, 100), (100, 100)              # used by the in-range case below
+EDGE_AT = (300, 100)
+N_FAR_FROM_POST = {2: row(605, 100, side=1)}         # 305 from the guard, 505 from the post
+F_ENGAGEABLE = {3: row(300, 420, side=1)}            # 320 from the guard, 377 from the post
+E_NEAR = {4: row(300, 380, side=1)}                  # 280 from the guard
+FAR = {3: row(300, 560, side=1)}                     # 460 from the guard, beyond its notice distance 330
 
 
-def test_R_087_03_a_guard_may_skip_a_nearer_enemy_that_is_beyond_its_post_radius_plus_range(inv):
-    """R-087-03 'it targets the nearest such enemy' + R-096-08 'no farther than GUARD_RADIUS = 200 wu from the post' (engine stage 2, om_tac_guard_seen): the guard at (250, 100), post (100, 100), range
-    300, picks F (460 from it, 484 from the post) while N (420 from it) is 570 wu from the post, beyond 200 + 300 = 500: legal, silent. Measured on L-0084 seed 1: ticks 1083 (unit 16), 1086 (15), 1556
-    (25), 1557 (26), 1558 (27), 1559 (24). Red today: `_acquire` counts N as the nearest (420 against 460)."""
-    assert pick(inv, {**N_FAR_FROM_POST, **F_ENGAGEABLE}, chose=3, guard=POST, unit=GUARD_AT) == []
+def test_R_087_03_control_a_guard_taking_the_nearest_enemy_inside_its_notice_distance_is_silent(inv):
+    """R-087-03 control (green today and after): the guard at the edge of its radius with enemy E at 280 wu from it and F at 320 (both inside its notice distance 330): taking E, the nearest, is silent."""
+    assert pick(inv, {**E_NEAR, **F_ENGAGEABLE}, chose=4, guard=POST, unit=EDGE_AT) == []
 
 
-def test_R_087_03_a_guard_skipping_a_nearer_enemy_it_could_engage_from_its_post_is_still_a_violation(inv):
-    """R-087-03 control (green today and after): the same guard, with a nearer enemy N2 at 420 from it and 446 from the post (inside the 500 wu): taking F (460) instead is a violation. The skip is for
-    the enemy the guard may not reach from its post, not for every enemy the guard does not take."""
-    n2 = {2: row(250, 520, side=1)}                   # 420 from the guard, 446 from the post
-    assert pick(inv, {**n2, **F_ENGAGEABLE}, chose=3, guard=POST, unit=GUARD_AT) == [("R-087-03", 5, 1)]
+def test_R_087_03_a_guard_taking_an_enemy_beyond_its_notice_distance_is_a_violation(inv):
+    """R-096-08 / R-087-04 (Round 5): a guard acquires within its notice distance (attack range 300 times 1.1), no longer anything its side sees within radius plus range of the post. The guard at
+    (300, 100) takes FAR, 460 wu from it and 502 from the post (the Round 2 stage 2 called that legal, silent): a violation at the acquisition tick. Control: the same guard taking F at 320 alone is silent."""
+    assert (pick(inv, FAR, chose=3, guard=POST, unit=EDGE_AT), pick(inv, F_ENGAGEABLE, chose=3, guard=POST, unit=EDGE_AT)) == ([("R-087-03", 5, 1)], [])
 
 
-def test_R_087_03_a_unit_that_is_not_a_guard_may_not_skip_an_enemy_beyond_a_post_radius(inv):
-    """R-087-03 control (green today and after): the post radius is for guards (R-096-08). The same positions with no guard order: taking F while N (420) is nearer is a violation."""
-    assert pick(inv, {**N_FAR_FROM_POST, **F_ENGAGEABLE}, chose=3, unit=GUARD_AT) == [("R-087-03", 5, 1)]
+def test_R_087_03_a_guard_skipping_a_nearer_enemy_inside_its_notice_distance_is_a_violation(inv):
+    """R-087-03 control (green today and after): the same guard, with a nearer enemy N2 at 290 from it (inside the notice distance): taking F (320) instead is a violation."""
+    n2 = {2: row(300, 390, side=1)}                   # 290 from the guard
+    assert pick(inv, {**n2, **F_ENGAGEABLE}, chose=3, guard=POST, unit=EDGE_AT) == [("R-087-03", 5, 1)]
+
+
+def test_R_087_03_neither_a_guard_nor_another_unit_may_skip_a_nearer_enemy_beyond_a_post_radius(inv):
+    """R-087-03 / R-096-08 (Round 5: the guard's second stage is gone): N is 305 wu from the unit and 505 from the post (beyond 200 + 300), inside the notice distance 330; F is 320 away. Taking F while N
+    is nearer is a violation for a guard, and for a unit with no guard order alike: the post radius excuses nothing at acquisition."""
+    scene = {**N_FAR_FROM_POST, **F_ENGAGEABLE}
+    assert (pick(inv, scene, chose=3, guard=POST, unit=EDGE_AT), pick(inv, scene, chose=3, unit=EDGE_AT)) == ([("R-087-03", 5, 1)], [("R-087-03", 5, 1)])
 
 
 def test_R_087_03_a_guard_with_an_enemy_in_range_must_take_the_nearest_in_range_not_stage_two(inv):

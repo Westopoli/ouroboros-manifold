@@ -107,8 +107,9 @@ def test_a_layout_without_group_keys_writes_no_groups_and_the_old_stage3_fight_r
     # The committed file stays as the stage 3 record; the determinism line is pinned by the sha256 of today's file (minus `fired`), recorded 2026-11-11.
     # Test-defect (engine rules Round 3, 94da7493, 2026-11-12): re-recorded 4aae51ea.. -> ad52a466..; the chase fix (the chase orders the move again when the unit has no route) moves this fight from
     # 2254 to 2194 ticks (a wipe, winner A; 8f825d59 still reads 2254, d70c8d47 leaves 2194); the checker finds no violation in it (its sight rules R-087-03 and R-093-02 are suspended for `--sight off`).
+    # Test-defect (Round 5, 2026-11-17, G1 to G5 and the second-pass fixes): re-recorded ad52a466.. -> b9c0f762..; the fight now ends in a wipe at tick 3081 (2194 before), the checker finds no violation in it.
     stripped = re.sub(rb'\n\s*"fired": (true|false),(?=\n)', b"", (out / "L-0039-s1.fight.json").read_bytes())
-    assert hashlib.sha256(stripped).hexdigest() == "ad52a466ea04fc5cce68531f46cb710e36f72350b748583cd0e25b7b42106de4"
+    assert hashlib.sha256(stripped).hexdigest() == "b9c0f762092bcfd1f995a09227c87b69562afed3df9e4ed858fbd90c70512fb2"
 
 
 def test_a_unit_without_a_group_or_a_group_without_a_unit_is_rejected(tmp_path):

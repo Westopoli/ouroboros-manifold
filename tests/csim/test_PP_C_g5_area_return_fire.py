@@ -27,7 +27,7 @@ import pytest
 
 from test_PP_C_g5_support import (
     BOMBARD, SUPPLY, VANGUARD, WINDOW, attack_move, dest, duel, hp, open_vision, read_reach,
-    set_param, set_reach, spawn, step, target,
+    pos, set_param, set_reach, spawn, step, target,
 )
 
 RING = [(330.0, 60.0), (330.0, -60.0), (340.0, 0.0), (320.0, 110.0), (320.0, -110.0),
@@ -168,12 +168,13 @@ def test_Q_008_03_an_area_multiplier_does_not_scale_a_direct_shot(lib, world_fac
 HIT = 10.0
 
 
-def _return_fire(lib, world_factory, reach, offset, dist, params=None, victim_layer=2):
+def _return_fire(lib, world_factory, reach, offset, dist, params=None, victim_layer=2, trace=None):
     """Vanguard (range 300, sensor 700, id 2) idle at the origin on `victim_layer`; a nearer same-layer
     enemy stands 100 wu away as a decoy; a Supply unit `offset` layers away (signed, + is up) at `dist`
     wu hits it once. The step taken is never the victim's cohort turn, so a target it holds can only
     come from return fire. Returns 'target' (it targets the attacker), 'goal' (it attack-moves to the
-    attacker) or 'none'."""
+    attacker) or 'none'. With a list as `trace`, the unit then runs WINDOW more ticks and one row per tick is appended: (it holds the attacker, its x, the
+    attacker's hp)."""
     w = world_factory(n_regions=1)
     if reach != (0, 0):
         assert set_reach(lib, w, VANGUARD, *reach) == 0
@@ -190,11 +191,16 @@ def _return_fire(lib, world_factory, reach, offset, dist, params=None, victim_la
     lib.om_unit_deal_damage(w, atk, v, HIT)
     step(lib, w)
     if target(lib, w, v) == atk:
-        return "target"
-    has, gx, gy = dest(lib, w, v)
-    if has == 1 and (gx, gy) == pytest.approx((float(dist), 0.0), abs=1e-6):
-        return "goal"
-    return "none"
+        res = "target"
+    else:
+        has, gx, gy = dest(lib, w, v)
+        res = "goal" if has == 1 and (gx, gy) == pytest.approx((float(dist), 0.0), abs=1e-6) else "none"
+    if trace is not None:
+        trace.append((target(lib, w, v) == atk, pos(lib, w, v)[0], hp(lib, w, atk)))
+        for _ in range(WINDOW):
+            step(lib, w)
+            trace.append((target(lib, w, v) == atk, pos(lib, w, v)[0], hp(lib, w, atk)))
+    return res
 
 
 @pytest.mark.parametrize("ok_reach,bad_reach,offset", [
@@ -224,14 +230,25 @@ def test_R_164_02_return_fire_out_of_range_attack_moves_only_within_reach(lib, w
 
 @pytest.mark.parametrize("direction,n", [("UP", 1), ("DOWN", 1), ("UP", 2), ("DOWN", 2)])
 def test_Q_008_03_return_fire_range_uses_the_offsets_range_multiplier(lib, world_factory, direction, n):
-    """The range at an offset is the roster range times OM_TP_RANGE_<dir>_<n> for return fire as for
-    direct fire (brief G5: reach 'applied to direct fire, area attacks and return fire'). Attacker 250
-    wu out, Vanguard range 300: multiplier 1.0 targets it (control); 0.5 (150 wu) puts it out of range,
-    so the unit attack-moves to it instead. INFERRED: the brief names the multipliers and return fire
-    together but states no return-fire example; reported."""
+    """The range at an offset is the roster range times OM_TP_RANGE_<dir>_<n> for return fire as for direct fire (brief G5: reach 'applied to direct fire,
+    area attacks and return fire'). Attacker 250 wu out, Vanguard range 300. Multiplier 1.0 (control): the unit holds the attacker from the hit, stands where
+    it is and fires. Multiplier 0.5 (reach 150, notice distance 165): the attacker is beyond both, and the unit still holds it as its target from the hit
+    (R-087-06: return fire is not bound by the notice distance, R-087-03) and walks to it (the leash bounds the walk, R-087-05); it fires only from within the
+    halved reach, so the first shot comes from a gap of at most 150 wu. (Test-defect, second pass 2026-11-17: the test expected a destination, 'goal', for the
+    out-of-range attacker; an idle unit that returns fire holds the attacker as its target from the hit. The firing edge is the reach itself, the engagement
+    edge the reach times 1.1, E-11 R-087-04.) INFERRED: the brief names the multipliers and return fire together but states no return-fire example; reported."""
     offset = n if direction == "UP" else -n
     reach = (n, 0) if direction == "UP" else (0, n)
-    assert _return_fire(lib, world_factory, reach, offset, 250.0, victim_layer=2) == "target"
-    got = _return_fire(lib, world_factory, reach, offset, 250.0, victim_layer=2,
-                       params={f"OM_TP_RANGE_{direction}_{n}": 0.5})
-    assert got == "goal"
+    kept = []
+    assert _return_fire(lib, world_factory, reach, offset, 250.0, victim_layer=2, trace=kept) == "target"
+    assert kept[0][0], "control: the unit holds the attacker from the hit at 1.0"
+    assert all(x == kept[0][1] for _, x, _ in kept), "control: at multiplier 1.0 the attacker is in range and the unit does not walk"
+    assert kept[-1][2] < kept[0][2], "control: at multiplier 1.0 the unit fires on the attacker"
+    half = 300.0 * 0.5
+    tr = []
+    got = _return_fire(lib, world_factory, reach, offset, 250.0, victim_layer=2, params={f"OM_TP_RANGE_{direction}_{n}": 0.5}, trace=tr)
+    assert got == "target", f"OM_TP_RANGE_{direction}_{n} 0.5: the attacker beyond the halved reach is held as the target from the hit, not given as a destination ({got})"
+    assert tr[-1][1] > tr[0][1] + 50.0, f"the unit did not walk toward the attacker beyond its halved reach (x {tr[0][1]} to {tr[-1][1]})"
+    first = next((x for held, x, h in tr if h < tr[0][2]), None)
+    assert first is not None, "the unit never fired on the attacker it walked to"
+    assert 250.0 - first <= half + 1.0, f"the first shot came from {250.0 - first} wu, beyond the halved reach {half} (the firing edge is the reach itself)"
