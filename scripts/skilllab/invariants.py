@@ -430,14 +430,17 @@ class _Checker:
         """R-087-09, counted as the engine counts it (`om_tac_giveup`, csrc/unit.c). The run is [target, count, reference distance, flagged]: it restarts on another target or when
         the distance has fallen more than 1 wu below the reference (the distance when the run began), the restart's distance is the reference, and the tick is counted either way; a
         shootable target clears it. The engine reads the positions at the top of its tick, the previous frame's, and it counts a target only on a tick that begins holding it:
-        a target taken on tick M is taken after the tick's give-up step, so its first count is tick M + 1, reading frame M (measured on the lab fights: every give-up ends a run
-        of 19 counted frames, the engine dropping on the 20th). The run counts whether or not the target is inside attack range (the swap excuse, `_gave_up`); a violation is
+        a target taken by acquisition on tick M is taken after the tick's give-up step, so its first count is tick M + 1, reading frame M (measured on the lab fights: every give-up
+        ends a run of 19 counted frames, the engine dropping on the 20th). A target taken by return fire is taken at the top of the tick (csrc/unit.c `last_attacker`), before the
+        give-up step: it is counted on tick M itself, reading frame M-1, when frame M-1 shows a hit by that target on the unit and the unit then held no target. The run counts whether or not the target is inside attack range (the swap excuse, `_gave_up`); a violation is
         reported on the frame whose count passes STUCK_TICKS, once per run, and only on a frame where the unit is within attack range (the rule's own words)."""
         tgt = r["target"] if r["alive"] else 0
         t = units.get(tgt) if tgt else None
         pu = self.prev["units"].get(u) if self.prev else None
         pt = self.prev["units"].get(tgt) if self.prev and tgt else None
-        if not t or not t["alive"] or r.get("shootable", True) or pu is None or pt is None or not pu["alive"] or pu["target"] != tgt:
+        taken_by_return_fire = (pu is not None and pu["alive"] and pu["target"] == 0 and tgt != 0
+                                and (tgt, u) in self.prev.get("hits", self.prev.get("fires", ())))
+        if not t or not t["alive"] or r.get("shootable", True) or pu is None or pt is None or not pu["alive"] or (pu["target"] != tgt and not taken_by_return_fire):
             self.unshot.pop(u, None)
             return
         counted = math.hypot(pt["x"] - pu["x"], pt["y"] - pu["y"])
