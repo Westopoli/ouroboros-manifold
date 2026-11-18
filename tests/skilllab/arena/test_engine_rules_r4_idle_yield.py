@@ -213,14 +213,33 @@ def test_control_L0039_sight_on_runs_and_the_measure_finds_no_stall():
     assert _stalls(rec) == [], _stalls(rec)[:6]
 
 
+OLD_STALL_FIRST_TICK = 1127   # L-0028 sight off on main e2dcee93: unit 18 stands beside its idle own units from tick 1127 to the 12,000-tick cap (10,874 unit-ticks)
+
+
 def test_control_L0028_unit_18_is_a_side_one_walker_and_the_fight_is_long_enough_to_stall():
-    """Control (the premise of the red tests; dumped 2026-11-12 on main e2dcee93, seed 1): L-0028 has unit 18 on side 1 (the sweep's 'side B Vanguard'), and the sight-off fight runs the 12,000 ticks of
-    CAP_SECONDS (a cap end), the sight-on one 7,160 (a silence end). On this tree the measure finds, sight on: 33 runs / 13,077 unit-ticks, units 5, 8, 9, 10, 11, 12, 27; sight off: 1 run, unit 18 from tick
-    1127, 10,874 unit-ticks (the sweep's I29 counted 12,655 and 10,833 past the 40th tick of each run); control: 49 runs / 7,627, units 5, 7, 8, 10, 11, 12, 17, 24, 26, 27; L-0045 control: 41 runs /
-    10,840, units 63, 65, 66, 74, 75, 76, 80, 83, 84, 87, 88 (sweep 9,280). Only the layout, the side and a long fight are asserted: the counts change when the engine does."""
+    """Control (the premise of the red tests; dumped 2026-11-12 on main e2dcee93, seed 1; re-anchored 2026-11-18, Test-defect: the control's fight changed with Round 6): L-0028 has unit 18 on side 1 (the sweep's
+    'side B Vanguard'), and on main the sight-off fight ran the 12,000 ticks of CAP_SECONDS (a cap end, three lone units pacing for ever; the lone give-up of Round 6 ends it by silence at tick 1600), the sight-on one 7,160
+    (a silence end). On main the measure found, sight on: 33 runs / 13,077 unit-ticks, units 5, 8, 9, 10, 11, 12, 27; sight off: 1 run, unit 18 from tick OLD_STALL_FIRST_TICK 1127, 10,874 unit-ticks (the sweep's I29 counted
+    12,655 and 10,833 past the 40th tick of each run); control: 49 runs / 7,627, units 5, 7, 8, 10, 11, 12, 17, 24, 26, 27; L-0045 control: 41 runs / 10,840, units 63, 65, 66, 74, 75, 76, 80, 83, 84, 87, 88 (sweep 9,280).
+    What the control is for: that the sight-off fight is long enough, and unit 18 is in the state, for the stall to happen if the engine let it. The bound on the length is now the stall's own: the fight lasts past
+    OLD_STALL_FIRST_TICK + STALLED_TICKS (1127 + 40 = 1167, the first tick by which the old stall would have counted), not past 2,000 ticks (that bound read the cap end, the defect). Dumped 2026-11-18 on the Round 6
+    tip: 1,600 ticks, a silence end; unit 18 (side 1) is alive on every tick, has a destination and no target on 910 of them, and on this engine walks to it and arrives at tick 1070 (no destination from then on), before
+    tick 1127 (the engine no longer holds it there), after passing its idle own unit 26 (30 wu away) on ticks 1038 to 1054, the only ticks on which it is a walker with no target beside an idle own unit: 17 ticks, on each of which
+    it moves more than STALL_RADIUS 2 wu (3.54 to 3.75 wu), so the measure's state is reached and the walker is let by. A unit that stood beside unit 26 instead (as on main) fails this on the step; a fight that ends
+    before tick 1167, or one in which unit 18 never meets an idle own unit, fails it too."""
     rec, last, end = played("L-0028", "off")
     assert rec.side[18] == 1
-    assert last > 2000, (last, end)
+    assert last > OLD_STALL_FIRST_TICK + STALLED_TICKS, (last, end)
+    assert all(tk["post"][18]["alive"] for tk in rec.ticks)
+    walking = [tk["n"] for tk in rec.ticks if tk["post"][18]["dest"] is not None and not tk["post"][18]["tgt"]]
+    assert len(walking) > STALLED_TICKS, len(walking)
+    beside = [tk["n"] for tk in rec.ticks if tk["post"][18]["dest"] is not None and not tk["post"][18]["tgt"]
+              and _idle_own_near(tk["post"], rec.side, 18, tk["post"][18], IDLE_NEAR)]
+    assert beside == list(range(1038, 1055)), beside
+    for n in beside:
+        a, b = rec.ticks[n - 1]["post"][18], rec.ticks[n - 2]["post"][18]
+        assert math.hypot(a["x"] - b["x"], a["y"] - b["y"]) > STALL_RADIUS, (n, a, b)
+    assert rec.ticks[1068]["post"][18]["dest"] is not None and rec.ticks[1069]["post"][18]["dest"] is None
 
 
 # ------------------------------------------------------------------ the rule, whole fights (red today)
