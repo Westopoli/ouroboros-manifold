@@ -16,9 +16,9 @@ Why: Same arc as SIT-0105, attacker at 2x.
 
 | side | role | count | anchor x | anchor y | facing | range | layer | shape | centre_x | centre_y | radius | start_deg | end_deg |
 |------|------|-------|----------|----------|--------|-------|-------|-------|----------|----------|--------|-----------|---------|
-| A | Vanguard | 8 | | | | 0 | 0 | arc | 2400 | 2000 | 500 | 164 | 196 |
+| A | Vanguard | 8 | | | | 0 | 0 | arc | 2400 | 2000 | 502 | 164 | 196 |
 | A | Warden | 8 | | | | 0 | 0 | arc | 2400 | 2000 | 560 | 165 | 194 |
-| A | Bombard | 8 | | | | 0 | 0 | arc | 2400 | 2000 | 640 | 167 | 192 |
+| A | Bombard | 8 | | | | 0 | 0 | arc | 2400 | 2000 | 642 | 167 | 192 |
 | B | Vanguard | 48 | 3200 | 2000 | west | 0 | 0 | block | | | | | |
 
 ## Features
