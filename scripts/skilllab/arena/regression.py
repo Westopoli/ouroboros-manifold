@@ -8,8 +8,8 @@ sight off) that runs as a second fight of the row on its own line. One line per 
 
   <id> sight=<on|off> end=<wipe|silence|cap> winner=<A|B|stall|none> survivors=<a>:<b> ticks=<n> agree=<yes|no|-> checker=<none|rule[,rule...]>   [DRAW]
 
-`agree` compares the winner with his expected one (`-` when he expects a draw; a control is never compared); a disagreement alone is no failure. `checker` names the rules the checker reported (the first
-KEEP of the fight's violations, `invariants.KEEP`). DRAW marks a fight that ended with both sides alive. Exit 0 only when every fight ended by elimination and the checker reported nothing; a row the
+`agree` compares the winner with his expected one (`-` when he expects a draw; a control is never compared); a disagreement alone is no failure. `checker` names every rule the checker reported in the fight (not only the first
+`invariants.KEEP` reports the fight document keeps). DRAW marks a fight that ended with both sides alive. Exit 0 only when every fight ended by elimination and the checker reported nothing; a row the
 catalogue's rejection rules refuse is a failure too. The fights' winners and survivors are what `run._document` records.
 """
 import argparse
@@ -65,7 +65,7 @@ def _play(label, layout, path, sight, expected, control=False):
     frames, last, end, orders = run.fight(layout, SEED, sight, snapshot.CAP_SECONDS)
     doc = run._document(layout, path, SEED, sight, frames, last, end, orders)
     res = doc["result"]
-    rules_seen = sorted({v["rule"] for v in doc.get("violations", [])})
+    rules_seen = orders["reported_rules"]   # every rule the checker reported; the document keeps only the first invariants.KEEP reports. See also: run.fight
     winner = "stall" if res["winner"] == "draw" else res["winner"]
     agree = "-" if expected in (None, "draw") else "yes" if winner == expected else "no"
     line = "%s sight=%s end=%s winner=%s survivors=%d:%d ticks=%d agree=%s checker=%s" % (
