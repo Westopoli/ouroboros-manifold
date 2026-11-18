@@ -334,6 +334,127 @@ def test_L2_command_prints_one_line_per_row_in_manifest_order(planted, tmp_path)
     assert named == ["L-9102", "L-9101", "L-9103"] and code != 0, (code, out)
 
 
+# ---- a row's control runs as a second fight (round6.md L2: "the control runs as a second fight of the row, on its own line, held to the same two conditions; the expected winner is compared for the fight only")
+
+def _control_row(layout, expected, sight, control, stage):
+    return ('[[fight]]\nstage = %d\nlayout = "%s"\nsight = "%s"\ncontrol = "%s"\nexpected_winner = "%s"\ndecision = "%s"\n\n' % (stage, layout, sight, control, expected, DEC3 if stage == 3 else DEC4))
+
+
+def _by_name(out):
+    """{first word of the line: line} of the fight lines of `out` (a fight line starts with the fight's id; the summary line starts with `regression:`)."""
+    return {ln.split()[0]: ln for ln in out.splitlines() if re.match(r"L-\d{4}", ln)}
+
+
+@pytest.fixture(scope="module")
+def planted_cover(tmp_path_factory):
+    """A catalogue with L-9201, the cover fixture of h063_fixtures (a box between two blocks of eight Vanguards, `both_same_point`): the fight ends by wipe with side B winning 0:4, its ground
+    control (the twin with the features emptied) by wipe with side A winning 2:0."""
+    import h063_fixtures as fx
+    cat = tmp_path_factory.mktemp("catalogue_cover")
+    lay, _ = fx.planar("cover", "L-9201")
+    fx.write(lay, cat)
+    return cat
+
+
+@pytest.fixture(scope="module")
+def controls_run(planted, planted_cover, tmp_path_factory):
+    """One run of a manifest of two rows, each with a control: L-9201 (stage 3, sight off, control ground, expects B) and L-9102 (stage 4, sight on, control sight, expects A)."""
+    work = tmp_path_factory.mktemp("controls")
+    (work / "L-9201.toml").write_text((planted_cover / "L-9201.toml").read_text())
+    (work / "L-9102.toml").write_text((planted / "L-9102.toml").read_text())
+    manifest = _manifest_file(work, _control_row("L-9201", "B", "off", "ground", 3), _control_row("L-9102", "A", "on", "sight", 4))
+    code, out = _main(manifest, work)
+    return code, out
+
+
+def test_L2_command_a_ground_control_runs_as_a_second_fight_on_its_own_line(controls_run):
+    """L2 'a row of stage 3 ... names a control (`ground` ...): the control runs as a second fight of the row, on its own line': the row L-9201 prints two lines, the fight and then `L-9201-control`,
+    right after it, each with its own result (the fight ends 0:4 with B the winner, the control with the features emptied 2:0 with A the winner, both by wipe, both at sight off, no checker report);
+    the exit is 0 because both fights pass. Red today only if the control is not run."""
+    code, out = controls_run
+    lines = [ln.split()[0] for ln in out.splitlines() if ln.startswith("L-")]
+    assert lines.index("L-9201-control") == lines.index("L-9201") + 1, out
+    fight, control = _by_name(out)["L-9201"], _by_name(out)["L-9201-control"]
+    assert [_field(fight, k) for k in ("end", "winner", "survivors", "sight", "checker")] == ["wipe", "B", "0:4", "off", "none"], fight
+    assert [_field(control, k) for k in ("end", "winner", "survivors", "sight", "checker")] == ["wipe", "A", "2:0", "off", "none"], control
+    assert code == 0, out
+
+
+def test_L2_command_a_sight_control_runs_as_a_second_fight_on_its_own_line(controls_run):
+    """L2 'a row of stage ... 4 names a control (... `sight`: targeting by sight off): the control runs as a second fight of the row, on its own line': the row L-9102 at sight on prints two
+    lines, the fight (`sight=on`) and then `L-9102-control` (`sight=off`: targeting by sight is off in the control), each ending by wipe with no checker report."""
+    code, out = controls_run
+    names = [ln.split()[0] for ln in out.splitlines() if ln.startswith("L-")]
+    assert names.index("L-9102-control") == names.index("L-9102") + 1 and names.count("L-9102") == 1, out
+    fight, control = _by_name(out)["L-9102"], _by_name(out)["L-9102-control"]
+    assert (_field(fight, "sight"), _field(fight, "end"), _field(fight, "checker")) == ("on", "wipe", "none"), fight
+    assert (_field(control, "sight"), _field(control, "end"), _field(control, "checker")) == ("off", "wipe", "none"), control
+    assert code == 0, out
+
+
+def test_L2_command_the_expected_winner_is_compared_for_the_fight_only(controls_run):
+    """L2 'the expected winner is compared for the fight only': L-9201 expects B; its fight is won by B (agree=yes) and its control by A, which would read agree=no if it were compared; the control's
+    `agree` is `-`. L-9102 expects A and both are won by A (agree=yes for the fight, `-` for the control, which would read yes)."""
+    _, out = controls_run
+    lines = _by_name(out)
+    assert (_field(lines["L-9201"], "agree"), _field(lines["L-9201-control"], "agree")) == ("yes", "-"), (lines["L-9201"], lines["L-9201-control"])
+    assert (_field(lines["L-9102"], "agree"), _field(lines["L-9102-control"], "agree")) == ("yes", "-"), (lines["L-9102"], lines["L-9102-control"])
+
+
+def test_L2_command_a_control_that_ends_with_both_sides_alive_fails_the_run_though_the_fight_passes(planted, tmp_path, monkeypatch):
+    """L2 'held to the same two conditions': the row L-9102 (stage 4, control sight): its fight ends by wipe, and its control, given a 10 s cap by a wrapper of `run.fight` on the row's second
+    call only, ends at the cap with both sides alive. The control's line says DRAW (not the fight's), and the exit is non-zero."""
+    from scripts.skilllab.arena import run
+    real, calls = run.fight, []
+
+    def fight(layout, seed, sight, cap_seconds, *args, **kwargs):
+        calls.append(sight)
+        return real(layout, seed, sight, 10 if len(calls) == 2 else cap_seconds, *args, **kwargs)
+    monkeypatch.setattr(run, "fight", fight)
+    code, out = _main(_manifest_file(tmp_path, _control_row("L-9102", "A", "on", "sight", 4)), planted)
+    lines = _by_name(out)
+    assert calls == ["on", "control"], calls
+    assert "DRAW" not in lines["L-9102"] and _field(lines["L-9102"], "end") == "wipe", lines["L-9102"]
+    assert "DRAW" in lines["L-9102-control"] and _field(lines["L-9102-control"], "end") != "wipe", lines["L-9102-control"]
+    assert code != 0, out
+
+
+def _plant_reports(monkeypatch, reports, only_fight=None):
+    """Plant checker reports through the Monitor, the seam `run.fight` reads its verdict from: `reports` is [(tick, rule)], each added to `Monitor.violations` (unit 1) when the monitor of the fight
+    reaches that tick; `only_fight` is the 1-based number of the fight to plant in (the Monitors are built one per fight, in play order), None for every fight. A planted report is what the
+    checker would have kept: the fight document keeps the first `invariants.KEEP` of them by (tick, rule, unit). (A real fault, `Engine.step` moving a unit 300 wu in tick 5 as the checker test above
+    does, is reported as `continuity` in a sight-off fight but not in a walking one: tried on L-9102 at sight on, 300, -300 and 1000 wu.)"""
+    from scripts.skilllab import invariants
+    real_init, real_after, built = invariants.Monitor.__init__, invariants.Monitor.after_step, []
+
+    def init(self, *args, **kwargs):
+        real_init(self, *args, **kwargs)
+        built.append(self)
+        self._planted_number = len(built)
+
+    def after_step(self):
+        real_after(self)
+        if only_fight in (None, self._planted_number):
+            for tick, rule in reports:
+                if tick == self.tick:
+                    self.violations.append({"rule": rule, "tick": tick, "unit": 1, "detail": "planted"})
+    monkeypatch.setattr(invariants.Monitor, "__init__", init)
+    monkeypatch.setattr(invariants.Monitor, "after_step", after_step)
+    return built
+
+
+def test_L2_command_a_control_that_carries_a_checker_report_fails_the_run_though_the_fight_passes(planted, tmp_path, monkeypatch):
+    """L2 'held to the same two conditions': the row L-9102 (stage 4, control sight), with one checker report (`continuity`, tick 5) planted in the SECOND fight only (the control). The fight's
+    line says checker=none, the control's line names continuity, and the exit is non-zero although both fights end by wipe."""
+    built = _plant_reports(monkeypatch, [(5, "continuity")], only_fight=2)
+    code, out = _main(_manifest_file(tmp_path, _control_row("L-9102", "A", "on", "sight", 4)), planted)
+    lines = _by_name(out)
+    assert len(built) == 2, built
+    assert (_field(lines["L-9102"], "checker"), _field(lines["L-9102"], "end")) == ("none", "wipe"), lines["L-9102"]
+    assert (_field(lines["L-9102-control"], "checker"), _field(lines["L-9102-control"], "end")) == ("continuity", "wipe"), lines["L-9102-control"]
+    assert code != 0, out
+
+
 @SLOW
 def test_L2_slow_the_real_manifest_runs_to_elimination_with_no_checker_report():
     """round6.md L2 proof, the slow test: `python -m scripts.skilllab.arena.regression` on the real manifest exits 0 (every approved fight ends by elimination under its one order per side, the
