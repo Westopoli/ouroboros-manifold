@@ -151,8 +151,8 @@ def test_R_087_09_control_a_return_fire_run_reads_its_reference_distance_from_th
     assert _planted(inv, lambda k: 400.0 if k == 0 else 398.9, 40, hits={0: [(2, 1)]}) == [(22, 1)]
 
 
-def test_R_087_09_control_a_return_fire_run_does_not_restart_on_a_gain_of_one_wu_or_less_against_the_frame_before(inv):
-    """R-087-09, return fire, the same shape with a gain of 0.5 wu (no restart: the reference stays frame 0's 400): reported on 21, one frame before the 1.1 wu case."""
+def test_R_087_09_a_return_fire_run_does_not_restart_on_a_gain_of_one_wu_or_less_against_the_frame_before(inv):
+    """R-087-09, return fire (red today), the same shape with a gain of 0.5 wu (no restart: the reference stays frame 0's 400): reported on 21, one frame before the 1.1 wu case."""
     assert _planted(inv, lambda k: 400.0 if k == 0 else 399.5, 40, hits={0: [(2, 1)]}) == [(21, 1)]
 
 
