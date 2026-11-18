@@ -9,12 +9,14 @@ THE ENGINE'S COUNT, as read from `om_tac_giveup` and as logged by the tracer (r6
   - Each tick, a unit that holds a target it cannot shoot counts one tick. The run (target, ref, count) restarts when the target is another one, or when the
     distance to it is more than 1 wu below `ref`, the distance when the current run began (`dist < ref - 1.0`); a restart sets ref to that distance and the count
     to 0 before the tick is counted. A shootable target clears the run. The 20th counted tick drops the target.
-  - The engine reads positions at the top of its tick: the positions the PREVIOUS frame ended with. A target taken during tick M is counted on tick M itself,
-    with the distance of frame M-1. So the count belonging to frame M (the frame that shows the target held) is made of the distances of frames M-1, M-2, ...:
-    at frame M, x(M) = distance between the unit and the target in frame M-1; the run restarts when x(M) < ref - 1, and the count is the number of frames since.
+  - The engine reads positions at the top of its tick: the positions the PREVIOUS frame ended with. A target taken by acquisition during tick M is taken after
+    the tick's give-up step (csrc/unit.c: the give-up step, then the cohort acquisition), so its first count is tick M+1, reading frame M's distance. So the count
+    belonging to frame k (k > M) is made of the distances of frames k-1, k-2, ... down to M: at frame k, x(k) = distance between the unit and the target in frame
+    k-1; the run restarts when x(k) < ref - 1, and the count is the number of frames since (1 on frame M+1, the first frame that counts). The frame that first shows
+    the target is not counted. (A return-fire target is taken before the give-up step and counted on its own tick; not pinned here, see the last test.)
   - The run does not care about the attack range; it counts from the tick the target was first held unshootable.
-THE CHECKER, so: it counts as above, on the previous frame's distances, from the frame the target is first shown; it reports on the frame whose count passes 20
-(the 21st counted frame), once per run, and only on a frame where the target is within the unit's attack range (the rule's own words; the tests in
+THE CHECKER, so: it counts as above, on the previous frame's distances, from the frame after the one that first shows the target; it reports on the frame whose
+count passes 20 (the 21st counted frame, 22 frames after the first one shows the target), once per run, and only on a frame where the target is within the unit's attack range (the rule's own words; the tests in
 test_invariants_tightened.py pin that part and stay as they are). "A hold of exactly 20 counted ticks is not reported and 21 is."
 Not tested here, left as the builder finds it: what the checker does when the previous frame has no row for the unit (the target is taken on frame 1).
 
@@ -22,7 +24,7 @@ Ruling (Round 6 brief, Westley): "the checker judges R-087-09 by the engine's ow
 distances the engine saw (the previous frame's positions). No slack tick is added."
 
 Planted frames (pure checker, only R-087-09): unit 1 stands at (100, 100), enemy 2 at (100 + D(k), 100) in frame k, frame 0 holds no target, frames 1..n hold enemy
-2, never shootable. The real sequences are the two fixtures in giveup_count_frames.json, cut from the fights the tracer followed (seed 1, sight on, the lab's run):
+2, never shootable (the target is first shown on frame 1; its first count is frame 2, its 20th frame 21, its 21st frame 22). The real sequences are the two fixtures in giveup_count_frames.json, cut from the fights the tracer followed (seed 1, sight on, the lab's run):
 L-0057 unit 24 (range 250, target 12, the engine dropped it at tick 393; the checker reported tick 391) and L-0046 unit 21 (range 800, target 115, the engine
 dropped it at tick 1633; the checker reported tick 1632). The engine's counts there, from the GU log: L-0046 run restarts on ticks 1604, 1606, 1610, 1614, count 20 on
 tick 1633; L-0057 run restarts on tick 374 (the first reading 248.06 wu), count 20 on tick 393.
@@ -56,25 +58,25 @@ def _planted(inv, dists, held, rng=500.0, enemy=2, shootable=False):
 
 # ------------------------------------------------------------------ the 20 / 21 line
 
-@pytest.mark.parametrize("held,expected", [(20, []), (21, [(21, 1)]), (30, [(21, 1)])], ids=["20-ticks-silent", "21-ticks-flagged", "30-ticks-flagged-once"])
+@pytest.mark.parametrize("held,expected", [(21, []), (22, [(22, 1)]), (31, [(22, 1)])], ids=["20-ticks-silent", "21-ticks-flagged", "30-ticks-flagged-once"])
 def test_R_087_09_control_twenty_counted_ticks_are_silent_and_the_twenty_first_is_flagged(inv, held, expected):
-    """R-087-09, control (green today): the target stands still 400 wu away inside range 500, unshootable; held 20 frames: no report; the 21st: one report, on that
-    frame; held on to 30: still the one report."""
+    """R-087-09, control: the target stands still 400 wu away inside range 500, unshootable. Held through frame 21: 20 counted frames (frames 2..21), no report; through
+    frame 22: the 21st counted frame, one report, on frame 22; held on to frame 31: still the one report. (The first frame shows the target and is not counted.)"""
     assert _planted(inv, lambda k: 400.0, held) == expected
 
 
 # ------------------------------------------------------------------ the anchor
 
 def test_R_087_09_the_count_starts_where_the_engines_run_starts_not_where_the_unit_enters_range(inv):
-    """R-087-09, the engine's anchor: the run began on frame 1 (the target stood 300.9 wu away, range 300, so out of range), and from frame 11 it stands 299.95 wu
-    away, in range (0.95 wu nearer: no restart). The engine has counted 21 ticks on frame 21: reported there. A counter anchored where the unit first has it in
-    range counts 11 on frame 21 and reports on frame 31."""
-    assert _planted(inv, lambda k: 300.9 if k <= 10 else 299.95, 40, rng=300.0) == [(21, 1)]
+    """R-087-09, the engine's anchor: the target is first shown on frame 1 (it stood 300.9 wu away, range 300, so out of range), and from frame 11 it stands 299.95 wu
+    away, in range (0.95 wu nearer: no restart). The engine has counted 21 ticks on frame 22 (the first count is frame 2): reported there. A counter anchored where
+    the unit first has it in range counts 11 on frame 21 and reports on frame 31."""
+    assert _planted(inv, lambda k: 300.9 if k <= 10 else 299.95, 40, rng=300.0) == [(22, 1)]
 
 
 def test_R_087_09_the_first_reading_of_a_new_run_is_the_previous_frames(inv):
-    """R-087-09, the engine reads the top of its tick: the target was taken on frame 1 and the engine's first reading is frame 0's 400 wu; frame 1's 398.9 wu is
-    1.1 wu nearer: the run restarts on frame 2 (count 1) and its 21st count is frame 22. A count anchored on frame 1's own distance never restarts and reports on frame 21."""
+    """R-087-09, the engine reads the top of its tick: the target is first shown on frame 1 and the engine's first reading, on frame 2, is frame 1's 398.9 wu (frame 0's
+    400 wu, from before the target was held, is not read): count 1 on frame 2, the 21st count is frame 22 (no restart: the run's own reading is its reference)."""
     assert _planted(inv, lambda k: 400.0 if k == 0 else 398.9, 40) == [(22, 1)]
 
 
