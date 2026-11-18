@@ -94,8 +94,8 @@ def test_R_097_05_the_report_names_the_pair_and_the_distance(inv):
 def test_R_097_05_the_pair_is_reported_on_either_side_and_just_inside_28_wu(inv):
     """L4: 'two units on one layer', whichever side each is on, and the limit is a strict 'closer than 28': 27.9 wu apart for 4 ticks is reported (an enemy pair and a friendly pair alike)."""
     assert keys(pair(inv, 27.9)) == [("R-097-05", 4, 1)]
-    frames = [{1: row(1000, 1000), 2: row(1020, 1000, side=1)} for _ in range(6)]
-    assert keys(inv.check(trace(*frames), rules(inv), only=["R-097-05"]).violations) == [("R-097-05", 4, 1)]
+    frames = [{1: row(1000, 1000), 2: row(1020, 1000, side=1)} for _ in range(6)]       # close from frame 0: the fourth close frame is tick 3
+    assert keys(inv.check(trace(*frames), rules(inv), only=["R-097-05"]).violations) == [("R-097-05", 3, 1)]
 
 
 def test_R_097_05_the_pair_is_reported_on_a_layer_above_zero_too(inv):
@@ -137,9 +137,9 @@ def test_R_097_05_control_a_dead_unit_is_not_part_of_a_pair(inv):
 
 
 def test_R_097_05_control_a_unit_that_dies_while_close_ends_the_run(inv):
-    """L4: the pair is close in ticks 1 to 3 with both alive, the second unit is dead from tick 4 (still lying 20 wu away): not reported in tick 4 or after."""
+    """L4: the pair is close in ticks 0 to 2 with both alive, the second unit is dead from tick 3 (still lying 20 wu away): not reported in tick 3 or after (alive, tick 3 would be the fourth)."""
     def at(k):
-        return {1: row(1000, 1000), 2: row(1020, 1000, alive=k < 4)}
+        return {1: row(1000, 1000), 2: row(1020, 1000, alive=k < 3)}
     assert inv.check(trace(*[at(k) for k in range(12)]), rules(inv), only=["R-097-05"]).violations == []
 
 
