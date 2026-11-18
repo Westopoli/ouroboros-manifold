@@ -136,7 +136,9 @@ def _assert_order_kept(rec, shot, point, what):
 @pytest.mark.parametrize("group", [False, True], ids=["alone", "group"])
 @pytest.mark.parametrize("k", [0, 1, 2, 3], ids=["on_the_shot", "1_tick_after", "2_ticks_after", "3_ticks_after"])
 def test_R_096_02_a_walking_attack_mover_whose_target_dies_resumes_to_its_point(lib, world_factory, k, group):
-    """R-096-02 'when the lock ends ... it resumes toward the point; an attack-move is not finished until the unit reaches its point' and R-084-04 'pauses movement for 0.5 s' (a pause, not the end of an order):
+    """R-096-02, as the epic reads now: "when the lock ends (E-11 R-087-03: the target dies, is lost from sight or leaves the notice distance) it resumes toward the point. The pause after the unit's own shot (E-11 R-084-04)
+    delays the resume and never cancels it: a walker that cannot step keeps its destination and walks when the pause ends"; "an attack-move is not finished until the unit reaches its point"; and R-084-04 'pauses movement for 0.5 s'
+    (a pause, not the end of an order). This function is the death half of the rule's Then (the sibling below ends the lock by distance and by sight, the move-order test below it covers a move given in the pause):
     a walking Raider attack-moved (alone, or in a group of three with a slot) shoots a Supply (it first walks to attack range); the Supply dies on the tick of the shot (k 0: the shot kills it) or k ticks after (killed by another unit). Every tick:
     no step during the nine ticks after the shot, a destination from the tick the pause ends, it walks on and arrives at its point (its slot, in a group)."""
     w, u, v = _scene(lib, world_factory, WALKING, group, 1.0 if k == 0 else BIG_HP)
