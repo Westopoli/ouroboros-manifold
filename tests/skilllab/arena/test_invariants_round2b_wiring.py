@@ -60,12 +60,13 @@ def at(mon, rule, tick, unit=None):
 
 
 def test_control_the_monitor_runs_the_three_fights_to_the_measured_ends():
-    """Control (green today and after, unless the engine changes): L-0061 seed 1 2136 ticks, L-0084 seed 1 3923, the cover fixture 801; sight on suspends nothing. Proves the fights below are the
+    """Control (green today and after, unless the engine changes): L-0061 seed 1 1415 ticks, L-0084 seed 1 1955, the cover fixture 957; sight on suspends nothing. Proves the fights below are the
     ones the premises were dumped on. Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47; Test-defect: dumped before the Round 3 engine fixes): was 2234 / 3718 / 1086 on 7ba38983. L-0061: 2234 -> 2025
     at fix 3 (8f825d59) -> 2136 at fix 2 (94da7493); L-0084: 3718 -> 3923 at fix 1 (d70c8d47); cover: 1086 -> 847 at fix 2 -> 801 on the Round 4 tip 6d3d7635 (R-097-10: an idle unit steps aside for a mover of its own side; first different tick 575; Test-defect: dumped
-    before it). The lab checker reports no violation of any rule on any of the three."""
+    before it). Re-pinned 2026-11-17 on the Round 5 fourth-pass tip (Test-defect: the lengths were the fights before the notice distance of R-087-04): 2136 -> 1415, 3923 -> 1955, 801 -> 957; the lab checker
+    reports no violation of any rule on any of the three."""
     got = [(played(n)[0].tick, played(n)[0].suspended) for n in ("L-0061", "L-0084", "cover")]
-    assert got == [(2136, {}), (3923, {}), (801, {})]
+    assert got == [(1415, {}), (1955, {}), (957, {})]
 
 
 def test_R_096_08_a_guard_dropping_a_target_beyond_radius_plus_range_by_slant_is_not_an_r_087_03_report_L0061():
