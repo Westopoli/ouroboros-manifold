@@ -2000,6 +2000,8 @@ static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty)
 
 /* See also: om_tac_move_resume in tactical_move.c, which clears the held flag and keeps the group */
 int om_tac_move_resume(om_world *w, uint32_t unit_id);
+/* See also: om_tac_move_reissue in tactical_move.c: a move the engine re-issues inside an order that stands (R-099-05: om_command_move, an order from outside, resets the give-up count; these do not) */
+int om_tac_move_reissue(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y);
 
 static void om_tac_hold(om_world *w, om_unit_row *u, uint32_t target_id) {
     if (u->halted) return;
@@ -2019,7 +2021,7 @@ static void om_tac_release(om_world *w, om_unit_row *u) {
     if (u->order == OM_ORDER_ATTACK_MOVE && u->am_gid != 0 && om_unit_get_group_id(w, u->unit_id) == u->am_gid) {
         om_tac_move_resume(w, u->unit_id);
     } else if (u->order == OM_ORDER_ATTACK_MOVE) {
-        om_command_move(w, &u->unit_id, 1, u->order_x, u->order_y);
+        om_tac_move_reissue(w, &u->unit_id, 1, u->order_x, u->order_y);
         u->issued_x = u->order_x;
         u->issued_y = u->order_y;
     } else {
@@ -2039,7 +2041,7 @@ static void om_tac_end_pursuit(om_world *w, om_unit_row *u) {
     u->target_id = 0;
     u->anchor_set = 0;
     u->halted = 0;
-    om_command_move(w, &u->unit_id, 1, u->order_x, u->order_y);
+    om_tac_move_reissue(w, &u->unit_id, 1, u->order_x, u->order_y);
     u->issued_x = u->order_x;
     u->issued_y = u->order_y;
 }
@@ -2060,7 +2062,7 @@ static void om_tac_chase(om_world *w, om_unit_row *u, const om_unit_row *t) {
     }
     u->am_gid = 0;
     u->halted = 0;
-    om_command_move(w, &u->unit_id, 1, t->x, t->y);
+    om_tac_move_reissue(w, &u->unit_id, 1, t->x, t->y);
     u->issued_x = t->x; u->issued_y = t->y;
 }
 
@@ -2080,7 +2082,7 @@ static void om_tac_return(om_world *w, om_unit_row *u) {
     }
     if (u->halted || u->issued_x != u->order_x || u->issued_y != u->order_y) {
         u->halted = 0;
-        om_command_move(w, &u->unit_id, 1, u->order_x, u->order_y);
+        om_tac_move_reissue(w, &u->unit_id, 1, u->order_x, u->order_y);
         u->issued_x = u->order_x; u->issued_y = u->order_y;
     }
 }
@@ -2513,7 +2515,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                     u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
                 }
                 u->issued_x = atk->x; u->issued_y = atk->y;
-                om_command_move(w, &u->unit_id, 1, atk->x, atk->y);
+                om_tac_move_reissue(w, &u->unit_id, 1, atk->x, atk->y);
             }
         }
     }
@@ -2644,7 +2646,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                     u->halted = 1;
                 }
             } else if (u->halted || u->issued_x != t->x || u->issued_y != t->y) {
-                om_command_move(w, &u->unit_id, 1, t->x, t->y);
+                om_tac_move_reissue(w, &u->unit_id, 1, t->x, t->y);
                 u->issued_x = t->x; u->issued_y = t->y;
                 u->halted = 0;
             }

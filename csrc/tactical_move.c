@@ -2043,6 +2043,7 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
         mu->kiting = 0;
         mu->deflecting = 0;
         mu->order_kind = q->kind;
+        mu->giveup_near = 0; /* R-099-05: a new order starts the give-up count at zero. See also: om_command_move */
         om_move_transit_cancel(mu);
         om_move_route_touch(ms, 0, q->x, q->y);
     }
@@ -3104,6 +3105,7 @@ uint32_t om_command_group_move(om_world *w, const uint32_t *ids, uint32_t n, dou
         mu->kiting = 0;
         mu->deflecting = 0;
         mu->order_kind = 0;
+        mu->giveup_near = 0; /* R-099-05: a new order starts the give-up count at zero. See also: om_command_move */
         om_move_route_touch(ms, 0, slot_x, slot_y);
         om_tac_unit_set_guard(w, ids[i], 0);
     }
@@ -3118,7 +3120,9 @@ int om_command_issue_named(om_world *w, const char *name, uint32_t unit, double 
     return 1; /* R-096-06: patrol/hold/stop/follow and anything else -- rejected, no state change */
 }
 
-int om_command_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y) {
+/* The move command as the engine re-issues it inside an order that stands (resume after a fight, pursuit, a guard's return, a chase): it leaves the give-up
+ * count alone, so a held unit still gives up (R-099-05). See also: om_command_move below, an order from outside, which starts the count at zero; unit.c's callers. */
+int om_tac_move_reissue(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y) {
     om_move_state *ms;
     uint32_t i;
     if (!w || !unit_ids) return 1;
@@ -3140,6 +3144,20 @@ int om_command_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, dou
         om_move_transit_cancel(mu);
         om_move_route_touch(ms, 0, x, y);
         om_tac_unit_set_guard(w, unit_ids[i], 0);
+    }
+    return 0;
+}
+
+/* R-099-05, last sentence: a move order given from outside (the tests, the lab, the pipe, enemy_macro.c, and unit.c's attack-move and attack-target orders) starts the
+ * give-up count at zero, even the same order again. The engine's own re-issues inside an order use om_tac_move_reissue and keep the count.
+ * See also: om_tac_move_reissue above; om_command_group_move and om_move_apply_queue_for_tick, the other two entries. */
+int om_command_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y) {
+    uint32_t i;
+    int r = om_tac_move_reissue(w, unit_ids, n_units, x, y);
+    if (r != 0) return r;
+    for (i = 0; i < n_units; i++) {
+        om_move_unit *mu = om_move_touch(w, om_ms(w), unit_ids[i]);
+        if (mu) mu->giveup_near = 0;
     }
     return 0;
 }
