@@ -129,8 +129,8 @@ def test_R_093_02_the_control_run_of_l0039_lists_both_sight_rules_as_suspended()
 
 
 def test_R_093_02_the_control_run_of_l0039_reports_no_violation_of_either_sight_rule():
-    """R-093-02 / R-087-03: with targeting by sight off a unit fires at what its side does not see, by design: the control of L-0039 seed 1 (2102 ticks; 2730 before Round 5, re-pinned after G1 to G5, the lab checker reports no violation of any rule on the new run; 2858 before the Round 3 chase fix 94da7493) reports no violation
+    """R-093-02 / R-087-03: with targeting by sight off a unit fires at what its side does not see, by design: the control of L-0039 seed 1 (2412 ticks; 2102 before Round 6, re-pinned 2026-11-18, Test-defect: R-096-02, an order kept through the pause after the unit's own shot, 66fbc1ee9, first different tick 477, unit 6 keeps its destination where main's engine cleared it; 2730 before Round 5, re-pinned after G1 to G5, the lab checker reports no violation of any rule on the new run; 2858 before the Round 3 chase fix 94da7493) reports no violation
     of either rule. Red today: R-087-03 12 and R-093-02 2657, the first at tick 14 for units 7 and 15."""
     mon, _ = played("L-0039", 1, "control")
     got = collections.Counter(v["rule"] for v in mon.violations if v["rule"] in SIGHT_RULES)
-    assert mon.tick == 2102 and dict(got) == {}, (dict(got), [(v["rule"], v["tick"], v["unit"]) for v in mon.violations if v["rule"] in SIGHT_RULES][:4])
+    assert mon.tick == 2412 and dict(got) == {}, (dict(got), [(v["rule"], v["tick"], v["unit"]) for v in mon.violations if v["rule"] in SIGHT_RULES][:4])
