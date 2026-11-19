@@ -18,9 +18,11 @@ THE API THIS FILE PINS (the lab builder builds to it; the manifest file itself i
                       layout | situation   exactly one: a catalogue id `L-0054`, or a situation id `SIT-0101` (the converter gives it an id of its own, `L-0101` onwards, when the row runs)
                       sight            "off" (stages 1 to 3) or "on" (stage 4)
                       control          "none" (stages 1 and 2), "ground" (stage 3: the twin with the features emptied), "sight" (stage 4: targeting by sight off), the kinds of run.py `--control`
-                      expected_winner  "A", "B" or "draw", the file's own `predict` (the layout's, or the situation's `Predict:`)
-                      predict_rate     side A's win rate where his file gives one: the layout's `predict_rate`; for a situation the `Expected win rate:` as the converter turns it into side A's
-                                       (Predict A: the number, B: one minus it, draw: 0.5). Absent when the file gives none (L-0054).
+                      expected_winner  "A", "B" or "draw". Stages 1, 3, 4: the layout's own `predict`. Stage 2: the side that won in the run he approved on 2026-11-02 (STAGE2_VERDICTS below), NOT the
+                                       situation file's `Predict:`, which is the Architect's draft (Test-defect, Story: stage4-findings).
+                      predict_rate     side A's win rate where he gave one: stages 1, 3, 4 the layout's `predict_rate` (absent for L-0054); stage 2 only SIT-0108 (his 50 percent for an open-field control,
+                                       heuristics.md), absent for the other six (he gave no number; the situation files' `Expected win rate:` is the Architect's draft). "None given" is the ABSENT key:
+                                       `regression.py` reads `row["expected_winner"]` (a value is required) and scores `draw` or a missing winner as agree=`-`, so a winner he did not give has no row today.
                       decision         the id of the decision row (docs/northstar/story_reviews/westley/decisions.md) that approved the fight's stage
   python -m scripts.skilllab.arena.regression [--manifest PATH] [--catalogue DIR] [--situations DIR]
                     defaults: the real manifest, the real catalogue, the real situations directory. `main(argv=None)` returns the exit code (0 when every fight ended by elimination and the checker
@@ -73,6 +75,23 @@ DEC2 = "DEC-stage2-seen-2026-11-02"
 DEC3 = "DEC-stage3-layouts-2026-11-05"
 DEC4 = "DEC-stage4-layouts-2026-11-05"
 
+# His verdicts of 2026-11-02 on the stage 2 fights, from docs/northstar/story_reviews/westley/crossings.md (the DEC-stage2-seen-2026-11-02 row, decisions.md:199, sends there: "Per-picture reasoning is
+# in `research/layer_dynamics/crossings.md`"). Each value: (the side that won in the run he approved, as crossings.md "what happened" records it; side A's rate he gave or None; the file and line of his
+# words; a phrase of those words, checked against that line by a control below). He approved all seven, so each expected winner is the side that won in what he approved. SIT-0108 ended in a mutual wipe:
+# `draw`; its 0.5 is his "open field, equal forces ... 50% ... control" (heuristics.md, his 2026-11-01 table; crossings.md:24 calls the fight "control"). He gave no number for the other six.
+# The situation files' `Predict:` and `Expected win rate:` are the Architect's drafts ("DRAFT by the Architect ... Westley rewrites or vetoes any number") and are not read here: they say SIT-0103 draw and
+# SIT-0106 B, which he did not say (SIT-0103: B won and he approved, "approved."; SIT-0106: A won and he approved, "this one also had the correct outcome, approved.").
+_CROSSINGS = "docs/northstar/story_reviews/westley/crossings.md"
+STAGE2_VERDICTS = {
+    "SIT-0101": ("B", None, 17, "bombard's with no support will be annhilated by strike units"),
+    "SIT-0103": ("B", None, 19, "a good example of how a mediecore player would assemble their units"),
+    "SIT-0104": ("A", None, 20, "approved, red got annihilated, which might be ok"),
+    "SIT-0105": ("A", None, 21, "This fight had the correct outcome given the configuration"),
+    "SIT-0106": ("A", None, 22, "this one also had the correct outcome, approved."),
+    "SIT-0107": ("B", None, 23, "this behavior is expected"),
+    "SIT-0108": ("draw", 0.5, 24, "approved."),
+}
+
 # (stage, kind, id, sight, control, decision): the rows of round6.md L2. SIT-0102 is not here (denied as a roster finding).
 ROWS = ([(1, "layout", "L-0054", "off", "none", DEC1)]
         + [(2, "situation", "SIT-%04d" % n, "off", "none", DEC2) for n in (101, 103, 104, 105, 106, 107, 108)]
@@ -96,16 +115,11 @@ def _key(fight):
     return fight["stage"], kind, fight[kind]
 
 
-def _expected(kind, ident):
-    """(predict, side A's rate or None) as his file gives it: the layout's `predict` and `predict_rate`; a situation's `Predict:` and `Expected win rate:` as the converter turns them (situations.py `_layout`)."""
-    if kind == "layout":
-        with open(CATALOGUE / (ident + ".toml"), "rb") as f:
-            lay = tomllib.load(f)
-        return lay["predict"], lay.get("predict_rate")
-    text = next(SITUATIONS.glob(ident + "-*.md")).read_text()
-    predict = re.search(r"^Predict:[ \t]*(\S+)", text, re.M).group(1)
-    number = float(re.search(r"^Expected win rate:[ \t]*(\S+)", text, re.M).group(1))
-    return predict, {"A": number, "B": 1 - number, "draw": 0.5}[predict]
+def _expected(ident):
+    """(predict, side A's rate or None) of a layout row as its file gives it: `predict` and `predict_rate`. Stage 2 rows are not read from their situation files (STAGE2_VERDICTS)."""
+    with open(CATALOGUE / (ident + ".toml"), "rb") as f:
+        lay = tomllib.load(f)
+    return lay["predict"], lay.get("predict_rate")
 
 
 def test_L2_the_manifest_names_exactly_the_fights_of_the_stage_decisions():
@@ -123,17 +137,46 @@ def test_L2_each_row_has_its_stage_sight_control_and_deciding_decision():
     assert got == {(s, k, i): (sight, control, dec) for s, k, i, sight, control, dec in ROWS}
 
 
-def test_L2_each_row_carries_his_expected_winner_and_rate_from_his_own_file():
-    """L2: 'his expected winner and rate where he gave one': the layout's `predict` and `predict_rate` (side A's rate), or the situation's `Predict:` and `Expected win rate:` as side A's. L-0054
-    (predict draw, no rate in its file) has an expected winner `draw` and no `predict_rate` key. Red today: no manifest."""
+def test_L2_each_layout_row_carries_his_expected_winner_and_rate_from_his_own_file():
+    """L2: 'his expected winner and rate where he gave one' for stages 1, 3 and 4: the layout's `predict` and `predict_rate` (side A's rate). L-0054 (predict draw, no rate in its file) has an
+    expected winner `draw` and no `predict_rate` key. The situation rows (stage 2) are NOT read from their files: see the two tests below. Red today: no manifest."""
     for f in _manifest():
-        kind = "layout" if "layout" in f else "situation"
-        want, rate = _expected(kind, f[kind])
-        assert f.get("expected_winner") == want, (f[kind], f.get("expected_winner"), want)
+        if "layout" not in f:
+            continue
+        want, rate = _expected(f["layout"])
+        assert f.get("expected_winner") == want, (f["layout"], f.get("expected_winner"), want)
         if rate is None:
-            assert "predict_rate" not in f, (f[kind], f["predict_rate"])
+            assert "predict_rate" not in f, (f["layout"], f["predict_rate"])
         else:
-            assert f.get("predict_rate") == pytest.approx(rate), (f[kind], f.get("predict_rate"), rate)
+            assert f.get("predict_rate") == pytest.approx(rate), (f["layout"], f.get("predict_rate"), rate)
+
+
+def test_L2_control_the_table_of_his_stage2_verdicts_names_the_stage2_rows_and_quotes_his_words():
+    """Control (green today): STAGE2_VERDICTS has exactly the seven stage 2 rows of ROWS, and each phrase it quotes is on the line of crossings.md it names."""
+    assert sorted(STAGE2_VERDICTS) == sorted(i for s, k, i, *_ in ROWS if s == 2)
+    lines = (ROOT / _CROSSINGS).read_text().splitlines()
+    for sit, (_, _, line, phrase) in STAGE2_VERDICTS.items():
+        assert phrase in lines[line - 1], (sit, line, phrase)
+        assert "(%s)" % sit in lines[line - 1], (sit, line)
+
+
+def test_L2_no_stage2_row_takes_its_expected_winner_from_a_situation_files_draft_predict():
+    """Test-defect, Story: stage4-findings. Stage 2 expected winners were taken from the situation files' draft `Predict:` (the Architect's), not from his verdicts of 2026-11-02. Each stage 2 row's
+    `expected_winner` equals the side that won in the run he approved (STAGE2_VERDICTS, from crossings.md:17-24): SIT-0101 B, SIT-0103 B, SIT-0104 A, SIT-0105 A, SIT-0106 A, SIT-0107 B, SIT-0108 draw.
+    Red today on SIT-0103 (manifest `draw`; he approved B winning) and SIT-0106 (manifest `B`; he approved A winning: 'this one also had the correct outcome, approved.')."""
+    got = {f["situation"]: f.get("expected_winner") for f in _manifest() if f["stage"] == 2}
+    assert got == {sit: v[0] for sit, v in STAGE2_VERDICTS.items()}
+
+
+def test_L2_stage2_rows_carry_a_predict_rate_only_where_he_gave_one():
+    """Test-defect, Story: stage4-findings. He gave no win rate for any stage 2 fight except the open-field control SIT-0108 (50 percent, heuristics.md); the other six rows carry no `predict_rate` key
+    (today they carry the situation files' draft `Expected win rate:`: 0.25, 0.5, 0.6, 0.8, 0.4, 0.4). SIT-0108's is 0.5. Red today on those six."""
+    rows = {f["situation"]: f for f in _manifest() if f["stage"] == 2}
+    for sit, (_, rate, _, _) in STAGE2_VERDICTS.items():
+        if rate is None:
+            assert "predict_rate" not in rows[sit], (sit, rows[sit]["predict_rate"])
+        else:
+            assert rows[sit].get("predict_rate") == pytest.approx(rate), (sit, rows[sit].get("predict_rate"))
 
 
 @pytest.mark.parametrize("dec", [DEC1, DEC2, DEC3, DEC4])
