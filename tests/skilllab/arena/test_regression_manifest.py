@@ -506,3 +506,43 @@ def test_L2_the_sweeps_tasks_are_the_manifests_fights_and_no_others():
     approved = {f["layout"] for f in _manifest() if "layout" in f}
     converted = {"L-%04d" % n for n in range(101, 110)}
     assert approved <= named and named <= approved | converted, (sorted(approved - named), sorted(named - approved - converted))
+
+
+# ------------------------------------------------------------------------------------------------------------ L5: a quiet end with every order finished is `apart`
+
+# round6.md L5 / DEC-formation-kept-2026-11-19 / docs/stories/H-040.md "Orders and fight end", the command's half (the runner's half is tests/skilllab/arena/test_run_apart_end.py, which also says
+# which fixtures stand for which state): "The regression command prints `APART` on the line and does not fail on it; a quiet end of any other kind ... stays `silence` with `stall` true and fails, as
+# does the time cap." The word APART stands on the line as DRAW stands on a draw's; the `end=` key reads `apart`. The line's `winner=` word for an apart end is the builder's and is not pinned.
+# The planted catalogue's L-9101 (`hold:A`, the stall fixture) is the real apart fight (no unit holds an order or a target at tick 200, the enemies 820 wu apart); the state of a unit that still holds an
+# order is planted as test_run_apart_end.py plants it, by wrapping `Engine.unit_destination`.
+
+def test_L5_command_an_apart_end_prints_APART_and_is_not_counted_as_a_failure(planted, tmp_path):
+    """L5: the stall fixture (L-9101, `hold:A`, 8:8 at tick 200, nobody holding an order, the nearest enemies about 820 wu apart) is an apart end: its one line says end=apart, survivors=8:8, checker=none,
+    carries the word APART and not DRAW; with a wipe row beside it the command exits 0 and its summary says 0 failed. Red today: the line says end=silence and DRAW, and the exit is 1."""
+    code, out = _main(_manifest_file(tmp_path, _row("L-9101", "draw"), _row("L-9102", "A")), planted)
+    (line,) = _lines_of(out, "L-9101")
+    assert (_field(line, "end"), _field(line, "survivors"), _field(line, "checker")) == ("apart", "8:8", "none"), line
+    assert "APART" in line and "DRAW" not in line, line
+    assert code == 0 and "0 failed" in out, (code, out)
+
+
+def test_L5_command_a_silence_end_with_both_sides_alive_still_fails_and_prints_DRAW(planted, tmp_path, monkeypatch):
+    """L5: the same fight with one unit (id 1) still holding a destination as far as the engine says (`Engine.unit_destination` answers a point for it): the quiet end is `silence`, the line says DRAW and not
+    APART, and the exit is non-zero with 1 failed in the summary. Green today (silence with both alive is a failure) and must stay green."""
+    real = Engine.unit_destination
+    monkeypatch.setattr(Engine, "unit_destination", lambda self, w, u: (2000.0, 2600.0) if u == 1 else real(self, w, u))
+    code, out = _main(_manifest_file(tmp_path, _row("L-9101", "draw")), planted)
+    (line,) = _lines_of(out, "L-9101")
+    assert _field(line, "end") == "silence" and "DRAW" in line and "APART" not in line, line
+    assert code != 0 and "1 failed" in out, (code, out)
+
+
+def test_L5_command_the_time_cap_still_fails_even_when_the_fight_was_quiet(planted, tmp_path, monkeypatch):
+    """L5: the same fight with the cap cut to 5 s (`snapshot.CAP_SECONDS`, which the command reads each fight; tick 100, before the 10 s silence window can close): the end is `cap`, the line says DRAW and
+    not APART, the exit is non-zero. Green today and must stay green."""
+    from scripts.skilllab.arena import snapshot
+    monkeypatch.setattr(snapshot, "CAP_SECONDS", 5)
+    code, out = _main(_manifest_file(tmp_path, _row("L-9101", "draw")), planted)
+    (line,) = _lines_of(out, "L-9101")
+    assert _field(line, "end") == "cap" and "DRAW" in line and "APART" not in line, line
+    assert code != 0, (code, out)
