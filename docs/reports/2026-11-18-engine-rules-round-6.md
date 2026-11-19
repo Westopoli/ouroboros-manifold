@@ -45,9 +45,16 @@ Found red on main and not from this round: four tests of `tests/transport` had b
 
 Same winners as on main's engine in every fight. Two ends with both sides alive, both carried to part two: the stage 1 fight L-0054 (14 against 22 at tick 10,860: every survivor has finished its order, the kind of end DEC-formation-kept names as expected) and the ground control of L-0084 (40 against 56 at tick 820, not yet traced). The overlap check reports on L-0054, SIT-0104, L-0055, L-0084, L-0080, L-0083 and three controls: E3, put off. The sight controls of L-0061, L-0080 and L-0083 end exactly as their fights do; winners differ from his expectation on SIT-0106, L-0039 (both stages), L-0080 and L-0083: both told to him, neither traced.
 
-## Open after part one
+## Part two (2026-11-19, lab only; branch `s/draws-r6b-lab`)
 
-- Part two: piece L5; the L-0084 ground control.
+- L5: a quiet end is written `end: "apart"`, and is not a failure, when the sides fought (a shot was fired), no living unit holds a destination or a target, and no two living enemies stand within the notice distance of either. The stage 1 fight ends so: 14 against 22 at tick 10,860. A quiet end with no shot fired stays a stall: the sides never met, which is a fault of where the order was placed. Pages show "apart: nearest enemies N wu: bring to Westley"; a rated block lists its apart seeds.
+- L6: the ground control of L-0084 fired no shot (traced: the twin removed the slope and left the holders on layer 1 and the attackers on layer 0; with sight off nobody shoots across layers). A control's units now stand on the layer the featureless ground has under them. The control ends by elimination, B 27 left at tick 1361, against A 18 left with the slope. The other three stage 3 twins are byte-identical.
+- The standing set after part two: 14 fights and 8 controls end by elimination, the stage 1 fight ends apart, no draw. The command still exits non-zero, on the overlap reports of E3 alone (nine rows).
+- Checked: all 54 arena files green; the lab's top-level files that touch the arena, snapshot, page and rate green; the lab docs lint green; no pinned fight hash moved. The stage folders he approved were not re-made.
+
+## Open after the round
+
+- Done in part two: piece L5; the L-0084 ground control.
 - Q-097-04: overlapped pairs in a jam (141 pairs in the stage 1 fight, the closest 6 wu apart): a design of its own for the push pass and the steering.
 - With Westley: whether stage 4 approval waits on the overlap; why sight changes nothing in three stage 4 fights; the point at which a trap springs; the expected winner of a mirrored fight on a generated map.
 - Noted, not traced: the checker reports a planted 300 wu jump as a continuity break with sight off and not with sight on; the pipe has no working guard or hold verb; `test_speed.py` and `test_umbrella.py` remain over their marks.
