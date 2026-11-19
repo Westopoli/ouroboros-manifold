@@ -35,6 +35,7 @@ FALL_HEIGHT = 480      # DRAFT-fall-map-height: "the last frame larger"; Westley
 
 STYLE = ("<style>.agree{background:#bfe8bf}.disagree{background:#f0b8b8}.none{background:#cccccc}td.stall,span.stall{background:#f5d76e}.shot img{outline:4px solid #e6c200}"
          ".stall td{background:#f5d76e}"   # DRAFT-stall-colour: flagged amber; Westley rules
+         "td.apart,span.apart,tr.apart td{background:#9fd3e6}"   # DRAFT-apart-colour (round6.md L5): its own blue, not the stall amber; Westley rules
          ".strip figure{display:inline-block;margin:2px;text-align:center}</style>")
 
 
@@ -108,6 +109,7 @@ def _row(path, control_dir=None, sentences=None):
     last = len(frames) - 1
     fall = _figure("%s/frame-%d.png" % (stem, last), frames[last]["tick"], frames[last]["alive"], FALL_HEIGHT)
     stall = bool(res.get("stall"))
+    apart = res.get("end") == "apart"   # round6.md L5: quiet, fought, every order finished, enemies out of notice; not a stall, still brought to him
     return ('<tr%(rowcls)s><td><b>%(id)s</b><br>seed %(seed)d<br>pair: %(pair)s%(bad)s</td>'
             '<td>predict: %(predict)s<br>%(why)s</td>'
             '<td>winner: %(winner)s<br>survivors: %(surv)s<br>ticks: %(ticks)d%(capped)s<br>end: %(end)s (%(schema)s)%(flag)s</td>'
@@ -120,8 +122,9 @@ def _row(path, control_dir=None, sentences=None):
                "predict": html.escape(res["predict"]), "why": html.escape(layout.get("predict_why", "")),
                "winner": html.escape(res["winner"]), "surv": "%d:%d" % tuple(res["survivors"]), "ticks": res["ticks"],
                "capped": " (capped)" if res["capped"] else "", "cls": cls, "cell": verdict_cell, "bad": "<br><b>%s</b>" % html.escape(bad) if bad else "",
-               "rowcls": ' class="stall"' if stall else "", "end": html.escape(res.get("end", "-")),
-               "schema": html.escape(doc["schema"]), "flag": "<br><b>stall: bring to Westley</b>" if stall else "",
+               "rowcls": ' class="stall"' if stall else ' class="apart"' if apart else "", "end": html.escape(res.get("end", "-")),
+               "schema": html.escape(doc["schema"]), "flag": "<br><b>stall: bring to Westley</b>" if stall else
+               "<br><b>apart: nearest enemies %d wu: bring to Westley</b>" % round(res["nearest_enemy_wu"]) if apart else "",
                "verdict": html.escape(layout.get("verdict") or "-"), "feedback": html.escape(layout.get("feedback", "")),
                "strip": strip, "fall": fall, "words": _words(layout, (sentences or {}).get(doc["layout_id"], {})), "blocked": _blocked(doc) + _first_seen(doc),
                "control": _control_row(control_dir, doc["layout_id"], doc["seed"], doc.get("sight"))})
@@ -248,8 +251,9 @@ def _layout_block(d, out_dir, rate, docs, layout, bad, control_dir=None, sentenc
     median = docs.get(rate["median_seed"])
     seeds = []
     for s in rate["seeds"]:
-        cls = "stall" if s in rate["stall_seeds"] else "none" if s in rate["none_seeds"] else ""
+        cls = "stall" if s in rate["stall_seeds"] else "none" if s in rate["none_seeds"] else "apart" if s in rate.get("apart_seeds", ()) else ""
         seeds.append('<span%s>%d</span>' % (' class="%s"' % cls if cls else "", s))
+    apart_note = "<p class=\"apart\"><b>apart seeds (%s): bring to Westley</b></p>" % " ".join(str(x) for x in rate["apart_seeds"]) if rate.get("apart_seeds") else ""   # round6.md L5
     survivors = "".join("<tr><td>%s</td><td>%.1f</td><td>%.1f</td><td>%d</td><td>%d</td></tr>" % (html.escape(r), a, b, sa, sb)
                         for r, a, b, sa, sb in _survivors(list(docs.values()))) if docs else ""
     stem = "%s-s%d" % (rate["layout_id"], rate["median_seed"])
@@ -257,9 +261,9 @@ def _layout_block(d, out_dir, rate, docs, layout, bad, control_dir=None, sentenc
     words = _words(layout, (sentences or {}).get(rate["layout_id"], {})) + (_blocked(median) + _first_seen(median) if median else "")
     return ('<h2>%s</h2><table border="1" cellpadding="6">%s%s</table>%s%s<table border="1" cellpadding="4"><tr><th>role</th><th>A mean survivors</th>'
             '<th>B mean survivors</th><th>A start</th><th>B start</th></tr>%s</table><p>median seed %d strip (first shot outlined)</p>'
-            '<div class="strip">%s</div>%s<p>seeds: %s</p>%s'
+            '<div class="strip">%s</div>%s<p>seeds: %s</p>%s%s'
             % (html.escape(rate["layout_id"]), _row_html([(h, "") for h in SUMMARY_HEAD], "th"), _row_html(cells), _gap_sentence(rate), words, survivors, rate["median_seed"], strip,
-               _control_strip(control_dir, rate["layout_id"], rate["median_seed"], median.get("sight") if median else None) if control_dir else "", " ".join(seeds), "".join("<p><b>%s</b></p>" % html.escape(m) for m in bad + ["seed %d %s" % (s, _invalid(d)) for s, d in sorted(docs.items()) if d.get("invalid")])))
+               _control_strip(control_dir, rate["layout_id"], rate["median_seed"], median.get("sight") if median else None) if control_dir else "", " ".join(seeds), apart_note, "".join("<p><b>%s</b></p>" % html.escape(m) for m in bad + ["seed %d %s" % (s, _invalid(d)) for s, d in sorted(docs.items()) if d.get("invalid")])))
 
 
 def build(d, out, control_dir=None, stage=None, sentences=None):

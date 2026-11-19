@@ -8,7 +8,8 @@ Stage 1 floor (DEC-lab-stage1-floor-2026-10-31): sight off (`OM_TP_TARGET_BY_SIG
 DRAFT-fight-cap (snapshot.CAP_SECONDS). Orders (H-052, docs/stories/H-040.md "Orders and fight end"): layout key `orders` = "both_same_point" (default;
 every unit of both sides attack-moves to the midpoint of the tick-0 centroids) or "hold:<A|B>" (that side gets no order, the other attack-moves to its centroid).
 Fight end: wipe; silence (DRAFT-silence-seconds 10: over the last 10 s of sim time no shot by either side and no living unit moved more than
-MOVED_WU, clock from tick 0); cap. Silence with both sides alive is a stall (winner "stall", `FIGHT <id> seed <n> STALL ticks <t>`).
+MOVED_WU, clock from tick 0); cap. Silence with both sides alive is a stall (winner "stall", `FIGHT <id> seed <n> STALL ticks <t>`), except an `apart` end
+(round6.md L5: a shot was fired, no unit holds a destination or a target, no two enemies within notice of either; `result.nearest_enemy_wu`; `_apart`), which is no stall.
 Exit 0 with a FIGHT line, exit 2 with REJECT lines.
 H-063 (stage 3, the ground pushes back): the layout's features go to the engine (features.py: planar blocks, the slope band); a layout whose moving units cannot
 reach their destination is REJECTed `REJECT <id> R8 unreachable: side_b unit 2` (exit 2); a layout with features writes a per-frame `blocked` list (unit ids that
@@ -28,6 +29,7 @@ Layout `orders = "groups"` gives per-group orders with an optional release trigg
 `--sight off` is unchanged (stages 1 to 3 reproduce byte for byte)."""
 import argparse
 import json
+import math
 import sys
 import tomllib
 from pathlib import Path
@@ -63,6 +65,34 @@ def _setup_for(layout):
 def _centroid(engine, w, ids):
     pts = [engine.unit_pos(w, u) for u in ids]
     return sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
+
+
+def _apart(engine, w, living, sides):
+    """True when a quiet end is `apart` (round6.md L5, DEC-formation-kept-2026-11-19): no living unit holds a destination or a target, and no two living enemies stand within the notice
+    distance of either (the unit's attack range times the reach table's multiplier for the two layers times (1 + NOTICE_MARGIN), as `invariants.notice_distance` reads it), counting a pair only
+    where one of the two could fire across their layers (`profile_reach`, csrc/unit.c om_tac_in_reach; `Engine.can_shoot` ignores layers). The shot-fired half is the caller's (`last_shot`).
+    `living` is the living unit ids, `sides` {unit id: faction}. See also: invariants.Monitor, which reads the same tables for R-087-04."""
+    if any(engine.unit_target(w, u) or engine.unit_destination(w, u) is not None for u in living):
+        return False
+    up = [1.0] + [engine.get_param(w, engine.param_id("OM_TP_RANGE_UP_%d" % n)) for n in range(1, 5)]       # csrc/unit.c om_tac_offset_mult, OM_REACH_MAX_OFFSET 4
+    down = [1.0] + [engine.get_param(w, engine.param_id("OM_TP_RANGE_DOWN_%d" % n)) for n in range(1, 5)]
+    info = {}
+    for u in living:
+        t = engine.unit_type(w, u)
+        info[u] = (engine.unit_pos(w, u), int(engine.unit_layer(w, u)), engine.type_stats(w, t)["attack_range"], engine.profile_reach(w, t))
+    for a in living:
+        (ax, ay), la, rng, reach = info[a]
+        for b in living:
+            if sides[a] == sides[b]:
+                continue
+            (bx, by), lb, _, _ = info[b]
+            if lb > la and lb - la > reach[0] or lb < la and la - lb > reach[1]:
+                continue   # a cannot fire at b across these layers
+            gap = abs(lb - la)
+            mult = (up if lb > la else down)[gap] if 0 < gap <= 4 else 1.0
+            if (ax - bx) ** 2 + (ay - by) ** 2 <= (rng * mult * (1.0 + invariants.NOTICE_MARGIN)) ** 2:
+                return False
+    return True
 
 
 def _frame(engine, w, tick, rows, blocked=None, seen=False, fired=()):
@@ -151,17 +181,47 @@ def layer_mismatch(layout):
         engine.free_world(w)
 
 
+def _on_ground_layers(layout, twin):
+    """[(side key, unit index, layer)] for the units of `layout` whose layer the ground it is given set and the twin's featureless ground does not: a unit stands on the layer the layout's ground
+    gives it (`hills.ground_layer`, not below 0) and the twin's ground gives another. A unit on a layer the layout's ground does not give it (a layer chosen by design, not by a feature the twin
+    removes) is not listed. Both grounds are read as the sight-off fight lays them (`_ground_world`)."""
+    changed = []
+    engine, w, _ = _ground_world(layout, "off")
+    engine2, w2, _ = _ground_world(twin, "off")
+    try:
+        for _, _, key in SIDES:
+            for i, u in enumerate(layout[key]["units"]):
+                given = max(0, hills.ground_layer(engine, w, u["x"], u["y"]))
+                bare = max(0, hills.ground_layer(engine2, w2, u["x"], u["y"]))
+                if u["layer"] == given and given != bare:
+                    changed.append((key, i, bare))
+        return changed
+    finally:
+        engine.free_world(w)
+        engine2.free_world(w2)
+
+
 def control_twin(layout, layout_path, control_dir):
     """(twin layout, path of its TOML) for a layout `features.bound` says the engine is given something for, else (None, None). The twin is the same layout with
     `features` emptied and `movement` "walk" (its units still walk, `fight`); `<control_dir>/<id>-control.toml` and `.json` are written as `produce.write_layout` writes a
-    layout. `layout_path` is the main layout's file, kept for the signature the runner passes. See also: fight, _document."""
+    layout. `layout_path` is the main layout's file, kept for the signature the runner passes. L6 (round6.md): a unit that stood on the layer the removed ground gave it stands on the layer
+    the featureless ground gives (`_on_ground_layers`), and the twin says which in `layers_changed` ("side_a unit 3", side A then B, index order; the key is absent when none changed, and is
+    in the JSON only, not the TOML); a unit on a layer by the layout's design is left as it is. See also: fight, _document, regression._cannot_fight."""
     if not features.bound(layout):
         return None, None
     twin = {**layout, "features": [], "movement": "walk"}
+    moved = _on_ground_layers(layout, twin)
+    if moved:
+        for key in {k for k, _, _ in moved}:
+            twin[key] = {**layout[key], "units": [dict(u) for u in layout[key]["units"]]}
+        for key, i, layer in moved:
+            twin[key]["units"][i]["layer"] = layer
     control_dir = Path(control_dir)
     control_dir.mkdir(parents=True, exist_ok=True)
     toml_path = control_dir / ("%s-control.toml" % layout["id"])
     toml_path.write_text(dump_toml(twin))
+    if moved:
+        twin["layers_changed"] = ["%s unit %d" % (key, i) for key, i, _ in moved]
     toml_path.with_suffix(".json").write_text(json.dumps(twin, indent=2) + "\n")
     return twin, toml_path
 
@@ -243,6 +303,7 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
         everyone = [u for f in ids for u in ids[f]]
         hp = {u: engine.unit_hp(w, u) for u in everyone}
         fired = set()   # attackers of fire events since the last captured frame; a thinned file keeps what the frame had when captured
+        side_of = {u: f for f in ids for u in ids[f]}
         last_shot, history = 0, {0: {u: engine.unit_pos(w, u) for u in everyone}}
         tick, end = 0, "cap"
         while tick < cap:
@@ -280,6 +341,8 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
                 if before is not None and last_shot <= tick - SILENCE_TICKS and not any(
                         u in before and (p[0] - before[u][0]) ** 2 + (p[1] - before[u][1]) ** 2 > MOVED_WU * MOVED_WU for u, p in now.items()):
                     end = "silence"
+                    if last_shot > 0 and _apart(engine, w, [u for u in everyone if engine.unit_alive(w, u)], side_of):
+                        end = "apart"   # round6.md L5
                     break
         if tick not in frames:
             frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen, fired)
@@ -320,6 +383,9 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders, dense
             "result": {"winner": winner, "survivors": survivors, "ticks": last, "capped": end == "cap", "end": end, "stall": stall,
                        "predict": layout["predict"],
                        "agree": winner == layout["predict"]}}
+    if end == "apart":   # round6.md L5: the plan distance between the nearest two living enemies, as the last frame's rounded x and y give it
+        alive = [u for u in frames[last]["units"] if u["alive"]]
+        doc["result"]["nearest_enemy_wu"] = round(min(math.hypot(p["x"] - q["x"], p["y"] - q["y"]) for p in alive if p["side"] == "A" for q in alive if q["side"] == "B"), 2)
     if walks:
         doc["movement_kind"] = features.WALKING_KIND
     if sight != "off" and features.planar_rects(layout):
@@ -434,6 +500,8 @@ def main(argv=None):
             f.write(head + row)
         if res["stall"]:
             print("FIGHT %s seed %d STALL ticks %d" % (layout["id"], seed, res["ticks"]))
+        elif res["end"] == "apart":
+            print("FIGHT %s seed %d APART ticks %d nearest %s wu" % (layout["id"], seed, res["ticks"], res["nearest_enemy_wu"]))
         else:
             print("FIGHT %s seed %d winner %s ticks %d agree %s" % (layout["id"], seed, res["winner"], res["ticks"], "yes" if res["agree"] else "no"))
     if args.seeds:

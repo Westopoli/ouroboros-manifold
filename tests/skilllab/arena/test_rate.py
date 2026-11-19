@@ -182,6 +182,33 @@ def test_a_stall_seed_is_counted_and_listed():
     assert (rate["wins_a"], rate["wins_b"]) == (4, 0) and rate["rate_a"] == 0.8
 
 
+def apart_fight(seed, winner="draw", layout_id="L-9100"):
+    """A fight file of an `apart` end (round6.md L5): both sides alive, `stall` false, `nearest_enemy_wu` 378, the winner word `winner` (the runner's choice: `draw` or `none`; only `stall` would be wrong)."""
+    doc = fight(seed, "A", layout_id=layout_id)
+    doc["result"].update({"winner": winner, "end": "apart", "stall": False, "survivors": [2, 2], "capped": False, "agree": False, "nearest_enemy_wu": 378.0})
+    return doc
+
+
+@pytest.mark.parametrize("winner", ["draw", "none"])
+def test_L5_an_apart_seed_is_listed_as_apart_and_is_not_counted_as_a_stall(winner):
+    """round6.md L5: "a rated block of seeds lists its `apart` seeds as brought to him, apart from its stalls". Five seeds: 1, 2 and 5 won by A, seed 3 a stall (end silence), seed 4 an apart end
+    (both alive, `result.end` "apart"). The rate file carries a new key `apart_seeds` listing the seed numbers whose end is `apart` ([4]); `stalls` is 1 and `stall_seeds` [3] (the apart seed is
+    not one of them); the apart seed counts as no win for either side (A won 3 of 5, rate 0.6). Red today: no `apart_seeds` key."""
+    fights = [fight(s, "stall" if s == 3 else "A", 1000) for s in range(1, 6)]
+    fights[3] = apart_fight(4, winner)
+    rate = load_rate().rate(fights, 0.60)
+    assert rate["stalls"] == 1 and rate["stall_seeds"] == [3], rate
+    assert (rate["wins_a"], rate["wins_b"], rate["rate_a"]) == (3, 0, 0.6), rate
+    assert rate.get("apart_seeds") == [4], rate
+
+
+def test_L5_a_block_with_no_apart_seed_lists_none_apart():
+    """round6.md L5: a block whose fights all end by elimination or by a stall lists no apart seed: `apart_seeds` is the empty list (a stall seed is not an apart seed). Red today: no key."""
+    fights = [fight(s, "stall" if s == 2 else "A", 1000) for s in range(1, 4)]
+    rate = load_rate().rate(fights, 0.80)
+    assert rate["stall_seeds"] == [2] and rate.get("apart_seeds") == [], rate
+
+
 def test_checker_accepts_winner_none_for_a_same_tick_wipe():
     """Audit item 2: "`result.winner` is `\"none\"`, `end` is `\"wipe\"`" for both sides wiped on the same tick. The runner writes that file through `snapshot.write`, so the checker must
     accept it (today it rejects: "result.winner is not A, B, draw or stall"). Gap for the builder: snapshot.py is not in the story's Files list."""

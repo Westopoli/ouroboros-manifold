@@ -38,11 +38,12 @@ def _firing_capable(doc, ranges):
 def rate(fights, predict_rate, band=BAND, mirror=False):
     """The rate file's content for the fight dicts of one layout (one per seed). Scoring (H-053, ruled 2026-11-02): `agree` is the winner guess, the layout's `predict`
     (read from fights[0]["result"]) against the measured majority winner (a tie of wins or a mutual wipe is "draw"); `band_gap` (points) is information and decides nothing;
-    an exact mirror with Predict draw is not scored (`agree` None). Stall and none seeds are the flag, their seed lists; they do not change `agree`."""
+    an exact mirror with Predict draw is not scored (`agree` None). Stall, apart and none seeds are the flag, their seed lists; they do not change `agree`."""
     seeds = [f["seed"] for f in fights]
     wins = lambda w: sum(1 for f in fights if f["result"]["winner"] == w)
     stall_seeds = [f["seed"] for f in fights if f["result"]["winner"] == "stall"]
     none_seeds = [f["seed"] for f in fights if f["result"]["winner"] == "none"]
+    apart_seeds = [f["seed"] for f in fights if f["result"].get("end") == "apart"]   # round6.md L5: quiet, fought, every order finished, enemies out of notice; brought to him, apart from the stalls
     rate_a = wins("A") / len(seeds)
     ranges = _roster_ranges()
     capable = [c for c in (_firing_capable(f, ranges) for f in fights) if c]
@@ -50,7 +51,7 @@ def rate(fights, predict_rate, band=BAND, mirror=False):
     predict = fights[0]["result"]["predict"]
     majority = "A" if wins("A") > wins("B") else "B" if wins("B") > wins("A") else "draw"
     return {"layout_id": fights[0]["layout_id"], "seeds": seeds, "wins_a": wins("A"), "wins_b": wins("B"), "stalls": len(stall_seeds),
-            "stall_seeds": stall_seeds, "none_seeds": none_seeds, "rate_a": rate_a, "predict_rate": predict_rate, "band": band,
+            "stall_seeds": stall_seeds, "apart_seeds": apart_seeds, "none_seeds": none_seeds, "rate_a": rate_a, "predict_rate": predict_rate, "band": band,
             "band_gap": abs(rate_a - predict_rate) * 100, "mirror": mirror,
             "agree": None if mirror and predict == "draw" else predict == majority,
             "firing_capable": {s: round(sum(c[s] for c in capable) / len(capable), 1) if capable else -1 for s in "AB"},
