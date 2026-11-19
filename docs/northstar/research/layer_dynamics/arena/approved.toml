@@ -12,13 +12,14 @@ control = "none"
 expected_winner = "draw"
 decision = "DEC-stage1-seen-2026-11-01"
 
+# Stage 2 rows: expected_winner is the side that won in the run he approved, and predict_rate is kept only where he gave a number (SIT-0108); both from his verdicts in
+# docs/northstar/story_reviews/westley/crossings.md (2026-11-02), not from the situation files' draft predictions.
 [[fight]]
 stage = 2
 situation = "SIT-0101"
 sight = "off"
 control = "none"
 expected_winner = "B"
-predict_rate = 0.25
 decision = "DEC-stage2-seen-2026-11-02"
 
 [[fight]]
@@ -26,8 +27,7 @@ stage = 2
 situation = "SIT-0103"
 sight = "off"
 control = "none"
-expected_winner = "draw"
-predict_rate = 0.5
+expected_winner = "B"
 decision = "DEC-stage2-seen-2026-11-02"
 
 [[fight]]
@@ -36,7 +36,6 @@ situation = "SIT-0104"
 sight = "off"
 control = "none"
 expected_winner = "A"
-predict_rate = 0.6
 decision = "DEC-stage2-seen-2026-11-02"
 
 [[fight]]
@@ -45,7 +44,6 @@ situation = "SIT-0105"
 sight = "off"
 control = "none"
 expected_winner = "A"
-predict_rate = 0.8
 decision = "DEC-stage2-seen-2026-11-02"
 
 [[fight]]
@@ -53,8 +51,7 @@ stage = 2
 situation = "SIT-0106"
 sight = "off"
 control = "none"
-expected_winner = "B"
-predict_rate = 0.4
+expected_winner = "A"
 decision = "DEC-stage2-seen-2026-11-02"
 
 [[fight]]
@@ -63,7 +60,6 @@ situation = "SIT-0107"
 sight = "off"
 control = "none"
 expected_winner = "B"
-predict_rate = 0.4
 decision = "DEC-stage2-seen-2026-11-02"
 
 [[fight]]
