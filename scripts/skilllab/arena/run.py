@@ -181,17 +181,47 @@ def layer_mismatch(layout):
         engine.free_world(w)
 
 
+def _on_ground_layers(layout, twin):
+    """[(side key, unit index, layer)] for the units of `layout` whose layer the ground it is given set and the twin's featureless ground does not: a unit stands on the layer the layout's ground
+    gives it (`hills.ground_layer`, not below 0) and the twin's ground gives another. A unit on a layer the layout's ground does not give it (a layer chosen by design, not by a feature the twin
+    removes) is not listed. Both grounds are read as the sight-off fight lays them (`_ground_world`)."""
+    changed = []
+    engine, w, _ = _ground_world(layout, "off")
+    engine2, w2, _ = _ground_world(twin, "off")
+    try:
+        for _, _, key in SIDES:
+            for i, u in enumerate(layout[key]["units"]):
+                given = max(0, hills.ground_layer(engine, w, u["x"], u["y"]))
+                bare = max(0, hills.ground_layer(engine2, w2, u["x"], u["y"]))
+                if u["layer"] == given and given != bare:
+                    changed.append((key, i, bare))
+        return changed
+    finally:
+        engine.free_world(w)
+        engine2.free_world(w2)
+
+
 def control_twin(layout, layout_path, control_dir):
     """(twin layout, path of its TOML) for a layout `features.bound` says the engine is given something for, else (None, None). The twin is the same layout with
     `features` emptied and `movement` "walk" (its units still walk, `fight`); `<control_dir>/<id>-control.toml` and `.json` are written as `produce.write_layout` writes a
-    layout. `layout_path` is the main layout's file, kept for the signature the runner passes. See also: fight, _document."""
+    layout. `layout_path` is the main layout's file, kept for the signature the runner passes. L6 (round6.md): a unit that stood on the layer the removed ground gave it stands on the layer
+    the featureless ground gives (`_on_ground_layers`), and the twin says which in `layers_changed` ("side_a unit 3", side A then B, index order; the key is absent when none changed, and is
+    in the JSON only, not the TOML); a unit on a layer by the layout's design is left as it is. See also: fight, _document, regression._cannot_fight."""
     if not features.bound(layout):
         return None, None
     twin = {**layout, "features": [], "movement": "walk"}
+    moved = _on_ground_layers(layout, twin)
+    if moved:
+        for key in {k for k, _, _ in moved}:
+            twin[key] = {**layout[key], "units": [dict(u) for u in layout[key]["units"]]}
+        for key, i, layer in moved:
+            twin[key]["units"][i]["layer"] = layer
     control_dir = Path(control_dir)
     control_dir.mkdir(parents=True, exist_ok=True)
     toml_path = control_dir / ("%s-control.toml" % layout["id"])
     toml_path.write_text(dump_toml(twin))
+    if moved:
+        twin["layers_changed"] = ["%s unit %d" % (key, i) for key, i, _ in moved]
     toml_path.with_suffix(".json").write_text(json.dumps(twin, indent=2) + "\n")
     return twin, toml_path
 

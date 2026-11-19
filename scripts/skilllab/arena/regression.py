@@ -11,7 +11,7 @@ sight off) that runs as a second fight of the row on its own line. One line per 
 `agree` compares the winner with his expected one (`-` when he expects a draw; a control is never compared); a disagreement alone is no failure. `checker` names every rule the checker reported in the fight (not only the first
 `invariants.KEEP` reports the fight document keeps). DRAW marks a fight that ended with both sides alive; APART marks the one kind of that end the lab expects (round6.md L5: `run._apart`), with winner `none`, and is no failure.
 Exit 0 only when every fight ended by elimination or apart and the checker reported nothing; a row the
-catalogue's rejection rules refuse is a failure too. The fights' winners and survivors are what `run._document` records.
+catalogue's rejection rules refuse is a failure too, and so is a ground control that cannot fight (L6: its sides stand on layers the units cannot fire across by the layout's design; printed `cannot fight`, not run). The fights' winners and survivors are what `run._document` records.
 """
 import argparse
 import sys
@@ -78,6 +78,15 @@ def _play(label, layout, path, sight, expected, control=False):
     return line, res["end"] in ("wipe", "apart") and not rules_seen
 
 
+def _cannot_fight(twin, sight):
+    """True when no unit of one side could fire at a unit of the other across the layers the twin gives them: the same layer, or (sight on) one layer down (`run.REACH_UP`, `run.REACH_DOWN`; sight
+    off is reach (0, 0)). A control in which no shot can be fired measures nothing (round6.md L6). See also: run.control_twin."""
+    up, down = (run.REACH_UP, run.REACH_DOWN) if sight == "on" else (0, 0)
+    a = {u["layer"] for u in twin["side_a"]["units"]}
+    b = {u["layer"] for u in twin["side_b"]["units"]}
+    return not any(la == lb or (lb > la and lb - la <= up) or (lb < la and la - lb <= down) for la in a for lb in b)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python3 -m scripts.skilllab.arena.regression", description=__doc__.splitlines()[0])
     ap.add_argument("--manifest", type=Path, default=LD / "arena" / "approved.toml")
@@ -110,6 +119,10 @@ def main(argv=None):
                     print("%s-control sight=%s REJECT no control twin: the engine is given nothing by this layout's features" % (label, sight), flush=True)
                     failed += 1
                     continue
+            if sight != "control" and _cannot_fight(twin, sight):
+                print("%s-control sight=%s cannot fight: the sides stand on layers the units cannot fire across, by the layout's design; not run" % (label, sight), flush=True)
+                failed += 1
+                continue
             line, ok = _play(label + "-control", twin, twin_path, sight, None, control=True)
             print(line, flush=True)
             failed += not ok
