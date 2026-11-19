@@ -10,6 +10,7 @@ Two layers:
                                                  fight of 12,000 ticks is not re-scanned every tick
   Monitor(engine, world, width, height, sight)  the online wrapper `run.fight` uses: reads the engine after each step, builds the frame, feeds `_Checker`
 
+Round 6 (2026-11-18) adds the same-layer half of R-097-05 (`invariants_r6.py`: two units on one layer closer than 28 wu for more than 3 ticks).
 Round 5 (2026-11-17) adds R-087-01 (unseen fire) and R-097-05 (slope collision), makes R-087-03 know the notice distance (a pick or a lock beyond it) and judges a guard's pick from where it stands.
 Round 2 (engine rules, 2026-11-11) adds: R-087-03 acquisitions (nearest seen enemy, cohort turn, return fire), R-093-02 (fire only at the side's visible set of the previous
 frame), R-087-09 only within attack range, continuity judging layer changes (not every push), R-096-08 (guard leash) and R-087-10 (spherical range of a shot). `watch` is the entry the lab
@@ -28,6 +29,7 @@ import ctypes
 import math
 
 from scripts.skilllab.invariants_r5 import NOTICE_MARGIN, LockKept, SlopeCollision, UnseenFire, notice_distance, slope_at_for  # noqa: F401  NOTICE_MARGIN: DRAFT-notice-margin, read by the tests
+from scripts.skilllab.invariants_r6 import SameLayerOverlap
 
 RULES = ("R-207-06", "R-207-07", "R-087-04", "R-084-04", "R-087-03", "R-087-09", "R-083-03", "continuity", "R-093-02", "R-096-08", "R-087-10", "R-087-01", "R-097-05")
 
@@ -103,8 +105,7 @@ class _Checker:
         self.prev = None
         self.last_shot = {}          # unit -> tick of its last shot (R-084-04)
         self.lock = {}               # unit -> (target, (x, y) where it took that lock) (R-087-03)
-        self.stuck = {}              # unit -> [target, frames not shootable, first distance, flagged] (R-087-09), a target inside attack range: the violation check
-        self.unshot = {}             # the same run for a target at any distance: the engine's give-up window (csrc/unit.c om_tac_giveup), which the swap excuse reads
+        self.unshot = {}             # unit -> [target, ticks counted not shootable, reference distance, flagged]: the engine's give-up run (csrc/unit.c om_tac_giveup), which R-087-09 and the swap excuse read
         self.gave_up = {}            # (unit, target) -> tick of the give-up the checker excused: the target is not eligible for that unit for GIVEUP_EXCLUSION_TICKS (R-087-09)
         self.unseen = {}             # unit -> (target, consecutive frames it was held while its side's previous visible set lacked it) (R-093-02)
         self.breached = set()        # guards outside their radius now (R-096-08: one violation per breach, not one per frame)
@@ -113,6 +114,7 @@ class _Checker:
         self._lock_kept = LockKept(self._beyond_notice, lambda u: self.rf.get(u, False))
         self._unseen_fire = UnseenFire(rules.guards, self._pushed, self._disp, lambda u, mine, theirs: self.rules.reach.get(u) is None or self._in_reach(self.rules.reach[u], mine, theirs))
         self._slope = SlopeCollision(rules.slope_at) if rules.slope_at is not None else None
+        self._overlap = SameLayerOverlap(rules.slope_at)
 
     # -- helpers
     @staticmethod
@@ -209,6 +211,8 @@ class _Checker:
             self._unseen_fire.feed(frame, prev, tick, out)
         if "R-097-05" in on and self._slope is not None:
             self._slope.feed(frame, prev, tick, out)
+        if "R-097-05" in on:
+            self._overlap.feed(frame, prev, tick, out)
         if "R-093-02" in on and prev is not None and "visible" in prev:
             self._sight(frame, prev["visible"], tick, out)
         for a in shooters:
@@ -422,29 +426,32 @@ class _Checker:
         elif tick % COHORT_SLOTS != self.rules.cohort[u]:
             out.append(_violation("R-087-03", tick, u, "acquired %d at tick %d, off its cohort turn (slot %d)" % (tgt, tick, self.rules.cohort[u])))
 
-    @staticmethod
-    def _advance(runs, u, tgt, dist):
-        """One frame of unit u's run of holding tgt unshootable: [target, frames, distance at the run's start, flagged]; it restarts on another target or when the unit closes in by more than 1 wu."""
-        run = runs.get(u)
-        if run is None or run[0] != tgt or dist < run[2] - 1.0:
-            run = runs[u] = [tgt, 0, dist, False]
-        run[1] += 1
-        return run
-
     def _held(self, units, u, r, tick, out):
+        """R-087-09, counted as the engine counts it (`om_tac_giveup`, csrc/unit.c). The run is [target, count, reference distance, flagged]: it restarts on another target or when
+        the distance has fallen more than 1 wu below the reference (the distance when the run began), the restart's distance is the reference, and the tick is counted either way; a
+        shootable target clears it. The engine reads the positions at the top of its tick, the previous frame's, and it counts a target only on a tick that begins holding it:
+        a target taken by acquisition on tick M is taken after the tick's give-up step, so its first count is tick M + 1, reading frame M (measured on the lab fights: every give-up
+        ends a run of 19 counted frames, the engine dropping on the 20th). A target taken by return fire is taken at the top of the tick (csrc/unit.c `last_attacker`), before the
+        give-up step: it is counted on tick M itself, reading frame M-1, when frame M-1 shows a hit by that target on the unit and the unit then held no target. The run counts whether or not the target is inside attack range (the swap excuse, `_gave_up`); a violation is
+        reported on the frame whose count passes STUCK_TICKS, once per run, and only on a frame where the unit is within attack range (the rule's own words)."""
         tgt = r["target"] if r["alive"] else 0
         t = units.get(tgt) if tgt else None
-        if not t or not t["alive"] or r.get("shootable", True):
-            self.stuck.pop(u, None)
+        pu = self.prev["units"].get(u) if self.prev else None
+        pt = self.prev["units"].get(tgt) if self.prev and tgt else None
+        taken_by_return_fire = (pu is not None and pu["alive"] and pu["target"] == 0 and tgt != 0
+                                and (tgt, u) in self.prev.get("hits", self.prev.get("fires", ())))
+        if not t or not t["alive"] or r.get("shootable", True) or pu is None or pt is None or not pu["alive"] or (pu["target"] != tgt and not taken_by_return_fire):
             self.unshot.pop(u, None)
             return
+        counted = math.hypot(pt["x"] - pu["x"], pt["y"] - pu["y"])
+        run = self.unshot.get(u)
+        if run is None or run[0] != tgt or counted < run[2] - 1.0:
+            run = self.unshot[u] = [tgt, 0, counted, False]
+        run[1] += 1
         dist = math.hypot(t["x"] - r["x"], t["y"] - r["y"])
-        self._advance(self.unshot, u, tgt, dist)     # R-087-09 as the engine counts it: whether or not the target is inside attack range (the swap excuse, `_gave_up`)
         reach = self.rules.attack_range.get(u)
         if reach is not None and dist > reach:
-            self.stuck.pop(u, None)          # the R-087-09 violation is about a target within attack range; its 20 ticks are consecutive in-range ticks
             return
-        run = self._advance(self.stuck, u, tgt, dist)
         if run[1] > STUCK_TICKS and not run[3] and "R-087-09" in self.on:
             run[3] = True
             out.append(_violation("R-087-09", tick, u, "held target %d unshootable for %d ticks without closing in (%.0f wu away)" % (tgt, run[1], dist)))

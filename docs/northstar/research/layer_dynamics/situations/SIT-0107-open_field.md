@@ -16,7 +16,7 @@ Why: Westley's surround-at-half heuristic is for a surround; this is one arc, so
 
 | side | role | count | anchor x | anchor y | facing | range | layer | shape | centre_x | centre_y | radius | start_deg | end_deg |
 |------|------|-------|----------|----------|--------|-------|-------|-------|----------|----------|--------|-----------|---------|
-| A | Vanguard | 12 | | | | 0 | 0 | arc | 2400 | 2000 | 500 | 155 | 205 |
+| A | Vanguard | 12 | | | | 0 | 0 | arc | 2400 | 2000 | 505 | 155 | 205 |
 | B | Vanguard | 24 | 3200 | 2000 | west | 0 | 0 | block | | | | | |
 
 ## Features

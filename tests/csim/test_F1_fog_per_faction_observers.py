@@ -305,10 +305,14 @@ def _visible_hash(lib, w):
 # are moved on step 1 (unit 41 by 2.4 wu: unit 58, of its own side, takes a target that tick and walks 5.1 wu into it at 35 wu; 58 units differ in all). Spread: unit 284 is moved 24.5 wu by unit 98
 # of its own side, 10.6 wu away (2 units differ).
 # Re-recorded 2026-11-17 (engine rules Round 5, G1 to G5: a lock ends at the notice distance, a guard acquires within it, an attack-mover is not moved by unseen fire, layer by side of the midline on a slope; was: 2026-11-12 recorded: clash state 3782ccba visible 740858b4, spread state d0b7f912 visible 4ba1758c; green on main b23e605c9).
+# Re-recorded 2026-11-18 (engine rules Round 6, E2 second pass, DEC-giveup-progress-2026-11-18: the give-up counts only ticks without progress; was: 2026-11-17 recorded: spread state f2d0a1f3, visible unchanged, clash unchanged). Built on 64dacc0bc and on 7d2f839be in lock step: the first tick to differ is 240 (units 396 and 490):
+# unit 396, held 56 wu from its slot, ended its order at the top of tick 240 in the old build (count 40 from the top of tick 201); in the new build ticks 201 and 202 bring it nearer and are not counted, it has counted 37 and takes its step on tick 240; unit 490, 30 wu from it, is moved by the same 0.47 wu in the collision pass.
+# Re-recorded again 2026-11-18 (engine rules Round 6, 551b5acee: a new order starts the give-up count at zero, R-099-05, DEC-giveup-progress-2026-11-18; was: spread state f79705b8, visible unchanged, clash unchanged). Built on 551b5acee^ and on the tip in lock step:
+# the first tick to differ is 247 (unit 396 only; positions are equal before it): the old build carried 396's count of 37 from its group order 5 into its replaced order 6 and ended it at the end of tick 245; the new build starts the count at 0 on tick 241, so 396 is still held on 246 and walks free on 247.
 GOLDEN = {
     "clash": ("090c42c9c714a45fc42bf92f5eb60c9e8e31ed204a4e57182076d113c81adda8",
               "1f1d6a2220df7ccab39779edbffd81ea77fbb5c4b3760dd2d2d33cf5941cdb03"),
-    "spread": ("f2d0a1f33e5a9aab001fee38295929dd197c1806041ebbea20e4877cf2a6548e",
+    "spread": ("af0f91a6db979af3978fc8f29cfa18e831c0f8865a9e698f56d6387af69397ba",
                "aa80378e03e774d93785b73289bcdfef4a6cf25c2691f80316a861d3e87dd018"),
 }
 

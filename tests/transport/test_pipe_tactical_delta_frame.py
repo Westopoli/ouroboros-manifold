@@ -122,6 +122,17 @@ def _player_ids(frame):
     return [u["id"] for u in frame["units"] if u["faction"] == 0]
 
 
+def _lane_movers(frame, k=1):
+    """The k player units on the open edge of the spawn block: highest y, then lowest x. Their
+    move order (towards y 5000) leads away from the block, so no idle own-side unit is in the
+    way and none is pushed (E-13 R-097-10: an idle unit steps aside for a mover of its own side;
+    a mover inside the packed block would put twenty-odd neighbours in units_changed). These
+    tests are about the delta's shape and the reconstruction, not about collision."""
+    mine = [u for u in frame["units"] if u["faction"] == 0]
+    mine.sort(key=lambda u: (-u["y"], u["x"], u["id"]))
+    return [u["id"] for u in mine[:k]]
+
+
 def _move_cmd(ids, dx=500.0):
     return {"type": "cmd", "name": "command", "verb": "move", "units": ids, "x": dx, "y": 5000.0}
 
@@ -168,7 +179,7 @@ def test_delta_frame_has_the_delta_shape_and_only_changed_units():
     """Positive control: one move order makes exactly that unit change; an unchanged unit
     never rides units_changed."""
     first = _begin_units()
-    mover = _player_ids(first)[0]
+    mover = _lane_movers(first)[0]
     _, tac = _begin_frames([_step(SETTLE_TICKS), _move_cmd([mover]), _step(1)])
     delta = tac[-1]
     _assert_delta(delta)
@@ -202,7 +213,7 @@ def test_full_frame_on_every_20th_step_counted_from_mission_begin():
 
 def test_n_greater_than_one_writes_only_the_last_frame_against_the_last_frame_written():
     first = _begin_units()
-    mover = _player_ids(first)[0]
+    mover = _lane_movers(first)[0]
     _, tac = _begin_frames([_step(SETTLE_TICKS), _move_cmd([mover]), _step(5), _step(0)])
     assert len(tac) == 4, "n=5 must write one frame, got ticks %r" % [f["tick"] for f in tac]
     delta, probe = tac[2], tac[3]
@@ -334,7 +345,7 @@ def test_reconstruction_check_detects_a_dropped_change():
     """Positive control for the reconstruction detector: dropping one changed unit from a
     delta breaks the equality the tests above assert."""
     first = _begin_units()
-    movers = _player_ids(first)[:3]
+    movers = _lane_movers(first, 3)
     frames = _run([SET_SEED, START, BEGIN, _step(SETTLE_TICKS), _move_cmd(movers), _step(1), _step(0)])
     tac = _tacticals(frames)
     base, delta, probe = _apply(_apply({}, tac[0]), tac[1]), tac[2], tac[3]

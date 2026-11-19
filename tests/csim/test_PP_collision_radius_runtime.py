@@ -55,7 +55,9 @@ ARRIVAL_MULT = 1.5   # R-099-04 and csrc/om_constants.h OM_ARRIVAL_TOLERANCE_MUL
 # Test-defect, re-recorded 2026-11-12 (engine rules Round 4, R-097-10: an idle unit takes the push of a mover of its own side and steps aside; was 9266aad512c513ca...). Built on the Round 3
 # tip e2dcee93 and on 6d3d7635 in lock step: the first tick to differ is 48 (two units differ): the 3 x 2 group has an arrived member, unit 9, that stood still at its slot in the old engine
 # while unit 11 of its group, 30 wu away and still walking, was held back; the new engine moves unit 9 aside by 2.8 wu. Radius 15 set and radius unset still give one trace.
-TRACE_R15 = "53b854664d08e163e8863ebb4c39b5d71d9826b5bcaec99ef18308af9d5dd4d8"
+# Test-defect, re-recorded 2026-11-18 (engine rules Round 6, E2 second pass, DEC-giveup-progress-2026-11-18: the give-up counts only ticks without progress; was 53b85466...). Built on 64dacc0bc and on 7d2f839be in lock step: the first tick to differ is 88 (unit 6 only):
+# unit 6 of the 3 x 2 group, pushed in and out of its slot by its mates, ended its order at the top of tick 88 in the old build (count 40) and in the new build has counted 17 and keeps walking; it gives up on tick 134. Radius 15 set and radius unset still give one trace.
+TRACE_R15 = "46d1472c0c3f1e31b18c8591bbaddcfd6010a733159fb2921f09f1fb0839d30a"
 
 
 def _world(lib, radius):

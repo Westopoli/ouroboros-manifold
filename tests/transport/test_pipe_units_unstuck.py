@@ -16,9 +16,11 @@ each move.
 
 Test 2 (determinism): same command stream twice -> byte-identical final positions.
 
-Test 3 (negative): group-move ONLY unit 137 (alone in its group); all 275 other
-units are stationary with group_id 0 and still surround it; unit 137 must NOT
-have moved > 1 wu after 60 frames.
+Test 3 (negative) removed (Round 6): test_single_unit_group_still_blocked expected a lone
+mover ringed by idle own-side units to stay put, the opposite of E-13 R-097-03 / R-097-10
+since 2026-11-12, and no blocker that still blocks can be staged through the pipe verbs; the
+property (a mover that cannot pass is held) is held by
+tests/csim/test_E13_R097_10_idle_own_units_yield.py::test_R_097_10_an_idle_enemy_unit_takes_none_of_the_push_the_mover_goes_round_or_is_held.
 
 Setup (same seed/region/feature/step as the other transport tests):
   set_seed 1, 80 regions, strategic features 1..7, step 10,
@@ -182,40 +184,3 @@ def test_unstuck_determinism():
     assert not mismatches, (
         "%d unit(s) had non-identical positions across two runs:\n%s"
         % (len(mismatches), "\n".join(mismatches[:10])))
-
-
-# ---------------------------------------------------------------------------
-# Test 3 (negative): unit blocked by NON-group stationary units still waits
-# ---------------------------------------------------------------------------
-
-def test_single_unit_group_still_blocked():
-    """Group-move ONLY unit 20 to the destination.  Unit 20 (spawn 11775,45)
-    has all four cardinal 30-wu neighbours (ids 2, 19, 21, 38); all have
-    group_id 0 in this scenario (they were not included in the group command).
-
-    The fix excludes only same-nonzero-group mates.  group_id-0 units are still
-    blockers.  All 13 probe directions from unit 20 are blocked by its four
-    stationary non-group neighbours, so unit 20 must NOT move > 1 wu after
-    60 steps.
-
-    Positive control for the exclusion being exact: if the fix incorrectly
-    excluded all units (or all stationary units), unit 20 would escape here.
-    """
-    move_single = {"type": "cmd", "name": "command", "verb": "move",
-                   "units": [20], "x": DEST_X, "y": DEST_Y}
-    cmds = [SET_SEED, STEP10, START, BEGIN, move_single]
-    for _ in range(N_STEPS):
-        cmds.append({"type": "cmd", "name": "tactical_step", "n": 1})
-    frames = _run(cmds)
-    tactical = [f for f in frames if f["type"] == "tactical"]
-    assert len(tactical) >= 2, "expected begin frame + at least 1 step"
-    begin_map = {u["id"]: u for u in tactical[0].get("units", [])}
-    final_map = {u["id"]: u for u in tactical[-1].get("units", [])}
-    assert 20 in begin_map, "unit 20 absent from begin frame"
-    assert 20 in final_map, "unit 20 absent from final frame"
-    bu, fu = begin_map[20], final_map[20]
-    dist = ((fu["x"] - bu["x"]) ** 2 + (fu["y"] - bu["y"]) ** 2) ** 0.5
-    assert dist <= MIN_MOVE_WU, (
-        "unit 20 moved %.3f wu despite being surrounded by non-group stationary "
-        "units; exclusion is too broad (spawn=(%.2f,%.2f) final=(%.2f,%.2f))"
-        % (dist, bu["x"], bu["y"], fu["x"], fu["y"]))

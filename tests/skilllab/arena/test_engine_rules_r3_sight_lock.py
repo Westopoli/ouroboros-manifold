@@ -33,6 +33,10 @@ fixes 2 and 3 leave it). The episode is one tick later: side A sees 71 at the en
 at 1779 (29, 33 and 37 to none, 40 to 95). Drops of a target seen at both ends of the tick: 748, of which reach 118, give-up 157, guard post 473, unexplained 0. The lab checker reports no violation
 of any rule on the fight.
 
+Re-derived 2026-11-18 on the Round 6 tip (Test-defect: R-096-02, the order kept through the pause after the unit's own shot, 66fbc1ee9: first different tick 812, unit 71 keeps its destination where main's engine cleared it): L-0084 seed 1 sight on is 1,987 ticks. Side A (the guards' side)
+sees 59 sights gained and 8 lost, all 8 at tick 1760 (enemies 89 to 96), so the guard episode is back: guards 29 to 40 hold enemy 91 (unit 35: 90, units 38 to 40: 93) through the end of tick 1760, the tick side A stops seeing it, and drop it
+at 1761. The side B episode (units 80, 85 and 86 hold guard 8 through the end of tick 1233 and drop it at 1234) is unchanged. Drops of a target seen at both ends: 2 (notice distance 2), unexplained 0.
+
 Re-derived 2026-11-17 on the Round 5 fourth-pass tip (Test-defect: the premises were the fight before the notice distance): L-0084 seed 1 sight on is 1,955 ticks (the run length 3,923 re-pinned to 1,955 by the verifier). The guards'
 side sees 56 enemies and loses none, so the guard episode of enemy 71 is gone; the sight change the lock tests use is side B's loss of sight of the guards (units 80, 85 and 86 hold guard 8 through the end of
 tick 1233, the tick side B stops seeing it, and drop it at 1234). Drops of a target seen at both ends: 4 (notice distance 3, reach 1), unexplained 0; give-up and guard post: none.
@@ -167,28 +171,29 @@ def unexplained(r):
 # ------------------------------------------------------------------ green first: the premises
 
 def test_control_the_fight_and_the_trace_premises_hold():
-    """Control (green after the fix, the premise of the red test below): the recorded fight is the one traced, re-derived on the Round 5 tip (the premise before was the 3,923-tick run, the guards 29 to 40
-    holding enemy 71 through its sight loss at ticks 1776 to 1778, and drops of every reason; the run length re-pinned by the verifier, 3,923 -> 1,955). Now: 1,955 ticks; the guards (1 to 40, all side A)
-    never lose sight of an enemy (56 sights gained, none lost), so the guard episode is absent from this fight; the sight change the lock test depends on is the attackers' (side B, units 41 to 96): at the
-    end of tick 1232 side B sees guard 8, at the end of 1233 and 1234 it does not; units 80, 85 and 86 hold it through the end of 1233 and none at the end of 1234; 54 unit-ticks in all hold a target through
-    the tick their side lost sight of it (ticks 1233, 1255, 1353, 1478, 1771, 1836, 1953), 95 cases of a held target that left the sight; the oracle finds drops of a seen target for the reasons that are in
-    the fight, 4 in all (notice distance 3, reach 1: the guards drop none), none unexplained (so a red below is not a detector that excuses nothing: a fix that dropped a lock early would add an unexplained one)."""
+    """Control (green after the fix, the premise of the red test below): the recorded fight is the one traced. Re-derived 2026-11-18 on the Round 6 tip (Test-defect: 66fbc1ee9, first different tick 812, unit 71), see the header: 1,987 ticks; side A gains 59 sights and loses 8, all at tick 1760, where guards 29 to 40 hold
+    the enemy through the end of the tick and drop it at 1761 (checked below); side B's loss of guard 8 at tick 1233 is as before; 59 unit-ticks hold a target through the tick their side lost sight of it (ticks 1233, 1353, 1595, 1679, 1760, 1841, 1961), 118 cases of a held target that left the sight;
+    drops of a seen target: 2, both by notice distance, none unexplained. The Round 5 run (1,955 ticks, the guards never lost sight, the guard episode absent, 54 held unit-ticks, drops: notice distance 3 and reach 1) is in the header. The oracle finds drops of a seen target for the reasons that are in
+    the fight, none unexplained (so a red below is not a detector that excuses nothing: a fix that dropped a lock early would add an unexplained one)."""
     r = played()
     rec = r.rec
-    assert len(rec.ticks) == 1955, len(rec.ticks)
+    assert len(rec.ticks) == 1987, len(rec.ticks)
     assert [rec.side[u] for u in range(1, 41)] == [SIDE_A] * 40 and {rec.side[u] for u in range(41, 97)} == {1}
     changes = {s: [(tk["n"], e, tk["vis_post"][(s, e)]) for prev, tk in zip(rec.ticks, rec.ticks[1:]) for (s2, e) in tk["vis_post"] if s2 == s and prev["vis_post"].get((s, e)) != tk["vis_post"][(s, e)]] for s in (0, 1)}
-    assert (len([c for c in changes[SIDE_A] if c[2]]), len([c for c in changes[SIDE_A] if not c[2]])) == (56, 0), "the guards' side loses sight of an enemy: the guard episode is back"
+    assert (len([c for c in changes[SIDE_A] if c[2]]), [(c[0], c[1]) for c in changes[SIDE_A] if not c[2]]) == (59, [(1760, e) for e in range(89, 97)]), "the guards' side sight changes are not those of the premise"
+    guards = {29: 91, 30: 91, 31: 91, 32: 91, 33: 91, 34: 91, 35: 90, 36: 91, 37: 91, 38: 93, 39: 93, 40: 93}   # the guard episode: held through the end of tick 1760 (side A stops seeing it there), dropped at 1761
+    assert [rec.ticks[n - 1]["vis_post"][(SIDE_A, e)] for e in (90, 91, 93) for n in (1759, 1760, 1761)] == [True, False, False] * 3
+    assert {u: [rec.ticks[n - 1]["post"][u]["tgt"] for n in (1759, 1760, 1761)] for u in guards} == {u: [e, e, 0] for u, e in guards.items()}
     assert [rec.ticks[n - 1]["vis_post"][(1, 8)] for n in (1232, 1233, 1234)] == [True, False, False]
     assert [[rec.ticks[n - 1]["post"][u]["tgt"] for n in (1232, 1233, 1234)] for u in (80, 85, 86)] == [[8, 8, 0]] * 3
     held, cases = held_after_sight_loss(r, 0)
-    assert (len(held), cases) == (54, 95) and sorted({n for n, _, _ in held}) == [1233, 1255, 1353, 1478, 1771, 1836, 1953], (len(held), cases)
+    assert (len(held), cases) == (59, 118) and sorted({n for n, _, _ in held}) == [1233, 1353, 1595, 1679, 1760, 1841, 1961], (len(held), cases)
     reasons = {}
     for d in drops_of_a_seen_target(r):
         reasons[d[4]] = reasons.get(d[4], 0) + 1
     # give-up (R-087-09) and guard post (R-096-08) drops of a seen target are absent from this fight: with the Round 5 notice distance a unit that holds a target it cannot shoot is dropped by the
     # distance, and a guard acquires from where it stands; the two excuses stay in the oracle for the fights that still have them and are not exercised here.
-    assert reasons == {"notice distance": 3, "reach": 1}, reasons
+    assert reasons == {"notice distance": 2}, reasons
     assert unexplained(r) == []
 
 

@@ -56,7 +56,8 @@ STEP_TOL = 0.05                       # numeric slack for the C's cheap trig, as
 
 # Recorded on the unmodified tree by test_PP_collision_radius_runtime.py (origin/main 37858c8e, no csrc change).
 # Test-defect, re-recorded 2026-11-12 with the copy in test_PP_collision_radius_runtime.py (engine rules Round 4, R-097-10; was 9266aad512c513ca...; the reason is given there).
-TRACE_R15 = "53b854664d08e163e8863ebb4c39b5d71d9826b5bcaec99ef18308af9d5dd4d8"
+# Test-defect, re-recorded 2026-11-18 with the copy in test_PP_collision_radius_runtime.py (engine rules Round 6, E2 second pass, DEC-giveup-progress-2026-11-18; was 53b85466...; the reason is given there).
+TRACE_R15 = "46d1472c0c3f1e31b18c8591bbaddcfd6010a733159fb2921f09f1fb0839d30a"
 
 
 def _set_radius(lib, w, unit_type, radius):
@@ -343,7 +344,9 @@ def test_H_041_production_slot_spacing_follows_the_largest_when_every_radius_is_
 # conftest's own binding functions against it. Not recorded from a modified tree: if it ever changes, a landing changed the save format.
 # Test-defect, re-pinned 2026-11-12 from bd3b8f1b... (engine rules Round 4, R-097-10: an idle unit steps aside for a mover of its own side; the mixed scene's unit state moves from tick 48 of
 # the 100, as TRACE_R15 does, and the size is the same). Taken from the Round 4 lib; the format is unchanged (the Round 3 lib gives the old value).
-SAVE_NO_RADIUS_SHA256 = "22577020d600e85ef27725e7de01d36da6f1aaf16620730e21a5717b48f0aaba"
+# Test-defect, re-pinned 2026-11-18 from 22577020... (engine rules Round 6, E2 second pass, DEC-giveup-progress-2026-11-18): the unit state of the same mixed scene moves from tick 88 of the 100 (unit 6 keeps its order, see TRACE_R15); size 1154363 unchanged,
+# header and layout byte for byte as before (355 bytes differ in 17 ranges, all in the last 8 KB of the save, units 6 and 8 to 11 differ); the commit that moved it, 7d2f839be, touches no save code.
+SAVE_NO_RADIUS_SHA256 = "d1d1342236d76e9caa1465e47bfab2fad0670871853e23451afc1e5c45261e52"
 SAVE_NO_RADIUS_SIZE = 1154363
 SAVE_SERIAL_AT = 40   # the 8-byte world serial (csrc/save.c header): a per-process counter of worlds created, so a second save in one process differs there only; zeroed before hashing
 

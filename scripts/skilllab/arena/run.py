@@ -289,6 +289,7 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
         if group_state:
             doc_orders["groups"] = groups.record(group_state)
         doc_orders["invariants"] = monitor.document_keys()   # _document removes it
+        doc_orders["reported_rules"] = sorted({v["rule"] for v in monitor.violations})   # every rule the checker reported, not the first KEEP; _document removes it. See also: regression._play
         return frames, tick, end, doc_orders
     finally:
         engine.free_world(w)
@@ -300,6 +301,7 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders, dense
     orders = dict(orders)
     stage4 = orders.pop("stage4", None)
     checked = orders.pop("invariants", None)   # F0: fight()'s verdict of the checker
+    orders.pop("reported_rules", None)   # the whole list of rules, for regression._play; the document keeps only `violations`
     ticks = snapshot.frame_ticks(last, TICKS_PER_SECOND) if dense_every is None else sorted(frames)
     every = dense_every or (ticks[1] - ticks[0] if len(ticks) > 2 else BASE_EVERY)
     survivors = frames[last]["alive"]

@@ -1,4 +1,4 @@
-# Rule pins: R-087-01, R-087-06, R-096-02, R-005-09
+# Rule pins: R-087-01, R-087-06, R-096-02, R-005-09, R-099-05
 """Engine rules round 5, G4, whole fights in the lab configuration: an attack-mover still on its way is neither moved nor stopped by unseen fire; a unit that has moved away holds and is not moved again without a new hit.
 
 Rule word for word (docs/bible/epics/E-11-units-and-combat.md, R-087-01, as it reads on the Round 5 branch): "Given an idle unit, or an attack-moving unit that has arrived at its point, with no target, that takes
@@ -20,7 +20,11 @@ THE MEASURES (DRAFT numbers are Westley's):
   moved_away_on_its_way   a tick on which the engine's flag for "in a move away" goes up for a unit that had a destination (an attack-move on its way) and no target at the start of the tick: the rule says it
                           is neither moved nor stopped. A unit with no destination at the start of the tick (idle, or an attack-mover that has arrived) is the unit the rule moves.
   stood_under_unseen_fire a walker with a destination and no target that stays within STAND_RADIUS DRAFT-r5-stand-radius 2 wu of where the run began for more than STAND_TICKS DRAFT-inv-stalled-ticks 40
-                          consecutive ticks while an enemy its side does not see hits it (an unseen hit within HIT_GAP DRAFT-f9-hit-gap 60 ticks of the tick).
+                          held ticks while an enemy its side does not see hits it (an unseen hit within HIT_GAP DRAFT-f9-hit-gap 60 ticks of the tick). The run begins on the first tick without progress in R-099-05's
+                          sense and counts only such ticks (the engine's give-up, E-13 R-099-05, ends the order on its 40th counted tick): each tick is judged by its own two ends, the distance to the destination
+                          where it began and where it ended; one that brought the unit nearer by more than PROGRESS_EPS 0.1 wu (COLLISION_SETTLE_EPS, the rule's own) is not a held tick, neither begins a run nor
+                          counts nor ends one (the same definition as `ProgressCount` in tests/csim/test_E13_R099_05_giveup_counts_only_ticks_without_progress.py). Round 6, Test-defect: the run began while the unit
+                          was still settling into its place and counted those ticks (L-0080 unit 46: 42 for the 40 of the rule).
   repeated_away_no_hit    a unit that begins a move away (flag 0 to 1) when no hit has landed on it since the start of its previous one.
   walked_back_into_fire   after a move away ends (flag 1 to 0) the unit has a destination, or moves under its own power (more than OWN_MOVE 0.5 wu, no unit within PUSH_RADIUS 40 wu), before it takes a target,
                           is hit again, or dies: "it holds where the move away ends; it does not walk back into the fire".
@@ -43,6 +47,7 @@ SECONDS = 600               # the lab's cap (12,000 ticks), as test_engine_rules
 MIN_TICKS = 300
 STAND_RADIUS = 2.0          # DRAFT-r5-stand-radius
 STAND_TICKS = 40            # DRAFT-inv-stalled-ticks (the sweep's number)
+PROGRESS_EPS = 0.1          # COLLISION_SETTLE_EPS: R-099-05's 'nearer by more than 0.1 wu' (a tick that brings the unit nearer by more than this is not a held tick)
 HIT_GAP = 60                # DRAFT-f9-hit-gap
 OWN_MOVE = oracle.OWN_MOVE
 PUSH_RADIUS = oracle.PUSH_RADIUS
@@ -168,25 +173,31 @@ def _near_other(tk, ids, u):
 
 
 def stood_under_unseen_fire(rec, stand=STAND_TICKS, radius=STAND_RADIUS, gap=HIT_GAP):
-    """[(unit, first tick, length)]: runs of more than `stand` consecutive ticks on which a walker has a destination and no target and stays within `radius` of the run's first position, with an unseen hit on it
-    within `gap` ticks of the end of the tick (the oracle's `unseen_hits`)."""
+    """[(unit, first held tick, held ticks)]: runs of more than `stand` held ticks on which a walker has a destination and no target and stays within `radius` of the run's first position, with an unseen hit on it
+    within `gap` ticks of the end of the run (the oracle's `unseen_hits`). A held tick is one on which the unit came no nearer its destination by more than PROGRESS_EPS (R-099-05; the two ends of the tick are its
+    `pre` and `post` rows); a tick that brought it nearer by more than that is not counted, and neither starts a run nor ends one."""
     last_hit = {}
     for n, v, a, _, _ in unseen.unseen_hits(rec):
         last_hit.setdefault(v, []).append(n)
     out, cur = [], {}
     for tk in rec.ticks:
-        post = tk["post"]
+        post, pre = tk["post"], tk["pre"]
         for u in rec.ids:
             p = post[u]
             if p["alive"] and p["dest"] is not None and not p["tgt"]:
+                dest = p["dest"]
+                held = math.hypot(pre[u]["x"] - dest[0], pre[u]["y"] - dest[1]) - math.hypot(p["x"] - dest[0], p["y"] - dest[1]) <= PROGRESS_EPS
                 c = cur.get(u)
                 if c is not None and math.hypot(p["x"] - c[1], p["y"] - c[2]) <= radius:
-                    c[3] += 1
                     c[4] = tk["n"]
+                    if held:
+                        c[3] += 1
                     continue
                 if c is not None:
                     out += _run(c, u, last_hit, stand, gap)
-                cur[u] = [tk["n"], p["x"], p["y"], 1, tk["n"]]
+                    del cur[u]
+                if held:
+                    cur[u] = [tk["n"], p["x"], p["y"], 1, tk["n"]]
             else:
                 c = cur.pop(u, None)
                 if c is not None:
@@ -261,6 +272,29 @@ def test_control_the_stand_measure_flags_a_walker_with_a_destination_that_stands
     for tk in rec.ticks:
         tk["fires"] = []
     assert stood_under_unseen_fire(rec) == []
+
+
+def _settling_rec(settle_ticks, held_ticks, step=0.15):
+    """One walker toward (2000, 2000) that comes `step` wu nearer on each of `settle_ticks` ticks (progress), then stands `held_ticks` ticks (nothing moves it), an unseen enemy hitting it every 30 ticks. Each tick has its own
+    `pre` and `post` rows (the unit's position at the start and at the end of the tick)."""
+    rec = _Rec(0.0, n=0)
+    x = 1000.0
+    for k in range(1, settle_ticks + held_ticks + 1):
+        x0 = x
+        if k <= settle_ticks:
+            x += step / math.sqrt(2.0)         # along the line to (2000, 2000): `step` wu nearer
+        pre, post = {1: _row(x=x0, y=x0), 2: _row(x=1300.0, dest=None)}, {1: _row(x=x, y=x), 2: _row(x=1300.0, dest=None)}
+        vis = {(0, 2): False, (1, 1): True}
+        rec.ticks.append({"n": k, "pre": pre, "post": post, "fires": [(2, 1)] if k % 30 == 0 else [], "vis_pre": vis, "vis_post": vis})
+    return rec
+
+
+def test_control_the_stand_run_starts_at_the_first_tick_without_progress_and_counts_held_ticks_only():
+    """Control (Round 6, green on the corrected measure): a walker that comes 0.15 wu nearer on each of its first 10 ticks (R-099-05: not held, so no run) and then stands still has a stand of exactly its held ticks:
+    40 held ticks are the limit (not more than 40: none), 41 are one stand of 41; a walker coming 0.05 wu nearer a tick (not more than 0.1: held) for 10 ticks and then standing 31 ticks is one stand of 41."""
+    assert stood_under_unseen_fire(_settling_rec(10, 40)) == []
+    assert stood_under_unseen_fire(_settling_rec(10, 41)) == [(1, 11, 41)]
+    assert stood_under_unseen_fire(_settling_rec(10, 31, step=0.05)) == [(1, 1, 41)]
 
 
 # ------------------------------------------------------------------ the premise: the fights exercise the rule (green today)
