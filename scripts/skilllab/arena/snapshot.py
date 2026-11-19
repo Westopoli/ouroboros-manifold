@@ -26,7 +26,7 @@ _UNIT = {"id": int, "side": str, "role": str, "x": "num", "y": "num", "layer": i
 _RESULT = {"winner": str, "survivors": list, "ticks": int, "capped": bool, "predict": str, "agree": bool}
 _ORDERS = {"mode": str, "point": list, "attacker": "side_or_null"}
 _ORDER_MODES = ("both_same_point", "hold_and_attack", "groups")   # "groups": the stage 4 fix F3 per-group orders (groups.py)
-_ENDS = ("wipe", "silence", "cap")
+_ENDS = ("wipe", "silence", "cap", "apart")   # "apart" (round6.md L5): quiet, a shot was fired, every order finished, no two enemies within notice; it carries result.nearest_enemy_wu
 _VIOLATION = {"rule": str, "tick": int, "unit": int, "detail": str}   # F0 (scripts/skilllab/invariants.py): one broken rule, written under `violations`
 
 
@@ -144,7 +144,7 @@ def validate(doc: dict) -> list[str]:
             out.append("frames[0].tick is not 0")
     result = doc.get("result")
     if isinstance(result, dict):
-        spec = dict(_RESULT, end=str, stall=bool, **({"first_seen": dict} if "first_seen" in result else {})) if v2 else _RESULT   # H-088: first_seen optional
+        spec = dict(_RESULT, end=str, stall=bool, **{k: t for k, t in (("first_seen", dict), ("nearest_enemy_wu", "num")) if k in result}) if v2 else _RESULT   # H-088: first_seen optional; L5: nearest_enemy_wu (apart only, below)
         _check_keys(result, spec, "result", out)
         if v2 and isinstance(result.get("first_seen"), dict):
             _check_keys(result["first_seen"], {"A": "int_or_null", "B": "int_or_null"}, "result.first_seen", out)
@@ -153,7 +153,9 @@ def validate(doc: dict) -> list[str]:
             out.append("result.winner is not " + ", ".join(winners[:-1]) + " or " + winners[-1])
         if v2:
             if "end" in result and result["end"] not in _ENDS:
-                out.append("result.end is not wipe, silence or cap")
+                out.append("result.end is not wipe, silence, cap or apart")
+            if "end" in result and (result["end"] == "apart") != ("nearest_enemy_wu" in result):
+                out.append("result.nearest_enemy_wu belongs to result.end apart alone, and an apart end carries it")
             stall = result.get("stall")
             if stall is True and result.get("end") != "silence":
                 out.append("result.stall without result.end silence")

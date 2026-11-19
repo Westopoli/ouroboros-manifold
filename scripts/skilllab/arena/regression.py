@@ -6,10 +6,11 @@ Runs every row of `docs/northstar/research/layer_dynamics/arena/approved.toml` a
 at tick 0; a trap's groups get theirs when it springs: `run.fight`, DEC-one-click-2026-11-18). A row of stage 3 or 4 names a control (`ground`: the twin with the features emptied; `sight`: targeting by
 sight off) that runs as a second fight of the row on its own line. One line per fight, in manifest order:
 
-  <id> sight=<on|off> end=<wipe|silence|cap> winner=<A|B|stall|none> survivors=<a>:<b> ticks=<n> agree=<yes|no|-> checker=<none|rule[,rule...]>   [DRAW]
+  <id> sight=<on|off> end=<wipe|apart|silence|cap> winner=<A|B|stall|none> survivors=<a>:<b> ticks=<n> agree=<yes|no|-> checker=<none|rule[,rule...]>   [DRAW|APART]
 
 `agree` compares the winner with his expected one (`-` when he expects a draw; a control is never compared); a disagreement alone is no failure. `checker` names every rule the checker reported in the fight (not only the first
-`invariants.KEEP` reports the fight document keeps). DRAW marks a fight that ended with both sides alive. Exit 0 only when every fight ended by elimination and the checker reported nothing; a row the
+`invariants.KEEP` reports the fight document keeps). DRAW marks a fight that ended with both sides alive; APART marks the one kind of that end the lab expects (round6.md L5: `run._apart`), with winner `none`, and is no failure.
+Exit 0 only when every fight ended by elimination or apart and the checker reported nothing; a row the
 catalogue's rejection rules refuse is a failure too. The fights' winners and survivors are what `run._document` records.
 """
 import argparse
@@ -66,13 +67,15 @@ def _play(label, layout, path, sight, expected, control=False):
     doc = run._document(layout, path, SEED, sight, frames, last, end, orders)
     res = doc["result"]
     rules_seen = orders["reported_rules"]   # every rule the checker reported; the document keeps only the first invariants.KEEP reports. See also: run.fight
-    winner = "stall" if res["winner"] == "draw" else res["winner"]
+    winner = "none" if res["end"] == "apart" else "stall" if res["winner"] == "draw" else res["winner"]
     agree = "-" if expected in (None, "draw") else "yes" if winner == expected else "no"
     line = "%s sight=%s end=%s winner=%s survivors=%d:%d ticks=%d agree=%s checker=%s" % (
         label, "on" if sight == "on" else "off", res["end"], winner, res["survivors"][0], res["survivors"][1], res["ticks"], agree, ",".join(rules_seen) or "none")
-    if res["end"] != "wipe":
+    if res["end"] == "apart":
+        line += " APART"   # round6.md L5: expected without a player's micro; not a failure
+    elif res["end"] != "wipe":
         line += " DRAW"
-    return line, res["end"] == "wipe" and not rules_seen
+    return line, res["end"] in ("wipe", "apart") and not rules_seen
 
 
 def main(argv=None):
