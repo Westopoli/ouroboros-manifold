@@ -28,8 +28,11 @@ def head_sha():
 
 
 def run(*args):
-    return subprocess.run([sys.executable, "-m", "scripts.look.ledger", *map(str, args)],
-                          cwd=ROOT, capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-m", "scripts.look.ledger", *map(str, args)],
+                       cwd=ROOT, capture_output=True, text=True)
+    assert "No module named" not in r.stderr and "Error while finding module" not in r.stderr, \
+        "scripts.look.ledger does not exist"  # a missing tool must not satisfy a reject test
+    return r
 
 
 def row(rid="r1", **over):
