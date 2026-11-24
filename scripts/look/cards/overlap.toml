@@ -1,0 +1,12 @@
+id = "overlap"
+requirements = ["R-097-05"]
+words = "Units must not stand inside each other."
+
+[[checks]]
+kind = "state"
+name = "no_stack"
+success = "No two living same-layer units are closer than one radius for more than DRAFT-max-ticks consecutive frames."
+broken_twin = "stacked_pair"
+[checks.params]
+"DRAFT-radius" = 15.0      # Westley's; one unit radius, wu
+"DRAFT-max-ticks" = 3      # Westley's
