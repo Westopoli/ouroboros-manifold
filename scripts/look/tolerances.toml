@@ -1,0 +1,13 @@
+# DRAFT: every number here is a placeholder. Westley's numbers; he owns and replaces them.
+# Starting values are tight-but-sane so the planted give-up break FAILs and an identical trace PASSes.
+"DRAFT-feel-path_length_ratio" = 0.1     # worst unit's today/approved path length vs 1.0
+"DRAFT-feel-path_shape" = 20.0           # worst unit's mean same-tick distance, wu
+"DRAFT-feel-arrival_spread" = 10.0       # ticks from first frame to last unit settling
+"DRAFT-feel-formation_spread" = 30.0     # mean RMS distance from centroid, wu
+"DRAFT-feel-nn_spacing" = 10.0           # median nearest-neighbour distance, wu
+"DRAFT-feel-stops" = 0.5                 # stuck findings (any change fails)
+"DRAFT-feel-reversals" = 0.5             # backwards findings (any change fails)
+"DRAFT-feel-jitter" = 0.5                # rubberband findings (any change fails)
+"DRAFT-feel-time_overlapped" = 10.0      # ticks with any pair overlapping
+"DRAFT-feel-shots_fired" = 5.0           # fired flags counted
+"DRAFT-feel-kill_order" = 0.5            # positions where the death order differs
