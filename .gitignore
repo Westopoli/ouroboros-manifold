@@ -46,3 +46,4 @@ docs/research/graphify-out/
 saves/
 dist/
 .wt-state
+.cache/look/
