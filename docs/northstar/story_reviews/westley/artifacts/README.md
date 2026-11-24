@@ -1,0 +1,1 @@
+Each id in `../artifacts.md` keeps its page source (`A-00N/page.html`) and `facts.json` here, never the MP4s (reproducible from the recorded command and sha). Ids with no folder had no source to keep.

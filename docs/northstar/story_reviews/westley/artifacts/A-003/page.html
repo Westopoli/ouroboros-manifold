@@ -1,0 +1,203 @@
+<title>Movement Reference Clips</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a decision card first, then one comparison bench per fight (four synced clips + a shared transport), then the fact tables. */
+:root {
+  --bg: #f3f5f6; --panel: #ffffff; --fg: #1b2329; --muted: #5b6871; --line: #d5dde2;
+  --accent: #0f7c86; --blue: #2459c9; --red: #c23a2b; --warn: #a15c00; --warn-bg: #fff3e0;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, Segoe UI, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --blue: #7ea2f2; --red: #f08070; --warn: #f0b060; --warn-bg: #2b2215; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --blue: #7ea2f2; --red: #f08070; --warn: #f0b060; --warn-bg: #2b2215; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+.wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 26px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 19px; font-weight: 600; margin: 0; text-wrap: balance; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.lede { max-width: 70ch; margin: 6px 0 0; }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card p { margin: 0; max-width: 84ch; }
+.decide { border-left: 4px solid var(--warn); }
+.small { font-size: 13px; color: var(--muted); }
+.blue { color: var(--blue); font-weight: 600; } .red { color: var(--red); font-weight: 600; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figcaption { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 14px; }
+figcaption b { font-weight: 600; }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 6px; display: block; }
+.pill { display: inline-block; font: 500 12px var(--mono); padding: 1px 8px; border-radius: 99px; border: 1px solid currentColor; }
+.pill.ok { color: var(--accent); } .pill.bad { color: var(--red); } .pill.mid { color: var(--warn); }
+.transport { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.transport .group { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.transport .label { font-size: 12px; color: var(--muted); margin-right: 2px; }
+button { font: 500 13px var(--sans); color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 5px; padding: 5px 10px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button[aria-pressed="true"] { background: var(--accent); color: var(--panel); border-color: var(--accent); }
+input[type="range"] { flex: 1 1 260px; min-width: 160px; accent-color: var(--accent); }
+input[type="number"] { width: 92px; font: 13px var(--mono); padding: 5px 6px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); color: var(--fg); }
+.readout { font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; padding: 4px 10px; border-radius: 5px; background: var(--bg); border: 1px solid var(--line); }
+.moments { display: grid; gap: 6px; }
+.moment { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 14px; }
+.moment button { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: left; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 500; font-size: 12.5px; }
+tr.sel td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.note { background: var(--warn-bg); border-left: 3px solid var(--warn); padding: 8px 12px; border-radius: 4px; font-size: 13.5px; }
+.watch { margin: 0; padding-left: 18px; font-size: 14px; }
+footer { font-size: 13px; color: var(--muted); max-width: 90ch; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Ouroboros Manifold · simulation lab · 2026-11-24</div>
+    <h1>Movement Reference Clips</h1>
+    <p class="lede">The same two lab fights under four versions of the engine, so you can see what changed in movement and decide from the picture. Every fight is seed 1 with one attack-move click per side at tick 0. The four clips of a fight share one camera and play in step: the same tick appears in each box.</p>
+  </header>
+
+  <section class="card decide">
+    <div class="eyebrow">Decision waiting for you</div>
+    <p><strong>Variant A is your old side-step rule</strong> (a 7-point sweep, group mates and idle friends do not block the probe, the unit keeps its side until the straight line is clear). It is the only version that ends both fights without any unit ending its order short, but it flips the stage 2 fight to <span class="red">red</span> winning 13:0.</p>
+    <p>Watch SIT-0106 first: in the approved version the held <span class="blue">blue</span> arc beats red's 48 Vanguards 11:0. Under A, red's block flows around and through the arc. Tell me in chat whether that is a movement result you accept (and the 2026-11-02 verdict changes), a side effect to tune out, or something to isolate first with the role and layout tests.</p>
+    <p class="small">Stopping is the priority (your 2026-11-24 words); stuck-behind is counted separately and is the nit-pick. Nothing in the engine has changed on main: V1 and A exist only in scratch copies.</p>
+  </section>
+
+  <!-- SIT-0106 -->
+  <section class="card" id="sit">
+    <div class="eyebrow">Fight 1 · stage 2 · open field · 1 min</div>
+    <h2>SIT-0106: red's 48 Vanguards attack-move into <span class="blue">blue's</span> held arc (8 Vanguard, 8 Warden, 8 Bombard)</h2>
+    <div class="grid bench" data-first="0" data-last="2543">
+      <figure><video preload="metadata" playsinline muted poster="SIT-0106-approved-poster.jpg" src="SIT-0106-approved.mp4"></video>
+        <figcaption><b>Approved 2026-11-05</b><span class="pill ok">blue wins 11:0</span><span class="small">tick 2315</span></figcaption></figure>
+      <figure><video preload="metadata" playsinline muted poster="SIT-0106-today-poster.jpg" src="SIT-0106-stage2.mp4"></video>
+        <figcaption><b>Today (main)</b><span class="pill ok">blue wins 5:0</span><span class="small">tick 2543</span></figcaption></figure>
+      <figure><video preload="metadata" playsinline muted poster="SIT-0106-v1-poster.jpg" src="SIT-0106-v1.mp4"></video>
+        <figcaption><b>V1: give-up removed</b><span class="pill ok">blue wins 5:0</span><span class="small">tick 2543, same as today</span></figcaption></figure>
+      <figure><video preload="metadata" playsinline muted poster="SIT-0106-A-poster.jpg" src="SIT-0106-A.mp4"></video>
+        <figcaption><b>A: old side-step</b><span class="pill bad">red wins 13:0</span><span class="small">tick 2301</span></figcaption></figure>
+    </div>
+    <div class="transport" data-for="sit">
+      <div class="group"><button data-play aria-label="Play or pause">Play</button></div>
+      <input type="range" data-scrub min="0" max="1000" value="0" aria-label="Scrub all four clips">
+      <span class="readout">tick <span data-tk>0</span></span>
+      <div class="group"><span class="label">Speed</span><button data-rate="0.25">½x</button><button data-rate="0.5">1x</button><button data-rate="1" aria-pressed="true">2x</button><button data-rate="2">4x</button></div>
+      <div class="group"><span class="label">Step</span><button data-step="-1">◀ 2 ticks</button><button data-step="1">2 ticks ▶</button></div>
+    </div>
+    <div class="moments">
+      <div class="moment"><button data-tick="0">tick 0</button><span>Red block at the right, blue arc at the left. Watch how red's rear ranks behave while the front engages.</span></div>
+      <div class="moment"><button data-tick="800">tick 800</button><span>Mid-fight: compare how many red units are in range in each version, and where the idle ones stand.</span></div>
+    </div>
+    <div class="tablewrap"><table>
+      <tr><th>Version</th><th>Result</th><th>Survivors</th><th>Last tick</th><th>Never fired</th><th>Idle 200+ at end</th><th>Units overlapping</th></tr>
+      <tr><td>Approved 2026-11-05</td><td>blue, wipe</td><td>11 : 0</td><td>2315</td><td>0</td><td>0</td><td>none</td></tr>
+      <tr><td>Today</td><td>blue, wipe</td><td>5 : 0</td><td>2543</td><td>2</td><td>0</td><td>none</td></tr>
+      <tr><td>V1: give-up removed</td><td>blue, wipe</td><td>5 : 0</td><td>2543</td><td>2</td><td>0</td><td>none</td></tr>
+      <tr class="sel"><td>A: old side-step</td><td>red, wipe</td><td>0 : 13</td><td>2301</td><td>2</td><td>0</td><td>none</td></tr>
+    </table></div>
+    <p class="small">Your verdict on 2026-11-02: "this one also had the correct outcome, approved" (blue wins; "Protected Siege beats double the Line"). V1 equals today because this fight has no give-ups. Blue's survivors fell from 11 to 5 between the approved version and today, so red already does better than when you approved it.</p>
+  </section>
+
+  <!-- L-0054 -->
+  <section class="card" id="l54">
+    <div class="eyebrow">Fight 2 · stage 1 · open field · 128 a side · up to 5 min</div>
+    <h2>L-0054: both sides attack-move onto one point (2000, 2000)</h2>
+    <div class="grid bench" data-first="0" data-last="12000">
+      <figure><video preload="metadata" playsinline muted poster="L-0054-approved-poster.jpg" src="L-0054-approved.mp4"></video>
+        <figcaption><b>Approved 2026-11-05</b><span class="pill ok">blue wins 9:0</span><span class="small">tick 8954</span></figcaption></figure>
+      <figure><video preload="metadata" playsinline muted poster="L-0054-today-poster.jpg" src="L-0054-stage1.mp4"></video>
+        <figcaption><b>Today (main)</b><span class="pill bad">draw 14:22, apart</span><span class="small">tick 10860</span></figcaption></figure>
+      <figure><video preload="metadata" playsinline muted poster="L-0054-v1-poster.jpg" src="L-0054-v1.mp4"></video>
+        <figcaption><b>V1: give-up removed</b><span class="pill bad">draw 6:11, cap</span><span class="small">tick 12000</span></figcaption></figure>
+      <figure><video preload="metadata" playsinline muted poster="L-0054-A-poster.jpg" src="L-0054-A.mp4"></video>
+        <figcaption><b>A: old side-step</b><span class="pill mid">red wins 17:0, wipe</span><span class="small">tick 6408</span></figcaption></figure>
+    </div>
+    <div class="transport" data-for="l54">
+      <div class="group"><button data-play aria-label="Play or pause">Play</button></div>
+      <input type="range" data-scrub min="0" max="1000" value="0" aria-label="Scrub all four clips">
+      <span class="readout">tick <span data-tk>0</span></span>
+      <div class="group"><span class="label">Speed</span><button data-rate="0.5">1x</button><button data-rate="1" aria-pressed="true">2x</button><button data-rate="2">4x</button><button data-rate="4">8x</button></div>
+      <div class="group"><span class="label">Step</span><button data-step="-1">◀ 2 ticks</button><button data-step="1">2 ticks ▶</button></div>
+    </div>
+    <div class="moments">
+      <div class="moment"><button data-tick="0">tick 0</button><span>Both groups form up on one point.</span></div>
+      <div class="moment"><button data-tick="520">tick 520</button><span>The rear of each pack: in today's and V1, units 122, 123, 126 (and red's 250, 251, 254) have ended their order by tick 510. See what the same units do in the other versions.</span></div>
+      <div class="moment"><button data-tick="2000">tick 2000</button><span>Mid-fight jam: how many units stand behind the firing line with no target.</span></div>
+      <div class="moment"><button data-tick="6400">tick 6400</button><span>Under A the fight is already over; the others are still going.</span></div>
+    </div>
+    <div class="tablewrap"><table>
+      <tr><th>Version</th><th>Result</th><th>Survivors</th><th>Last tick</th><th>Never fired</th><th>Idle 200+ at end (behind / front)</th><th>Units overlapping</th></tr>
+      <tr><td>Approved 2026-11-05</td><td>blue, wipe</td><td>9 : 0</td><td>8954</td><td>1</td><td>0</td><td>none</td></tr>
+      <tr><td>Today</td><td>draw, apart</td><td>14 : 22</td><td>10860</td><td>31</td><td>12 / 23</td><td>5 pairs</td></tr>
+      <tr><td>V1: give-up removed</td><td>draw, cap</td><td>6 : 11</td><td>12000</td><td>9</td><td>4 / 12</td><td>2 pairs</td></tr>
+      <tr class="sel"><td>A: old side-step</td><td>red, wipe</td><td>0 : 17</td><td>6408</td><td>0</td><td>1 / 4</td><td>2 pairs</td></tr>
+    </table></div>
+    <p class="small">In V1 all 17 survivors have completed their order by reaching their formation slots (slots sit 330 to 400 wu apart on both sides of the point; Vanguard range is 300), which is the group rule you ruled on 2026-11-19. In the middle of the fight the jam is the same in V1 and A: 209 stall windows in V1, 183 in A. Overlaps are pairs of units under one radius apart for more than 3 ticks (an open question you have not ruled on).</p>
+  </section>
+
+  <section class="card">
+    <div class="eyebrow">Findings behind the clips</div>
+    <p><strong>What ended the rear units' orders today:</strong> 48 of 256 units in L-0054 end their attack-move early and then stand for the rest of the fight (the give-up rule: within 75 wu of their own formation spot for 40 ticks without getting closer). All 54 give-ups had a friend directly ahead, and the nearest enemy was 335 to 428 wu away, just past the 330 wu at which an idle unit takes a target. The game data shows no colour change on living units at that moment; the units simply stop while the rest move on.</p>
+    <p><strong>When the idling began:</strong> the history comparison puts it at one change, the Round 5 acquisition rule (2026-11-17, "a unit acquires within its notice distance, never the sensor radius"). Before it, L-0054 ended in a wipe with almost nobody idle; at and after it 82 to 87 units per side stand idle for 200 ticks or more. You ruled that this is not the problem ("the problem is the attack-move was not followed through"), so acquisition is unchanged in every clip above.</p>
+    <p><strong>The old side-step:</strong> not found literally. The nearest match is the Python reference (2026-04-12): probe the heading and ±30, ±60 and ±90 degrees and take the first with no unit within 30 wu. The old C version swept 13 angles and group mates did not block the probe. On 2026-10-02 a switch replaced it with a 3-angle step in which group mates and idle friends do block. Variant A restores the old rule and commits to a side. The "about 5 probe nodes" form was tested as well (80 and 160 wu) and both versions still end L-0054 at the cap.</p>
+  </section>
+
+  <div class="note">Render notes, not game behaviour: the tick counter in each clip covers the replay's own top-left line (alive counts). Today's two clips were rendered earlier on their own camera, so their framing can differ slightly from the other three. The long fight was rendered in pieces, so the end banner flashes for one frame every 1,000 ticks.</div>
+
+  <footer>Recorded and rendered on the Linux box with the real Godot fight replay. Approved is the engine at 4fa618ce7 (the stage 3 approval) with its own lab; today is main at 45245ff88; V1 and A are scratch builds on top of it, diffs saved beside the render files. Each run is byte-identical when re-run from the same code and seed.</footer>
+</div>
+
+<script>
+(function () {
+  const FPS = 20, TPF = 2;
+  document.querySelectorAll(".card[id]").forEach(function (sec) {
+    const bench = sec.querySelector(".bench");
+    const vids = Array.from(bench.querySelectorAll("video"));
+    const tr = sec.querySelector(".transport");
+    const first = Number(bench.dataset.first), last = Number(bench.dataset.last);
+    const scrub = tr.querySelector("[data-scrub]"), tk = tr.querySelector("[data-tk]"), playBtn = tr.querySelector("[data-play]");
+    let rate = 1, playing = false, seeking = false;
+    const dur = function () { return Math.max.apply(null, vids.map(function (v) { return v.duration || 0; })); };
+    const toTick = function (t) { return first + Math.round(t * FPS) * TPF; };
+    const seek = function (t) { vids.forEach(function (v) { v.currentTime = Math.min(Math.max(0, t), v.duration || t); }); };
+    const show = function () {
+      const t = vids[0].currentTime; tk.textContent = toTick(t).toLocaleString("en-US");
+      const d = dur(); if (d && !seeking) scrub.value = String(Math.round(t / d * 1000));
+    };
+    const setPlay = function (on) {
+      playing = on; playBtn.textContent = on ? "Pause" : "Play";
+      vids.forEach(function (v) { v.playbackRate = rate; if (on) { v.play().catch(function () {}); } else { v.pause(); } });
+    };
+    playBtn.addEventListener("click", function () { setPlay(!playing); });
+    vids[0].addEventListener("timeupdate", show);
+    vids.forEach(function (v) { v.addEventListener("ended", function () { v.pause(); }); });
+    vids[0].addEventListener("ended", function () { if (vids.every(function (v) { return v.ended || v.paused; })) setPlay(false); });
+    scrub.addEventListener("input", function () { seeking = true; setPlay(false); seek(Number(scrub.value) / 1000 * dur()); show(); });
+    scrub.addEventListener("change", function () { seeking = false; });
+    tr.querySelectorAll("[data-rate]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        rate = Number(b.dataset.rate); vids.forEach(function (v) { v.playbackRate = rate; });
+        tr.querySelectorAll("[data-rate]").forEach(function (o) { o.setAttribute("aria-pressed", String(o === b)); });
+      });
+    });
+    tr.querySelectorAll("[data-step]").forEach(function (b) {
+      b.addEventListener("click", function () { setPlay(false); seek(vids[0].currentTime + Number(b.dataset.step) / FPS); });
+    });
+    sec.querySelectorAll("[data-tick]").forEach(function (b) {
+      b.addEventListener("click", function () { setPlay(false); seek((Number(b.dataset.tick) - first) / TPF / FPS + 0.001); });
+    });
+  });
+})();
+</script>

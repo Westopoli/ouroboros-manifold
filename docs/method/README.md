@@ -48,4 +48,4 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 - `architect.md`, `builder.md`, `test_writer.md`, `westley.md`: role cards.
 - `harness.md`: the `H-` stories.
 - `history.md`: what was retired and where it is.
-- Decisions: `docs/northstar/story_reviews/westley/decisions.md`. The two staircase plans: `docs/northstar/story_reviews/westley/beta-staircase.md`, `lab-staircase.md`.
+- Decisions: `docs/northstar/story_reviews/westley/decisions.md`. The two staircase plans: `docs/northstar/story_reviews/westley/beta-staircase.md`, `lab-staircase.md`. Artifact pages he views: `artifacts.md` beside them.
