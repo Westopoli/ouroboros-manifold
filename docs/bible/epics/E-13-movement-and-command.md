@@ -113,7 +113,7 @@ As a commander, I want my back rank to shoot over my front rank, so that formati
 
 Rules
 - R-098-01  Given a ranged unit with a unit between it and its target, friendly or enemy, alive or dead, When it fires, Then the shot lands; no unit ever blocks fire, only cover, a wall or ground does (R-098-02). Westley, 2026-11-25: "The rule is units never block fire; only cover, walls and ground do." (DEC-units-never-block-fire-2026-11-25)
-  Proof: MISSING
+  Proof: tests/csim/test_E13_R098_01_units_never_block_fire.py::test_R_098_01_thirty_packed_units_on_the_line_do_not_block | whole-run | verified 7c2b4dbc 2026-11-25
 - R-098-02  Given a blocked cell (R-097-01) or a cover obstacle between them on the layers involved, When it fires, Then the shot is blocked exactly as vision is (E-12, E-01 S-007): cover blocks only up to its height, and only a line that passes through it between two units outside it; a unit standing inside cover is fired at as normal (E-01 R-007-06).
   Proof: MISSING
 
