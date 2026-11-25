@@ -14,8 +14,8 @@ Premises dumped (synthetic fights from snapshot.example(schema=om-fight-2), 12 f
 the wide one has every coordinate times 4): fight A box [100, 50, 177.0, 54.0]-ish, fight B four times that; winner A, survivors [3, 0], result.end wipe.
 Real-sim fight: L-0047 seed 1, every 100 ticks: wipe at tick 1591.
 
-Controls (green today): test_control_* run the frozen scratch recipe (godot render, ffmpeg encode) on fight A and apply every checker to its output.
-Red today: scripts/skilllab/arena/clip.py does not exist (each clip fixture fails with "No module named scripts.skilllab.arena.clip").
+The checkers are shown able to fail in tests/skilllab/integration/test_clip_pipeline_functions.py (test_control_*); the scratch render control of the first version was
+retired once clip.py rendered the same fights (Test-defect commit).
 """
 from __future__ import annotations
 
@@ -82,28 +82,6 @@ def sim_clip(tmp_path_factory):
     root = tmp_path_factory.mktemp("clipsim")
     c = _run(root / "out", "sim", None, None, "--layout", S.LAYOUT_SMALL, "--seed", "1", "--every", "100", "--version", "today", "--chunk", "10", work=root / "work")
     return c
-
-
-# ================================================================ controls
-
-def test_control_scratch_render_and_encode_pass_every_checker(tmp_path):
-    """CONTROL for every check below: the scene renders fight A with the scratch godot call (12 frame-<i>.png, none blank by the gate's frame_busyness), the scratch
-    ffmpeg line makes a clip of those frames that passes video_problems (h264, yuv420p, 20/1, width 1600, faststart, 12 frames, under 9 MB), and the label strip reads back
-    'A tick 0' and 'A tick 1107' through tesseract. Premise dumped: the scene writes frame-0.png .. frame-11.png at 1920x1080."""
-    fight = S.write_fight(tmp_path / "A.fight.json", S.synthetic_fight(frames=FRAMES))
-    shots = tmp_path / "shots"
-    assert S.scratch_render(fight, shots) == 0
-    names = sorted(p.name for p in shots.glob("frame-*.png"))
-    assert names == sorted("frame-%d.png" % i for i in range(FRAMES))
-    for n in names:
-        assert (shots / n).read_bytes()[:8] == b"\x89PNG\r\n\x1a\n" and frame_busyness(shots / n) > 0.0, n
-    frames = [shots / ("frame-%d.png" % i) for i in range(FRAMES)]
-    ticks = [100 * n for n in range(FRAMES - 1)] + [LAST_TICK]
-    mp4 = tmp_path / "ctl.mp4"
-    S.scratch_encode(frames, ticks, "A", mp4)
-    assert S.video_problems(mp4, frames=FRAMES, max_bytes=9_000_000) == []
-    assert S.frame_label(mp4, 0, tmp_path) == "A tick 0"
-    assert S.frame_label(mp4, FRAMES - 1, tmp_path) == "A tick %d" % LAST_TICK
 
 
 # ================================================================ the files and ffprobe

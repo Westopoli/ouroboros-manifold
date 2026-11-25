@@ -9,8 +9,8 @@ Rules proved (the brief's words, quoted; there is no S-/R- id for this piece):
 - "ffprobe checks (codec, pix_fmt, fps 20, width 1600, faststart, size cap, frame count equals fight frames)"
 - "missing Godot or ffmpeg is an error not a silent skip"
 
-Controls (green today, they run the frozen scratch recipe in clip_pipeline_support.py and show the checkers can pass AND can fail): test_control_*.
-Red today for the missing-feature reason: `scripts/skilllab/arena/clip.py` does not exist (ModuleNotFoundError at the import inside each test).
+Controls (green without the module, they show the checkers can pass AND can fail): test_control_*; the scratch recorder control was retired once record_fight matched closeup's
+bytes (Test-defect commit).
 
 The 3 GB cap proxy (a full render of 10,000+ ticks takes the better part of an hour under software GL): the streaming functions (`position_box`, `split_chunks`) run
 on a 414 MB, 10,500-frame fight file in a child whose address space is limited to 1 GiB, a third of the real cap. The control shows `json.load` of the same file
@@ -59,18 +59,6 @@ def fight12(tmp_path) -> tuple[Path, dict]:
 
 
 # ================================================================ controls
-
-def test_control_scratch_record_matches_closeup_bytes(tmp_path):
-    """CONTROL for the record-bytes test: the scratch recorder (run.fight, _document, json.dump) writes the very bytes closeup writes for L-0047, seed 1, every 100."""
-    from scripts.skilllab.arena import closeup
-    out_a = tmp_path / "a"
-    rc = closeup.main(["--layout", str(S.ROOT / S.LAYOUT_SMALL), "--seed", "1", "--every-ticks", "100", "--out", str(out_a)])
-    assert rc == 0
-    mine = S.scratch_record(S.LAYOUT_SMALL, 1, 100, tmp_path / "b")
-    theirs = out_a / mine.name
-    assert theirs.exists(), "closeup wrote %s, scratch wrote %s" % (sorted(p.name for p in out_a.iterdir()), mine.name)
-    assert mine.read_bytes() == theirs.read_bytes()
-
 
 def test_control_scratch_encode_passes_every_video_check_and_the_checks_can_fail(tmp_path):
     """CONTROL for the ffprobe, faststart, frame-count and label checks: the scratch ffmpeg line over 12 frames passes all of them (label read back by tesseract,

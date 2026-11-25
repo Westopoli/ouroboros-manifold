@@ -1,8 +1,8 @@
 """Shared helpers of the clip-pipeline tests (not collected). Interface: docs/reports/2026-11-24-clip-pipeline-interface.md.
 
 Everything here reads files or runs tools; nothing opens a picture: checks are ffprobe fields, box order in the mp4, hashes, the gate's `frame_busyness` (a file
-statistic over a decoded frame) and tesseract on the label strip (a program reading pixels). Also holds the CONTROLS: a frozen copy of the scratch recipe
-(`r6-clips/tmp/{rec.py,render.sh,enc.py}`) that runs on today's tree, so the checks are shown able to pass before the new module exists.
+statistic over a decoded frame) and tesseract on the label strip (a program reading pixels). Also holds `scratch_encode`, a frozen copy of the scratch ffmpeg line
+(`r6-clips/tmp/enc.py`): it makes the deliberately wrong clips (no faststart, other fps or width) the checkers must reject.
 See also: tests/qa/test_fight_replay.py (the scene launch this mirrors)."""
 from __future__ import annotations
 
@@ -19,12 +19,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 PY = os.environ.get("OM_CLIP_PYTHON") or sys.executable
-GODOT = os.path.expanduser("~/.local/bin/godot.real")
-SCENE = "res://scenes/proto/fight_replay/fight_replay.tscn"
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
 LAYOUT_SMALL = "docs/northstar/research/layer_dynamics/catalogue/L-0047.toml"  # 32 units, wipe at tick 1591 (every 2), runs in about a second
 LAYOUT_REJECTED = "docs/northstar/research/layer_dynamics/catalogue/L-0001.toml"  # closeup prints "REJECT L-0001 R6" and exits 2
-EXTRA_SHOT_TIMEOUT = 600
 
 sys.path.insert(0, str(ROOT))
 
@@ -218,35 +215,7 @@ def make_pngs(folder: Path, count: int, size=(960, 540), noise: bool = False) ->
     return out
 
 
-# ---------------------------------------------------------------- CONTROLS: the scratch recipe, frozen
-
-def scratch_record(layout: str, seed: int, every: int, out: Path) -> Path:
-    """Control for record_fight: scratch rec.py's fight step, in-process, the same calls (run, _document, json.dump)."""
-    import tomllib
-    from scripts.skilllab.arena import snapshot
-    from scripts.skilllab.arena.run import fight, _document
-    path = ROOT / layout
-    lay = tomllib.load(open(path, "rb"))
-    frames, last, end, orders = fight(lay, seed, "off", snapshot.CAP_SECONDS, every)
-    doc = _document(lay, path, seed, "off", frames, last, end, orders, every)
-    out.mkdir(parents=True, exist_ok=True)
-    target = out / ("%s-s%d-every%d.fight.json" % (lay["id"], seed, every))
-    with open(target, "w", encoding="utf-8") as f:
-        json.dump(doc, f, sort_keys=True, indent=2)
-        f.write("\n")
-    return target
-
-
-def scratch_render(fight: Path, shots: Path, box: str | None = None, timeout: int = EXTRA_SHOT_TIMEOUT) -> int:
-    """Control for the render step: scratch render.sh's godot call on one fight file (OM_FIT_EXTRA only when `box` is given)."""
-    shots.mkdir(parents=True, exist_ok=True)
-    env = env_clean({"OM_FIGHT": str(fight), "OM_SHOT_OUT": str(shots)})
-    if box:
-        env["OM_FIT_EXTRA"] = box
-    cmd = ["xvfb-run", "-a", "-s", "-screen 0 1920x1080x24", GODOT, "--path", str(ROOT), "--display-driver", "x11", "--rendering-driver", "opengl3", "-w",
-           "--position", "0,0", "--resolution", "1920x1080", "--fixed-fps", "30", SCENE]
-    return subprocess.run(cmd, cwd=str(shots), env=env, capture_output=True, text=True, timeout=timeout).returncode
-
+# ---------------------------------------------------------------- the scratch ffmpeg line, frozen (wrong clips for the checker controls)
 
 def scratch_encode(frames: list, ticks: list, version: str, out_mp4: Path, crf: int = 23, faststart: bool = True, fps: int = 20, width: int = 1600) -> None:
     """Control for encode_clip: scratch enc.py's ffmpeg line (label burn, scale, yuv420p, faststart) over PNG frames. `faststart=False`, another `fps` or `width`

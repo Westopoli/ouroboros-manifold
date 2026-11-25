@@ -67,11 +67,12 @@ def test_control_fit_without_the_variable_holds_the_positions_with_a_margin(figh
 
 
 def test_extra_widens_the_fit_to_hold_the_box(fight, monkeypatch):
-    """Brief: "one fixed camera box for a set of fights (union of positions ...": OM_FIT_EXTRA="-500,-400,5000,4000" (a box far wider than the fight) makes camera.fit hold it
-    (fit x0 <= -500, y0 <= -400, x1 >= 5000, y1 >= 4000)."""
+    """Brief: "one fixed camera box for a set of fights (union of positions ...": OM_FIT_EXTRA="-300,-200,700,500" (a box far wider than the fight) makes camera.fit hold it
+    (fit x0 <= -300, y0 <= -200, x1 >= 700, y1 >= 500). A box past about 1,500 wu a side makes a wide field, where the scene follows the centroid and camera.fit is that
+    window (H-053), so this box stays under it."""
     path, _ = fight
-    fit = _fit(monkeypatch, path, "-500,-400,5000,4000")
-    assert fit[0] <= -500.0 and fit[1] <= -400.0 and fit[2] >= 5000.0 and fit[3] >= 4000.0, fit
+    fit = _fit(monkeypatch, path, "-300,-200,700,500")
+    assert fit[0] <= -300.0 and fit[1] <= -200.0 and fit[2] >= 700.0 and fit[3] >= 500.0, fit
 
 
 def test_an_extra_inside_the_fight_box_changes_nothing(fight, monkeypatch):

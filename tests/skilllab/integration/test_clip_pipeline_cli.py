@@ -8,7 +8,6 @@ Rules proved (the brief's words):
 
 Controls (green today): closeup, the module this one sits beside, exits 2 with REJECT for the same rejected layout; an empty PATH makes the tool lookup fail the way the
 missing-tool test relies on.
-Red today: the module does not exist, so `python -m` exits 1 with "No module named scripts.skilllab.arena.clip" instead of the exit codes the interface names.
 """
 from __future__ import annotations
 
@@ -73,7 +72,7 @@ def test_bad_arguments_exit_2_and_leave_nothing(tmp_path, fight6, args, why):
     """Brief: "CLI `python -m scripts.skilllab.arena.clip ...`": arguments that cannot make a clip (%s) exit 2 and write nothing under --out."""
     out = tmp_path / "out"
     base = ["--out", out, "--name", "t"]
-    if "--layout" not in args and "--fight" not in args and "--situation" not in args:
+    if why != "no source" and "--layout" not in args and "--fight" not in args and "--situation" not in args:
         base += ["--fight", fight6]
     r = S.run_clip(base + args)
     assert r.returncode == 2, "%s: rc %s\nstdout %s\nstderr %s" % (why, r.returncode, r.stdout[-300:], r.stderr[-300:])
