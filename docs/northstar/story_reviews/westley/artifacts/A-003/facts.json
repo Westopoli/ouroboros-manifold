@@ -1,0 +1,542 @@
+{
+ "L-0054-A": {
+  "clip": "L-0054-A.mp4",
+  "poster": "L-0054-A-poster.jpg",
+  "fight": "L-0054",
+  "seed": 1,
+  "snapshot_every_ticks": 2,
+  "version": "A",
+  "version_note": "old side-step rule (7-point sweep, group mates and idle friends do not block, committed side); tree r6-advance/t-A; diff over t-a: r6-advance/diffs/A.diff",
+  "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-A",
+  "winner": "B",
+  "survivors_A_B": [
+   0,
+   17
+  ],
+  "last_tick": 6408,
+  "end_kind": "wipe",
+  "capped": false,
+  "frames": 3205,
+  "last_frame_tick": 6408,
+  "video": {
+   "frames": 3205,
+   "size_px": [
+    1600,
+    900
+   ],
+   "codec": "h264",
+   "pix_fmt": "yuv420p",
+   "fps": "20/1",
+   "duration_s": 160.25,
+   "size_bytes": 8467057
+  },
+  "never_fired": {
+   "A": 0,
+   "B": 0,
+   "total": 0,
+   "units_start": 256
+  },
+  "idle200_at_end": {
+   "total": 5,
+   "arrived": 0,
+   "behind": 1,
+   "front": 4
+  },
+  "overlap_radius15_max3": {
+   "verdict": "FAIL",
+   "pairs": 2,
+   "detail": [
+    {
+     "a": 97,
+     "b": 121,
+     "ticks": 8,
+     "last_tick": 438,
+     "min_dist": 5.957
+    },
+    {
+     "a": 225,
+     "b": 249,
+     "ticks": 8,
+     "last_tick": 438,
+     "min_dist": 5.957
+    }
+   ],
+   "radius": 15,
+   "max_ticks": 3
+  },
+  "position_box": [
+   400.0,
+   1262.37,
+   3600.0,
+   2738.44
+  ],
+  "stats_file": "runs/L54-A.stats.json",
+  "mp4_sha256": "94c0c4636a0523233c91b856aa1f99524aa5474aacd92a7beb6d4bd79c784ad1"
+ },
+ "L-0054-approved": {
+  "clip": "L-0054-approved.mp4",
+  "poster": "L-0054-approved-poster.jpg",
+  "fight": "L-0054",
+  "seed": 1,
+  "snapshot_every_ticks": 2,
+  "version": "APPROVED",
+  "version_note": "engine at 4fa618ce7 (stage 3 approval) with its own lab runner; fight file from r6-ladder",
+  "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-ladder (sha 4fa618ce7)",
+  "winner": "A",
+  "survivors_A_B": [
+   9,
+   0
+  ],
+  "last_tick": 8954,
+  "end_kind": "wipe",
+  "capped": false,
+  "frames": 4478,
+  "last_frame_tick": 8954,
+  "video": {
+   "frames": 4478,
+   "size_px": [
+    1600,
+    900
+   ],
+   "codec": "h264",
+   "pix_fmt": "yuv420p",
+   "fps": "20/1",
+   "duration_s": 223.9,
+   "size_bytes": 7918608
+  },
+  "never_fired": {
+   "A": 1,
+   "B": 0,
+   "total": 1,
+   "units_start": 256
+  },
+  "idle200_at_end": {
+   "total": 0,
+   "arrived": 0,
+   "behind": 0,
+   "front": 0
+  },
+  "overlap_radius15_max3": {
+   "verdict": "PASS",
+   "pairs": 0,
+   "detail": [],
+   "radius": 15,
+   "max_ticks": 3
+  },
+  "position_box": [
+   400.0,
+   1241.27,
+   3600.0,
+   2758.73
+  ],
+  "stats_file": "runs/L54-approved.stats.json",
+  "mp4_sha256": "0468d34287322e3d9eb32a912dfbe9a346cb7062c610571fa25a1fea885c0a78"
+ },
+ "L-0054-today": {
+  "clip": "L-0054-today.mp4",
+  "poster": "L-0054-today-poster.jpg",
+  "fight": "L-0054",
+  "seed": 1,
+  "snapshot_every_ticks": 2,
+  "version": "TODAY",
+  "version_note": "main 45245ff88 (clip reused from r6-clips, tree 482fcb058688c00d6fe93130f246ce1421aa88e9); stats from the r6-ladder every-2 file",
+  "tree": "main 45245ff88",
+  "winner": "draw",
+  "survivors_A_B": [
+   14,
+   22
+  ],
+  "last_tick": 10860,
+  "end_kind": "apart",
+  "capped": false,
+  "frames": 5431,
+  "last_frame_tick": 10860,
+  "video": {
+   "frames": 5431,
+   "size_px": [
+    1600,
+    900
+   ],
+   "codec": "h264",
+   "pix_fmt": "yuv420p",
+   "fps": "20/1",
+   "duration_s": 271.55,
+   "size_bytes": 11492120
+  },
+  "never_fired": {
+   "A": 12,
+   "B": 19,
+   "total": 31,
+   "units_start": 256
+  },
+  "idle200_at_end": {
+   "total": 35,
+   "arrived": 0,
+   "behind": 12,
+   "front": 23
+  },
+  "overlap_radius15_max3": {
+   "verdict": "FAIL",
+   "pairs": 5,
+   "detail": [
+    {
+     "a": 81,
+     "b": 118,
+     "ticks": 123,
+     "last_tick": 2728,
+     "min_dist": 9.702
+    },
+    {
+     "a": 82,
+     "b": 120,
+     "ticks": 6,
+     "last_tick": 1396,
+     "min_dist": 0.33
+    },
+    {
+     "a": 203,
+     "b": 226,
+     "ticks": 6,
+     "last_tick": 1962,
+     "min_dist": 11.947
+    },
+    {
+     "a": 207,
+     "b": 231,
+     "ticks": 5,
+     "last_tick": 4236,
+     "min_dist": 6.756
+    },
+    {
+     "a": 210,
+     "b": 248,
+     "ticks": 7,
+     "last_tick": 1398,
+     "min_dist": 2.004
+    }
+   ],
+   "radius": 15,
+   "max_ticks": 3
+  },
+  "position_box": [
+   400.0,
+   1445.88,
+   3600.0,
+   2554.12
+  ],
+  "stats_file": "runs/L54-today.stats.json",
+  "note": "clip reused as rendered earlier (r6-clips); its camera box was the today run's own box",
+  "mp4_sha256": "1592843f65ec9197d6a03aec9879f3a9869cda7a3bf7680338e546ecd4ccb294"
+ },
+ "L-0054-v1": {
+  "clip": "L-0054-v1.mp4",
+  "poster": "L-0054-v1-poster.jpg",
+  "fight": "L-0054",
+  "seed": 1,
+  "snapshot_every_ticks": 2,
+  "version": "V1",
+  "version_note": "give-up removed; tree r6-advance/t-a (logging only, sim identical to V1); diff over V1: r6-advance/diffs/log_over_v1.diff",
+  "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-a",
+  "winner": "draw",
+  "survivors_A_B": [
+   6,
+   11
+  ],
+  "last_tick": 12000,
+  "end_kind": "cap",
+  "capped": true,
+  "frames": 6001,
+  "last_frame_tick": 12000,
+  "video": {
+   "frames": 6001,
+   "size_px": [
+    1600,
+    900
+   ],
+   "codec": "h264",
+   "pix_fmt": "yuv420p",
+   "fps": "20/1",
+   "duration_s": 300.05,
+   "size_bytes": 8835672
+  },
+  "never_fired": {
+   "A": 5,
+   "B": 4,
+   "total": 9,
+   "units_start": 256
+  },
+  "idle200_at_end": {
+   "total": 16,
+   "arrived": 0,
+   "behind": 4,
+   "front": 12
+  },
+  "overlap_radius15_max3": {
+   "verdict": "FAIL",
+   "pairs": 2,
+   "detail": [
+    {
+     "a": 78,
+     "b": 122,
+     "ticks": 10,
+     "last_tick": 4110,
+     "min_dist": 12.782
+    },
+    {
+     "a": 232,
+     "b": 253,
+     "ticks": 46,
+     "last_tick": 4408,
+     "min_dist": 0.078
+    }
+   ],
+   "radius": 15,
+   "max_ticks": 3
+  },
+  "position_box": [
+   400.0,
+   1445.88,
+   3600.0,
+   2554.12
+  ],
+  "stats_file": "runs/L54-v1.stats.json",
+  "mp4_sha256": "d85af9c3ce336305a114cc498ea9c3729d2c1ce5988ccb7b4b400e9c29535eec"
+ },
+ "SIT-0106-A": {
+  "clip": "SIT-0106-A.mp4",
+  "poster": "SIT-0106-A-poster.jpg",
+  "fight": "SIT-0106",
+  "seed": 1,
+  "snapshot_every_ticks": 2,
+  "version": "A",
+  "version_note": "old side-step rule (7-point sweep, group mates and idle friends do not block, committed side); tree r6-advance/t-A; diff over t-a: r6-advance/diffs/A.diff",
+  "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-A",
+  "winner": "B",
+  "survivors_A_B": [
+   0,
+   13
+  ],
+  "last_tick": 2301,
+  "end_kind": "wipe",
+  "capped": false,
+  "frames": 1152,
+  "last_frame_tick": 2301,
+  "video": {
+   "frames": 1152,
+   "size_px": [
+    1600,
+    900
+   ],
+   "codec": "h264",
+   "pix_fmt": "yuv420p",
+   "fps": "20/1",
+   "duration_s": 57.6,
+   "size_bytes": 5435389
+  },
+  "never_fired": {
+   "A": 0,
+   "B": 2,
+   "total": 2,
+   "units_start": 72
+  },
+  "idle200_at_end": {
+   "total": 0,
+   "arrived": 0,
+   "behind": 0,
+   "front": 0
+  },
+  "overlap_radius15_max3": {
+   "verdict": "PASS",
+   "pairs": 0,
+   "detail": [],
+   "radius": 15,
+   "max_ticks": 3
+  },
+  "position_box": [
+   1758.16,
+   1554.88,
+   3320.0,
+   2389.94
+  ],
+  "stats_file": "runs/SIT-A.stats.json",
+  "mp4_sha256": "3dca6c110a96a45a096a948289ce13b61c0355a2dfefd398eb5a6dae5d5c484e"
+ },
+ "SIT-0106-approved": {
+  "clip": "SIT-0106-approved.mp4",
+  "poster": "SIT-0106-approved-poster.jpg",
+  "fight": "SIT-0106",
+  "seed": 1,
+  "snapshot_every_ticks": 2,
+  "version": "APPROVED",
+  "version_note": "engine at 4fa618ce7 (stage 3 approval) with its own lab runner; fight file from r6-ladder",
+  "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-ladder (sha 4fa618ce7)",
+  "winner": "A",
+  "survivors_A_B": [
+   11,
+   0
+  ],
+  "last_tick": 2315,
+  "end_kind": "wipe",
+  "capped": false,
+  "frames": 1158,
+  "last_frame_tick": 2314,
+  "video": {
+   "frames": 1158,
+   "size_px": [
+    1600,
+    900
+   ],
+   "codec": "h264",
+   "pix_fmt": "yuv420p",
+   "fps": "20/1",
+   "duration_s": 57.9,
+   "size_bytes": 6402179
+  },
+  "never_fired": {
+   "A": 0,
+   "B": 0,
+   "total": 0,
+   "units_start": 72
+  },
+  "idle200_at_end": {
+   "total": 0,
+   "arrived": 0,
+   "behind": 0,
+   "front": 0
+  },
+  "overlap_radius15_max3": {
+   "verdict": "PASS",
+   "pairs": 0,
+   "detail": [],
+   "radius": 15,
+   "max_ticks": 3
+  },
+  "position_box": [
+   1758.16,
+   1488.37,
+   3320.17,
+   2348.59
+  ],
+  "stats_file": "runs/SIT-approved.stats.json",
+  "mp4_sha256": "902edcacd5164f54b98f50239bf880da9166776f809a2b0381fc0ba8162d9100"
+ },
+ "SIT-0106-today": {
+  "clip": "SIT-0106-today.mp4",
+  "poster": "SIT-0106-today-poster.jpg",
+  "fight": "SIT-0106",
+  "seed": 1,
+  "snapshot_every_ticks": 2,
+  "version": "TODAY",
+  "version_note": "main 45245ff88 (clip reused from r6-clips, tree 482fcb058688c00d6fe93130f246ce1421aa88e9); stats from the r6-ladder every-2 file",
+  "tree": "main 45245ff88",
+  "winner": "A",
+  "survivors_A_B": [
+   5,
+   0
+  ],
+  "last_tick": 2543,
+  "end_kind": "wipe",
+  "capped": false,
+  "frames": 1272,
+  "last_frame_tick": 2542,
+  "video": {
+   "frames": 1273,
+   "size_px": [
+    1600,
+    900
+   ],
+   "codec": "h264",
+   "pix_fmt": "yuv420p",
+   "fps": "20/1",
+   "duration_s": 63.65,
+   "size_bytes": 7801472
+  },
+  "never_fired": {
+   "A": 0,
+   "B": 2,
+   "total": 2,
+   "units_start": 72
+  },
+  "idle200_at_end": {
+   "total": 0,
+   "arrived": 0,
+   "behind": 0,
+   "front": 0
+  },
+  "overlap_radius15_max3": {
+   "verdict": "PASS",
+   "pairs": 0,
+   "detail": [],
+   "radius": 15,
+   "max_ticks": 3
+  },
+  "position_box": [
+   1758.16,
+   1608.62,
+   3320.17,
+   2364.71
+  ],
+  "stats_file": "runs/SIT-today.stats.json",
+  "note": "clip reused as rendered earlier (r6-clips); its camera box was the today run's own box",
+  "mp4_sha256": "e02a1c16b9e7adbeee832173be9aecf85944acda1d35fedc67c4cedf0a013da2"
+ },
+ "SIT-0106-v1": {
+  "clip": "SIT-0106-v1.mp4",
+  "poster": "SIT-0106-v1-poster.jpg",
+  "fight": "SIT-0106",
+  "seed": 1,
+  "snapshot_every_ticks": 2,
+  "version": "V1",
+  "version_note": "give-up removed; tree r6-advance/t-a (logging only, sim identical to V1); diff over V1: r6-advance/diffs/log_over_v1.diff",
+  "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-a",
+  "winner": "A",
+  "survivors_A_B": [
+   5,
+   0
+  ],
+  "last_tick": 2543,
+  "end_kind": "wipe",
+  "capped": false,
+  "frames": 1273,
+  "last_frame_tick": 2543,
+  "video": {
+   "frames": 1273,
+   "size_px": [
+    1600,
+    900
+   ],
+   "codec": "h264",
+   "pix_fmt": "yuv420p",
+   "fps": "20/1",
+   "duration_s": 63.65,
+   "size_bytes": 6136615
+  },
+  "never_fired": {
+   "A": 0,
+   "B": 2,
+   "total": 2,
+   "units_start": 72
+  },
+  "idle200_at_end": {
+   "total": 0,
+   "arrived": 0,
+   "behind": 0,
+   "front": 0
+  },
+  "overlap_radius15_max3": {
+   "verdict": "PASS",
+   "pairs": 0,
+   "detail": [],
+   "radius": 15,
+   "max_ticks": 3
+  },
+  "position_box": [
+   1758.16,
+   1608.62,
+   3320.17,
+   2364.71
+  ],
+  "stats_file": "runs/SIT-v1.stats.json",
+  "mp4_sha256": "8b2eec8d9f1502b8d91720e5e02533adc4798af8b479d92015b0ada76d7dc5c6"
+ }
+}
