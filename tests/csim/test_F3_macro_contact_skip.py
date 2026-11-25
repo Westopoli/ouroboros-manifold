@@ -245,9 +245,10 @@ def _state_hash(lib, w):
 # Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold recorded). TD-PP-A199-rerecord.
 # Re-recorded 2026-11-08 (engine rule fixes F2, F3, F4; the new clash run has 0 R-207-06, R-087-04, R-084-04, R-087-03, R-083-03 violations by scripts/skilllab/invariants.py; was: day23 recorded: clash d6ac88b5; spread 12ad27cb unchanged). Test-defect.
 # Re-recorded 2026-11-17 (engine rules Round 5, G1 to G5: a lock ends at the notice distance, a guard acquires within it, an attack-mover is not moved by unseen fire, layer by side of the midline on a slope; was: 2026-11-12 recorded: clash ec37b603, spread unchanged; green on main b23e605c9).
+# Re-recorded 2026-11-24 (DEC-movement-sidestep-2026-11-24: no give-up, a probe skips group mates and idle friends, a detour is kept on its side until the line is clear; was: clash 17c563cd, spread 12ad27cb). Re-recorded from the built branch; the lab per-tick checks of the same change are green.
 GOLDEN = {
-    "clash": "17c563cdcd3ac9c87ce0f7d28030df91bcf6b6ea03b263c173c878b94f1a8503",
-    "spread": "12ad27cb5f68afb9e32c68dbd9c38cf22ccaa61cbda43a18e7409024a861cceb",
+    "clash": "d9f0d69692af5b984a6556830eb2f7a678cf940a9809c03674575cecd46e324b",
+    "spread": "8b5e6e53cd48c547a51db466ab16ed0f911c819a645fd84812375daaf7b005a4",
 }
 
 

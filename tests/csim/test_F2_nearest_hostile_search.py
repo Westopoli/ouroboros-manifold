@@ -436,9 +436,10 @@ def _state_hash(lib, w):
 # Built on the Round 3 tip e2dcee93 and on 6d3d7635 in lock step: the first step to differ is step 1 in both scenes. Clash: 11 idle units are moved on step 1 (unit 69 by 0.4 wu: unit 86, of its own side,
 # takes a target that tick and walks 7.4 wu into it at 32.7 wu; 22 units differ in all). Spread: unit 51 is moved 7.8 wu by unit 418 of its own side, 16.4 wu away (2 units differ).
 # Re-recorded 2026-11-17 (engine rules Round 5, G1 to G5: a lock ends at the notice distance, a guard acquires within it, an attack-mover is not moved by unseen fire, layer by side of the midline on a slope; was: 2026-11-12 recorded: clash 8c76ebb2, spread fad7b9eb; green on main b23e605c9).
+# Re-recorded 2026-11-24 (DEC-movement-sidestep-2026-11-24: no give-up, a probe skips group mates and idle friends, a detour is kept on its side until the line is clear; was: clash 26872ced, spread 62acb120). Re-recorded from the built branch; the lab per-tick checks of the same change are green.
 GOLDEN = {
-    "clash": "26872cedcc6e42806415bc5710e63ce7ab025a3ab397f31ba21e0a68c6c53601",
-    "spread": "62acb1209322a40ef0285a93885ee4483d588bcf3b912bc66489c66018b87f0f",
+    "clash": "21e035abce0b05d46f54387d2acfac1e6899e21b4a3e28542b393b144301b8cc",
+    "spread": "4d85a375563e8004f4e274c9cea8a920ef91a7d3467d5ee1abf5a45b51cd38ca",
 }
 
 
