@@ -14,7 +14,7 @@ import isolation_arms_fixtures as af
 import isolation_fixtures as fx
 
 LI3_BASE = "ace81d52e37101588eea55ffd681d0c64ef6d03b"   # the merge of LI2 into the LI1 build: the tree this piece starts from
-RUNNER_FIX = "41ffbfacc"   # LI1 follow-up, the brief's first commit of LI3: a fight the rule checker marks invalid is a result, not a layout error (the runner is untouched beyond it)
+RUNNER_FIX = "8a763d652"   # LI1 follow-up: a fight the rule checker marks invalid is a result, not a layout error (41ffbfacc, the brief's first commit of LI3), plus li4's `_fight(control_dir)` added after it (8a763d652); the runner is untouched beyond these
 SRC = fx.ROOT / "scripts" / "skilllab" / "arena" / "isolation_arms.py"
 
 
