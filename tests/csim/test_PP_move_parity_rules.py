@@ -1,8 +1,8 @@
 """Parity-diagnosis C bugs, tests against RULED text (Addendum 63 / A176-A180, runs/2026-10-03_parity_diagnosis.md).
 
 Proves E-13 R-100-02 (S-100, turn rate by category), R-099-04 (S-099, a route waypoint, the final one included,
-counts as reached within 2 x collision radius = 30 wu), R-097-03 (S-097, the steering detour is held for 60 wu
-moved, a new order does not clear it) and the targeting cohort (Phase B C1: the Python staggers by uid % 4 with
+counts as reached within 2 x collision radius = 30 wu), R-097-03 (S-097, the steering detour is kept on its side until the line is clear,
+a new order does not clear it) and the targeting cohort (Phase B C1: the Python staggers by uid % 4 with
 0-based uid; C ids are uid + 1, so the C must use (id - 1) % 4). Written before the fixes; each test is red today
 for the reason in its docstring. Rates: simulation/config.py FACING_ROTATION_SPEED_* = 6.0 / 4.0 / 2.5 rad/s, one
 tick is 1/20 s (OM_TACTICAL_TICK_RATE), so a capped turn is 0.3 / 0.2 / 0.125 rad per tick.
@@ -13,6 +13,7 @@ import math
 import pytest
 
 from conftest import OMFeature
+from test_PP_unit_support import SUPPLY
 
 RAIDER = 0
 FRIEND, ENEMY = 0, 1
@@ -22,7 +23,6 @@ CATEGORY = {"strike": 0, "line": 1, "siege": 2}
 ANGLE_TOL = 1e-6          # the cap is exact arithmetic on the facing value, no trig on the capped path
 ANGLE_TOL_STEER = 0.01    # as test_PP_move_steer_face.py: absorbs the C's cheap trig on a displacement angle
 RAIDER_STEP = 7.5         # 150 wu/s at 20 ticks/s
-DETOUR_MIN_DIST = 60.0    # R-097-03
 WAYPOINT_REACH = 30.0     # R-099-04: 2 x collision radius 15
 
 # custom types: the category is what the rule names, the speed is picked to be the "wrong" band for it
@@ -136,12 +136,17 @@ def test_R_099_04_two_waypoint_route_ends_within_30_wu_and_not_earlier(lib, tw):
 
 # ------------------------------------------------------------- R-097-03 detour survives a new order
 
+BIG_HP = 1.0e6      # a Supply with this hp holds its place and never fires, as the other movement tests use it
+
+
 def _detour_scene(lib, w):
-    """A Raider at (0,0) ordered east, a friend standing at (40,0): the straight, +30 and -30 probes are held,
-    +60 is the first clear one (SWEEP case "plus60_first_clear" of test_PP_move_steer_face.py)."""
+    """A Raider at (500,500) ordered east, an enemy Supply standing at (540,500): the straight, +30 and -30 probes are held, +60 is the first clear one
+    (SWEEP case "plus60_first_clear" of test_PP_move_steer_face.py). An enemy blocks the probe whatever it does (a friend that stands idle does not,
+    DEC-movement-sidestep-2026-11-24)."""
     u = lib.om_unit_spawn(w, RAIDER, FRIEND, 500.0, 500.0, 0)
-    blocker = lib.om_unit_spawn(w, RAIDER, FRIEND, 540.0, 500.0, 0)
+    blocker = lib.om_unit_spawn(w, SUPPLY, ENEMY, 540.0, 500.0, 0)
     assert u and blocker
+    lib.om_unit_set_hp(w, blocker, BIG_HP)
     lib.om_command_move(w, u, 1500.0, 500.0)
     return u
 
@@ -153,29 +158,42 @@ def _step_angle(lib, w, u):
     return math.atan2(y1 - y0, x1 - x0), math.hypot(x1 - x0, y1 - y0)
 
 
-def test_R_097_03_control_detour_is_held_for_60_wu_of_movement(lib, tw):
-    """Positive control, no new order: the first step takes the +60 degree detour and the unit then keeps that heading
-    until 60 wu have been moved (8 steps of 7.5), re-probing and turning only after. Passes today."""
-    u = _detour_scene(lib, tw)
-    for k in range(8):
-        ang, dist = _step_angle(lib, tw, u)
-        assert abs(_angle_diff(ang, math.radians(60.0))) < ANGLE_TOL_STEER, f"step {k + 1}: heading {math.degrees(ang):.2f}"
-        assert abs(dist - RAIDER_STEP) < 0.01
+def _wall_the_plus_side(lib, w, u):
+    """Three more enemy Supplies on the +30, +60 and +90 probe points of `u` for an order east, from where it stands now."""
+    x, y = lib.om_unit_get_pos(w, u)
+    for dx, dy in ((34.64, 20.0), (20.0, 34.64), (0.0, 40.0)):
+        s = lib.om_unit_spawn(w, SUPPLY, ENEMY, x + dx, y + dy, 0)
+        assert s
+        lib.om_unit_set_hp(w, s, BIG_HP)
 
 
-def test_R_097_03_a_new_move_order_does_not_clear_the_detour(lib, tw):
-    """Westley's rule: the detour is held for 60 wu of distance moved. A new move order (here to the south-east, whose
-    own probe would choose -75 degrees) given one step into the detour leaves the held +60 degree heading in place for
-    the remaining steps up to 60 wu. Red today: tactical_move.c ~2516 (om_command_move) sets mu->deflecting = 0, so
-    the next step re-probes and heads off the held +60 degrees."""
+def test_R_097_03_a_new_move_order_keeps_the_stored_detour_and_its_side(lib, tw):
+    """R-097-03, ALG-68 (DEC-movement-sidestep-2026-11-24): a detour is kept on its side until the straight line is clear, and a new move order does not clear it. The first step takes the +60 degree detour
+    (as _detour_scene). Then the +30, +60 and +90 probes are walled off by three more Supplies and the same order is given again: the straight line and the -30 probe are held by the first Supply, so the unit
+    that holds a +60 detour tries only its own side, finds none clear, and keeps the stored +60 heading on the next step. Its control, the same walls and a fresh unit (no stored detour) in the same place,
+    turns -60 (the first clear one of the whole sweep), so the +60 above is the stored detour and not the sweep's own choice."""
     u = _detour_scene(lib, tw)
     ang, _ = _step_angle(lib, tw, u)
     assert abs(_angle_diff(ang, math.radians(60.0))) < ANGLE_TOL_STEER      # the detour is active
-    lib.om_command_move(tw, u, 1500.0, -500.0)
-    for k in range(2, 9):
-        ang, _ = _step_angle(lib, tw, u)
-        assert abs(_angle_diff(ang, math.radians(60.0))) < ANGLE_TOL_STEER, \
-            f"step {k}: heading {math.degrees(ang):.2f}, the order cleared the detour"
+    _wall_the_plus_side(lib, tw, u)
+    lib.om_command_move(tw, u, 1500.0, 500.0)
+    ang, _ = _step_angle(lib, tw, u)
+    assert abs(_angle_diff(ang, math.radians(60.0))) < ANGLE_TOL_STEER, \
+        f"heading {math.degrees(ang):.2f} after the new order, the stored +60 detour was not kept"
+
+
+def test_R_097_03_control_a_unit_with_no_stored_detour_takes_the_other_side(lib, tw):
+    """Control of the test above: the walls and the order as there, but the unit was never deflected (it is put where the first one stood after its step, with no detour): its sweep goes -60."""
+    u = _detour_scene(lib, tw)
+    ang, _ = _step_angle(lib, tw, u)
+    x, y = lib.om_unit_get_pos(tw, u)
+    fresh = lib.om_unit_spawn(tw, RAIDER, FRIEND, x + 300.0, y, 0)         # far from the first unit and its Supplies; the walls and the first Supply are built round it
+    blocker = lib.om_unit_spawn(tw, SUPPLY, ENEMY, x + 300.0 + (540.0 - x), y + (500.0 - y), 0)
+    lib.om_unit_set_hp(tw, blocker, BIG_HP)
+    _wall_the_plus_side(lib, tw, fresh)
+    lib.om_command_move(tw, fresh, 1500.0, 500.0)
+    ang, _ = _step_angle(lib, tw, fresh)
+    assert abs(_angle_diff(ang, math.radians(-60.0))) < ANGLE_TOL_STEER, f"control: heading {math.degrees(ang):.2f}, wanted -60 (the sweep's own choice)"
 
 
 # ------------------------------------------------------------- targeting cohort (Phase B C1)
