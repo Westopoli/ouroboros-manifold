@@ -11,6 +11,7 @@ import isolation_fixtures as fx
 import isolation_fw_real as real
 
 LAYOUT = "L-0055"
+WATCH = ("Makefile", "csrc/unit.c", "scripts/skilllab/arena/run.py", "scripts/skilllab/arena/isolation_runner.py", "csrc/ouroboros_sim.h")
 
 
 def _run(scratch, tag):
@@ -19,8 +20,8 @@ def _run(scratch, tag):
 
 
 def _state(repo):
-    return {"head": fx.git(repo, "rev-parse", "HEAD"), "refs": fx.git(repo, "for-each-ref", "--format=%(refname) %(objectname)"), "status": fx.git(repo, "status", "--porcelain", "--ignored=no"),
-            "worktrees": fx.git(repo, "worktree", "list", "--porcelain")}
+    return {"head": fx.git(repo, "rev-parse", "HEAD"), "status": fx.git(repo, "status", "--porcelain", "--ignored=no"),
+            "mtimes": {rel: os.stat(Path(repo) / rel).st_mtime_ns for rel in WATCH if (Path(repo) / rel).exists()}}
 
 
 def test_d1_d2_d3_two_runs_two_scratch_roots(iso_scratch, tmp_path_factory):

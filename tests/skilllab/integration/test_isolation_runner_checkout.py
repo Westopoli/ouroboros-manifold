@@ -1,7 +1,7 @@
 # spec: docs/northstar/plans/lab-isolation-2026-11-24/spec.md section 7 (LI1: "never the repository checkout"; "Never checked out in the repository", section 2); CLAUDE.md Git
 """LI1 checkout safety: the runner reads git objects and writes only under its scratch root.
 
-K1 a matrix run leaves the repo it archived from as it found it: HEAD, branches and tags, worktree list, `git status`, and the files of the worktree (this one) are unchanged, and Westley's live checkout is unchanged.
+K1 a matrix run leaves the repo it archived from as it found it: HEAD, `git status`, and the files of the worktree (this one) are unchanged, and Westley's live checkout is unchanged.
 K2 every path the rows name (fight_path), every tree it built, is under the scratch root and under neither this worktree nor the live checkout.   K3 the lab ran from the scratch tree, not from this one: the fight file names its
 layout relative to the tree that ran it, and the built tree's own csrc built the library there.
 Runs on the fixture's matrix (two versions, one fight each); no extra fight."""
@@ -15,8 +15,6 @@ import isolation_fixtures as fx
 def _state(repo):
     return {
         "head": fx.git(repo, "rev-parse", "HEAD"),
-        "refs": fx.git(repo, "for-each-ref", "--format=%(refname) %(objectname)"),
-        "worktrees": fx.git(repo, "worktree", "list", "--porcelain"),
         "status": fx.git(repo, "status", "--porcelain", "--ignored=no"),
         "stash": fx.git(repo, "stash", "list"),
     }

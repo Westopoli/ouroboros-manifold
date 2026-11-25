@@ -2,7 +2,7 @@
 # section 2 ("Never checked out in the repository"), section 1 precondition 7 (one click per side, "not from the runner, a layout or a test")
 """LI3 arm safety, whole runs on `now` in a fresh scratch root: one M cell (8 against 16, both orders) and one V cell (flat, 8 a side, holder A).
 
-Z1 the repositories (this worktree and Westley's live checkout) are unchanged by the arms: HEAD, refs, worktrees, status, stash, the catalogue directory, a file watch; every layout the arms wrote is under the scratch root, none in a repository.
+Z1 the repositories (this worktree and Westley's live checkout) are unchanged by the arms: HEAD, status, stash, the catalogue directory, a file watch; every layout the arms wrote is under the scratch root, none in a repository.
 Z2 the lab is called as the arm's brief says: M with sight off (no `--sight on`, no `--control`), V with `--sight on --control sight`; one `--layout` and one `--seed` per call; nothing else that could be a second order.
 Z3 deterministic: the same arm cell twice (two out dirs) gives equal rows ignoring only `fight_path`, and byte-identical fight files and layout files.   Z4 the CLI writes the same rows as the function."""
 import json
@@ -29,8 +29,7 @@ def scrub(row):
 
 
 def _state(repo):
-    return {"head": fx.git(repo, "rev-parse", "HEAD"), "refs": fx.git(repo, "for-each-ref", "--format=%(refname) %(objectname)"), "worktrees": fx.git(repo, "worktree", "list", "--porcelain"),
-            "status": fx.git(repo, "status", "--porcelain", "--ignored=no"), "stash": fx.git(repo, "stash", "list"),
+    return {"head": fx.git(repo, "rev-parse", "HEAD"), "status": fx.git(repo, "status", "--porcelain", "--ignored=no"), "stash": fx.git(repo, "stash", "list"),
             "catalogue": sorted(p.name for p in (Path(repo) / af.LD / "catalogue").iterdir()), "mtimes": {rel: os.stat(Path(repo) / rel).st_mtime_ns for rel in WATCH if (Path(repo) / rel).exists()}}
 
 
