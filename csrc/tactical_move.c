@@ -3905,6 +3905,7 @@ static void mv_save_all(const om_move_state *ms, mv_sw *s) {
         mv_put_f64(s, mu->facing);
         mv_put_f64(s, mu->prev_x); mv_put_f64(s, mu->prev_y); mv_put_f64(s, mu->prev_facing);
         mv_put_i32(s, mu->has_dest);
+        mv_put_i32(s, ms->idle[id]); /* the idle flag of the last collision pass: the probe skip of the next tick reads it, so a load must give it back (DEC-movement-sidestep-2026-11-24). Not hashed. */
         mv_put_f64(s, mu->dest_x); mv_put_f64(s, mu->dest_y);
         mv_put_i32(s, mu->direct_move);
         mv_put_u32(s, mu->group_id);
@@ -4055,6 +4056,7 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         mu->facing = mv_get_f64(&r);
         mu->prev_x = mv_get_f64(&r); mu->prev_y = mv_get_f64(&r); mu->prev_facing = mv_get_f64(&r);
         mu->has_dest = mv_get_i32(&r);
+        ms->idle[id] = (uint8_t)mv_get_i32(&r);
         mu->dest_x = mv_get_f64(&r); mu->dest_y = mv_get_f64(&r);
         mu->direct_move = mv_get_i32(&r);
         mu->group_id = mv_get_u32(&r);
