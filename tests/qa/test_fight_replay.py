@@ -314,8 +314,15 @@ def test_shot_out_saves_one_png_per_frame_none_blank_and_quits(fight3, tmp_path,
             g.proc.wait(timeout=QUIT_TIMEOUT)
         except subprocess.TimeoutExpired:
             pytest.fail("the scene did not quit after saving the frames (OM_SHOT_OUT set); stderr tail:\n" + g.stderr_tail())
-        names = sorted(p.name for p in out.iterdir())
+        names = sorted(p.name for p in out.iterdir() if p.suffix == ".png")
         assert names == ["frame-0.png", "frame-1.png", "frame-2.png"], "OM_SHOT_OUT dir holds %s; stderr tail:\n%s" % (names, g.stderr_tail())
+        sidecars = sorted(p.name for p in out.iterdir() if p.suffix == ".json")
+        assert sidecars == ["frame-0.json", "frame-1.json", "frame-2.json"], "OM_SHOT_OUT dir holds sidecars %s; stderr tail:\n%s" % (sidecars, g.stderr_tail())
+        for sc in sidecars:
+            try:
+                json.loads((out / sc).read_text())
+            except ValueError as e:
+                pytest.fail("%s is not valid JSON: %s" % (sc, e))
         for name in names:
             assert (out / name).read_bytes()[:8] == PNG_MAGIC, "%s is not a PNG" % name
             assert frame_busyness(out / name) > 0.0, "%s is blank (uniform fraction 1)" % name
