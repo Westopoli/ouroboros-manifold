@@ -632,7 +632,7 @@ def test_ke5_load_rejects_core_cell_at_or_above_side_squared(klib, kmake):
 
 def test_ke5_save_format_version_is_10(klib, kmake):
     """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10; W2 moved it to 11 (TD-VG-W-1), E7 to 12 (TD-VG-E-27), LAB-REV2 E0 to 13, read as the moved pins read it (header bytes 4..8 of a save)."""
-    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 13
+    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 14
 
 
 def test_ke5_abi_version_is_7(klib):
@@ -659,8 +659,8 @@ def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
         side = json.load(open(path + ".json"))
         word = struct.unpack_from("<I", open(path, "rb").read(), 4)[0]
     assert isinstance(side.get("format_version"), int) and isinstance(word, int)
-    assert side["format_version"] == 13, f"sidecar format_version {side['format_version']} (save version word {word})"
-    assert word == 13
+    assert side["format_version"] == 14, f"sidecar format_version {side['format_version']} (save version word {word})"
+    assert word == 14
 
 
 # ------------------------------------------------------------------------------------------------ the hook om_terrain_set_heights
