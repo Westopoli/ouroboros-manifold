@@ -142,7 +142,7 @@ def test_save_round_trip_at_format_10_keeps_empty_new_state(lib, world_factory):
     size = lib.om_save_state_size(src)
     buf = (ctypes.c_uint8 * size)()
     lib.om_save_state_write(src, buf, size)
-    assert int.from_bytes(bytes(buf[4:8]), "little") == 13
+    assert int.from_bytes(bytes(buf[4:8]), "little") == 14
     dst = world_factory(n_regions=1)
     assert lib.om_load_state_read(dst, buf, size) == 0
     assert lib.om_lot_count(dst) == 0 and lib.om_strongpoint_count(dst) == 0

@@ -93,6 +93,11 @@ STAGE2_VERDICTS = {
 }
 
 # (stage, kind, id, sight, control, decision): the rows of round6.md L2. SIT-0102 is not here (denied as a roster finding).
+# Re-pinned 2026-11-24 (DEC-movement-sidestep-2026-11-24): Westley accepted the movement side-step results for the flyer rows, so these three rows now expect B. His recorded verdicts stay
+# quoted above and in the layout file: L-0054 predict `draw` (DEC-stage1-seen-2026-11-01), SIT-0104 A ("approved, red got annihilated, which might be ok", 2026-11-02) and SIT-0106 A ("this one
+# also had the correct outcome, approved.", 2026-11-02). Each row is still asserted on its own; the manifest row carries the key `repin_decision` beside the stage `decision`.
+REPINNED = {"L-0054": "B", "SIT-0104": "B", "SIT-0106": "B"}
+
 ROWS = ([(1, "layout", "L-0054", "off", "none", DEC1)]
         + [(2, "situation", "SIT-%04d" % n, "off", "none", DEC2) for n in (101, 103, 104, 105, 106, 107, 108)]
         + [(3, "layout", lid, "off", "ground", DEC3) for lid in ("L-0055", "L-0073", "L-0084", "L-0039")]
@@ -144,6 +149,7 @@ def test_L2_each_layout_row_carries_his_expected_winner_and_rate_from_his_own_fi
         if "layout" not in f:
             continue
         want, rate = _expected(f["layout"])
+        want = REPINNED.get(f["layout"], want)  # L-0054: his verdict was `draw` (2026-11-01); re-pinned to B, see REPINNED
         assert f.get("expected_winner") == want, (f["layout"], f.get("expected_winner"), want)
         if rate is None:
             assert "predict_rate" not in f, (f["layout"], f["predict_rate"])
@@ -165,7 +171,8 @@ def test_L2_no_stage2_row_takes_its_expected_winner_from_a_situation_files_draft
     `expected_winner` equals the side that won in the run he approved (STAGE2_VERDICTS, from crossings.md:17-24): SIT-0101 B, SIT-0103 B, SIT-0104 A, SIT-0105 A, SIT-0106 A, SIT-0107 B, SIT-0108 draw.
     Red today on SIT-0103 (manifest `draw`; he approved B winning) and SIT-0106 (manifest `B`; he approved A winning: 'this one also had the correct outcome, approved.')."""
     got = {f["situation"]: f.get("expected_winner") for f in _manifest() if f["stage"] == 2}
-    assert got == {sit: v[0] for sit, v in STAGE2_VERDICTS.items()}
+    # SIT-0104 and SIT-0106: his verdict was A (2026-11-02, STAGE2_VERDICTS); re-pinned to B, see REPINNED
+    assert got == {sit: REPINNED.get(sit, v[0]) for sit, v in STAGE2_VERDICTS.items()}
 
 
 def test_L2_stage2_rows_carry_a_predict_rate_only_where_he_gave_one():
@@ -272,7 +279,7 @@ def _field(line, name):
 def test_L2_command_a_fight_that_ends_by_elimination_gives_exit_0_and_one_line(planted, tmp_path):
     """L2: 'prints one line per fight (end, winner, survivors, ticks, agreement with his expectation, checker reports) and exits non-zero if any fight ends without an elimination or the
     checker reports a rule'. The command itself (`python -m`, a subprocess), one planted row, L-9102 (wipe, side A wins), expected A: exit 0; one line naming L-9102 with end=wipe, winner=A,
-    survivors=8:0, a tick count, agree=yes, checker=none, and no DRAW. Red today: no module."""
+    survivors=7:0 (8:0 until 2026-11-24: Test-defect, DEC-movement-sidestep-2026-11-24, a different fight), a tick count, agree=yes, checker=none, and no DRAW. Red today: no module."""
     manifest = _manifest_file(tmp_path, _row("L-9102", "A"))
     done = subprocess.run([sys.executable, "-m", "scripts.skilllab.arena.regression", "--manifest", str(manifest), "--catalogue", str(planted)],
                           cwd=str(ROOT), capture_output=True, text=True, timeout=600)
@@ -280,7 +287,7 @@ def test_L2_command_a_fight_that_ends_by_elimination_gives_exit_0_and_one_line(p
     assert done.returncode == 0, (done.returncode, done.stdout[-800:], done.stderr[-800:])
     assert len(lines) == 1, done.stdout
     line = lines[0]
-    assert (_field(line, "end"), _field(line, "winner"), _field(line, "survivors"), _field(line, "agree"), _field(line, "checker")) == ("wipe", "A", "8:0", "yes", "none")
+    assert (_field(line, "end"), _field(line, "winner"), _field(line, "survivors"), _field(line, "agree"), _field(line, "checker")) == ("wipe", "A", "7:0", "yes", "none")
     assert int(_field(line, "ticks")) > 0 and _field(line, "sight") == "off" and "DRAW" not in line
 
 
@@ -302,15 +309,16 @@ def test_L2_command_a_winner_other_than_his_expected_one_is_reported_not_failed(
 
 
 def test_L2_command_a_checker_report_gives_a_non_zero_exit_and_the_rule_on_the_line(planted, tmp_path, monkeypatch):
-    """L2: 'exits non-zero if ... the checker reports a rule'. The same wipe fight as L-9102, with `Engine.step` moving side A's first unit 300 wu sideways in its fifth step (a real fault the
-    checker sees as `continuity`): the fight still ends by wipe, the exit is non-zero, and its line says checker=continuity (the rule id, comma-joined if more) and not DRAW. Red today: no module."""
+    """L2: 'exits non-zero if ... the checker reports a rule'. The same wipe fight as L-9102, with `Engine.step` moving side B's first unit 300 wu sideways in its fifth step (a real fault the
+    checker sees as `continuity`; Test-defect, 2026-11-24, DEC-movement-sidestep-2026-11-24: it was side A's first unit, which the side-step leaves 39.1 wu from its nearest mate at tick 5, inside the checker's
+    40 wu push radius, so the move was forgiven as a push; side B's mates stand 40.0 wu apart): the fight still ends by wipe, the exit is non-zero, and its line says checker=continuity (the rule id, comma-joined if more) and not DRAW. Red today: no module."""
     real, state = Engine.step, {"n": 0}
 
     def step(self, w):
         real(self, w)
         state["n"] += 1
         if state["n"] == 5:
-            u = sorted(self._own[(w.value, 0)])[0]
+            u = sorted(self._own[(w.value, 1)])[0]
             x, y = self.unit_pos(w, u)
             self._lib.om_unit_set_pos.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_double, ctypes.c_double]
             self._lib.om_unit_set_pos(w, u, x, y + 300.0)

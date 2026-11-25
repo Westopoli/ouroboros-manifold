@@ -17,6 +17,8 @@
 
 Five unit commands: move, attack-move, attack a target, guard, use the ability. Guard is a radius guard (S-208; Westley, 2026-10-13). Requests by pointing at the map and the economy seat's orders are a second channel beside these four, not unit commands (E-22 S-168, S-170, S-180). A selection moves together at its slowest member's pace and keeps its shape on arrival; a player who wants a fast element to run ahead splits it off. Movement is two-level: a coarse route around obstacles, buildings and, for walking units, ground too steep to cross (S-207), then local steering that flows around allies instead of shoving through them. A unit that has stopped to fight is immovable, so front ranks hold and later arrivals spill into flanking slots on their own. Everything is deterministic: same start, same commands, same movement tick for tick, which is what lockstep multiplayer needs.
 
+Requirements page: `references/movement-requirements.md`.
+
 Reference model: movement and targeting follow StarCraft 2's rules. Where a rule here is silent, or two readings of it exist, what StarCraft 2 does is the answer; a deliberate difference from it is written as a rule with Westley's words beside it. Westley, 2026-10-20: "starcraft 2 movement mechanics are the reference, when stuck on blocked refer to them and use their rules"; on the engage rules the same day: "We're just copying Starcraft 2 rules here, easy quick-reference"; 2026-11-06: "We're following sc2's movement model"; 2026-11-11: "It should be documented that we're using starcraft 2 rules for movement/targeting."
 
 ## Obviously working in 60 seconds
@@ -56,7 +58,7 @@ The guard stance joined the commands 2026-10-13 (S-208, R-096-08). An attack-mov
 Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
   Proof: MISSING
-- R-096-02  Given an attack-move, When an enemy its side can see comes within the unit's notice distance (E-11 R-087-04), Then the unit closes to attack range, halts and fires; when the lock ends (E-11 R-087-03: the target dies, is lost from sight or leaves the notice distance) it resumes toward the point. The pause after the unit's own shot (E-11 R-084-04) delays the resume and never cancels it: a walker that cannot step keeps its destination and walks when the pause ends, and a move or attack-move order given during the pause is kept the same way. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); after every fight the group resumes toward the point as a unit attack-moved alone does (Westley, 2026-10-13, option (a): an attack-move is not finished until the unit reaches its point, except that a unit that gives up under R-099-05 ends where it stands (Architect decision 28, 2026-10-19); his 2026-10-02 words for the lone unit, "It should resume its prior goal after the fight is completed", now hold for a group too). The group resume is built (2026-10-14); before it, two groups attack-moved to one point stalled 303 to 336 wu apart with range 300.
+- R-096-02  Given an attack-move, When an enemy its side can see comes within the unit's notice distance (E-11 R-087-04), Then the unit closes to attack range, halts and fires; when the lock ends (E-11 R-087-03: the target dies, is lost from sight or leaves the notice distance) it resumes toward the point. The pause after the unit's own shot (E-11 R-084-04) delays the resume and never cancels it: a walker that cannot step keeps its destination and walks when the pause ends, and a move or attack-move order given during the pause is kept the same way. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); after every fight the group resumes toward the point as a unit attack-moved alone does (Westley, 2026-10-13, option (a): an attack-move is not finished until the unit reaches its point, and a blocked unit keeps routing, it never ends short (R-099-06; DEC-movement-sidestep-2026-11-24); his 2026-10-02 words for the lone unit, "It should resume its prior goal after the fight is completed", now hold for a group too). The group resume is built (2026-10-14); before it, two groups attack-moved to one point stalled 303 to 336 wu apart with range 300.
   Proof: tests/csim/test_E13_R096_02_order_kept_through_shot_pause.py::test_R_096_02_a_walking_attack_mover_whose_target_dies_resumes_to_its_point | scenario | no terrain in the scene; a lock that ends by distance or sight and a move order given in the pause are held by the two sibling tests of the file | verified a14930ba5 2026-11-19
 - R-096-03  Given an attack-move or idle engagement, When the unit itself has pursued farther from its anchor (its position at acquisition) than its own type's sensor radius, or its attack range where that is the larger (DEC-leash-param-2026-11-01), Then it drops the target and resumes (attack-move) or holds (idle); a unit holding and firing from its anchor never drops a target for the leash, whatever its weapon range (ruled A188, 2026-10-03; the earlier text measured the target's distance). The leash was 200 wu for every type until 2026-11-01; Westley: the vision range of that specific unit, modelled on the game whose movement we follow, where a unit's leash sat at or just beyond its vision (H-057).
   Proof: MISSING
@@ -85,7 +87,7 @@ Rules
   Proof: MISSING
 - R-097-02  Given a destination shared by several units, When routes are computed, Then the route is computed once and cached.
   Proof: MISSING
-- R-097-03  Given a moving unit, When it steps, Then it probes 40 wu ahead; if a unit on its layer, or on the same slope (R-097-05), blocks the probe (an idle unit of its own side does not block: idle means no move target and not engaged; an enemy always does) it tries +30, -30, +60, -60, +90 and -90 degrees from its heading, in that order, and takes the first clear one; if none is clear it continues straight.
+- R-097-03  Given a moving unit, When it steps, Then it probes 40 wu ahead; if a unit on its layer, or on the same slope (R-097-05), blocks the probe (a group mate of its own group does not block, nor does an idle unit of its own side, idle meaning no move target and not engaged; an enemy, an engaged unit and a moving friend always do) it tries +30, -30, +60, -60, +90 and -90 degrees from its heading, in that order, and takes the first clear one. That angle is its detour: it keeps the detour's side (tries only that side's angles) until the straight line is clear, and if none on its side is clear it keeps its stored heading (DEC-movement-sidestep-2026-11-24).
   Proof: MISSING
 - R-097-04  Given a unit that took a deflected angle, When it moves, Then it keeps that heading for at least 60 wu before re-evaluating.
   Proof: MISSING
@@ -110,8 +112,8 @@ Open flags: none here. Q-097-02 closed 2026-10-21 (register: invisible tie-break
 As a commander, I want my back rank to shoot over my front rank, so that formation depth is an advantage and not a jam.
 
 Rules
-- R-098-01  Given a ranged unit with an ally between it and its target, When it fires, Then the shot lands; friendly units never block fire.
-  Proof: MISSING
+- R-098-01  Given a ranged unit with a unit between it and its target, friendly or enemy, alive or dead, When it fires, Then the shot lands; no unit ever blocks fire, only cover, a wall or ground does (R-098-02). Westley, 2026-11-25: "The rule is units never block fire; only cover, walls and ground do." (DEC-units-never-block-fire-2026-11-25)
+  Proof: tests/csim/test_E13_R098_01_units_never_block_fire.py::test_R_098_01_thirty_packed_units_on_the_line_do_not_block | whole-run | verified 7c2b4dbc 2026-11-25
 - R-098-02  Given a blocked cell (R-097-01) or a cover obstacle between them on the layers involved, When it fires, Then the shot is blocked exactly as vision is (E-12, E-01 S-007): cover blocks only up to its height, and only a line that passes through it between two units outside it; a unit standing inside cover is fired at as normal (E-01 R-007-06).
   Proof: MISSING
 
@@ -129,23 +131,10 @@ Rules
   Proof: MISSING
 - R-099-03  Given more than 1,000 live units on the battlefield, When the tactical tick rate drops from 20 to 10 ticks per second (and returns above that count is crossed downward), Then every per-second quantity (speed, attack interval, ability duration and cooldown, drift) is unchanged in real time because per-tick values scale with the tick period, the change happens on a tick boundary, and every peer in a multiplayer session switches on the same tick (decision A, Westley 2026-09-24).
   Proof: MISSING
-- R-099-04  Given a unit within its arrival radius of its destination (1.5 × collision radius for a formation slot, 2 × for a route waypoint), When the tick runs, Then it has arrived where it stands, without snapping to the point: its destination is cleared and it is stationary from that tick onward, and any later displacement by collision or direct position change leaves it at the new position with no re-approach. A walker ordered alone has no arrival radius: with a clear path it walks to its point itself (tests hold a lone walker to within 1 wu of its route's end and a guard to within 5 wu of its post), and when something keeps it from the point it ends by the give-up of R-099-05; a flying unit ordered alone stops within 1.5 radii of its point, as its steering always has (found 2026-11-18: walkers ordered alone stood 16 to 19 wu from their point with the destination still set for 10,000 ticks).
+- R-099-04  Given a unit within its arrival radius of its destination (1.5 × collision radius for a formation slot, 2 × for a route waypoint), When the tick runs, Then it has arrived where it stands, without snapping to the point: its destination is cleared and it is stationary from that tick onward, and any later displacement by collision or direct position change leaves it at the new position with no re-approach. A walker ordered alone has no arrival radius: with a clear path it walks to its point itself (tests hold a lone walker to within 1 wu of its route's end and a guard to within 5 wu of its post), and when something keeps it from the point it keeps routing and its order stays active (R-099-06); a flying unit ordered alone stops within 1.5 radii of its point, as its steering always has (found 2026-11-18: walkers ordered alone stood 16 to 19 wu from their point with the destination still set for 10,000 ticks).
   Proof: tests/csim/test_PP_move_collision.py::test_R_099_04_within_slot_radius_arrives_where_it_stands | scenario | default flying kind, no canvas; no re-approach: test_R_099_04_displaced_after_arrival_does_not_re_approach in the same file; a walker alone: tests/csim/test_E13_R099_05_lone_walker_arrives_and_gives_up.py::test_R_099_04_control_a_lone_walker_with_a_clear_path_walks_to_its_point_itself | verified a14930ba5 2026-11-19
-- R-099-05  Given a unit held within 75 wu (about two slot spacings) of the place its order names (its slot under a group move or a group attack-move; its ordered point when it moves or attack-moves alone; walking or flying), When it has spent 40 ticks (2 s) there on which it came no nearer that place, Then it ends its order where it stands, the same state as an arrival: its destination is cleared and it takes no step of its own from that tick onward (a later push by a unit of its own side still moves it, R-097-10). Each tick is judged by its own two ends: a tick that began inside the 75 wu disc and brought the unit nearer by more than 0.1 wu is not counted and does not reset the count, so a slow unit that is still walking in is never stopped short; a tick that began outside the disc resets the count; arriving resets it; an order given to the unit starts it at zero, and the engine's own re-issue of a move inside an order (the resume after a fight, a pursuit, a return) does not. The count is zero on any tick the unit holds a target, is in the pause after its own shot, kites or is on a direct move (a pursuit, a guard's return, a move away from fire): a unit that pursues or stands to shoot is itself walking alone toward its target's place and is never ended by this rule. A walker ordered alone has no arrival radius (R-099-04), so this rule is what ends it when something stands on its point. A unit never paces with no end inside the disc (Architect decision 28, 2026-10-19, for the group; DEC-draws-round6-2026-11-18 for the unit alone; DEC-giveup-progress-2026-11-18 for the progress count and the new order; built 2026-11-18). A unit that paces farther than 75 wu from a place it can never reach has no rule yet. Units queued on a layer-order spot are to be left out of this rule when that queue is built (Q-002-10).
-  Proof: tests/csim/test_E13_R099_05_lone_walker_arrives_and_gives_up.py::test_R_099_05_a_walker_ordered_alone_and_held_inside_75_wu_ends_its_order_on_the_40th_tick_not_the_39th | scenario | no terrain; a group member at its slot: tests/csim/test_E13_R099_05_giveup_counts_only_ticks_without_progress.py::test_R_099_05_control_a_held_group_member_still_ends_its_order_on_the_40th_tick_not_the_39th; the progress count, the new order and the target clause are held by sibling tests of the two files | verified a14930ba5 2026-11-19
-
-Inputs: none beyond S-097.
-Outputs: positions.
-Open flags: none.
-
-### S-100 — Facing
-
-Direction changed 2026-10-13, rewrite pending: facing gains a firing arc, a unit fires only at targets inside an arc about its facing (Westley: "add a firing-arc rule to the game"; Q-100-01 for width and the flanked case). The rules below are what the game does today.
-As a commander, I want units to face what they shoot and where they go, and to turn rather than snap, so that a retreat under fire looks like one.
-
-Direction changed 2026-10-02, rewrite pending: a unit faces its engaged target only within 1.5 times its range, else its move target, else its velocity, and a stationary firing unit turns. The rules below are what the game does today.
-
-Rules
+- R-099-06  Given an attack-moving unit (alone or in a group) that is blocked by other units on the way to its point or its slot, When any number of ticks pass, Then its order stays active and it keeps routing around the blockers (R-097-03); it never ends its order short because it is blocked. An order ends only by arrival (R-099-04), a new order, death, or the pursuit and guard rules (Westley, 2026-11-24: "The unit is never supposed to 'give up' walking towards it's attack move, or trying to find paths around the object blocking it"; DEC-movement-sidestep-2026-11-24, which removed the give-up of the old R-099-05).
+  Proof: unbuilt; tests written red, not yet green: tests/csim/test_E13_DEC_sidestep_no_giveup.py::test_DEC_movement_sidestep_a_blocked_group_attack_mover_keeps_its_order_for_3000_ticks and ::test_DEC_movement_sidestep_a_lone_unit_blocked_on_its_point_keeps_its_order_for_3000_ticks
 - R-100-01  Given a unit attacking a target, When facing updates, Then it faces the target; given moving with no target, it faces its heading, which is the direction of its travel (the one-tick displacement), not its destination (DEC-facing-travel, 2026-10-22); given idle with no target, it keeps its last facing.
   Proof: MISSING
 - R-100-02  Given a facing change, When it turns, Then the turn rate is capped at 6.0 rad/s for Strike, 4.0 for Line, 2.5 for Siege.
@@ -173,7 +162,7 @@ Rules
 Inputs: tick deltas.
 Outputs: screen.
 Open flags: Q-101-02 (the collision iteration cap against R-101-01's 30 wu floor).
-Arrival is the group centroid reaching the point. Reference required: `references/E-13/notes.md`, missing.
+Arrival is the group centroid reaching the point. Reference: `references/E-13/notes.md` (one provided shot) and `references/movement-requirements.md`.
 
 ### S-102 — Same commands, same battle
 As a player in a multiplayer match, I want every peer to compute the same movement from the same commands, so that we are all watching one battle.
@@ -284,7 +273,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Look and behavior references
 
-`references/E-13/notes.md`, missing: formation movement, flow around blockers, turning (2 to 5 clips).
+`references/E-13/notes.md` holds one provided shot (grouped forces read as groups); formation movement, flow around blockers and turning still have no clips (2 to 5 wanted). Behaviour reference: `references/movement-requirements.md`.
 
 ## Ways this could be wrong
 

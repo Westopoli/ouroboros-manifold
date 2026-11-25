@@ -57,7 +57,8 @@ STEP_TOL = 0.05                       # numeric slack for the C's cheap trig, as
 # Recorded on the unmodified tree by test_PP_collision_radius_runtime.py (origin/main 37858c8e, no csrc change).
 # Test-defect, re-recorded 2026-11-12 with the copy in test_PP_collision_radius_runtime.py (engine rules Round 4, R-097-10; was 9266aad512c513ca...; the reason is given there).
 # Test-defect, re-recorded 2026-11-18 with the copy in test_PP_collision_radius_runtime.py (engine rules Round 6, E2 second pass, DEC-giveup-progress-2026-11-18; was 53b85466...; the reason is given there).
-TRACE_R15 = "46d1472c0c3f1e31b18c8591bbaddcfd6010a733159fb2921f09f1fb0839d30a"
+# Test-defect, re-recorded 2026-11-24 with the copy in test_PP_collision_radius_runtime.py (DEC-movement-sidestep-2026-11-24; was 46d1472c...; the reason is given there).
+TRACE_R15 = "8d184caaf3b4c21c8ac43812e2c7ddaa0fc8f7372c7794a36dd96c81664df003"
 
 
 def _set_radius(lib, w, unit_type, radius):
@@ -346,8 +347,10 @@ def test_H_041_production_slot_spacing_follows_the_largest_when_every_radius_is_
 # the 100, as TRACE_R15 does, and the size is the same). Taken from the Round 4 lib; the format is unchanged (the Round 3 lib gives the old value).
 # Test-defect, re-pinned 2026-11-18 from 22577020... (engine rules Round 6, E2 second pass, DEC-giveup-progress-2026-11-18): the unit state of the same mixed scene moves from tick 88 of the 100 (unit 6 keeps its order, see TRACE_R15); size 1154363 unchanged,
 # header and layout byte for byte as before (355 bytes differ in 17 ranges, all in the last 8 KB of the save, units 6 and 8 to 11 differ); the commit that moved it, 7d2f839be, touches no save code.
-SAVE_NO_RADIUS_SHA256 = "d1d1342236d76e9caa1465e47bfab2fad0670871853e23451afc1e5c45261e52"
-SAVE_NO_RADIUS_SIZE = 1154363
+# Test-defect, re-pinned 2026-11-24 from d1d13422... (DEC-movement-sidestep-2026-11-24): the movement slot of each moving unit loses two saved words (giveup_near, 4 bytes, and detour_remaining, 8) and gains the idle flag (4),
+# 8 bytes fewer for each of the 12 units of the mixed scene, and the version word is 14 (save format bumped 13 -> 14): 1154363 to 1154267; the unit state moves with the new behaviour (see TRACE_R15).
+SAVE_NO_RADIUS_SHA256 = "bc34e63a22a8ae313493b4b5b836c1824aa78aa59bb302b69468451233e1e7e6"
+SAVE_NO_RADIUS_SIZE = 1154267
 SAVE_SERIAL_AT = 40   # the 8-byte world serial (csrc/save.c header): a per-process counter of worlds created, so a second save in one process differs there only; zeroed before hashing
 
 

@@ -31,12 +31,12 @@ from scripts.skilllab.arena import run as arena_run, snapshot
 from scripts.skilllab.fight import TICKS_PER_SECOND
 
 ROOT = Path(__file__).resolve().parents[3]
-OPEN_TICKS = {"off": 576, "on": 558, "control": 558}   # dumped 2026-11-07 on base 633ea3e4: 585 / 575 / 575; re-dumped 2026-11-08 (engine rule fixes F2, F3: a mover does not fire, the lock holds; Test-defect)
-OPEN_NORMAL_FRAMES = {"off": [0, 100, 200, 300, 400, 500, 576], "on": [0, 100, 200, 300, 400, 500, 558]}
+OPEN_TICKS = {"off": 600, "on": 558, "control": 558}   # dumped 2026-11-07 on base 633ea3e4: 585 / 575 / 575; re-dumped 2026-11-08 (engine rule fixes F2, F3: a mover does not fire, the lock holds; Test-defect)
+OPEN_NORMAL_FRAMES = {"off": [0, 100, 200, 300, 400, 500, 600], "on": [0, 100, 200, 300, 400, 500, 558]}
 # CL-7 pins: sha256 of run.main's fight file (layout_path replaced by "layout_path_pinned", as h088_fixtures.sight_off_digests) and results.md, recorded on base 633ea3e4;
 # the fight-file shas re-recorded 2026-11-07 for the per-unit `fired` key (replay-firing-lines; the file minus every `fired` line has the old sha, results.md is unchanged).
 PINS = {
-    ("open", "off"): ("24898dd291dbaa24c8456249660ef606ae6e721d6ce2377001c82067ebb3c7c3", "82b05a22c96b1bd63181299a87b7a49d96a8571f2fe1340f8eee00ff04150c92"),   # fight file re-recorded 2026-11-18 (Round 6, R-099-05 give-up counts only ticks without progress, 7d2f839be: first different tick 79, unit 2 keeps its destination; 576 ticks and results.md unchanged; Test-defect); was 69a6e91a.. (Round 5)
+    ("open", "off"): ("61b786f51bad16f17ab8c2405306477a55d3e1c5a4f5f0ca79a1210a83555689", "3f0190e2fb39c596bbc74778ae1f72e9342637f2d8c29d2a33726416cc15344b"),   # Test-defect, re-recorded 2026-11-24 (DEC-movement-sidestep-2026-11-24: the open field fight with sight off now ends at tick 600, not 576; was 24898dd2... / 82b05a22...);   # fight file re-recorded 2026-11-18 (Round 6, R-099-05 give-up counts only ticks without progress, 7d2f839be: first different tick 79, unit 2 keeps its destination; 576 ticks and results.md unchanged; Test-defect); was 69a6e91a.. (Round 5)
     ("open", "on"): ("f9a03b60a43afcaf81dfceac7f6481ad7747b8856ce74cb302c67e7ee96a454f", "834adbf48902f73dedc3ed596e1c33945363f9b45ef6886fc4dfc2d9fee1224d"),
     ("cover", "on"): ("62c276c27730497edb563a193c51d60b319ea2307c57f74df43a06bbad0b75ea", "a80623626903d02ad8b6f01f374f984ba72b086cb32b88dfdfc3b50041c8d479"),   # re-recorded 2026-11-18 (Round 6, R-096-02 an order kept through the pause after its own shot, 66fbc1ee9: first different tick 378, unit 15 keeps its destination; 957 ticks, wipe; Test-defect); was 41ceb0cc.. / 3d924ab0.. re-recorded 2026-11-17 (Round 5 G1 to G7: 801 -> 957 ticks, checker reports none, seed 1 sight on; Test-defect); was 39d6a56d.. / 8d72a35c.. re-recorded 2026-11-12 (Round 4 idle-yield 6d3d7635, R-097-10: 847 -> 801 ticks, first different tick 575, checker reports none, seed 1 sight on; Test-defect); was 3b558888.. / 303193f2.. (Round 3 chase fix 94da7493: 1086 -> 847 ticks, checker reports none, seed 1 sight on; Test-defect); was b4d52723.. / b6fa72d3.. (2026-11-11, Round 2 F5 and F6: 1941 -> 1086), c29bb91c.. / 4a167ece.. before
 }
@@ -128,7 +128,7 @@ def by_tick(doc):
 # ---------------------------------------------------------------- controls: the existing path
 
 def test_control_the_normal_runs_the_closeup_tests_compare_with_have_the_dumped_premises(lab):
-    """CONTROL (green today, must stay green), the premises of CL-1 to CL-6: the normal runner on OPEN gives 576 / 558 / 558 ticks (sight off / on / control), all wipes, normal
+    """CONTROL (green today, must stay green), the premises of CL-1 to CL-6: the normal runner on OPEN gives 600 / 558 / 558 ticks (sight off / on / control), all wipes, normal
     frames at 0, 100 ... and the last tick; on COVER 957 ticks with `built_features` and per-frame `blocked`."""
     got = {s: lab.normal("open", s)[0] for s in ("off", "on", "control")}
     cover = lab.normal("cover", "on")[0]

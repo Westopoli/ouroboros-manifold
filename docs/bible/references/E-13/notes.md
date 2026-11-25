@@ -10,4 +10,4 @@
 |---|---|---|---|---|---|---|
 | 01 | S-095, S-088 | `E-13.png` | Halo Wars | Grouped forces read as distinct groups even when clumped tight: each unit is a cluster of ~6 individual models under one selection bar, and the eye still separates the groups | the Halo art / factions | a moving force reads as legible groups, never one indistinct blob; one "unit" = several models, not a single figure |
 
-**Halo Wars is the reference for E-13.** For the motion behaviors below (formation cohesion, flow around blockers, turning/facing — S-095, S-097, S-100, S-101), Halo Wars group movement is the target register; capture clips there when needed. This shot also informs E-11 squad rendering (S-081, S-088).
+**Superseded 2026-11-11: StarCraft 2 is the reference for E-13 movement and targeting** (hub, `game_bible.md`; `references/movement-requirements.md`). This shot stays as the look of grouped forces (S-095, S-088), not as a motion reference; Halo Wars is no longer the target register for formation cohesion, flow around blockers or turning (S-095, S-097, S-100, S-101). It still informs E-11 squad rendering (S-081, S-088).

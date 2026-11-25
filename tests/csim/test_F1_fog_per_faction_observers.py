@@ -309,11 +309,12 @@ def _visible_hash(lib, w):
 # unit 396, held 56 wu from its slot, ended its order at the top of tick 240 in the old build (count 40 from the top of tick 201); in the new build ticks 201 and 202 bring it nearer and are not counted, it has counted 37 and takes its step on tick 240; unit 490, 30 wu from it, is moved by the same 0.47 wu in the collision pass.
 # Re-recorded again 2026-11-18 (engine rules Round 6, 551b5acee: a new order starts the give-up count at zero, R-099-05, DEC-giveup-progress-2026-11-18; was: spread state f79705b8, visible unchanged, clash unchanged). Built on 551b5acee^ and on the tip in lock step:
 # the first tick to differ is 247 (unit 396 only; positions are equal before it): the old build carried 396's count of 37 from its group order 5 into its replaced order 6 and ended it at the end of tick 245; the new build starts the count at 0 on tick 241, so 396 is still held on 246 and walks free on 247.
+# Re-recorded 2026-11-24 (DEC-movement-sidestep-2026-11-24: no give-up, a probe skips group mates and idle friends, a detour is kept on its side until the line is clear; was: clash state 090c42c9, spread state af0f91a6 and visible aa80378e; the clash visible hash is unchanged). Re-recorded from the built branch; the lab per-tick checks of the same change are green.
 GOLDEN = {
-    "clash": ("090c42c9c714a45fc42bf92f5eb60c9e8e31ed204a4e57182076d113c81adda8",
+    "clash": ("e742aa1c92fbd193dde4a66cd798332688ef1300b131cf50cab7f6d65f4b5eb6",
               "1f1d6a2220df7ccab39779edbffd81ea77fbb5c4b3760dd2d2d33cf5941cdb03"),
-    "spread": ("af0f91a6db979af3978fc8f29cfa18e831c0f8865a9e698f56d6387af69397ba",
-               "aa80378e03e774d93785b73289bcdfef4a6cf25c2691f80316a861d3e87dd018"),
+    "spread": ("b4f440eb00471dfe836d18fbaa5f920ec9ffaacf7fe572695ce8ae541ef2e5ed",
+               "de192bd7dde6cab4f9390294e4cdc4498d1655458bff3e70523651dbf81fd7c1"),
 }
 
 

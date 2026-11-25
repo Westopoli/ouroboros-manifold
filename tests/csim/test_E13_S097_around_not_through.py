@@ -98,44 +98,33 @@ def test_R_097_03_it_probes_40_wu_ahead(lib, world_factory):
     assert abs(lib.om_unit_get_facing(w, u_blocked)) < 1e-3
 
 
-def test_R_097_04_it_keeps_that_heading_for(lib, world_factory):
-    """Given a unit that took a deflected angle, When it moves, Then it keeps that heading for at least 60 wu before re-evaluating."""
+def test_R_097_04_it_keeps_that_side_until_the_straight_line_is_clear(lib, world_factory):
+    """Given a unit that took a deflected angle, When it moves, Then it keeps to that side of the straight line for as long as the straight line stays blocked (DEC-movement-sidestep-2026-11-24; it replaces
+    the 60 wu hold). A Raider at (0,0) ordered to (500,0) has an enemy Supply (1e6 hp, never moves) 60 wu ahead. On every tick on which the point 40 wu along the straight line from where the tick began is
+    within 30 wu of the Supply, the tick's displacement is on the deflected side (never toward the other side); the unit deflects on at least 4 such ticks (positive control: it did deflect, and the first
+    deflection is to +y), and when the line is clear it heads for its point again and arrives within 30 wu."""
     w = world_factory(n_regions=1)
 
     u = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0)
     lib.om_command_move(w, u, 500.0, 0.0)
+    blocker = lib.om_unit_spawn(w, 6, 1, 60.0, 0.0, 0)  # an enemy Supply
+    lib.om_unit_set_hp(w, blocker, 1.0e6)
 
-    # Blocker placed 30 wu ahead
-    lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 30.0, 0.0, 0)
-    lib.om_world_step(w)
-
-    # Test-defect, A127: facing now turns at a limited rate toward the heading (R-100), so facing keeps
-    # changing while the unit walks one steady line. The heading the rule talks about is the direction
-    # the unit travels: measured here as the direction of each tick's displacement. The first two steps
-    # are the turn onto the deflected line (and the push-out from a blocker spawned exactly 30 wu
-    # away), so the deflected heading is taken from the third step. Distance is counted from where the
-    # unit stood (0, 0), threshold 55 wu < 60 unchanged.
-    start_pos_x, start_pos_y = 0.0, 0.0
-    lib.om_world_step(w)
-    prev = lib.om_unit_get_pos(w, u)
-    lib.om_world_step(w)
-    cur = lib.om_unit_get_pos(w, u)
-    deflected_heading = math.atan2(cur[1] - prev[1], cur[0] - prev[0])
-    prev = cur
-    # Positive control: the deflected travel heading is not the straight +x line, so a unit that
-    # re-evaluated back to straight would show.
-    assert abs(deflected_heading) > 0.1
-
-    dist_covered = 0.0
-    for _ in range(100):
-        if dist_covered >= 55.0:
-            break
+    side, blocked_ticks = 0, 0
+    for _ in range(200):
+        x0, y0 = lib.om_unit_get_pos(w, u)
+        probe = (x0 + 40.0, y0)  # the straight line to (500,0) runs along +x from a unit on y = 0, and is within a hair of it once deflected
+        blocked = math.hypot(probe[0] - 60.0, probe[1] - 0.0) < 30.0
         lib.om_world_step(w)
-        curr_x, curr_y = lib.om_unit_get_pos(w, u)
-        dist_covered = math.hypot(curr_x - start_pos_x, curr_y - start_pos_y)
-        step_heading = math.atan2(curr_y - prev[1], curr_x - prev[0])
-        prev = (curr_x, curr_y)
-        assert pytest.approx(step_heading, abs=1e-3) == deflected_heading
+        x1, y1 = lib.om_unit_get_pos(w, u)
+        if blocked and abs(y1 - y0) > 1e-6:
+            if side == 0:
+                side = 1 if y1 > y0 else -1
+            blocked_ticks += 1
+            assert (y1 - y0) * side > 0.0, "tick on which the straight line was blocked went to the other side: dy %.4f, the side taken first %d" % (y1 - y0, side)
+    assert blocked_ticks >= 4, "premise: the unit deflected on only %d blocked ticks" % blocked_ticks
+    x, y = lib.om_unit_get_pos(w, u)
+    assert math.hypot(x - 500.0, y) <= 30.0, "the unit did not get on to its point: at (%.1f, %.1f)" % (x, y)
 
 
 def test_R_097_05_they_pushed_apart_along_line(lib, world_factory):

@@ -31,9 +31,6 @@ FRIEND, ENEMY = 0, 1
 ANGLE_TOL_RAD = 0.01
 DIST_TOL = 0.01         # the C's cheap sin/cos leave a step 5e-5 wu short; this only tells "moved" from "waited"
 RAIDER_STEP = 7.5       # 150 wu/s at 20 ticks/s (R-099-02)
-VANGUARD_STEP = 4.0     # 80 wu/s at 20 ticks/s
-DETOUR_MIN_DIST = 60.0  # R-097-04
-
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
@@ -43,10 +40,6 @@ def tw(lib, world_factory):
     w = world_factory(n_regions=1)
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
     return w
-
-
-def _arr(ids):
-    return (ctypes.c_uint32 * len(ids))(*ids)
 
 
 def _angle_diff(a, b):
@@ -146,20 +139,6 @@ def test_R_097_03_mover_on_upper_layer_ignores_lower_layer_blocker(lib, tw):
     assert abs(_angle_diff(ang, 0.0)) < ANGLE_TOL_RAD
 
 
-def test_R_097_03_group_mates_block(lib, tw):
-    """R-097-03 (P8): a unit of the mover's own move group blocks the probe like any other unit (the C
-    exempted group mates). A at (0,0) and B at (40,0) are group-moved to (1000,0); A's slot is (980,0), its
-    straight probe point (40,0) is B's start-of-tick position, so A deflects +60 as in the single-blocker case."""
-    a = lib.om_unit_spawn(tw, RAIDER, FRIEND, 0.0, 0.0, 0)
-    b = lib.om_unit_spawn(tw, RAIDER, FRIEND, 40.0, 0.0, 0)
-    gid = lib.om_command_group_move(tw, _arr([a, b]), 2, 1000.0, 0.0)
-    assert gid != 0
-    ang, dist, _ = _step_once(lib, tw, a)
-    assert dist == pytest.approx(RAIDER_STEP, abs=DIST_TOL)
-    assert abs(_angle_diff(ang, math.radians(60.0))) < ANGLE_TOL_RAD, \
-        f"group mate did not block: A moved at {math.degrees(ang):.2f} deg"
-
-
 def test_R_097_03_probe_uses_start_of_tick_positions(lib, tw):
     """R-097-03 (P8): the probe tests every other unit where it stood at the start of the tick, not where
     an earlier unit of this tick has already moved it. A (id 1) at (0,0) goes +x and moves first to (7.5,0);
@@ -185,34 +164,6 @@ def test_R_097_03_start_of_tick_control_idle_unit_at_the_live_spot_blocks(lib, t
     ang, dist, _ = _step_once(lib, tw, b)
     assert dist == pytest.approx(RAIDER_STEP, abs=DIST_TOL)
     assert abs(_angle_diff(ang, math.pi)) > 0.1, "an idle unit on the probe point did not deflect B"
-
-
-@pytest.mark.parametrize("unit_type,step", [(RAIDER, RAIDER_STEP), (VANGUARD, VANGUARD_STEP)],
-                         ids=["raider_7_5_per_tick", "vanguard_4_per_tick"])
-def test_R_097_04_detour_held_for_60_wu_of_distance_moved(lib, tw, unit_type, step):
-    """R-097-04 (P8): a deflected heading is held for 60 wu of distance moved, counted by distance (so a slower
-    unit holds it for more ticks), then the unit re-aims at its destination. The blocker at (60,0) holds only the
-    straight probe (20 wu) and leaves +30 clear, so the deflection is +30 whatever the rest of the sweep does;
-    it is removed after the first tick (hp 0) so that the straight way is clear and only the detour hold keeps
-    the heading. A Raider holds +30 deg for 8 ticks, a Vanguard for 15; the next tick heads at the destination."""
-    ticks_held = int(round(DETOUR_MIN_DIST / step))
-    u = lib.om_unit_spawn(tw, unit_type, FRIEND, 0.0, 0.0, 0)
-    blocker = _spawn_blockers(lib, tw, [(60, 0)])[0]
-    lib.om_command_move(tw, u, 1000.0, 0.0)
-    ang, dist, _ = _step_once(lib, tw, u)
-    assert abs(_angle_diff(ang, math.radians(30.0))) < ANGLE_TOL_RAD, "no +30 deflection on tick 1"
-    lib.om_unit_set_hp(tw, blocker, 0.0)
-    assert lib.om_unit_alive(tw, blocker) == 0
-    for k in range(2, ticks_held + 1):
-        ang, dist, _ = _step_once(lib, tw, u)
-        assert dist == pytest.approx(step, abs=DIST_TOL)
-        assert abs(_angle_diff(ang, math.radians(30.0))) < ANGLE_TOL_RAD, \
-            f"detour dropped on tick {k} of {ticks_held}"
-    x, y = lib.om_unit_get_pos(tw, u)
-    ang, dist, _ = _step_once(lib, tw, u)
-    want = math.atan2(0.0 - y, 1000.0 - x)
-    assert abs(_angle_diff(ang, want)) < ANGLE_TOL_RAD, \
-        f"detour held past {DETOUR_MIN_DIST} wu: moved at {math.degrees(ang):.2f}, wanted {math.degrees(want):.2f}"
 
 
 def test_R_102_02_sweep_order_is_documented_in_algorithms_md():

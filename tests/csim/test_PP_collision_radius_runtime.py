@@ -57,7 +57,9 @@ ARRIVAL_MULT = 1.5   # R-099-04 and csrc/om_constants.h OM_ARRIVAL_TOLERANCE_MUL
 # while unit 11 of its group, 30 wu away and still walking, was held back; the new engine moves unit 9 aside by 2.8 wu. Radius 15 set and radius unset still give one trace.
 # Test-defect, re-recorded 2026-11-18 (engine rules Round 6, E2 second pass, DEC-giveup-progress-2026-11-18: the give-up counts only ticks without progress; was 53b85466...). Built on 64dacc0bc and on 7d2f839be in lock step: the first tick to differ is 88 (unit 6 only):
 # unit 6 of the 3 x 2 group, pushed in and out of its slot by its mates, ended its order at the top of tick 88 in the old build (count 40) and in the new build has counted 17 and keeps walking; it gives up on tick 134. Radius 15 set and radius unset still give one trace.
-TRACE_R15 = "46d1472c0c3f1e31b18c8591bbaddcfd6010a733159fb2921f09f1fb0839d30a"
+# Test-defect, re-recorded 2026-11-24 (DEC-movement-sidestep-2026-11-24: no give-up, a probe skips group mates and idle friends, a detour is kept on its side until the line is clear; was 46d1472c...).
+# The mixed scene has units that meet idle friends and group mates, which no longer deflect, and a member that gave up before; radius 15 set and radius unset still give one trace.
+TRACE_R15 = "8d184caaf3b4c21c8ac43812e2c7ddaa0fc8f7372c7794a36dd96c81664df003"
 
 
 def _world(lib, radius):
@@ -72,6 +74,19 @@ def _world(lib, radius):
 
 def _spawn(lib, w, x, y):
     return lib.om_unit_spawn(w, RAIDER, FACTION, x, y, LAYER)
+
+
+SUPPLY = 6           # as test_PP_unit_support.SUPPLY
+ENEMY = 1
+BIG_HP = 1.0e6
+
+
+def _blocker(lib, w, x, y):
+    """A unit that blocks a probe: an enemy Supply (1e6 hp, never fires, never moves). Until DEC-movement-sidestep-2026-11-24 this was an idle own Raider; an idle friend
+    no longer blocks a probe (it steps aside), so the scenes below, which are about the radius, use a blocker that always does."""
+    b = lib.om_unit_spawn(w, SUPPLY, ENEMY, x, y, LAYER)
+    lib.om_unit_set_hp(w, b, BIG_HP)
+    return b
 
 
 def _pos(lib, w, u):
@@ -89,8 +104,8 @@ def _gap_run(lib, radius, ticks=300):
     """Returns (x where the mover first crosses y = 1000 or None, final mover pos, the per-tick trajectory)."""
     w = _world(lib, radius)
     try:
-        _spawn(lib, w, *BLOCK_A)
-        _spawn(lib, w, *BLOCK_B)
+        _blocker(lib, w, *BLOCK_A)
+        _blocker(lib, w, *BLOCK_B)
         m = _spawn(lib, w, 1040.0, 1200.0)           # on the perpendicular bisector, 200 wu above the line
         lib.om_command_move(w, m, 1040.0, 800.0)      # 200 wu below it: the straight path runs through the gap
         crossing_x, prev, traj = None, _pos(lib, w, m), []
@@ -258,11 +273,11 @@ def test_R_099_04_control_arrival_at_radius_15_is_22_5(lib):
 # ---- site family: steering probe and blocked test (R-097-03) ----------------------------------------------------
 
 def _pass_by(lib, radius, offset):
-    """A unit walks +y past an idle blocker `offset` wu to its side (the blocker at x = 1000, the walker on
+    """A unit walks +y past a blocker `offset` wu to its side (the blocker at x = 1000, the walker on
     x = 1000 + offset). Returns the largest sideways drift of the walker from its straight line."""
     w = _world(lib, radius)
     try:
-        _spawn(lib, w, 1000.0, 1200.0)
+        _blocker(lib, w, 1000.0, 1200.0)
         m = _spawn(lib, w, 1000.0 + offset, 1000.0)
         lib.om_command_move(w, m, 1000.0 + offset, 1400.0)
         drift = 0.0

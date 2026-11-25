@@ -2,6 +2,8 @@
 
 Plan: `docs/northstar/plans/engine-rules-2026-11-08/round6.md`. Why the round was cut: `docs/reports/2026-11-18-lab-draws.md` and `docs/reports/2026-11-18-attack-move-drift.md`. Branch `s/draws-r6-engine`. Contracts untouched (`csrc/ouroboros_sim.h`, `signatures.toml`, the pipe frames: the diff against main is empty).
 
+E2's give-up is superseded by DEC-movement-sidestep-2026-11-24 (removed; E-13 R-099-06).
+
 ## What was built
 
 | Piece | What a player or the lab sees | Where |
