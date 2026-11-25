@@ -196,3 +196,30 @@ def run_matrix(names, layouts, seeds, scratch_root, rows_path, *, arm="W", refs=
                     f.write(json.dumps(rows[-1], sort_keys=True) + "\n")
                     f.flush()
     return rows
+
+
+def main(argv=None):
+    """CLI wiring (LI1 interface): exit 0 when every row is ok, 1 when any row is an error row; the rows are written either way."""
+    import argparse
+    ap = argparse.ArgumentParser(prog="python3 -m scripts.skilllab.arena.isolation_runner")
+    ap.add_argument("--version", required=True, choices=("then", "now", "fix"))
+    ap.add_argument("--ref")
+    ap.add_argument("--layout", required=True, help="a catalogue id (L-0047) or a situation id (SIT-0106)")
+    ap.add_argument("--seed", required=True, type=int)
+    ap.add_argument("--arm", default="W")
+    ap.add_argument("--scratch", required=True, type=Path)
+    ap.add_argument("--rows", required=True, type=Path)
+    ap.add_argument("--repo", type=Path)
+    ap.add_argument("--out", type=Path)
+    args = ap.parse_args(argv)
+    if args.version == "fix" and not args.ref:
+        ap.error("--version fix needs --ref")
+    rows = run_matrix([args.version], [args.layout], [args.seed], args.scratch, args.rows, arm=args.arm, refs={args.version: args.ref}, repo=args.repo, out_dir=args.out)
+    for row in rows:
+        err = row["error"]
+        print("%s %s %s seed %d %s" % (row["version"], row["lab_sha"], row["layout"], row["seed"], "ERROR %s: %s" % (err["stage"], err["message"]) if err else "ok"))
+    return 1 if any(r["error"] for r in rows) else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
