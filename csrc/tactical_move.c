@@ -2047,9 +2047,17 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
     }
 }
 
+/* A unit that does not block self_id's probe: a mate of its own group (they walk to their own slots) or an idle friend (om_move_yields: R-097-10 has it step aside). An enemy, and a
+ * friend that is moving, holding a target or engaged, still block. See also: om_move_probe_gather_start, DEC-movement-sidestep-2026-11-24. */
+static int om_move_probe_ignores(const om_world *w, const om_move_state *ms, uint32_t self_id, uint32_t cid) {
+    const uint32_t g = ms->units[self_id].group_id;
+    if (g != 0 && ms->units[cid].group_id == g) return 1;
+    return om_move_yields(w, ms, cid, self_id);
+}
+
 /* PP-move P8 (PURSUE_BY_STEERING): the units a probe from (x, y) can touch, as their start-of-tick
- * positions, into scan_x/scan_y: same layer, or on the same slope as the unit (R-097-03, R-097-05), group mates and idle friends included, the unit itself
- * not. The grid was filed at the start of the tick, so a unit still in a cell is in the cell of its
+ * positions, into scan_x/scan_y: same layer, or on the same slope as the unit (R-097-03, R-097-05), the unit itself not, and not the mates and idle friends
+ * om_move_probe_ignores names. The grid was filed at the start of the tick, so a unit still in a cell is in the cell of its
  * start-of-tick position; a unit in the spill list is always a candidate. Returns the count. */
 static uint32_t om_move_probe_gather_start(const om_world *w, om_move_state *ms, uint32_t self_id, double x, double y) {
     const double r = OM_STEERING_PROBE_DIST + 2.0 * ms->radius + OM_MOVE_GRID_BOUND_PAD;
@@ -2061,6 +2069,7 @@ static uint32_t om_move_probe_gather_start(const om_world *w, om_move_state *ms,
         cid = ms->slot_id[slot];
         double dx = ms->start_x[cid] - x, dy = ms->start_y[cid] - y;
         if (cid == self_id || dx * dx + dy * dy > r2) continue;
+        if (om_move_probe_ignores(w, ms, self_id, cid)) continue;
         if (ms->start_layer[cid] != layer && !om_move_same_slope(w, x, y, layer, ms->start_x[cid], ms->start_y[cid], ms->start_layer[cid])) continue;
         ms->scan_x[n] = ms->start_x[cid];
         ms->scan_y[n] = ms->start_y[cid];
@@ -2075,6 +2084,7 @@ static uint32_t om_move_probe_gather_start(const om_world *w, om_move_state *ms,
                 slot = base + om_move_lowest_bit(mask);
                 cid = ms->slot_id[slot];
                 if (ms->unit_slot[cid] != slot || cid == self_id) continue;
+                if (om_move_probe_ignores(w, ms, self_id, cid)) continue;
                 if (ms->start_layer[cid] != layer && !om_move_same_slope(w, x, y, layer, ms->slot_sx[slot], ms->slot_sy[slot], ms->start_layer[cid])) continue;
                 ms->scan_x[n] = ms->slot_sx[slot];
                 ms->scan_y[n] = ms->slot_sy[slot];
