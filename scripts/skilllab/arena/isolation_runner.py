@@ -135,13 +135,13 @@ def row_key(row):
     return (row["version"], row["lab_sha"], row["arm"], row["layout"], row["seed"])
 
 
-def _fight(tree, layout_file, seed, out):
-    """Run the tree's own lab once; the path of the fight file. Exit 2 with no fight file is the lab's REJECT of the layout; exit 2 with the file is a fight the rule checker marked invalid, not an error (the file says so)."""
+def _fight(tree, layout_file, seed, out, control_dir=None):
+    """Run the tree's own lab once; the path of the fight file. `control_dir` adds the lab's `--control-dir` (the control twin's fight file is written there). Exit 2 with no fight file is the lab's REJECT of the layout; exit 2 with the file is a fight the rule checker marked invalid, not an error (the file says so)."""
     path = out / ("%s-s%d.fight.json" % (layout_file.stem, seed))
     path.unlink(missing_ok=True)
     out.mkdir(parents=True, exist_ok=True)
-    done = subprocess.run([sys.executable, "-m", "scripts.skilllab.arena.run", "--layout", str(layout_file), "--seed", str(seed), "--out", str(out)],
-                          cwd=str(tree), capture_output=True, text=True)
+    done = subprocess.run([sys.executable, "-m", "scripts.skilllab.arena.run", "--layout", str(layout_file), "--seed", str(seed), "--out", str(out)]
+                          + (["--control-dir", str(control_dir)] if control_dir else []), cwd=str(tree), capture_output=True, text=True)
     if done.returncode == 2 and not path.is_file():      # REJECT: the lab refused the layout and wrote nothing; an INVALID fight (exit 2) wrote its file, which carries `invalid` and `violations`
         raise BuildError("layout", _tail(done.stdout, done.stderr))
     if not path.is_file():
