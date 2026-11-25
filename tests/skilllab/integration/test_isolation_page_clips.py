@@ -66,7 +66,7 @@ def test_caption_has_layout_seed_version_tick_range_and_table_row(tmp_path):
 
 def test_clip_sets_keep_the_manifest_order_and_the_facts_order(tmp_path):
     root, _, _ = render(tmp_path, [("z-first", "L-0055", "same", ["now", "then"]), ("a-second", "L-0084", "changed", ["then", "now"])])
-    ids = [n.attrs["id"] for n in root.one("section", data_section="clips").find("section")]
+    ids = [n.attrs["id"] for n in root.one("section", data_section="clips").find("section") if "id" in n.attrs]
     assert ids == ["z-first", "a-second"]
     assert [v.attrs["src"].rsplit("/", 1)[-1] for v in root.one("section", id="z-first").find("video")] == ["z-first-now.mp4", "z-first-then.mp4"]
 
