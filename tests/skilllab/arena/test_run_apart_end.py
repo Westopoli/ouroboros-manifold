@@ -39,7 +39,6 @@ import hashlib
 import io
 import math
 import sys
-import tomllib
 from pathlib import Path
 
 import pytest
@@ -57,7 +56,6 @@ from scripts.skilllab.engine import Engine  # noqa: E402
 from test_closeup import PINS, _layout as closeup_layout  # noqa: E402
 from test_run import make_stall_layout, write_layout_orders  # noqa: E402
 
-CATALOGUE = ROOT / "docs" / "northstar" / "research" / "layer_dynamics" / "catalogue"
 NOTICE = 1.1                  # 1 + OM_NOTICE_MARGIN (csrc/notice_internal.h)
 FIELD = "nearest_enemy_wu"    # the name this file pins for the distance, in `result`
 
@@ -119,24 +117,8 @@ def is_stall(doc):
 
 
 # ---------------------------------------------------------------- the stage 1 fight
-
-def test_L5_the_stage_1_fight_ends_apart_with_the_nearest_enemies_beyond_every_survivors_notice_distance():
-    """H-040 / DEC-formation-kept-2026-11-19: L-0054 (sight off, seed 1; about a minute) ends with both sides alive, each survivor having finished its order, the nearest enemies beyond notice
-    (round6.md E5; measured on this branch 2026-11-19: 14 against 22 at tick 10,860, end silence). Under L5 that end is `apart`: `end` apart, `stall` false, both sides alive, not capped, no survivor holds a target in the last frame, the document validates, and `nearest_enemy_wu`
-    is the distance between the nearest two survivors (as the last frame gives it, within 0.05 wu) and is greater than the notice distance of every survivor. Red today: the end is `silence`, `stall` true."""
-    with open(CATALOGUE / "L-0054.toml", "rb") as f:
-        layout = tomllib.load(f)
-    doc = document(layout, "off", snapshot.CAP_SECONDS)
-    res = doc["result"]
-    assert res["end"] == "apart" and res["stall"] is False and res["capped"] is False, res
-    assert min(res["survivors"]) > 0 and res["winner"] != "stall", res
-    assert snapshot.validate(doc) == []
-    assert sum(doc["frames"][0]["alive"]) > sum(res["survivors"]), "no unit fell: the sides never fought"   # shots were fired
-    last = doc["frames"][-1]["units"]
-    assert all(u["target"] is None for u in last if u["alive"]), "a survivor still holds a target in the last frame"
-    assert abs(res[FIELD] - nearest(doc)) <= 0.05, (res[FIELD], nearest(doc))
-    assert res[FIELD] > max(notice(doc, "A"), notice(doc, "B")), "the nearest enemies are within a survivor's notice distance: %s" % res
-
+# Test-defect, 2026-11-24 (DEC-movement-sidestep-2026-11-24): the test that ran L-0054 to an apart end is retired. Under the side-step L-0054 (sight off, seed 1) is a wipe at tick 6408, no longer an
+# apart end; the apart end stays proved by the REAL fixture below (a real fight, a planted shot) and its neighbours.
 
 # ---------------------------------------------------------------- planted fights
 
@@ -335,7 +317,7 @@ def test_L5_the_distance_field_belongs_to_the_apart_end_alone(end, stall):
 
 @pytest.mark.parametrize("case,sight", [("open", "off"), ("open", "on")])
 def test_L5_a_fight_that_ends_by_elimination_writes_the_same_bytes_as_before(tmp_path, case, sight):
-    """H-040 / DEC-formation-kept-2026-11-19: "A fight that ends by elimination writes the same bytes as today". The two pinned open-field fights of test_closeup.py (`PINS`, wipe at tick 576 sight off and
+    """H-040 / DEC-formation-kept-2026-11-19: "A fight that ends by elimination writes the same bytes as today". The two pinned open-field fights of test_closeup.py (`PINS`, wipe at tick 600 sight off and
     558 sight on; layout path replaced as `h088_fixtures._pinned_sha` does) through `run.main`: the fight file and `results.md` hash to the recorded sha256. Green today, must stay green; it
     stays green only if the apart branch adds nothing to a wipe."""
     layout = closeup_layout(case)

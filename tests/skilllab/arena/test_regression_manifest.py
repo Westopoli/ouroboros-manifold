@@ -272,7 +272,7 @@ def _field(line, name):
 def test_L2_command_a_fight_that_ends_by_elimination_gives_exit_0_and_one_line(planted, tmp_path):
     """L2: 'prints one line per fight (end, winner, survivors, ticks, agreement with his expectation, checker reports) and exits non-zero if any fight ends without an elimination or the
     checker reports a rule'. The command itself (`python -m`, a subprocess), one planted row, L-9102 (wipe, side A wins), expected A: exit 0; one line naming L-9102 with end=wipe, winner=A,
-    survivors=8:0, a tick count, agree=yes, checker=none, and no DRAW. Red today: no module."""
+    survivors=7:0 (8:0 until 2026-11-24: Test-defect, DEC-movement-sidestep-2026-11-24, a different fight), a tick count, agree=yes, checker=none, and no DRAW. Red today: no module."""
     manifest = _manifest_file(tmp_path, _row("L-9102", "A"))
     done = subprocess.run([sys.executable, "-m", "scripts.skilllab.arena.regression", "--manifest", str(manifest), "--catalogue", str(planted)],
                           cwd=str(ROOT), capture_output=True, text=True, timeout=600)
@@ -280,7 +280,7 @@ def test_L2_command_a_fight_that_ends_by_elimination_gives_exit_0_and_one_line(p
     assert done.returncode == 0, (done.returncode, done.stdout[-800:], done.stderr[-800:])
     assert len(lines) == 1, done.stdout
     line = lines[0]
-    assert (_field(line, "end"), _field(line, "winner"), _field(line, "survivors"), _field(line, "agree"), _field(line, "checker")) == ("wipe", "A", "8:0", "yes", "none")
+    assert (_field(line, "end"), _field(line, "winner"), _field(line, "survivors"), _field(line, "agree"), _field(line, "checker")) == ("wipe", "A", "7:0", "yes", "none")
     assert int(_field(line, "ticks")) > 0 and _field(line, "sight") == "off" and "DRAW" not in line
 
 
@@ -302,15 +302,16 @@ def test_L2_command_a_winner_other_than_his_expected_one_is_reported_not_failed(
 
 
 def test_L2_command_a_checker_report_gives_a_non_zero_exit_and_the_rule_on_the_line(planted, tmp_path, monkeypatch):
-    """L2: 'exits non-zero if ... the checker reports a rule'. The same wipe fight as L-9102, with `Engine.step` moving side A's first unit 300 wu sideways in its fifth step (a real fault the
-    checker sees as `continuity`): the fight still ends by wipe, the exit is non-zero, and its line says checker=continuity (the rule id, comma-joined if more) and not DRAW. Red today: no module."""
+    """L2: 'exits non-zero if ... the checker reports a rule'. The same wipe fight as L-9102, with `Engine.step` moving side B's first unit 300 wu sideways in its fifth step (a real fault the
+    checker sees as `continuity`; Test-defect, 2026-11-24, DEC-movement-sidestep-2026-11-24: it was side A's first unit, which the side-step leaves 39.1 wu from its nearest mate at tick 5, inside the checker's
+    40 wu push radius, so the move was forgiven as a push; side B's mates stand 40.0 wu apart): the fight still ends by wipe, the exit is non-zero, and its line says checker=continuity (the rule id, comma-joined if more) and not DRAW. Red today: no module."""
     real, state = Engine.step, {"n": 0}
 
     def step(self, w):
         real(self, w)
         state["n"] += 1
         if state["n"] == 5:
-            u = sorted(self._own[(w.value, 0)])[0]
+            u = sorted(self._own[(w.value, 1)])[0]
             x, y = self.unit_pos(w, u)
             self._lib.om_unit_set_pos.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_double, ctypes.c_double]
             self._lib.om_unit_set_pos(w, u, x, y + 300.0)

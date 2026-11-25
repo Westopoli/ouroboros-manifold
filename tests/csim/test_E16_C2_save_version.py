@@ -12,7 +12,7 @@ import ctypes
 from conftest import OMTier, set_owner, set_region
 
 VERSION_OFFSET = 4
-EXPECTED_VERSION = 13
+EXPECTED_VERSION = 14  # Test-defect, 2026-11-24 (DEC-movement-sidestep-2026-11-24): the movement slot changed, 13 -> 14
 PRE_BUMP_VERSION = 9
 
 
