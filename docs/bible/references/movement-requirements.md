@@ -25,13 +25,17 @@ Confidence: high = Blizzard page or editor documentation read; medium = search s
 | Call for help | "Acquire Call For Help Filters" weapon field and a search-effect flag exist (high on existence); radius NOT FOUND | none | unverified | |
 | Idle own units give way to a moving unit | Push priority per unit; idle yield, hold-position units resist (appendix-b, Liquipedia patch notes high; idle-yield reported); forum hearsay on details (low to medium) | E-13 R-097-10; DEC-Q087-02 | unverified in detail; open Q-097-04 | 2026-10-20 "idle units are 'obstacles' to moving units, starcraft 2 movement mechanics are the reference, when stuck on blocked refer to them and use their rules" |
 | Enemy units are never pushed | Reported (appendix-b), not Blizzard text | R-097-08: enemies collide like allies | unverified | |
-| A blocked unit: repath, wait or give up | NOT FOUND anywhere (only an anecdotal "repath" comment) | R-099-05 give-up after 40 ticks within 75 wu | contradicted by ruling | 2026-11-24 "The unit is never supposed to \"give up\" walking towards it's attack move, or trying to find paths aroudn the object blocking it." |
-| An attack-moving unit never ends its order short of its destination because it is blocked; it keeps routing | not documented; this is Westley's rule | R-099-05 does the opposite, to be removed by the pending engine change | contradicted by ruling | 2026-11-24, as above; priority: "the 'stopping' issue takes priority ... The 'stuck' is a nit-pick, the 'stopping' is game breaking." |
-| Units stuck behind their own firing line are expected | not documented | DEC-stuck-behind-is-expected-2026-11-19 | ruling; the give-up half is superseded by 2026-11-24 | 2026-11-19 "players are expected to micro their units to path around other units already firing" |
+| A blocked unit: repath, wait or give up | NOT FOUND anywhere (only an anecdotal "repath" comment) | steering side-step (ALG-68, R-097-03); no give-up, R-099-06 | match to the ruling (ruling, built) | 2026-11-24 "The unit is never supposed to \"give up\" walking towards it's attack move, or trying to find paths aroudn the object blocking it."; DEC-movement-sidestep-2026-11-24 |
+| An attack-moving unit never ends its order short of its destination because it is blocked; it keeps routing | not documented; this is Westley's rule | R-099-06 (the give-up of the old R-099-05 is removed) | match to the ruling (ruling, built) | 2026-11-24, as above; priority: "the 'stopping' issue takes priority ... The 'stuck' is a nit-pick, the 'stopping' is game breaking." |
+| Units stuck behind their own firing line are expected | not documented | DEC-stuck-behind-is-expected-2026-11-19; the stuck unit side-steps and keeps its order (ALG-68, R-099-06) | ruling (ruling, built); its give-up half is superseded by DEC-movement-sidestep-2026-11-24 | 2026-11-19 "players are expected to micro their units to path around other units already firing" |
 | Arrival threshold; group clump on arrival | Clump on arrival (player post, medium); threshold NOT FOUND | E-13 R-099-04: 1.5 x radius per slot | unverified | |
 | Group speed | None: each unit at its own speed (appendix-b, high) | R-095-01 slowest member's pace | deliberate difference | his Halo Wars / AoE3 model, hub; 2026-09-16 |
 | High ground sees low ground, not the reverse; halfway up a ramp full view | Yes (Liquipedia, Blizzard Q&A, high) | E-05 R-005-09 | match | 2026-10-05, 2026-10-22 |
 | Unit hit by something it cannot see | Not documented (appendix-a) | R-087-01: moves 200 wu away | unverified | 2026-11-06 "would run away ... but doesn't just stay still while being shot" |
+
+## Decision of 2026-11-24: variant A
+
+Westley approved variant A, "the old side-step", of the four-version comparison (artifact https://claude.ai/artifact/8YJhVNwQnRo7FCuXYSS6RG, version 3; DEC-movement-sidestep-2026-11-24): no give-up; a group mate and an idle friend do not block the probe; a detour keeps its side until the straight line is clear. One engine, `csrc/`, for the lab and the beta.
 
 ## Deliberate differences
 
@@ -43,7 +47,7 @@ Confidence: high = Blizzard page or editor documentation read; medium = search s
 
 ## Open questions
 
-1. A unit blocked by its own units: SC2 NOT FOUND. Ours is ruled (2026-11-24 above); how it routes (wait, side-step, repath) is a design for the pending engine change. Q-097-04 (walker wedged in a standing crowd) is open.
+1. A unit blocked by its own units: SC2 NOT FOUND. Ours is ruled (2026-11-24 above); it routes by the side-step of ALG-68 (variant A below), built under DEC-movement-sidestep-2026-11-24. Q-097-04 (walker wedged in a standing crowd) is open.
 2. Arrival threshold and how far a group settles: NOT FOUND. Ours R-099-04.
 3. Call for help: existence only, no radius. Ours has none.
 4. Idle-unit pushing: only forum hearsay (low to medium).
