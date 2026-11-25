@@ -191,7 +191,7 @@ typedef struct {
     double   deflect_heading;
     double   deflect_origin_x, deflect_origin_y;
     int      waiting;
-    double   detour_remaining, detour_dx, detour_dy;
+    double   detour_dx, detour_dy;       /* the heading of the detour a steering unit holds while `deflecting` is set (R-097-03, ALG-68); see om_move_steer_step */
     int      visible[OM_MAX_FACTIONS];
     int      plan_valid;                 /* PP-move route (ROUTE_AROUND_TERRAIN): aim_x/aim_y is the next waypoint */
     uint32_t plan_epoch;
@@ -2264,7 +2264,7 @@ static double om_move_member_pace(om_world *w, const om_move_unit *mu, uint32_t 
 /* PP-move P8, P7 (R-097-03, R-097-04, ALG-68, R-099-04): one unit's move under PURSUE_BY_STEERING, as the
  * Python's update_movement does it. Arrival is the slot radius, with no snap; the seek heading is the
  * unit vector to the destination; a blocked straight probe sweeps +30, -30, +60, -60, +90, -90 degrees
- * and takes the first clear one, holding it for the detour distance moved; none clear goes straight on.
+ * and takes the first clear one, held until the straight line is clear again (a held detour tries only its own side); none clear goes straight on.
  * See also: the 13-angle sweep in om_move_tick_unit, which this replaces when the switch is 0. */
 static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t period) {
     uint32_t id = mu->unit_id;
@@ -2294,25 +2294,36 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     }
     steer_x = dx / dist;
     steer_y = dy / dist;
-    if (mu->deflecting && mu->detour_remaining > 0.0) {
-        steer_x = mu->detour_dx;
-        steer_y = mu->detour_dy;
-    } else {
+    {
+        /* R-097-03, ALG-68 (DEC-movement-sidestep-2026-11-24): a clear straight probe ends the detour. A blocked one tries the six angles in order, but a unit that
+         * already holds a detour tries only the angles on its side of the straight line (the +30, +60, +90 side when steer x detour is positive, the others if not), so it never swings across to the
+         * other side. The angle found is the detour, kept until the straight line is clear again; none clear on its side keeps the stored heading. The older rule held
+         * a detour for 60 wu moved. See also: om_move_probe_ignores, the probe's gather. */
         uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather_start(w, ms, id, mu->x, mu->y);
-        mu->deflecting = 0;
-        if (n_near && !om_move_probe_clear(ms, n_near, hints, mu->x + OM_STEERING_PROBE_DIST * steer_x, mu->y + OM_STEERING_PROBE_DIST * steer_y)) {
-            double seek_x = steer_x, seek_y = steer_y;
+        const int held_side = mu->deflecting ? ((steer_x * mu->detour_dy - steer_y * mu->detour_dx) > 0.0 ? 1 : -1) : 0;
+        if (!n_near || om_move_probe_clear(ms, n_near, hints, mu->x + OM_STEERING_PROBE_DIST * steer_x, mu->y + OM_STEERING_PROBE_DIST * steer_y)) {
+            mu->deflecting = 0;
+        } else {
+            const double seek_x = steer_x, seek_y = steer_y;
+            int found = 0;
             for (k = 0; k < OM_PP_SWEEP_N; k++) {
-                double ax = seek_x * OM_PP_SWEEP_COS[k] - seek_y * OM_PP_SWEEP_SIN[k];
-                double ay = seek_x * OM_PP_SWEEP_SIN[k] + seek_y * OM_PP_SWEEP_COS[k];
+                const int angle_side = (k % 2u) == 0u ? 1 : -1; /* the table alternates +, -: +30, -30, +60, -60, +90, -90 */
+                double ax, ay;
+                if (held_side != 0 && angle_side != held_side) continue;
+                ax = seek_x * OM_PP_SWEEP_COS[k] - seek_y * OM_PP_SWEEP_SIN[k];
+                ay = seek_x * OM_PP_SWEEP_SIN[k] + seek_y * OM_PP_SWEEP_COS[k];
                 if (!om_move_probe_clear(ms, n_near, hints, mu->x + OM_STEERING_PROBE_DIST * ax, mu->y + OM_STEERING_PROBE_DIST * ay)) continue;
                 steer_x = ax;
                 steer_y = ay;
+                found = 1;
                 mu->deflecting = 1;
                 mu->detour_dx = ax;
                 mu->detour_dy = ay;
-                mu->detour_remaining = OM_STEERING_DETOUR_MIN_DIST;
                 break;
+            }
+            if (!found && held_side != 0) {
+                steer_x = mu->detour_dx;
+                steer_y = mu->detour_dy;
             }
         }
     }
@@ -2326,10 +2337,6 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
         if (route) om_move_commit_step(w, mu, nx, ny, OM_COMMIT_STEER);
         else { mu->x = nx; mu->y = ny; }
         om_move_grid_update(ms, mu);
-    }
-    if (mu->deflecting) {
-        mu->detour_remaining -= move_dist;
-        if (mu->detour_remaining <= 0.0) { mu->detour_remaining = 0.0; mu->deflecting = 0; }
     }
 }
 
@@ -3756,7 +3763,7 @@ static int mv_row_is_fresh(const om_world *cw, const om_move_unit *mu) {
     if (mu->order_kind != -1 || mu->routed || mu->deflecting || mu->deflect_heading != 0.0 || mu->waiting) return 0;
     if (mu->native_speed != om_unit_effective_speed(w, mu->unit_id)) return 0;
     for (f = 0; f < OM_MAX_FACTIONS; f++) if (!mu->visible[f]) return 0;
-    return !mu->detour_remaining && !mu->detour_dx && !mu->detour_dy && !mu->plan_valid &&
+    return !mu->detour_dx && !mu->detour_dy && !mu->plan_valid &&
            !mu->plan_epoch && !mu->plan_dest_x && !mu->plan_dest_y && !mu->aim_x && !mu->aim_y &&
            !mu->aim_is_waypoint && !mu->lay_state && !mu->lay_has_pend && !mu->lay_route && !mu->transit &&
            !mu->lay_to && !mu->lay_pend && !mu->lay_t && !mu->lay_dur && !mu->transit_home &&
@@ -3794,7 +3801,7 @@ static uint64_t om_move_section_hash(const om_world *w) {
         h = mv_dbl(h, mu->deflect_heading);
         h = mv_dbl(h, mu->deflect_origin_x); h = mv_dbl(h, mu->deflect_origin_y);
         h = mv_word(h, (uint64_t)(int64_t)mu->waiting);
-        h = mv_dbl(h, mu->detour_remaining); h = mv_dbl(h, mu->detour_dx); h = mv_dbl(h, mu->detour_dy);
+        h = mv_dbl(h, mu->detour_dx); h = mv_dbl(h, mu->detour_dy);
         for (k = 0; k < OM_MAX_FACTIONS; k++) {
             if (mu->visible[k]) bits |= 1ULL << (k % OM_MV_WORD_BITS);
         }
@@ -3911,7 +3918,7 @@ static void mv_save_all(const om_move_state *ms, mv_sw *s) {
         mv_put_f64(s, mu->deflect_heading);
         mv_put_f64(s, mu->deflect_origin_x); mv_put_f64(s, mu->deflect_origin_y);
         mv_put_i32(s, mu->waiting);
-        mv_put_f64(s, mu->detour_remaining); mv_put_f64(s, mu->detour_dx); mv_put_f64(s, mu->detour_dy);
+        mv_put_f64(s, mu->detour_dx); mv_put_f64(s, mu->detour_dy);
         for (k = 0; k < OM_MAX_FACTIONS; k++) mv_put_i32(s, mu->visible[k]);
         mv_put_i32(s, mu->plan_valid);
         mv_put_u32(s, mu->plan_epoch);
@@ -4061,7 +4068,7 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         mu->deflect_heading = mv_get_f64(&r);
         mu->deflect_origin_x = mv_get_f64(&r); mu->deflect_origin_y = mv_get_f64(&r);
         mu->waiting = mv_get_i32(&r);
-        mu->detour_remaining = mv_get_f64(&r); mu->detour_dx = mv_get_f64(&r); mu->detour_dy = mv_get_f64(&r);
+        mu->detour_dx = mv_get_f64(&r); mu->detour_dy = mv_get_f64(&r);
         for (k = 0; k < OM_MAX_FACTIONS; k++) mu->visible[k] = mv_get_i32(&r);
         mu->plan_valid = mv_get_i32(&r);
         mu->plan_epoch = mv_get_u32(&r);
