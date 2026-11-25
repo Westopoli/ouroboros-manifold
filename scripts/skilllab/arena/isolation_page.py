@@ -555,3 +555,36 @@ def build_page(out_dir, *, banner, banner_kind="decision", inputs, clips=None, d
     (out / "index.html").write_bytes(page.encode("ascii", "xmlcharrefreplace"))
     (out / "artifacts-row.md").write_bytes(_ledger_row(ledger, arms, comparison, shas, clip_sets).encode("utf-8"))
     return {"index": out / "index.html", "row": out / "artifacts-row.md"}
+
+
+# ---------------------------------------------------------------- the command line
+
+def main(argv=None):
+    import argparse
+    import sys
+    ap = argparse.ArgumentParser(prog="isolation_page", description="Write the lab isolation artifact page and its ledger row.")
+    ap.add_argument("--out", required=True, type=Path)
+    ap.add_argument("--banner", required=True)
+    ap.add_argument("--banner-kind", choices=BANNER_KINDS, default="decision")
+    ap.add_argument("--rows", nargs="+", default=[], type=Path, help="LI4-FW rows files (JSONL)")
+    ap.add_argument("--m", nargs="+", default=[], type=Path, help="files of M summaries (JSON lists)")
+    ap.add_argument("--v", nargs="+", default=[], type=Path, help="files of V rows (JSONL)")
+    ap.add_argument("--clips", type=Path, help="the clips manifest")
+    ap.add_argument("--id", required=True)
+    ap.add_argument("--date", required=True)
+    ap.add_argument("--title", required=True)
+    ap.add_argument("--why")
+    ap.add_argument("--url")
+    ap.add_argument("--repo", type=Path)
+    a = ap.parse_args(argv)
+    try:
+        inputs = read_inputs(rows=a.rows, m=a.m, v=a.v, repo=a.repo)
+        build_page(a.out, banner=a.banner, banner_kind=a.banner_kind, inputs=inputs, clips=a.clips, ledger={"id": a.id, "date": a.date, "title": a.title, "why": a.why, "url": a.url})
+    except PageError as err:
+        print("isolation_page: %s" % err, file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
