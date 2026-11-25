@@ -7,7 +7,7 @@ extends "res://scenes/proto/layout_shot/layout_shot.gd"
 ## box would shrink a unit under the glyph minimum (a wide field), the units keep it and the camera instead follows each frame's centroid (H-053 Replay readability).
 ## Rings: one per role per side, a line style per role (replay_marks.gd), per-unit rings behind key R. Six role glyphs, the legend names each.
 ## Space or Right steps forward, Left back (at either end the cursor stays put); OM_AUTOPLAY=1 steps at REPLAY_FPS, or at OM_FPS frames a second (a float > 0; H-088 closeup); OM_SHOT_OUT=<dir> saves frame-<i>.png for each
-## frame and quits. Every number below that the story does not give is a named DRAFT; Westley rules. See also scenes/proto/layout_shot/layout_shot.gd.
+## frame (plus `frame-<i>.json`, every unit's screen position, radius and ID colour; with OM_ID_RENDER=1 also the flat-colour `frame-<i>.id.png`, replay_sidecar.gd) and quits. Every number below that the story does not give is a named DRAFT; Westley rules. See also scenes/proto/layout_shot/layout_shot.gd.
 
 const REPLAY_SCENE_PATH := "res://scenes/proto/fight_replay/fight_replay.tscn"
 const REPLAY_FPS := 1.0  # DRAFT-replay-fps (story): frames per second under OM_AUTOPLAY
@@ -31,6 +31,7 @@ const BLOCKED_COLOUR := Color(1.0, 0.45, 0.0)  # DRAFT-blocked-colour (H-063)
 const SIGHT_ALPHA := 0.25  # DRAFT-sight-alpha (lab-stage4): a sight disc's line, in its side's colour
 const HOLLOW_ALPHA := 0.35  # DRAFT-hollow-alpha (lab-stage4): the body of a unit no living enemy sees
 const Marks := preload("res://scenes/proto/fight_replay/replay_marks.gd")
+const Sidecar := preload("res://scenes/proto/fight_replay/replay_sidecar.gd")
 
 var _fight: Dictionary = {}
 var _fight_frames: Array = []
@@ -372,6 +373,7 @@ func _save_all_frames() -> void:
 		var err := get_viewport().get_texture().get_image().save_png("%s/frame-%d.png" % [_shot_path, i])
 		if err != OK:
 			push_error("fight_replay: save_png frame-%d failed (%d)" % [i, err])
+		await Sidecar.write(self, i, "%s/frame-%d" % [_shot_path, i])
 	get_tree().quit()
 
 

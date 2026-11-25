@@ -1,0 +1,12 @@
+# Trap fight L-0080 (docs/northstar/story_reviews/westley/look_2026-11-19/README.md part B). Westley expected blue to win; red won in the recording.
+id = "trap"
+requirements = ["R-097-05"]
+words = "I expected blue to win the L-0080 trap."
+
+[[checks]]
+kind = "state"
+name = "blue_wins"
+success = "The fight's recorded winner is side A, blue (README B: red won with 25 of 32 left at tick 1540, so this check FAILs on that recording)."
+broken_twin = "red_wins_trap"
+[checks.params]
+"DRAFT-expected-winner" = "A"   # Westley's; his stated expectation, not yet a rule

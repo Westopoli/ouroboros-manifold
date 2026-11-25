@@ -334,7 +334,8 @@ func _do_wait_file(name: String, max_frames: int) -> void:
 		print("QA_WARN wait_file timeout %s" % name)
 
 
-func _do_screenshot(name: String) -> void:
+# Daemon "screenshot" passes an optional second argument, a directory (qa_daemon.gd); a bare name keeps _out_dir.
+func _do_screenshot(name: String, out_dir: String = "") -> void:
 	if DisplayServer.get_name() == "headless":
 		print("QA_WARN headless no screenshot %s" % name)
 		return
@@ -349,7 +350,11 @@ func _do_screenshot(name: String) -> void:
 	var img := get_viewport().get_texture().get_image()
 	if _is_uniform(img):
 		print("QA_WARN uniform %s" % name)
-	img.save_png(_out_path(name + ".png"))
+	var dest := _out_path(name + ".png")
+	if out_dir != "":
+		DirAccess.make_dir_recursive_absolute(out_dir)
+		dest = out_dir.path_join(name + ".png")
+	img.save_png(dest)
 	_shots.append(name)
 
 

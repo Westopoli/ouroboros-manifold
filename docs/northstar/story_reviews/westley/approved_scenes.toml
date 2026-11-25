@@ -1,0 +1,59 @@
+# Approved scenes ledger (story look-judge-rig, spec piece 4). One [[row]] per approval of a scene (a fight or a movement run), not of a static picture.
+# Backfilled 2026-11-24. reopen_command re-creates the approved fight file from the pinned sha in a scratch copy and prints it; trace_hash is the sha256 of that stdout.
+# Approvals that could not be re-run are in docs/reports/2026-11-24-ledger-unrecovered.md, never guessed.
+
+[[row]]
+id = "stage3-l-0055-s10"
+requirements = ["R-097-01", "R-097-03"]
+sha = "4fa618ce78349fcc077ce552753131e737ae2cea"
+scene = "lab fight replay (fight_replay.tscn)"
+fight_or_layout = "L-0055 chokepoint seed 10 sight off"
+seed = 10
+reopen_command = "d=$(mktemp -d) && git archive 4fa618ce78349fcc077ce552753131e737ae2cea | tar -x -C $d && (cd $d && python3 -m scripts.skilllab.arena.run --layout docs/northstar/research/layer_dynamics/catalogue/L-0055.toml --seed 10 --out out --sight off >&2 && cat out/L-0055-s10.fight.json); rc=$?; rm -rf $d; exit $rc"
+frames = ["docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-0.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-1.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-2.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-3.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-4.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-5.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-6.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-7.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-8.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-9.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-10.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-11.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-12.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-13.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-14.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-15.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-16.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0055-s10/frame-17.png"]
+words = "I rule approval on stage 3, we are go to move to stage 4"
+date = "2026-11-05"
+trace_hash = "18c5dc4e2cd68dc89b5ac8e0c89bb8fa78b560d8c4939bf1aa94e65c32dd5e1b"
+source = "chat 5144e2d7-e255-4f0e-a3da-e5dea8a94683 line 591; decisions.md:284 (DEC-stage3-seen-2026-11-05); stage-level approval, no per-fight verdict; blue 98%; red queues at the gap, nobody inside a wall"
+
+[[row]]
+id = "stage3-l-0073-s10"
+requirements = ["R-097-01", "R-097-03"]
+sha = "4fa618ce78349fcc077ce552753131e737ae2cea"
+scene = "lab fight replay (fight_replay.tscn)"
+fight_or_layout = "L-0073 city seed 10 sight off"
+seed = 10
+reopen_command = "d=$(mktemp -d) && git archive 4fa618ce78349fcc077ce552753131e737ae2cea | tar -x -C $d && (cd $d && python3 -m scripts.skilllab.arena.run --layout docs/northstar/research/layer_dynamics/catalogue/L-0073.toml --seed 10 --out out --sight off >&2 && cat out/L-0073-s10.fight.json); rc=$?; rm -rf $d; exit $rc"
+frames = ["docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-0.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-1.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-2.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-3.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-4.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-5.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-6.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-7.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-8.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-9.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-10.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-11.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-12.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-13.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-14.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-15.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0073-s10/frame-16.png"]
+words = "I rule approval on stage 3, we are go to move to stage 4"
+date = "2026-11-05"
+trace_hash = "d56eae503c84b9a56a0c3e8634096b4f37ba6a998da3e3e7c5fb020ccd0441c8"
+source = "chat 5144e2d7-e255-4f0e-a3da-e5dea8a94683 line 591; decisions.md:284 (DEC-stage3-seen-2026-11-05); stage-level approval, no per-fight verdict; blue 75%; units go round buildings"
+
+[[row]]
+id = "stage3-l-0084-s10"
+requirements = ["R-097-01", "R-097-05"]
+sha = "4fa618ce78349fcc077ce552753131e737ae2cea"
+scene = "lab fight replay (fight_replay.tscn)"
+fight_or_layout = "L-0084 slope seed 10 sight off"
+seed = 10
+reopen_command = "d=$(mktemp -d) && git archive 4fa618ce78349fcc077ce552753131e737ae2cea | tar -x -C $d && (cd $d && python3 -m scripts.skilllab.arena.run --layout docs/northstar/research/layer_dynamics/catalogue/L-0084.toml --seed 10 --out out --sight off >&2 && cat out/L-0084-s10.fight.json); rc=$?; rm -rf $d; exit $rc"
+frames = ["docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-0.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-1.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-2.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-3.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-4.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-5.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-6.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-7.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-8.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-9.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-10.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-11.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0084-s10/frame-12.png"]
+words = "I rule approval on stage 3, we are go to move to stage 4"
+date = "2026-11-05"
+trace_hash = "3141d5d7d182d135b2bbe2ac2164c09645810cb7cc29e0395f634c56bb9af556"
+source = "chat 5144e2d7-e255-4f0e-a3da-e5dea8a94683 line 591; decisions.md:284 (DEC-stage3-seen-2026-11-05); stage-level approval, no per-fight verdict; blue 60% as drawn (red won in this run); red climbs the ribbon, the cliff holds"
+
+[[row]]
+id = "stage3-l-0039-s10"
+requirements = ["R-097-01", "R-097-03"]
+sha = "4fa618ce78349fcc077ce552753131e737ae2cea"
+scene = "lab fight replay (fight_replay.tscn)"
+fight_or_layout = "L-0039 cover seed 10 sight off"
+seed = 10
+reopen_command = "d=$(mktemp -d) && git archive 4fa618ce78349fcc077ce552753131e737ae2cea | tar -x -C $d && (cd $d && python3 -m scripts.skilllab.arena.run --layout docs/northstar/research/layer_dynamics/catalogue/L-0039.toml --seed 10 --out out --sight off >&2 && cat out/L-0039-s10.fight.json); rc=$?; rm -rf $d; exit $rc"
+frames = ["docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-0.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-1.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-2.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-3.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-4.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-5.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-6.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-7.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-8.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-9.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-10.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-11.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-12.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-13.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-14.png", "docs/northstar/story_reviews/westley/arena_stage3/L-0039-s10/frame-15.png"]
+words = "I rule approval on stage 3, we are go to move to stage 4"
+date = "2026-11-05"
+trace_hash = "213d2a4bfab01f2d7e788bf8b5b41b27a5a5782ceca6905bca71af701af10df0"
+source = "chat 5144e2d7-e255-4f0e-a3da-e5dea8a94683 line 591; decisions.md:284 (DEC-stage3-seen-2026-11-05); stage-level approval, no per-fight verdict; red 75% as drawn (blue win predicted at 0.25); 600 s cap draw in this run; units go round cover boxes"
