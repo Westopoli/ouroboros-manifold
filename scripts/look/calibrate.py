@@ -19,17 +19,21 @@ def main(argv=None):
     args = ap.parse_args(argv)
     root = Path(args.controls)
     rows = json.loads((root / "controls.json").read_text())
-    false_pass, agree = {}, 0
+    false_pass, unsure, agree, out_rows = {}, {}, 0, []
     for row in rows:
         chk = {"name": row["check"], "backend": args.backend, "truth": row["truth"],
                "prompt": row.get("prompt", "Check: %s. Look at the frame." % row["check"])}
-        verdict = judge(root / row["frame"], chk)["verdict"]
-        verdict = "PASS" if verdict == "PASS" else "FAIL"
+        own = judge(root / row["frame"], chk)["verdict"]  # the back end's own verdict; UNSURE counts as FAIL below
+        verdict = "PASS" if own == "PASS" else "FAIL"
         false_pass.setdefault(row["check"], 0)
+        unsure.setdefault(row["check"], 0)
+        unsure[row["check"]] += own == "UNSURE"
+        out_rows.append({"id": row["id"], "verdict": own, "truth": row["truth"], "label": row["label"]})
         if row["role"] == "break" and verdict == "PASS":
             false_pass[row["check"]] += 1
         agree += verdict == row["label"]
-    report = {"false_pass": false_pass, "agreement": agree / len(rows) if rows else 1.0, "controls": len(rows)}
+    report = {"false_pass": false_pass, "unsure": unsure, "rows": out_rows,
+              "agreement": agree / len(rows) if rows else 1.0, "controls": len(rows)}
     print(json.dumps(report, sort_keys=True))
     return 1 if sum(false_pass.values()) > DRAFT_LOOK_FALSE_PASS_MAX else 0
 

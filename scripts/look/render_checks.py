@@ -8,6 +8,7 @@ Thresholds (max_offset_px, DRAFT-look-position-offset-px) are Westley's and are 
 from __future__ import annotations
 
 import json
+import math
 import re
 from pathlib import Path
 
@@ -43,24 +44,42 @@ def _colour(hexs: str) -> tuple[int, int, int]:
     return int(hexs[1:3], 16), int(hexs[3:5], 16), int(hexs[5:7], 16)
 
 
-def _disc(u: dict, shape: tuple[int, int]) -> np.ndarray:
-    yy, xx = np.mgrid[0:shape[0], 0:shape[1]]
-    return (xx - u["x"]) ** 2 + (yy - u["y"]) ** 2 <= u["radius"] ** 2
+def _shared_pixels(a: dict, b: dict, shape: tuple[int, int]) -> int:
+    """Pixels inside both sidecar discs, counted in the window around the two centres (never a full-frame mask)."""
+    if math.hypot(a["x"] - b["x"], a["y"] - b["y"]) > a["radius"] + b["radius"]:
+        return 0  # triangle inequality: no pixel can lie in both
+    x0 = max(0, int(math.floor(max(a["x"] - a["radius"], b["x"] - b["radius"]))))
+    x1 = min(shape[1], int(math.ceil(min(a["x"] + a["radius"], b["x"] + b["radius"]))) + 1)
+    y0 = max(0, int(math.floor(max(a["y"] - a["radius"], b["y"] - b["radius"]))))
+    y1 = min(shape[0], int(math.ceil(min(a["y"] + a["radius"], b["y"] + b["radius"]))) + 1)
+    if x1 <= x0 or y1 <= y0:
+        return 0
+    yy, xx = np.mgrid[y0:y1, x0:x1]
+    inside = lambda u: (xx - u["x"]) ** 2 + (yy - u["y"]) ** 2 <= u["radius"] ** 2
+    return int((inside(a) & inside(b)).sum())
 
 
-def overlaps(id_png: Path) -> list[dict]:
-    """Pairs of sidecar discs sharing pixels: [{"a", "b", "pixels"}], a < b, sorted."""
+def overlaps(id_png: Path, *, fight: dict | None = None, frame: int | None = None, radius_wu: float | None = None) -> list[dict]:
+    """Pairs of units standing inside each other: [{"a", "b", ...}], a < b, sorted.
+
+    With `fight`, `frame` (index into fight["frames"], the i of frame-<i>.id.png) and `radius_wu`: the living same-layer units of that fight frame closer than radius_wu
+    (R-097-05, judged on the fight file's wu geometry; the sidecar has no layer or alive); each row carries "dist_wu". Without them: the sidecar discs that share
+    pixels, each row carrying "pixels".
+    """
+    if fight is not None:
+        us = sorted((u for u in fight["frames"][frame]["units"] if u["alive"]), key=lambda u: u["id"])
+        return [{"a": a["id"], "b": b["id"], "dist_wu": d} for i, a in enumerate(us) for b in us[i + 1:]
+                if a["layer"] == b["layer"] and (d := math.hypot(a["x"] - b["x"], a["y"] - b["y"])) < radius_wu]
     sc = load_sidecar(id_png)
     shape = (int(sc["height"]), int(sc["width"]))
     units = sorted(sc["units"], key=lambda u: u["id"])
-    discs = [_disc(u, shape) for u in units]
     out = []
     for i, a in enumerate(units):
-        for j in range(i + 1, len(units)):
-            n = int((discs[i] & discs[j]).sum())
+        for b in units[i + 1:]:
+            n = _shared_pixels(a, b, shape)
             if n > 0:
-                out.append({"a": a["id"], "b": units[j]["id"], "pixels": n})
-    return sorted(out, key=lambda r: (r["a"], r["b"]))
+                out.append({"a": a["id"], "b": b["id"], "pixels": n})
+    return out
 
 
 def unit_pixels(id_png: Path) -> dict:

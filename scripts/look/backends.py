@@ -34,39 +34,52 @@ def _ask_ollama(png, prompt, model):
 
 
 def _ask_claude(png, prompt):
-    r = subprocess.run(["claude", "-p", "--allowedTools", "Read", "%s\nImage file: %s" % (prompt, png)],
+    # The prompt precedes `--allowedTools`: that flag is variadic and swallows every token after it, so a trailing prompt made the real CLI exit 1.
+    r = subprocess.run(["claude", "-p", "%s\nImage file: %s" % (prompt, png), "--allowedTools", "Read"],
                        input="", capture_output=True, text=True, timeout=_timeout(), check=True)
     return r.stdout
 
 
+_FIELD = r"(?:class:\s*[^\s,]+|count:\s*-?\d+|coordinates:\s*(?:\(\s*-?\d+\s*,\s*-?\d+\s*\)[\s,]*)+)"
+_FIELDS = re.compile(_FIELD + r"(?:[\s,;]+" + _FIELD + r")*[.\s]*", re.I)
+
+
 def parse(text):
-    """Return ("class", str) | ("count", int) | ("coordinates", [[x, y], ...]) | None."""
+    """Return every field of a reply that is made only of fields: [("class", str) | ("count", int) | ("coordinates", [[x, y], ...])], in order; [] when it is anything else."""
     t = text.strip()
-    m = re.fullmatch(r"class:\s*(\S+)", t, re.I)
-    if m:
-        return "class", m.group(1).strip(".,").lower()
-    m = re.fullmatch(r"count:\s*(-?\d+)", t, re.I)
-    if m:
-        return "count", int(m.group(1))
-    m = re.fullmatch(r"coordinates:\s*((?:\(\s*-?\d+\s*,\s*-?\d+\s*\)[\s,]*)+)", t, re.I)
-    if m:
-        pts = re.findall(r"\(\s*(-?\d+)\s*,\s*(-?\d+)\s*\)", m.group(1))
-        return "coordinates", [[int(x), int(y)] for x, y in pts]
-    return None
+    if not _FIELDS.fullmatch(t):
+        return []
+    out = []
+    for m in re.finditer(r"(class):\s*([^\s,]+)|(count):\s*(-?\d+)|(coordinates):\s*((?:\(\s*-?\d+\s*,\s*-?\d+\s*\)[\s,]*)+)", t, re.I):
+        if m.group(1):
+            out.append(("class", m.group(2).strip(".,;").lower()))
+        elif m.group(3):
+            out.append(("count", int(m.group(4))))
+        else:
+            pts = re.findall(r"\(\s*(-?\d+)\s*,\s*(-?\d+)\s*\)", m.group(6))
+            out.append(("coordinates", [[int(x), int(y)] for x, y in pts]))
+    return out
 
 
-def _compare(parsed, truth):
-    if parsed is None:
-        return "UNSURE"
-    kind, value = parsed
-    if kind not in truth:
-        return "FAIL"
-    want = truth[kind]
-    if kind == "class":
-        want = str(want).lower()
-    if kind == "coordinates":
-        return "PASS" if sorted(value) == sorted(list(p) for p in want) else "FAIL"
-    return "PASS" if value == want else "FAIL"
+def _compare(fields, truth):
+    """(verdict, parsed field used). The field answering the check is the one whose key the truth asks for; two different values for it are UNSURE."""
+    if not fields:
+        return "UNSURE", None
+    for kind in ("class", "count", "coordinates"):
+        if kind not in truth:
+            continue
+        values = [v for k, v in fields if k == kind]
+        if not values:
+            continue
+        if any(v != values[0] for v in values):
+            return "UNSURE", None
+        want = truth[kind]
+        if kind == "class":
+            want = str(want).lower()
+        if kind == "coordinates":
+            return ("PASS" if sorted(values[0]) == sorted(list(p) for p in want) else "FAIL"), (kind, values[0])
+        return ("PASS" if values[0] == want else "FAIL"), (kind, values[0])
+    return "FAIL", fields[0]
 
 
 def judge(crop_png, check):
@@ -87,6 +100,8 @@ def judge(crop_png, check):
         raw = json.loads(cache.read_text())["raw"]
     except (OSError, ValueError, KeyError):
         pass
+    if isinstance(raw, str) and not raw.strip():  # an empty reply cached by an earlier version is a miss
+        raw = None
     if raw is None:
         try:
             if backend == "ollama":
@@ -95,12 +110,11 @@ def judge(crop_png, check):
                 raw = _ask_claude(png, prompt)
             else:
                 raise ValueError("unknown back end %r" % backend)
-            if not isinstance(raw, str):
-                raise ValueError("non-text reply")
+            if not isinstance(raw, str) or not raw.strip():
+                raise ValueError("empty or non-text reply")
         except Exception as e:  # fail closed: any failure is UNSURE and is not cached
             return {"verdict": "UNSURE", "answer": "", "raw": "error: %s" % e}
         cache.parent.mkdir(parents=True, exist_ok=True)
         cache.write_text(json.dumps({"raw": raw}))
-    parsed = parse(raw)
-    return {"verdict": _compare(parsed, check["truth"]),
-            "answer": "" if parsed is None else json.dumps(parsed[1]), "raw": raw}
+    verdict, used = _compare(parse(raw), check["truth"])
+    return {"verdict": verdict, "answer": "" if used is None else json.dumps(used[1]), "raw": raw}

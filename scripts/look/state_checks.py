@@ -41,11 +41,22 @@ def check_overlap(fight, radius=DRAFT_LOOK_RADIUS, max_ticks=DRAFT_LOOK_MAX_TICK
     return _res("PASS", {"pairs": [], "radius": radius, "max_ticks": max_ticks}, frames[-1]["tick"])
 
 
+def _walls(fight):
+    """Wall rects [x0, y0, x1, y1] of a fight, or None when it records none: the top-level `walls`, plus every `built_features[]` entry's `boxes` (cover) and `walls` (trap),
+    each {x, y, w, h} with x, y the centre (formats found in real fight files, look_2026-11-19 and L-0039/L-0080/L-0083)."""
+    found = fight.get("walls")
+    rects = None if found is None else [list(w) for w in found]
+    for f in fight.get("built_features") or []:
+        for b in (f.get("boxes") or []) + (f.get("walls") or []):
+            rects = (rects or []) + [[b["x"] - b["w"] / 2, b["y"] - b["h"] / 2, b["x"] + b["w"] / 2, b["y"] + b["h"] / 2]]
+    return rects
+
+
 def check_unit_in_wall(fight):
     frames = fight.get("frames") or []
-    walls = fight.get("walls")
     if not frames:
         return _res("FAIL", {"reason": "no frames", "hits": []})
+    walls = _walls(fight)
     if walls is None:
         return _res("UNSURE", {"reason": "fight has no walls", "hits": []})
     hits = []
@@ -62,7 +73,7 @@ def check_frozen(fight, max_identical=DRAFT_LOOK_FROZEN_WINDOW):
     frames = fight.get("frames") or []
     if not frames:
         return _res("FAIL", {"reason": "no frames"})
-    sig = lambda fr: [(u["id"], u["x"], u["y"], u["hp"], u["alive"]) for u in fr["units"]]
+    sig = lambda fr: fr["units"]  # any difference in a unit record (fired, target, facing, seen ...) is a change; the tick and the frame summary are not
     n, worst, at = 1, 1, frames[0]["tick"]
     for p, fr in zip(frames, frames[1:]):
         n = n + 1 if sig(p) == sig(fr) else 1
