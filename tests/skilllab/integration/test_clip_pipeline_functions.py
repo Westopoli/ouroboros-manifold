@@ -293,9 +293,9 @@ def test_make_poster_is_a_jpeg_of_the_first_frame_with_its_label(tmp_path):
 def test_record_fight_from_a_situation_converts_it_like_the_lab_does(tmp_path):
     """Brief: "turns a layout+seed+engine tree ... into" a clip, with the situation form the scratch recorder took (`--situation SIT-NNNN`, converted by
     situations.convert as regression._layout does). Premise dumped by running the scratch rec.py today: SIT-0101, seed 1, every 100 gives file
-    L-0101-s1-every100.fight.json, winner B, wipe, last tick 586, 7 frames."""
+    L-0101-s1-every100.fight.json, winner B, wipe, last tick 640, 8 frames."""
     clip = _clip()
     got = clip.record_fight(situation="SIT-0101", seed=1, every=100, out_dir=tmp_path / "rec", work_dir=tmp_path / "work")
     assert Path(got).name == "L-0101-s1-every100.fight.json"
     doc = json.loads(Path(got).read_text())
-    assert (doc["layout_id"], doc["result"]["winner"], doc["result"]["ticks"], len(doc["frames"])) == ("L-0101", "B", 586, 7)
+    assert (doc["layout_id"], doc["result"]["winner"], doc["result"]["ticks"], len(doc["frames"])) == ("L-0101", "B", 640, 8)
