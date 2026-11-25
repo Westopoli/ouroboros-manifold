@@ -17,6 +17,8 @@
 
 Five unit commands: move, attack-move, attack a target, guard, use the ability. Guard is a radius guard (S-208; Westley, 2026-10-13). Requests by pointing at the map and the economy seat's orders are a second channel beside these four, not unit commands (E-22 S-168, S-170, S-180). A selection moves together at its slowest member's pace and keeps its shape on arrival; a player who wants a fast element to run ahead splits it off. Movement is two-level: a coarse route around obstacles, buildings and, for walking units, ground too steep to cross (S-207), then local steering that flows around allies instead of shoving through them. A unit that has stopped to fight is immovable, so front ranks hold and later arrivals spill into flanking slots on their own. Everything is deterministic: same start, same commands, same movement tick for tick, which is what lockstep multiplayer needs.
 
+Requirements page: `references/movement-requirements.md`.
+
 Reference model: movement and targeting follow StarCraft 2's rules. Where a rule here is silent, or two readings of it exist, what StarCraft 2 does is the answer; a deliberate difference from it is written as a rule with Westley's words beside it. Westley, 2026-10-20: "starcraft 2 movement mechanics are the reference, when stuck on blocked refer to them and use their rules"; on the engage rules the same day: "We're just copying Starcraft 2 rules here, easy quick-reference"; 2026-11-06: "We're following sc2's movement model"; 2026-11-11: "It should be documented that we're using starcraft 2 rules for movement/targeting."
 
 ## Obviously working in 60 seconds
@@ -173,7 +175,7 @@ Rules
 Inputs: tick deltas.
 Outputs: screen.
 Open flags: Q-101-02 (the collision iteration cap against R-101-01's 30 wu floor).
-Arrival is the group centroid reaching the point. Reference required: `references/E-13/notes.md`, missing.
+Arrival is the group centroid reaching the point. Reference: `references/E-13/notes.md` (one provided shot) and `references/movement-requirements.md`.
 
 ### S-102 — Same commands, same battle
 As a player in a multiplayer match, I want every peer to compute the same movement from the same commands, so that we are all watching one battle.
@@ -284,7 +286,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Look and behavior references
 
-`references/E-13/notes.md`, missing: formation movement, flow around blockers, turning (2 to 5 clips).
+`references/E-13/notes.md` holds one provided shot (grouped forces read as groups); formation movement, flow around blockers and turning still have no clips (2 to 5 wanted). Behaviour reference: `references/movement-requirements.md`.
 
 ## Ways this could be wrong
 
