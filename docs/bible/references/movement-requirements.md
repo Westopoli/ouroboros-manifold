@@ -31,6 +31,7 @@ Confidence: high = Blizzard page or editor documentation read; medium = search s
 | Arrival threshold; group clump on arrival | Clump on arrival (player post, medium); threshold NOT FOUND | E-13 R-099-04: 1.5 x radius per slot | unverified | |
 | Group speed | None: each unit at its own speed (appendix-b, high) | R-095-01 slowest member's pace | deliberate difference | his Halo Wars / AoE3 model, hub; 2026-09-16 |
 | High ground sees low ground, not the reverse; halfway up a ramp full view | Yes (Liquipedia, Blizzard Q&A, high) | E-05 R-005-09 | match | 2026-10-05, 2026-10-22 |
+| Units block shots | No: no source says they do (report 2026-11-11 row E, unverified; medium) | R-098-01 and `csrc/tactical_move.c`: units never block fire; only cover, a wall or ground does (R-098-02) | match | 2026-11-25 "The rule is units never block fire; only cover, walls and ground do." (DEC-units-never-block-fire-2026-11-25) |
 | Unit hit by something it cannot see | Not documented (appendix-a) | R-087-01: moves 200 wu away | unverified | 2026-11-06 "would run away ... but doesn't just stay still while being shot" |
 
 ## Decision of 2026-11-24: variant A
@@ -40,7 +41,6 @@ Westley approved variant A, "the old side-step", of the four-version comparison 
 ## Deliberate differences
 
 - Threat first and priority classes: not built; every enemy in play can hurt (R-087-03; DEC-targeting-sc2-2026-11-17).
-- Lines of fire: units, cover and ground block shots, SC2's units do not (R-087-09; 2026-10-07).
 - Guard steps up to 200 wu from its post; SC2 hold position never moves (R-096-08; 2026-10-13, 2026-11-08).
 - Unseen attacker: the unit moves away, its position is not shown (R-087-01; 2026-11-06).
 - Formation: a group moves at its slowest member's pace and keeps its shape, each unit to its own slot (R-095-01, R-095-02; E-11 S-087 omits this one). A group attack-mover ends at its own slot (DEC-formation-kept-2026-11-19, "B now"); SC2 has no formation speed and clumps on arrival.

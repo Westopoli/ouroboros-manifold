@@ -55,8 +55,8 @@ So the thing Westley saw on 2026-11-11, blue ignoring a Warden that walked up cl
 **D. Priority classes.** StarCraft 2 ranks fighting units and defences above other buildings. We have no buildings in fights yet (the economy is unbuilt).
 - Recommendation: note it in the economy epic for when structures become targets; build nothing now.
 
-**E. Shots and bodies.** In StarCraft 2 units do not block each other's shots (unverified, but no source says they do). Ours: a line of fire is blocked by units, cover or ground, and the unit looks for a firing spot (R-087-09, Westley 2026-10-07).
-- This is a deliberate difference and is already his rule. Recommendation: keep it, marked in the bible as a difference from StarCraft 2.
+**E. Shots and bodies.** In StarCraft 2 units do not block each other's shots (unverified, but no source says they do). Ours: a line of fire is blocked by cover, walls and ground; units never block it (R-098-01, `csrc/tactical_move.c`); a unit whose line is blocked looks for a firing spot (R-087-09, Westley 2026-10-07).
+- Not a difference: matches StarCraft 2. Westley ruled 2026-11-25: units never block fire (DEC-units-never-block-fire-2026-11-25). Row corrected 2026-11-25; it originally said units block shots, which the engine never did.
 
 **F. Guard.** StarCraft 2's hold position never moves. Our guard steps up to 200 wu from its post (R-096-08, Westley 2026-10-13 and 2026-11-08).
 - A deliberate difference, already his rule. Recommendation: keep it, marked as a difference.
@@ -76,6 +76,6 @@ For each the choice is Westley's ruling or a few minutes in the game itself. Unt
 
 ## 5. What happens after approval
 
-- The bible: rewrite R-087-03, R-087-04, R-087-05 and R-087-08 for A, B and C; mark E, F and G as differences; correct the two decisions; one `Q-` row for each of the five undocumented items that has no rule.
+- The bible: rewrite R-087-03, R-087-04, R-087-05 and R-087-08 for A, B and C; mark F and G as differences (E is not one: corrected 2026-11-25); correct the two decisions; one `Q-` row for each of the five undocumented items that has no rule.
 - The stories and tests: every rule and test under engage-on-sight, the lock and the leash checked against the new text (the audit of 2026-11-11 already lists them); tests first, then the engine change, as one small piece after Round 2.
 - The lab: fights will change again (units no longer walk toward everything they see), so the stage 4 pictures are re-made once more after that piece.
