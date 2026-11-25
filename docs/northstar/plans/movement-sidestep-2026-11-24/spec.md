@@ -45,7 +45,7 @@ Open: none for Westley. Every number the spec leaves is named `DRAFT-` in the co
 
 ## Built
 
-- Save format 14 (`OM_SAVE_FORMAT_VERSION`, `OM_PIPE_SAVE_FORMAT_VERSION`, client `CURRENT_SAVE_VERSION`): the movement slot drops `giveup_near` and `detour_remaining` and stores the idle table, so a save keeps which units were standing idle and the replay stays byte-identical. Version-13 saves are refused, no migration (R-111-03).
+- Save format 14 (`OM_SAVE_FORMAT_VERSION`, `OM_PIPE_SAVE_FORMAT_VERSION`, client `CURRENT_SAVE_VERSION`): the movement slot drops `giveup_near` and `detour_remaining` and stores the idle table, so the idle table is saved state. Version-13 saves are refused, no migration (R-111-03).
 - Seven lab tests are left red pending Westley's ruling: `r3_move_away` (three tests, L-0080), `r5_unseen_fire[L-0080]`, `f9_unseen_fire`, `r4_idle_yield` on L-0028 and on L-0045.
 - Walker finding: change A steers flyers only. Walker rows change only through the give-up removal, on L-0080 and L-0083 (both already disagreed with their expected winner before; B wins before and after). They are not re-pinned (`docs/reports/2026-11-24-movement-sidestep-landing.md`).
-- Makefile gap: a change to `csrc/om_internal.h` alone does not rebuild, because the header is not a dependency of the objects; clean the build after a header-only change.
+- Makefile gap: a change to `csrc/om_internal.h` alone does not rebuild, because the header is not a dependency of the objects.
