@@ -14,6 +14,7 @@ import isolation_arms_fixtures as af
 import isolation_fixtures as fx
 
 LI3_BASE = "ace81d52e37101588eea55ffd681d0c64ef6d03b"   # the merge of LI2 into the LI1 build: the tree this piece starts from
+RUNNER_FIX = "41ffbfacc"   # LI1 follow-up, the brief's first commit of LI3: a fight the rule checker marks invalid is a result, not a layout error (the runner is untouched beyond it)
 SRC = fx.ROOT / "scripts" / "skilllab" / "arena" / "isolation_arms.py"
 
 
@@ -63,6 +64,6 @@ def test_r4_flags_are_a_closed_list_of_names_and_there_is_no_pass_mark():
 
 def test_r5_the_module_is_new_and_the_runner_and_measures_are_untouched():
     assert SRC.is_file()
-    for rel in ("scripts/skilllab/arena/isolation_runner.py", "scripts/skilllab/arena/isolation_measures.py"):
-        changed = subprocess.run(["git", "--no-optional-locks", "-C", str(fx.ROOT), "diff", "--name-only", LI3_BASE, "--", rel], capture_output=True, text=True).stdout.strip()
+    for rel, base in (("scripts/skilllab/arena/isolation_runner.py", RUNNER_FIX), ("scripts/skilllab/arena/isolation_measures.py", LI3_BASE)):
+        changed = subprocess.run(["git", "--no-optional-locks", "-C", str(fx.ROOT), "diff", "--name-only", base, "--", rel], capture_output=True, text=True).stdout.strip()
         assert changed == "", "%s differs from the base of LI3: LI3 is a new file behind them (wiring, if any, is its own later commit)" % rel
