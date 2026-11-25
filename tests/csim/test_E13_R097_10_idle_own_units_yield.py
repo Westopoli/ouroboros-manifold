@@ -41,7 +41,6 @@ import pytest
 
 from conftest import OMFeature, OMWorldP
 from test_PP_unit_support import SUPPLY, VANGUARD, dest, pos, spawn, step
-from test_E13_R099_05_giveup_counts_only_ticks_without_progress import check_destination_by_count
 
 WALKING = 1                         # OM_MOVE_WALKING
 CANVAS = 2000.0
@@ -192,17 +191,16 @@ def test_R_097_10_a_destination_inside_a_ring_of_idle_own_units_is_reached(lib, 
 def test_R_097_10_an_idle_enemy_unit_takes_none_of_the_push_the_mover_goes_round_or_is_held(lib, world_factory):
     """R-097-10: "... none from an enemy mover, which takes all of it" (R-097-08: nobody passes through anybody). An idle enemy Supply stands at (500,500); M (side 0) is ordered to (520,500), a point inside the
     enemy's 30 wu. For 140 ticks the enemy never moves (exactly), M never comes closer than 30 wu to it, and M touched it (premise: a pair that never met proves nothing). M is held at the circle: the unit that is not
-    its own side's is a wall. M is a lone mover held inside the 75 wu disc of its point, 10 wu away, so its order ends by R-099-05 (Round 6 E2): its destination is kept on every tick through the 39th held tick (a tick
-    that comes nearer is not counted; it walks round the Supply for 80 ticks), cleared on the 40th (tick 120 on today's walk), and it is stationary after (Test-defect: until 2026-11-18 this asserted that M keeps its
-    destination for 100 ticks; a lone mover has given up since the E2 build). Red against a build that lets any idle unit step aside; red today on the destination until the progress clause is built (today's
-    count takes the ticks of the walk round the Supply and ends the order on tick 81)."""
+    its own side's is a wall. M is a lone mover held inside the 75 wu disc of its point, 10 wu away: no give-up ends its order (DEC-movement-sidestep-2026-11-24, R-099-05 removed), so its destination is kept on every one of the 140 ticks
+    (it is held or goes round the Supply; Test-defect: until 2026-11-24 this asserted the give-up on the 40th held tick). Red against a build that lets any idle unit step aside."""
     w, m, ids = _scene(lib, world_factory, [(SUPPLY, 1, *IDLE_XY)], (520.0, 500.0))
     tr = _trace(lib, w, m, ids, 140)
     ds = [_dist(r["m"], r["o"][0]) for r in tr]
     assert min(ds) <= DIAMETER + CONTACT, "premise: the mover never touched the enemy (closest %.1f)" % min(ds)
     assert all(r["o"][0] == IDLE_XY for r in tr), "the idle enemy was pushed by an enemy mover: first at tick %d" % (1 + next(k for k, r in enumerate(tr) if r["o"][0] != IDLE_XY))
     assert min(ds) >= DIAMETER - POS_TOL, "the mover came %.2f wu from the enemy (30 wu is the diameter)" % min(ds)
-    check_destination_by_count([r["has"] for r in tr], [r["m"] for r in tr], (520.0, 500.0), START, "the mover held at the enemy Supply")
+    for k, r in enumerate(tr):
+        assert r["has"], "tick %d: the mover's order ended, 10 wu from its point and held at the enemy Supply (no give-up ends an order)" % (k + 1)
 
 
 def test_R_097_10_an_idle_enemy_in_the_way_is_gone_round_with_the_goal_behind_it(lib, world_factory):
