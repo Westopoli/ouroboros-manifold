@@ -581,6 +581,10 @@ func _setup_camera(panel: Control) -> void:
 		for p in _feature_points(f):
 			lo = Vector2(minf(lo.x, p.x), minf(lo.y, p.y))
 			hi = Vector2(maxf(hi.x, p.x), maxf(hi.y, p.y))
+	var extra := OS.get_environment("OM_FIT_EXTRA").split(",")  # "x0,y0,x1,y1": one more box the fit holds, so every chunk of a clip (and every clip of a set) shares one camera (scripts/skilllab/arena/clip.py)
+	if extra.size() == 4:
+		lo = Vector2(minf(lo.x, float(extra[0])), minf(lo.y, float(extra[1])))
+		hi = Vector2(maxf(hi.x, float(extra[2])), maxf(hi.y, float(extra[3])))
 	var m := maxf(FIT_MARGIN * maxf(hi.x - lo.x, hi.y - lo.y), FIT_MIN_WU)
 	var box_lo := lo - Vector2(m, m)
 	var box_hi := hi + Vector2(m, m)
