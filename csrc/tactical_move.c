@@ -178,7 +178,6 @@ typedef struct {
     int      walker_on_slope;            /* R-004-06: 1 when that judgement found the walker on a slope; not saved or hashed, rewritten every tick */
     uint64_t moved_own_tick;             /* F2 (R-087-04): the last tick this unit's own movement step changed its position; not saved or hashed, rewritten every tick */
     int      has_dest;
-    uint32_t giveup_near;
     double   dest_x, dest_y;
     int      direct_move;
     uint32_t group_id;
@@ -2043,7 +2042,6 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
         mu->kiting = 0;
         mu->deflecting = 0;
         mu->order_kind = q->kind;
-        mu->giveup_near = 0; /* R-099-05: a new order starts the give-up count at zero. See also: om_command_move */
         om_move_transit_cancel(mu);
         om_move_route_touch(ms, 0, q->x, q->y);
     }
@@ -2743,42 +2741,6 @@ static void om_move_layer_pass(om_world *w, om_move_state *ms, uint32_t period) 
     }
 }
 
-/* PP-move R-099-05, A169 (PURSUE_BY_STEERING): a unit under a group move (or ordered alone) ends its order where it stands when it has been
- * within GROUP_GIVEUP_RADIUS of its point (its slot, for a group member) for GROUP_GIVEUP_TICKS counted ticks without arriving. Each tick is judged by its own two
- * ends (DEC-giveup-progress-2026-11-18): d0, the distance where the tick began (ms->start_x/start_y, written at the top of this same tick), and d1, where it ended.
- * d0 over the radius resets the count; d0 inside it and d1 nearer by more than COLLISION_SETTLE_EPS is not counted and leaves the count as it is (the unit is
- * still walking in); otherwise the tick is counted. Nothing is carried from one tick to the next but the saved count giveup_near. Runs at the END of the tick, on
- * the positions the tick ended with, so the order is cleared on the tick that makes the count 40 (the destination reported after that tick is none).
- * See also: the start_x/start_y write in om_move_tick_once; tests/csim/test_E13_R099_05_giveup_counts_only_ticks_without_progress.py. */
-static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
-    uint32_t id;
-    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
-        om_move_unit *mu = &ms->units[id];
-        double dx, dy, d0, d1;
-        if (!mu->in_use || !mu->has_dest || !om_unit_alive(w, id)) { if (mu->in_use) mu->giveup_near = 0; continue; }
-        /* E2 (R-099-05, Round 6): a unit ordered alone counts as a member does, but only while it is trying to move: on a tick it holds a target or is in the
-         * pause after its own shot the count is zero, since a unit that pursues or stands to shoot is a lone walker whose destination is its target's place.
-         * A direct move (pursuit, guard return, move away from fire) and a kiter are not an order given alone and are left as before. The count is giveup_near,
-         * the group give-up's own, so nothing new is saved. See also: the lone-unit "no progress" pass put off in DEC-audit-fixes-2026-10-23,
-         * tests/csim/test_E13_R099_05_lone_walker_arrives_and_gives_up.py. */
-        if (mu->group_id == 0 && (mu->direct_move || mu->kiting || om_unit_get_target(w, id) != 0 || om_unit_in_backswing(w, id))) { mu->giveup_near = 0; continue; }
-        dx = mu->dest_x - ms->start_x[id];
-        dy = mu->dest_y - ms->start_y[id];
-        d0 = sqrt(dx * dx + dy * dy);
-        if (d0 > (double)OM_GROUP_GIVEUP_RADIUS) { mu->giveup_near = 0; continue; }
-        dx = mu->dest_x - mu->x;
-        dy = mu->dest_y - mu->y;
-        d1 = sqrt(dx * dx + dy * dy);
-        if (d0 - d1 > OM_COLLISION_SETTLE_EPS) continue;
-        if (++mu->giveup_near >= OM_GROUP_GIVEUP_TICKS) {
-            mu->has_dest = 0;
-            om_move_route_drop(mu);
-            mu->deflecting = 0;
-            mu->giveup_near = 0;
-        }
-    }
-}
-
 /* DRAFT-slope-step-slack: wu a walker on a slope may exceed its pace in a tick before om_move_slope_clamp brings it back (a push of a step or two is the crowd's, a jump is not;
  * below the lab checker's DRAFT-inv-step-slack 1.3). Westley's to change. */
 #define OM_SLOPE_STEP_SLACK 1.0
@@ -2827,7 +2789,6 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     om_move_grid_rebuild(w, ms, 1);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) {
         for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
-            /* the distance the give-up pass takes as where this tick began; read only at the end of this tick. See also: om_move_giveup_pass. */
             ms->start_x[id] = ms->units[id].x;
             ms->start_y[id] = ms->units[id].y;
             ms->placed[id] = 0;
@@ -2851,7 +2812,6 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     om_move_walker_tick_moved(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_face_pass(w, ms, period);
     om_move_groups_check_arrival(ms);
-    if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_giveup_pass(w, ms);
 }
 
 /* R-092-02: no unit moves in the recon phase. Phase -1 (no mission) and
@@ -3105,7 +3065,6 @@ uint32_t om_command_group_move(om_world *w, const uint32_t *ids, uint32_t n, dou
         mu->kiting = 0;
         mu->deflecting = 0;
         mu->order_kind = 0;
-        mu->giveup_near = 0; /* R-099-05: a new order starts the give-up count at zero. See also: om_command_move */
         om_move_route_touch(ms, 0, slot_x, slot_y);
         om_tac_unit_set_guard(w, ids[i], 0);
     }
@@ -3120,8 +3079,8 @@ int om_command_issue_named(om_world *w, const char *name, uint32_t unit, double 
     return 1; /* R-096-06: patrol/hold/stop/follow and anything else -- rejected, no state change */
 }
 
-/* The move command as the engine re-issues it inside an order that stands (resume after a fight, pursuit, a guard's return, a chase): it leaves the give-up
- * count alone, so a held unit still gives up (R-099-05). See also: om_command_move below, an order from outside, which starts the count at zero; unit.c's callers. */
+/* The move command as the engine re-issues it inside an order that stands (resume after a fight, pursuit, a guard's return, a chase); om_command_move, an order
+ * from outside, is the same. See also: om_command_move below; unit.c's callers. */
 int om_tac_move_reissue(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y) {
     om_move_state *ms;
     uint32_t i;
@@ -3148,18 +3107,10 @@ int om_tac_move_reissue(om_world *w, const uint32_t *unit_ids, uint32_t n_units,
     return 0;
 }
 
-/* R-099-05, last sentence: a move order given from outside (the tests, the lab, the pipe, enemy_macro.c, and unit.c's attack-move and attack-target orders) starts the
- * give-up count at zero, even the same order again. The engine's own re-issues inside an order use om_tac_move_reissue and keep the count.
- * See also: om_tac_move_reissue above; om_command_group_move and om_move_apply_queue_for_tick, the other two entries. */
+/* A move order given from outside (the tests, the lab, the pipe, enemy_macro.c, and unit.c's attack-move and attack-target orders). It is the engine's own re-issue
+ * (om_tac_move_reissue) with nothing added: no order ends by a count of ticks (DEC-movement-sidestep-2026-11-24 removed R-099-05's give-up). */
 int om_command_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y) {
-    uint32_t i;
-    int r = om_tac_move_reissue(w, unit_ids, n_units, x, y);
-    if (r != 0) return r;
-    for (i = 0; i < n_units; i++) {
-        om_move_unit *mu = om_move_touch(w, om_ms(w), unit_ids[i]);
-        if (mu) mu->giveup_near = 0;
-    }
-    return 0;
+    return om_tac_move_reissue(w, unit_ids, n_units, x, y);
 }
 
 void om_command_queue_attack_move(om_world *w, uint32_t unit, double x, double y) {
@@ -3795,7 +3746,7 @@ static int mv_row_is_fresh(const om_world *cw, const om_move_unit *mu) {
     if (mu->order_kind != -1 || mu->routed || mu->deflecting || mu->deflect_heading != 0.0 || mu->waiting) return 0;
     if (mu->native_speed != om_unit_effective_speed(w, mu->unit_id)) return 0;
     for (f = 0; f < OM_MAX_FACTIONS; f++) if (!mu->visible[f]) return 0;
-    return !mu->giveup_near && !mu->detour_remaining && !mu->detour_dx && !mu->detour_dy && !mu->plan_valid &&
+    return !mu->detour_remaining && !mu->detour_dx && !mu->detour_dy && !mu->plan_valid &&
            !mu->plan_epoch && !mu->plan_dest_x && !mu->plan_dest_y && !mu->aim_x && !mu->aim_y &&
            !mu->aim_is_waypoint && !mu->lay_state && !mu->lay_has_pend && !mu->lay_route && !mu->transit &&
            !mu->lay_to && !mu->lay_pend && !mu->lay_t && !mu->lay_dur && !mu->transit_home &&
@@ -3820,7 +3771,6 @@ static uint64_t om_move_section_hash(const om_world *w) {
         h = mv_dbl(h, mu->facing);
         h = mv_dbl(h, mu->prev_x); h = mv_dbl(h, mu->prev_y); h = mv_dbl(h, mu->prev_facing);
         h = mv_word(h, (uint64_t)(int64_t)mu->has_dest);
-        h = mv_word(h, mu->giveup_near);
         h = mv_dbl(h, mu->dest_x); h = mv_dbl(h, mu->dest_y);
         h = mv_word(h, (uint64_t)(int64_t)mu->direct_move);
         h = mv_word(h, mu->group_id);
@@ -3938,7 +3888,6 @@ static void mv_save_all(const om_move_state *ms, mv_sw *s) {
         mv_put_f64(s, mu->facing);
         mv_put_f64(s, mu->prev_x); mv_put_f64(s, mu->prev_y); mv_put_f64(s, mu->prev_facing);
         mv_put_i32(s, mu->has_dest);
-        mv_put_u32(s, mu->giveup_near);
         mv_put_f64(s, mu->dest_x); mv_put_f64(s, mu->dest_y);
         mv_put_i32(s, mu->direct_move);
         mv_put_u32(s, mu->group_id);
@@ -4089,7 +4038,6 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         mu->facing = mv_get_f64(&r);
         mu->prev_x = mv_get_f64(&r); mu->prev_y = mv_get_f64(&r); mu->prev_facing = mv_get_f64(&r);
         mu->has_dest = mv_get_i32(&r);
-        mu->giveup_near = mv_get_u32(&r);
         mu->dest_x = mv_get_f64(&r); mu->dest_y = mv_get_f64(&r);
         mu->direct_move = mv_get_i32(&r);
         mu->group_id = mv_get_u32(&r);

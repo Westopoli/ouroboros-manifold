@@ -2000,7 +2000,7 @@ static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty)
 
 /* See also: om_tac_move_resume in tactical_move.c, which clears the held flag and keeps the group */
 int om_tac_move_resume(om_world *w, uint32_t unit_id);
-/* See also: om_tac_move_reissue in tactical_move.c: a move the engine re-issues inside an order that stands (R-099-05: om_command_move, an order from outside, resets the give-up count; these do not) */
+/* See also: om_tac_move_reissue in tactical_move.c: a move the engine re-issues inside an order that stands */
 int om_tac_move_reissue(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y);
 
 static void om_tac_hold(om_world *w, om_unit_row *u, uint32_t target_id) {
