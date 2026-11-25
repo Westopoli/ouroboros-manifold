@@ -98,12 +98,15 @@ Memory rule for every run: `systemd-run --user --scope -p MemoryMax=3G -p Memory
 
 Order: LI1, LI2, LI3 and the F and W part of LI4 (parallel after LI2), R, LI5 page and clips, P (after his list), LI6. V-then and V-now columns need no fix and run as soon as LI1 to LI4 land; V-fix waits. The chat reports once at the end of each arm (not per piece), one page link.
 
-## 8. Open questions for Westley (only those he has not ruled)
+## 8. Rulings and what is still open
 
-1. Arm R scan style: one ratio, or each side's headcount varied independently over 8 to 256 (decomposition section 4, not decided). Candidates: (a) 8 to 48 against 16 for every ordered pair (the lab's scan, cheapest, fits memory); (b) a grid of both headcounts from 8 to 256 per side (full map, many cells, chunked); (c) (a) first, (b) only for pairs whose (a) shows a flip.
-2. The final arm F list. This plan uses the four stage 3 features (chokepoint, city, slope, cover) only; confirm or name more (positioning arc or surround, formation, height bands) for a later round.
-3. Whether a failing part ever blocks anything. Decided so far: a failing pair is flagged (decomposition section 4(4)); whether a flag blocks a configuration from later batches "is decided when this is built". This plan blocks nothing: flags and readings are labels. Confirm.
-4. DRAFT numbers named, all Westley's: DRAFT-opening-window-40 (40 ticks); DRAFT-seeds-20 (the 20 seeds each, as stage 3 ran; 10 replicates in the scan cells); DRAFT-scan-8-48-vs-16 (README 4, already his); DRAFT-clip-fps-20 and DRAFT-clip-crf (page-load only); DRAFT-same-or-changed-rule ("same" = identical winner count over the seeds; he may prefer a tolerance in seeds, which this plan does not guess); DRAFT-idle-front-behind (the line between "behind the firing line" and "in front": the first-contact distance rule from the stage 3 pictures); DRAFT-stuck-ticks (ticks without progress before an alive unit with an active order counts as stopped; the checker's DRAFT-inv-stuck-ticks 20 is the nearest, reuse only if he agrees).
-5. Whether V (vision only at stage 3) should also include the stage 4 sight-on layouts L-0061 and L-0039 sight twin. This plan keeps stage 3 only, as asked.
+Ruled by Westley, 2026-11-24 (asked by the Architect, answered in chat):
+1. Arm R scan: ratio first (a), the full grid (b) only for pairs whose (a) shows a flip.
+2. A failing part blocks nothing, with one exception: the movement-stopping check (an order ended short, M arm) blocks a landing. Role and layout flags stay labels (decomposition section 4(4)).
+3. Arm V also covers the stage 4 sight-on layouts (L-0061, L-0080, L-0083, L-0039 sight twin), not only stage 3.
+4. Arm F list: the four stage 3 features for now (chokepoint, city, slope, cover); more are added in a later round. Not asked again.
+5. Context since this spec was drafted: the movement rule is variant A (`DEC-movement-sidestep-2026-11-24`, branch `s/movement-sidestep`); the column V-fix is that build. It steers flying units only; walkers (stage 3 and 4 layouts, the beta's ground era) keep their own step, so the isolation tests are also the check of whether walkers still get stuck.
+
+Still his, all `DRAFT-` in the code: DRAFT-opening-window-40, DRAFT-seeds-20, DRAFT-same-or-changed-rule, DRAFT-idle-front-behind, DRAFT-stuck-ticks, DRAFT-clip-fps-20, DRAFT-clip-crf (the scan 8 to 48 against 16 is already his, README section 4).
 
 Sources read: `decomposition.md`, `heuristics.md`, `README.md` sections 1 to 5, `approved.toml`, `approved_scenes.toml` (branch `s/look-judge-rig`), `ruled.md`, `crossings.md`, `decisions.md` rows DEC-stage3-layouts-2026-11-05 and DEC-one-click-2026-11-18, `plans/engine-rules-2026-11-08/spec.md`, `csrc/om_constants.h:518-526`, `scripts/skilllab/` listed above, r6-clips scripts.
