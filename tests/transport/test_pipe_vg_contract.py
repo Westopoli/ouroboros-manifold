@@ -277,7 +277,9 @@ def test_events_over_many_steps_accumulate_with_their_own_ticks():
     """S-087 (R-087-04): a `tactical_step n=100` through the clash returns the events of all 100 steps, each
     tagged with its own tick, so more than one distinct tick appears. Red on main: no `events`."""
     first = tacticals(run([SET_SEED, start(), BEGIN]))[0]
-    frames = run([SET_SEED, start(), BEGIN] + clash_script(first)[:-1 - ONE_STEP_FRAMES + 50] + [step(100)])
+    # Test-defect, 2026-11-24 (DEC-movement-sidestep-2026-11-24): the clash's fire events now stop at tick 2705 (they ran past tick 2850 before), so the 100-step call ends at tick 2700
+    # (the window 2601 to 2700 holds 26 events on several ticks) and not at 2850.
+    frames = run([SET_SEED, start(), BEGIN] + clash_script(first)[:-1 - ONE_STEP_FRAMES - 1] + [step(100)])
     last = tacticals(frames)[-1]
     ev = last.get("events")
     assert isinstance(ev, list), "no events list"
