@@ -18,6 +18,7 @@ enemy (in the side's visible set in both frames) nearer by more than 1 wu (the c
     [the nearer enemy is nearer than the target in frame N by 1.2 to 150.5 wu (1227/78: 482.9 wu to the target against 332.4 to the nearer enemy; 930/73: 448.5 against 340.0; 517/2, 874/39, 875/40, 877/10 and 1683/36: 1 to 4 wu; the
     five narrow ones are guards, units 1 to 40)].
 Control (green): the fight runs to the measured end and the engine makes these picks. The function names keep "eight" from the first version of the premise.
+Re-derived 2026-11-27 (Test-defect: Westley redrew L-0084 on 2026-11-27 (blue's arc 120 wu closer)): L-0084 seed 1 sight on is 1,927 ticks, survivors [30, 0], nothing suspended, the checker still reports no violation of any rule; the picks of the definition above (a unit with no living target the tick before takes a target, a seen enemy nearer by more than 1 wu in frame N, frame N the tick's end) are the 22 of ACQUIRED, none of the 21 listed above among them (the same definition on the old drawing gave exactly those 21).
 """
 import sys
 from functools import lru_cache
@@ -54,24 +55,24 @@ def nearest_reports(mon):
     return [(v["tick"], v["unit"], v["detail"]) for v in mon.violations if v["rule"] == "R-087-03" and NOT_NEAREST in v["detail"]]
 
 
-ACQUIRED = {(387, 60): 31, (387, 61): 31, (393, 50): 34, (513, 53): 34, (517, 2): 66, (846, 67): 8, (874, 39): 68, (875, 40): 68, (877, 10): 69, (930, 73): 32, (1227, 78): 31, (1227, 82): 31, (1287, 51): 31, (1287, 56): 31, (1407, 41): 31, (1407, 70): 31, (1467, 59): 31, (1527, 46): 31, (1527, 65): 31, (1682, 35): 90, (1683, 36): 91}   # from the premise above
+ACQUIRED = {(357, 45): 7, (368, 5): 62, (371, 4): 62, (491, 47): 40, (910, 11): 68, (968, 13): 75, (969, 79): 37, (969, 80): 37, (1030, 39): 69, (1031, 40): 69, (1032, 37): 78, (1087, 84): 33, (1148, 6): 84, (1149, 14): 83, (1151, 12): 83, (1152, 13): 83, (1272, 33): 95, (1409, 10): 89, (1570, 65): 38, (1572, 87): 40, (1687, 58): 33, (1694, 85): 30}   # from the premise above (re-derived 2026-11-27 on the redrawn L-0084, the premise's own definition; the 21 picks of the old drawing are all gone)
 PAIRS = list(ACQUIRED)
 
 
 def test_control_the_monitor_runs_L0084_to_the_measured_end_and_the_engine_still_makes_the_eight_picks():
     """Control (green before and after the checker fix; re-written 2026-11-12, Test-defect: it asserted the eight false reports, the defect the fix removes; the picks re-derived 2026-11-17 and 2026-11-18). Premise of the
-    tests below: L-0084 seed 1 sight on runs to the measured end with nothing suspended (the length and the survivors re-pinned 2026-11-17 by the verifier, Test-defect: 3923 ticks and [37, 0] were the fight before the notice distance; 1955 and [15, 0]; re-pinned 2026-11-18, Test-defect: 66fbc1ee9, first different tick 812, unit 71, now 1987 and [12, 0]), and the Monitor judged it (its
-    verdict is True or False, not None as a stand-in's is); the engine makes the 21 picks of the premise: at each (tick, unit) the unit takes the target named there (the tick before it held another or
+    tests below: L-0084 seed 1 sight on runs to the measured end with nothing suspended (the length and the survivors re-pinned 2026-11-17 by the verifier, Test-defect: 3923 ticks and [37, 0] were the fight before the notice distance; 1955 and [15, 0]; re-pinned 2026-11-18, Test-defect: 66fbc1ee9, first different tick 812, unit 71, now 1987 and [12, 0]; re-pinned 2026-11-27, Test-defect: Westley redrew L-0084 on 2026-11-27 (blue's arc 120 wu closer): the length, the survivors and the picks were the old drawing's, now 1927 and [30, 0]), and the Monitor judged it (its
+    verdict is True or False, not None as a stand-in's is); the engine makes the 22 picks of the premise (21 before the redraw of 2026-11-27): at each (tick, unit) the unit takes the target named there (the tick before it held another or
     none). So the tests below stay about the checker: a plain frame-N nearest comparison calls each of these picks wrong; the checker as it is reports none."""
     mon = monitored()
-    assert (mon.tick, mon.suspended, mon.survivors) == (1987, {}, [12, 0])
+    assert (mon.tick, mon.suspended, mon.survivors) == (1927, {}, [30, 0])
     assert mon.verdict()["invalid"] is not None
     got = {(n, u): mon.rec.ticks[n - 1]["post"][u]["tgt"] for n, u in ACQUIRED}
     assert got == ACQUIRED and all(mon.rec.ticks[n - 1]["pre"][u]["tgt"] != t for (n, u), t in ACQUIRED.items()), got
 
 
 def test_R_087_03_the_eight_legal_picks_of_L0084_are_not_reported_as_not_the_nearest():
-    """R-087-03 'it targets the nearest such enemy' with the engine's eligibility (R-096-08 post radius for a guard, R-087-10 slant for a unit on another layer): the Monitor reports none of the 21
+    """R-087-03 'it targets the nearest such enemy' with the engine's eligibility (R-096-08 post radius for a guard, R-087-10 slant for a unit on another layer): the Monitor reports none of the 22
     (tick, unit) pairs of the premise (the header lists them) on L-0084 seed 1."""
     got = {(t, u) for t, u, _ in nearest_reports(monitored())}
     assert not got & set(PAIRS), sorted(got & set(PAIRS))
