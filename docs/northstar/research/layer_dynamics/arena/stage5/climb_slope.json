@@ -1,0 +1,146 @@
+{
+  "id": "L-9405",
+  "situation": "slope",
+  "landscape": "small_tiered",
+  "seed": 1,
+  "predict": "B",
+  "predict_why": "Probe, no prediction of his; equal blocks, side B guessed.",
+  "verdict": "",
+  "feedback": "",
+  "defender": "A",
+  "orders": "hold:A",
+  "side_a": {
+    "headcount": 8,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 2700.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2700.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2700.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2700.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2740.0,
+        "y": 1940.0,
+        "facing": 3.1416,
+        "layer": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2740.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2740.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 1
+      },
+      {
+        "role": "Vanguard",
+        "x": 2740.0,
+        "y": 2060.0,
+        "facing": 3.1416,
+        "layer": 1
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 8,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 1000.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1000.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1000.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1000.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1040.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1040.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1040.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 1040.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0
+      }
+    ]
+  },
+  "features": [
+    {
+      "kind": "slope",
+      "x": 2000.0,
+      "y": 2000.0,
+      "length": 600.0,
+      "width": 200.0,
+      "heading": 0.0,
+      "from_band": 0,
+      "to_band": 1
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+# DRAFT. Architect-made probe, not a catalogue layout: it is not in catalogue/ or approved.toml, and Westley redraws it (he authors layouts).
+# Lab stage 5 drafted layout (docs/stories/H-091.md R-091-16), run with --facing on. Drafted from his recorded words in
+# docs/northstar/research/layer_dynamics/heuristics.md: '2 groups of units come at two different angles, surrounding blue. Red would be expected to win 80%'.
+# Side A (blue) holds 8 Vanguards at (2000, 2000) facing east. Side B (red) attacks in two groups of 4, tag `arc` 0 and 1, on rings 250 wu from the holder's centre, at bearings -60 (north-east)
+# and 150 (south-west) degrees (y grows down), 150 degrees apart, attack-moving onto the holder's centre of mass (order rule R2). predict_rate 0.2 is side A's rate: red 80 percent.
+# The numbers (headcounts, 250 wu, the two bearings) are the Architect's draft; the rate is his.
+
+id = "L-9406"
+situation = "open_field"
+landscape = "small_flat"
+seed = 1
+predict = "B"
+predict_why = "Westley, heuristics.md (objective): \"2 groups of units come at two different angles, surrounding blue. Red would be expected to win 80%.\" Side B is the attacker, so side A's rate is 0.2."
+verdict = ""
+feedback = ""
+defender = ""
+predict_rate = 0.2
+orders = "hold:A"
+
+[side_a]
+headcount = 8
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 1940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 2060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 1940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 2060.0
+facing = 0.0
+layer = 0
+
+[side_b]
+headcount = 8
+
+[[side_b.arcs]]
+centre = [2000.0, 2000.0]
+radius = 250.0
+start_deg = -72.0
+end_deg = -48.0
+count = 4
+
+[[side_b.arcs]]
+centre = [2000.0, 2000.0]
+radius = 250.0
+start_deg = 138.0
+end_deg = 162.0
+count = 4
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2077.25
+y = 1762.24
+facing = 1.8849
+layer = 0
+arc = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2109.59
+y = 1775.3
+facing = 2.0246
+layer = 0
+arc = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2139.8
+y = 1792.74
+facing = 2.1642
+layer = 0
+arc = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2167.28
+y = 1814.21
+facing = 2.3038
+layer = 0
+arc = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1814.21
+y = 2167.28
+facing = -0.733
+layer = 0
+arc = 1
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1792.74
+y = 2139.8
+facing = -0.5934
+layer = 0
+arc = 1
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1775.3
+y = 2109.59
+facing = -0.4538
+layer = 0
+arc = 1
+
+[[side_b.units]]
+role = "Vanguard"
+x = 1762.24
+y = 2077.25
+facing = -0.3141
+layer = 0
+arc = 1

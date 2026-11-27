@@ -1,6 +1,8 @@
 <!-- Westley's copy (2026-11-05). Stage status lives in ROADMAP.md section 1; each stage is one cascade plan Westley asks a Fable chat for, run by a Sonnet chat with /manager-mode. -->
 # The beta staircase: the game assembled one approved step at a time, on its own gate channel
 
+This is the BETA staircase: its stages are written "beta BN" (B0 to B16), never "stage N". A bare "stage N" from Westley means the simulation lab's staircase, `lab-staircase.md` (naming rule, CLAUDE.md, 2026-11-26).
+
 Westley, 2026-11-02: "there's not a beta.exe or command I can run that shows me the latest versions ... all I know is the work being done passes tests, but doesn't actually run. I want to ... use the same staged mechanism to put the pieces together of the beta." Approved by him the same morning; amended at once: B5 is one role in groups, not one unit.
 
 Standing rules, unchanged from the lab staircase (DEC-lab-staircase-2026-10-31): one story, one branch, one `--no-ff` landing; tests first by a different Sonnet; the Sonnet look reviewer before any picture reaches his folder; every picture row carries "What to expect / Approve means / Deny means"; a stage is Seen only on his verdict in a scene he plays; the next stage is Ready the day the previous is Seen; every number below is an Architect draft until he rules; Fable writes no code.

@@ -1,0 +1,287 @@
+{
+ "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+ "arcs": [
+  360,
+  180,
+  120,
+  90,
+  60
+ ],
+ "note": "holder = side A; answer_delay over holders whose first hit received is side or rear; seed 1, sight off, facing on, every-tick fights",
+ "scenes": {
+  "pinned_flank": {
+   "60": {
+    "answer_delay_answered": 4,
+    "answer_delay_max": 23,
+    "answer_delay_median": 22.5,
+    "answer_delay_units": 4,
+    "arc_check": {
+     "arc_deg": 60,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "sweep-pinned-arc60",
+    "hits_on_holder": {
+     "front": 307,
+     "rear": 233,
+     "side": 0
+    },
+    "last_tick": 914,
+    "rear_ticks_on_holder": 175,
+    "side_or_rear_ticks_on_holder": 175,
+    "survivors": [
+     0,
+     13
+    ],
+    "winner": "B"
+   },
+   "90": {
+    "answer_delay_answered": 4,
+    "answer_delay_max": 23,
+    "answer_delay_median": 22.5,
+    "answer_delay_units": 4,
+    "arc_check": {
+     "arc_deg": 90,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "flank-pinned-arc90",
+    "hits_on_holder": {
+     "front": 307,
+     "rear": 233,
+     "side": 0
+    },
+    "last_tick": 914,
+    "rear_ticks_on_holder": 175,
+    "side_or_rear_ticks_on_holder": 175,
+    "survivors": [
+     0,
+     13
+    ],
+    "winner": "B"
+   },
+   "120": {
+    "answer_delay_answered": 4,
+    "answer_delay_max": 23,
+    "answer_delay_median": 22.5,
+    "answer_delay_units": 4,
+    "arc_check": {
+     "arc_deg": 120,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "sweep-pinned-arc120",
+    "hits_on_holder": {
+     "front": 307,
+     "rear": 233,
+     "side": 0
+    },
+    "last_tick": 914,
+    "rear_ticks_on_holder": 175,
+    "side_or_rear_ticks_on_holder": 175,
+    "survivors": [
+     0,
+     13
+    ],
+    "winner": "B"
+   },
+   "180": {
+    "answer_delay_answered": 4,
+    "answer_delay_max": 23,
+    "answer_delay_median": 22.5,
+    "answer_delay_units": 4,
+    "arc_check": {
+     "arc_deg": 180,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "sweep-pinned-arc180",
+    "hits_on_holder": {
+     "front": 307,
+     "rear": 233,
+     "side": 0
+    },
+    "last_tick": 914,
+    "rear_ticks_on_holder": 175,
+    "side_or_rear_ticks_on_holder": 175,
+    "survivors": [
+     0,
+     13
+    ],
+    "winner": "B"
+   },
+   "360": {
+    "answer_delay_answered": 4,
+    "answer_delay_max": 23,
+    "answer_delay_median": 22.5,
+    "answer_delay_units": 4,
+    "arc_check": {
+     "arc_deg": 360,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "flank-pinned-arc360",
+    "hits_on_holder": {
+     "front": 307,
+     "rear": 233,
+     "side": 0
+    },
+    "last_tick": 914,
+    "rear_ticks_on_holder": 175,
+    "side_or_rear_ticks_on_holder": 175,
+    "survivors": [
+     0,
+     13
+    ],
+    "winner": "B"
+   }
+  },
+  "rear": {
+   "60": {
+    "answer_delay_answered": 4,
+    "answer_delay_max": 15,
+    "answer_delay_median": 14.0,
+    "answer_delay_units": 4,
+    "arc_check": {
+     "arc_deg": 60,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "rear-arc60",
+    "hits_on_holder": {
+     "front": 432,
+     "rear": 8,
+     "side": 0
+    },
+    "last_tick": 2391,
+    "rear_ticks_on_holder": 4,
+    "side_or_rear_ticks_on_holder": 4,
+    "survivors": [
+     4,
+     0
+    ],
+    "winner": "A"
+   },
+   "90": {
+    "answer_delay_answered": 4,
+    "answer_delay_max": 13,
+    "answer_delay_median": 12.0,
+    "answer_delay_units": 4,
+    "arc_check": {
+     "arc_deg": 90,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "rear-arc90",
+    "hits_on_holder": {
+     "front": 432,
+     "rear": 8,
+     "side": 0
+    },
+    "last_tick": 2391,
+    "rear_ticks_on_holder": 4,
+    "side_or_rear_ticks_on_holder": 4,
+    "survivors": [
+     4,
+     0
+    ],
+    "winner": "A"
+   },
+   "120": {
+    "answer_delay_answered": 4,
+    "answer_delay_max": 12,
+    "answer_delay_median": 11.0,
+    "answer_delay_units": 4,
+    "arc_check": {
+     "arc_deg": 120,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "sweep-rear-arc120",
+    "hits_on_holder": {
+     "front": 433,
+     "rear": 8,
+     "side": 0
+    },
+    "last_tick": 2391,
+    "rear_ticks_on_holder": 4,
+    "side_or_rear_ticks_on_holder": 4,
+    "survivors": [
+     4,
+     0
+    ],
+    "winner": "A"
+   },
+   "180": {
+    "answer_delay_answered": 4,
+    "answer_delay_max": 9,
+    "answer_delay_median": 8.0,
+    "answer_delay_units": 4,
+    "arc_check": {
+     "arc_deg": 180,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "sweep-rear-arc180",
+    "hits_on_holder": {
+     "front": 432,
+     "rear": 8,
+     "side": 0
+    },
+    "last_tick": 2387,
+    "rear_ticks_on_holder": 4,
+    "side_or_rear_ticks_on_holder": 4,
+    "survivors": [
+     4,
+     0
+    ],
+    "winner": "A"
+   },
+   "360": {
+    "answer_delay_answered": 5,
+    "answer_delay_max": 23,
+    "answer_delay_median": 23,
+    "answer_delay_units": 5,
+    "arc_check": {
+     "arc_deg": 360,
+     "first": [],
+     "verdict": "pass",
+     "violations": 0
+    },
+    "end_kind": "wipe",
+    "fight": "rear-arc360",
+    "hits_on_holder": {
+     "front": 423,
+     "rear": 8,
+     "side": 0
+    },
+    "last_tick": 2377,
+    "rear_ticks_on_holder": 4,
+    "side_or_rear_ticks_on_holder": 4,
+    "survivors": [
+     3,
+     0
+    ],
+    "winner": "A"
+   }
+  }
+ }
+}

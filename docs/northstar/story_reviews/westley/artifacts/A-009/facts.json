@@ -1,0 +1,1822 @@
+{
+ "dec-s4": [
+  {
+   "layout": "L-0080",
+   "version": "then",
+   "seed": 1,
+   "sight": "on",
+   "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-then",
+   "tree_sha": "4fa618ce78349fcc077ce552753131e737ae2cea",
+   "tree_note": "csrc 4fa618ce7 (this tree: scripts, scenes and layouts of caa79b7ff)",
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    19
+   ],
+   "last_tick": 2235,
+   "end_kind": "wipe",
+   "frames": 374,
+   "size_bytes": 1739457,
+   "duration_s": 18.7,
+   "mp4": "clips/L-0080-then.mp4",
+   "mp4_sha256": "e025b0bb89065d8818a5307937a392c557213104abc35b29fb9898dcaa103d5e",
+   "poster": "clips/L-0080-then-poster.jpg",
+   "crf": 23,
+   "camera_box": [
+    1130.0,
+    1850.0,
+    2870.0,
+    3199.75
+   ],
+   "label_first": "then  tick 0",
+   "label_last": "then  tick 2235",
+   "record_command": "dec-s4/rec.sh then L-0080 6   (sight on, seed 1, one frame per 6 ticks; analysis from the same run recorded every tick: rec.sh then L-0080 1)",
+   "record_python": "cd tree-then; PYTHONPATH=tree-then python -P drv/rec_s4.py tree-fix/docs/northstar/research/layer_dynamics/catalogue/L-0080.toml 1 6 rec/then-L-0080",
+   "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1130.0,1850.0,2870.0,3199.75 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,372)'\"'\"':text='\"'\"'then  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,373)'\"'\"':text='\"'\"'then  tick 2235                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0080-then.mp4",
+   "clip_command": "dec-s4/clip1.sh L-0080 then",
+   "first_shot_tick": {
+    "A": 129,
+    "B": 139
+   },
+   "first_still_unseen_fire_on_side": {
+    "A": null,
+    "B": null
+   },
+   "loser": "A",
+   "first_still_unseen_fire_on_loser": null,
+   "overlap_pairs_lt15wu_over3ticks": [
+    {
+     "pair": [
+      7,
+      8
+     ],
+     "from_tick": 301,
+     "to_tick": 304,
+     "ticks": 4,
+     "min_wu": 4.02
+    },
+    {
+     "pair": [
+      1,
+      4
+     ],
+     "from_tick": 303,
+     "to_tick": 306,
+     "ticks": 4,
+     "min_wu": 4.24
+    },
+    {
+     "pair": [
+      3,
+      4
+     ],
+     "from_tick": 311,
+     "to_tick": 314,
+     "ticks": 4,
+     "min_wu": 4.08
+    }
+   ]
+  },
+  {
+   "layout": "L-0080",
+   "version": "now",
+   "seed": 1,
+   "sight": "on",
+   "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-now",
+   "tree_sha": "893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+   "tree_note": "git archive 893a5af7f",
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    25
+   ],
+   "last_tick": 1540,
+   "end_kind": "wipe",
+   "frames": 258,
+   "size_bytes": 1617169,
+   "duration_s": 12.9,
+   "mp4": "clips/L-0080-now.mp4",
+   "mp4_sha256": "8a849e72f6972e60ac82f59d7803b3e06cc018a425a8affb26ff19c30ddb56d4",
+   "poster": "clips/L-0080-now-poster.jpg",
+   "crf": 23,
+   "camera_box": [
+    1130.0,
+    1850.0,
+    2870.0,
+    3199.75
+   ],
+   "label_first": "now  tick 0",
+   "label_last": "now  tick 1540",
+   "record_command": "dec-s4/rec.sh now L-0080 6   (sight on, seed 1, one frame per 6 ticks; analysis from the same run recorded every tick: rec.sh now L-0080 1)",
+   "record_python": "cd tree-now; PYTHONPATH=tree-now python -P drv/rec_s4.py tree-fix/docs/northstar/research/layer_dynamics/catalogue/L-0080.toml 1 6 rec/now-L-0080",
+   "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1130.0,1850.0,2870.0,3199.75 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,256)'\"'\"':text='\"'\"'now  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,257)'\"'\"':text='\"'\"'now  tick 1540                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0080-now.mp4",
+   "clip_command": "dec-s4/clip1.sh L-0080 now",
+   "first_shot_tick": {
+    "A": 164,
+    "B": 178
+   },
+   "first_still_unseen_fire_on_side": {
+    "A": null,
+    "B": {
+     "tick": 223,
+     "victim": 23,
+     "shooter": 6
+    }
+   },
+   "loser": "A",
+   "first_still_unseen_fire_on_loser": null,
+   "overlap_pairs_lt15wu_over3ticks": []
+  },
+  {
+   "layout": "L-0080",
+   "version": "fix",
+   "seed": 1,
+   "sight": "on",
+   "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix",
+   "tree_sha": "caa79b7ff6553cc4aee37bce70824443f1437f9b",
+   "tree_note": "git archive caa79b7ff",
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    21
+   ],
+   "last_tick": 2296,
+   "end_kind": "wipe",
+   "frames": 384,
+   "size_bytes": 1998933,
+   "duration_s": 19.2,
+   "mp4": "clips/L-0080-fix.mp4",
+   "mp4_sha256": "68d4ab9905c0de144860a191f6d47084d8e809f0d0d226d94ef640a28600e4be",
+   "poster": "clips/L-0080-fix-poster.jpg",
+   "crf": 23,
+   "camera_box": [
+    1130.0,
+    1850.0,
+    2870.0,
+    3199.75
+   ],
+   "label_first": "fix  tick 0",
+   "label_last": "fix  tick 2296",
+   "record_command": "dec-s4/rec.sh fix L-0080 6   (sight on, seed 1, one frame per 6 ticks; analysis from the same run recorded every tick: rec.sh fix L-0080 1)",
+   "record_python": "cd tree-fix; PYTHONPATH=tree-fix python -P drv/rec_s4.py tree-fix/docs/northstar/research/layer_dynamics/catalogue/L-0080.toml 1 6 rec/fix-L-0080",
+   "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1130.0,1850.0,2870.0,3199.75 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,382)'\"'\"':text='\"'\"'fix  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,383)'\"'\"':text='\"'\"'fix  tick 2296                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0080-fix.mp4",
+   "clip_command": "dec-s4/clip1.sh L-0080 fix",
+   "first_shot_tick": {
+    "A": 164,
+    "B": 178
+   },
+   "first_still_unseen_fire_on_side": {
+    "A": null,
+    "B": {
+     "tick": 223,
+     "victim": 23,
+     "shooter": 6
+    }
+   },
+   "loser": "A",
+   "first_still_unseen_fire_on_loser": null,
+   "overlap_pairs_lt15wu_over3ticks": []
+  },
+  {
+   "layout": "L-0083",
+   "version": "then",
+   "seed": 1,
+   "sight": "on",
+   "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-then",
+   "tree_sha": "4fa618ce78349fcc077ce552753131e737ae2cea",
+   "tree_note": "csrc 4fa618ce7 (this tree: scripts, scenes and layouts of caa79b7ff)",
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    36
+   ],
+   "last_tick": 1691,
+   "end_kind": "wipe",
+   "frames": 283,
+   "size_bytes": 1833231,
+   "duration_s": 14.15,
+   "mp4": "clips/L-0083-then.mp4",
+   "mp4_sha256": "2c1440d2e41c158b8e21b0da988d49d4978f4be518072c538452185068099214",
+   "poster": "clips/L-0083-then-poster.jpg",
+   "crf": 23,
+   "camera_box": [
+    1110.0,
+    1830.0,
+    2890.0,
+    3200.0
+   ],
+   "label_first": "then  tick 0",
+   "label_last": "then  tick 1691",
+   "record_command": "dec-s4/rec.sh then L-0083 6   (sight on, seed 1, one frame per 6 ticks; analysis from the same run recorded every tick: rec.sh then L-0083 1)",
+   "record_python": "cd tree-then; PYTHONPATH=tree-then python -P drv/rec_s4.py tree-fix/docs/northstar/research/layer_dynamics/catalogue/L-0083.toml 1 6 rec/then-L-0083",
+   "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1110.0,1830.0,2890.0,3200.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,281)'\"'\"':text='\"'\"'then  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,282)'\"'\"':text='\"'\"'then  tick 1691                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0083-then.mp4",
+   "clip_command": "dec-s4/clip1.sh L-0083 then",
+   "first_shot_tick": {
+    "A": 117,
+    "B": 127
+   },
+   "first_still_unseen_fire_on_side": {
+    "A": null,
+    "B": null
+   },
+   "loser": "A",
+   "first_still_unseen_fire_on_loser": null,
+   "overlap_pairs_lt15wu_over3ticks": [
+    {
+     "pair": [
+      1,
+      2
+     ],
+     "from_tick": 243,
+     "to_tick": 247,
+     "ticks": 5,
+     "min_wu": 7.3
+    },
+    {
+     "pair": [
+      10,
+      11
+     ],
+     "from_tick": 243,
+     "to_tick": 247,
+     "ticks": 5,
+     "min_wu": 6.19
+    },
+    {
+     "pair": [
+      2,
+      5
+     ],
+     "from_tick": 256,
+     "to_tick": 260,
+     "ticks": 5,
+     "min_wu": 2.74
+    },
+    {
+     "pair": [
+      10,
+      13
+     ],
+     "from_tick": 257,
+     "to_tick": 260,
+     "ticks": 4,
+     "min_wu": 3.75
+    },
+    {
+     "pair": [
+      3,
+      6
+     ],
+     "from_tick": 263,
+     "to_tick": 267,
+     "ticks": 5,
+     "min_wu": 10.96
+    },
+    {
+     "pair": [
+      10,
+      12
+     ],
+     "from_tick": 264,
+     "to_tick": 268,
+     "ticks": 5,
+     "min_wu": 1.13
+    },
+    {
+     "pair": [
+      2,
+      4
+     ],
+     "from_tick": 265,
+     "to_tick": 268,
+     "ticks": 4,
+     "min_wu": 13.41
+    },
+    {
+     "pair": [
+      10,
+      15
+     ],
+     "from_tick": 272,
+     "to_tick": 275,
+     "ticks": 4,
+     "min_wu": 2.71
+    },
+    {
+     "pair": [
+      2,
+      8
+     ],
+     "from_tick": 274,
+     "to_tick": 277,
+     "ticks": 4,
+     "min_wu": 2.31
+    },
+    {
+     "pair": [
+      11,
+      15
+     ],
+     "from_tick": 290,
+     "to_tick": 293,
+     "ticks": 4,
+     "min_wu": 10.49
+    }
+   ]
+  },
+  {
+   "layout": "L-0083",
+   "version": "now",
+   "seed": 1,
+   "sight": "on",
+   "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-now",
+   "tree_sha": "893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+   "tree_note": "git archive 893a5af7f",
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    39
+   ],
+   "last_tick": 1823,
+   "end_kind": "wipe",
+   "frames": 305,
+   "size_bytes": 2297644,
+   "duration_s": 15.25,
+   "mp4": "clips/L-0083-now.mp4",
+   "mp4_sha256": "8c4d1487d9d898c85cc2d4071c2b6014a4f96f34f3ebd9a3bdab1067f840ff8e",
+   "poster": "clips/L-0083-now-poster.jpg",
+   "crf": 23,
+   "camera_box": [
+    1110.0,
+    1830.0,
+    2890.0,
+    3200.0
+   ],
+   "label_first": "now  tick 0",
+   "label_last": "now  tick 1823",
+   "record_command": "dec-s4/rec.sh now L-0083 6   (sight on, seed 1, one frame per 6 ticks; analysis from the same run recorded every tick: rec.sh now L-0083 1)",
+   "record_python": "cd tree-now; PYTHONPATH=tree-now python -P drv/rec_s4.py tree-fix/docs/northstar/research/layer_dynamics/catalogue/L-0083.toml 1 6 rec/now-L-0083",
+   "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1110.0,1830.0,2890.0,3200.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,303)'\"'\"':text='\"'\"'now  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,304)'\"'\"':text='\"'\"'now  tick 1823                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0083-now.mp4",
+   "clip_command": "dec-s4/clip1.sh L-0083 now",
+   "first_shot_tick": {
+    "A": 159,
+    "B": 170
+   },
+   "first_still_unseen_fire_on_side": {
+    "A": null,
+    "B": {
+     "tick": 228,
+     "victim": 52,
+     "shooter": 6
+    }
+   },
+   "loser": "A",
+   "first_still_unseen_fire_on_loser": null,
+   "overlap_pairs_lt15wu_over3ticks": [
+    {
+     "pair": [
+      35,
+      69
+     ],
+     "from_tick": 504,
+     "to_tick": 507,
+     "ticks": 4,
+     "min_wu": 5.73
+    },
+    {
+     "pair": [
+      47,
+      71
+     ],
+     "from_tick": 827,
+     "to_tick": 830,
+     "ticks": 4,
+     "min_wu": 3.38
+    },
+    {
+     "pair": [
+      35,
+      60
+     ],
+     "from_tick": 845,
+     "to_tick": 861,
+     "ticks": 17,
+     "min_wu": 7.08
+    }
+   ]
+  },
+  {
+   "layout": "L-0083",
+   "version": "fix",
+   "seed": 1,
+   "sight": "on",
+   "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix",
+   "tree_sha": "caa79b7ff6553cc4aee37bce70824443f1437f9b",
+   "tree_note": "git archive caa79b7ff",
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    38
+   ],
+   "last_tick": 1811,
+   "end_kind": "wipe",
+   "frames": 303,
+   "size_bytes": 2211198,
+   "duration_s": 15.15,
+   "mp4": "clips/L-0083-fix.mp4",
+   "mp4_sha256": "d74938f8d1beda3b482da3f4f6601e79ef644d96e1f0fbf0ce193169d41176c1",
+   "poster": "clips/L-0083-fix-poster.jpg",
+   "crf": 23,
+   "camera_box": [
+    1110.0,
+    1830.0,
+    2890.0,
+    3200.0
+   ],
+   "label_first": "fix  tick 0",
+   "label_last": "fix  tick 1811",
+   "record_command": "dec-s4/rec.sh fix L-0083 6   (sight on, seed 1, one frame per 6 ticks; analysis from the same run recorded every tick: rec.sh fix L-0083 1)",
+   "record_python": "cd tree-fix; PYTHONPATH=tree-fix python -P drv/rec_s4.py tree-fix/docs/northstar/research/layer_dynamics/catalogue/L-0083.toml 1 6 rec/fix-L-0083",
+   "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1110.0,1830.0,2890.0,3200.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,301)'\"'\"':text='\"'\"'fix  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,302)'\"'\"':text='\"'\"'fix  tick 1811                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0083-fix.mp4",
+   "clip_command": "dec-s4/clip1.sh L-0083 fix",
+   "first_shot_tick": {
+    "A": 159,
+    "B": 170
+   },
+   "first_still_unseen_fire_on_side": {
+    "A": null,
+    "B": {
+     "tick": 228,
+     "victim": 52,
+     "shooter": 6
+    }
+   },
+   "loser": "A",
+   "first_still_unseen_fire_on_loser": null,
+   "overlap_pairs_lt15wu_over3ticks": []
+  },
+  {
+   "layout": "L-0039",
+   "version": "then",
+   "seed": 1,
+   "sight": "on",
+   "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-then",
+   "tree_sha": "4fa618ce78349fcc077ce552753131e737ae2cea",
+   "tree_note": "csrc 4fa618ce7 (this tree: scripts, scenes and layouts of caa79b7ff)",
+   "winner": "draw",
+   "survivors_A_B": [
+    5,
+    8
+   ],
+   "last_tick": 12000,
+   "end_kind": "cap",
+   "frames": 2001,
+   "size_bytes": 7948521,
+   "duration_s": 100.05,
+   "mp4": "clips/L-0039-then.mp4",
+   "mp4_sha256": "33f692b10564c188416c2a77c7b430715c8a92fc31fb715c19fea8656780903c",
+   "poster": "clips/L-0039-then-poster.jpg",
+   "crf": 23,
+   "camera_box": [
+    960.0,
+    1920.64,
+    2290.0,
+    2088.17
+   ],
+   "label_first": "then  tick 0",
+   "label_last": "then  tick 12000",
+   "record_command": "dec-s4/rec.sh then L-0039 6   (sight on, seed 1, one frame per 6 ticks; analysis from the same run recorded every tick: rec.sh then L-0039 1)",
+   "record_python": "cd tree-then; PYTHONPATH=tree-then python -P drv/rec_s4.py tree-fix/docs/northstar/research/layer_dynamics/catalogue/L-0039.toml 1 6 rec/then-L-0039",
+   "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=960.0,1920.64,2290.0,2088.17 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,2000)'\"'\"':text='\"'\"'then  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0039-then.mp4",
+   "clip_command": "dec-s4/clip1.sh L-0039 then",
+   "first_shot_tick": {
+    "A": 149,
+    "B": 80
+   },
+   "first_still_unseen_fire_on_side": {
+    "A": null,
+    "B": null
+   },
+   "loser": null,
+   "first_still_unseen_fire_on_loser": null,
+   "overlap_pairs_lt15wu_over3ticks": []
+  },
+  {
+   "layout": "L-0039",
+   "version": "now",
+   "seed": 1,
+   "sight": "on",
+   "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-now",
+   "tree_sha": "893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+   "tree_note": "git archive 893a5af7f",
+   "winner": "A",
+   "survivors_A_B": [
+    3,
+    0
+   ],
+   "last_tick": 2213,
+   "end_kind": "wipe",
+   "frames": 370,
+   "size_bytes": 661411,
+   "duration_s": 18.5,
+   "mp4": "clips/L-0039-now.mp4",
+   "mp4_sha256": "38f1dc54917c2227f96ac3d320ddc2bfe01f12c512a64457ce472a8bb3384117",
+   "poster": "clips/L-0039-now-poster.jpg",
+   "crf": 23,
+   "camera_box": [
+    960.0,
+    1920.64,
+    2290.0,
+    2088.17
+   ],
+   "label_first": "now  tick 0",
+   "label_last": "now  tick 2213",
+   "record_command": "dec-s4/rec.sh now L-0039 6   (sight on, seed 1, one frame per 6 ticks; analysis from the same run recorded every tick: rec.sh now L-0039 1)",
+   "record_python": "cd tree-now; PYTHONPATH=tree-now python -P drv/rec_s4.py tree-fix/docs/northstar/research/layer_dynamics/catalogue/L-0039.toml 1 6 rec/now-L-0039",
+   "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=960.0,1920.64,2290.0,2088.17 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,368)'\"'\"':text='\"'\"'now  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,369)'\"'\"':text='\"'\"'now  tick 2213                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0039-now.mp4",
+   "clip_command": "dec-s4/clip1.sh L-0039 now",
+   "first_shot_tick": {
+    "A": 94,
+    "B": 92
+   },
+   "first_still_unseen_fire_on_side": {
+    "A": null,
+    "B": {
+     "tick": 94,
+     "victim": 11,
+     "shooter": 7
+    }
+   },
+   "loser": "B",
+   "first_still_unseen_fire_on_loser": {
+    "tick": 94,
+    "victim": 11,
+    "shooter": 7
+   },
+   "overlap_pairs_lt15wu_over3ticks": []
+  },
+  {
+   "layout": "L-0039",
+   "version": "fix",
+   "seed": 1,
+   "sight": "on",
+   "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix",
+   "tree_sha": "caa79b7ff6553cc4aee37bce70824443f1437f9b",
+   "tree_note": "git archive caa79b7ff",
+   "winner": "A",
+   "survivors_A_B": [
+    3,
+    0
+   ],
+   "last_tick": 2213,
+   "end_kind": "wipe",
+   "frames": 370,
+   "size_bytes": 656629,
+   "duration_s": 18.5,
+   "mp4": "clips/L-0039-fix.mp4",
+   "mp4_sha256": "1d6b6c76c661ed2598df9c904b377c67a36e9126d551480d3a8218b577aceda1",
+   "poster": "clips/L-0039-fix-poster.jpg",
+   "crf": 23,
+   "camera_box": [
+    960.0,
+    1920.64,
+    2290.0,
+    2088.17
+   ],
+   "label_first": "fix  tick 0",
+   "label_last": "fix  tick 2213",
+   "record_command": "dec-s4/rec.sh fix L-0039 6   (sight on, seed 1, one frame per 6 ticks; analysis from the same run recorded every tick: rec.sh fix L-0039 1)",
+   "record_python": "cd tree-fix; PYTHONPATH=tree-fix python -P drv/rec_s4.py tree-fix/docs/northstar/research/layer_dynamics/catalogue/L-0039.toml 1 6 rec/fix-L-0039",
+   "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=960.0,1920.64,2290.0,2088.17 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s4/tree-fix --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,368)'\"'\"':text='\"'\"'fix  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,369)'\"'\"':text='\"'\"'fix  tick 2213                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0039-fix.mp4",
+   "clip_command": "dec-s4/clip1.sh L-0039 fix",
+   "first_shot_tick": {
+    "A": 94,
+    "B": 92
+   },
+   "first_still_unseen_fire_on_side": {
+    "A": null,
+    "B": {
+     "tick": 94,
+     "victim": 11,
+     "shooter": 7
+    }
+   },
+   "loser": "B",
+   "first_still_unseen_fire_on_loser": {
+    "tick": 94,
+    "victim": 11,
+    "shooter": 7
+   },
+   "overlap_pairs_lt15wu_over3ticks": []
+  }
+ ],
+ "dec-s3": {
+  "note": "seed 10 for L-0073 / L-0039 (frame every 6 ticks); seed 1 for SIT-0104 (frame every 2 ticks); one camera box per set across its versions; label top-left '<version>  tick N'",
+  "clips": [
+   {
+    "clip": "L-0073-then.mp4",
+    "poster": "L-0073-then-poster.jpg",
+    "layout": "L-0073",
+    "set": "L-0073",
+    "kind": "layout",
+    "version": "then",
+    "version_note": "engine 4fa618ce7 (stage 3 approval), its own lab",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea",
+    "sha": "4fa618ce78349fcc077ce552753131e737ae2cea",
+    "seed": 10,
+    "snapshot_every_ticks": 6,
+    "winner": "A",
+    "survivors_A_B": [
+     17,
+     0
+    ],
+    "last_tick": 6175,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 1031,
+    "fight_frames": 1031,
+    "size_bytes": 3410756,
+    "duration_s": 51.55,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "6c3449e72b2f2ed1c3edca8f1f74905b0b5fbdfd0349a6030435b50daafbf3be",
+    "poster_sha256": "20490185a27185918b1071685f3bff823ad53696c89f6a864bac12fa20416a4d",
+    "camera_box": [
+     620.0,
+     1566.2,
+     1409.23,
+     2434.28
+    ],
+    "label": {
+     "first": "then  tick 0",
+     "last": "then  tick 6175"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-then/L-0073-s10-every6.fight.json",
+     "sha256": "540ae425345b836ea792edefac6ba4c54d93de3ff0d45feb29c2cab6a2b50c7f",
+     "size_bytes": 7106394
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/drv/rec_then.py /home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea/docs/northstar/research/layer_dynamics/catalogue/L-0073.toml 10 6 /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-then /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-L-0073-then  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=620.0,1566.2,1409.23,2434.28 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,1029)'\"'\"':text='\"'\"'then  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,1030)'\"'\"':text='\"'\"'then  tick 6175                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0073-then.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name L-0073-then --version then --fight <fight> --box 620.0,1566.2,1409.23,2434.28 --max-mb 8",
+    "survivors_over_time": {
+     "500": [
+      23,
+      22,
+      "frame tick 498"
+     ],
+     "1000": [
+      20,
+      20,
+      "frame tick 996"
+     ],
+     "2000": [
+      18,
+      14,
+      "frame tick 1998"
+     ],
+     "3000": [
+      17,
+      9,
+      "frame tick 3000"
+     ],
+     "4000": [
+      17,
+      6,
+      "frame tick 3996"
+     ]
+    },
+    "orders_ended_short": {
+     "alive_at_end": 0,
+     "died_after_stopping": 0,
+     "total": 0,
+     "basis": "fallback: still for stuck_ticks, no target, not within 75 wu of orders.point, no enemy in notice",
+     "stuck_ticks": 200,
+     "units": []
+    },
+    "still200": {
+     "ever_still200_notarget": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_at_last_living_frame": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_and_alive_at_end": {
+      "A": 0,
+      "B": 0
+     },
+     "lab_idle_units_at_end": {
+      "total": 0,
+      "arrived": 0,
+      "behind": 0,
+      "front": 0
+     },
+     "orders": {
+      "mode": "hold_and_attack",
+      "point": [
+       1369.61,
+       2000.0
+      ],
+      "attacker": "B"
+     }
+    }
+   },
+   {
+    "clip": "L-0073-now.mp4",
+    "poster": "L-0073-now-poster.jpg",
+    "layout": "L-0073",
+    "set": "L-0073",
+    "kind": "layout",
+    "version": "now",
+    "version_note": "engine 893a5af7f, before the side-step",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "sha": "893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "seed": 10,
+    "snapshot_every_ticks": 6,
+    "winner": "A",
+    "survivors_A_B": [
+     19,
+     0
+    ],
+    "last_tick": 2516,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 421,
+    "fight_frames": 421,
+    "size_bytes": 1101842,
+    "duration_s": 21.05,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "a5f1c05a36ee39c0903b363bb7bc08d905566fc014098cb60a01bda7d081ed6a",
+    "poster_sha256": "2b65888601f93d5c4f0b9d762bdb9cb64a4011cb18d3d3aeefddaa9b3204c76f",
+    "camera_box": [
+     620.0,
+     1566.2,
+     1409.23,
+     2434.28
+    ],
+    "label": {
+     "first": "now  tick 0",
+     "last": "now  tick 2516"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-now/L-0073-s10-every6.fight.json",
+     "sha256": "53dc7c9654e8f9906cfb187b7c38984bd03f7f262e11eb570eeaa959948b56b7",
+     "size_bytes": 5871400
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/land-ledger/scripts/skilllab/arena/clip_record.py --seed 10 --every 6 --out /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-now --work /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-L-0073-now --layout /home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91/docs/northstar/research/layer_dynamics/catalogue/L-0073.toml  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91 PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=620.0,1566.2,1409.23,2434.28 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,419)'\"'\"':text='\"'\"'now  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,420)'\"'\"':text='\"'\"'now  tick 2516                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0073-now.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name L-0073-now --version now --fight <fight> --box 620.0,1566.2,1409.23,2434.28 --max-mb 8",
+    "survivors_over_time": {
+     "500": [
+      24,
+      18,
+      "frame tick 498"
+     ],
+     "1000": [
+      21,
+      12,
+      "frame tick 996"
+     ],
+     "2000": [
+      20,
+      2,
+      "frame tick 1998"
+     ],
+     "3000": "ended at 2516: [19, 0]",
+     "4000": "ended at 2516: [19, 0]"
+    },
+    "orders_ended_short": {
+     "alive_at_end": 0,
+     "died_after_stopping": 0,
+     "total": 0,
+     "basis": "fallback: still for stuck_ticks, no target, not within 75 wu of orders.point, no enemy in notice",
+     "stuck_ticks": 200,
+     "units": []
+    },
+    "still200": {
+     "ever_still200_notarget": {
+      "A": 14,
+      "B": 10
+     },
+     "still200_open_at_last_living_frame": {
+      "A": 13,
+      "B": 0
+     },
+     "still200_open_and_alive_at_end": {
+      "A": 13,
+      "B": 0
+     },
+     "lab_idle_units_at_end": {
+      "total": 13,
+      "arrived": 0,
+      "behind": 2,
+      "front": 11
+     },
+     "orders": {
+      "attacker": "B",
+      "mode": "hold_and_attack",
+      "point": [
+       1369.61,
+       2000.0
+      ]
+     }
+    }
+   },
+   {
+    "clip": "L-0073-fix.mp4",
+    "poster": "L-0073-fix-poster.jpg",
+    "layout": "L-0073",
+    "set": "L-0073",
+    "kind": "layout",
+    "version": "fix",
+    "version_note": "origin/main caa79b7ff (side-step landed; for walkers equal to now apart from the removed give-up)",
+    "tree": "/home/westopoli/Projects/om-wt/land-ledger",
+    "sha": "caa79b7ff6553cc4aee37bce70824443f1437f9b",
+    "seed": 10,
+    "snapshot_every_ticks": 6,
+    "winner": "A",
+    "survivors_A_B": [
+     19,
+     0
+    ],
+    "last_tick": 2516,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 421,
+    "fight_frames": 421,
+    "size_bytes": 1103443,
+    "duration_s": 21.05,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "9adf3d4cac66ac3727ae162dd148e0738661a32594d18dd1f32c6d97eb888c57",
+    "poster_sha256": "66e835ebc90b2bcea453dcf552fbf3a152188d426eb910e0e6250790d40b333d",
+    "camera_box": [
+     620.0,
+     1566.2,
+     1409.23,
+     2434.28
+    ],
+    "label": {
+     "first": "fix  tick 0",
+     "last": "fix  tick 2516"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-fix/L-0073-s10-every6.fight.json",
+     "sha256": "53dc7c9654e8f9906cfb187b7c38984bd03f7f262e11eb570eeaa959948b56b7",
+     "size_bytes": 5871400
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/land-ledger/scripts/skilllab/arena/clip_record.py --seed 10 --every 6 --out /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-fix --work /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-L-0073-fix --layout /home/westopoli/Projects/om-wt/land-ledger/docs/northstar/research/layer_dynamics/catalogue/L-0073.toml  # cwd=/home/westopoli/Projects/om-wt/land-ledger PYTHONPATH=/home/westopoli/Projects/om-wt/land-ledger",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=620.0,1566.2,1409.23,2434.28 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,419)'\"'\"':text='\"'\"'fix  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,420)'\"'\"':text='\"'\"'fix  tick 2516                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0073-fix.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name L-0073-fix --version fix --fight <fight> --box 620.0,1566.2,1409.23,2434.28 --max-mb 8",
+    "survivors_over_time": {
+     "500": [
+      24,
+      18,
+      "frame tick 498"
+     ],
+     "1000": [
+      21,
+      12,
+      "frame tick 996"
+     ],
+     "2000": [
+      20,
+      2,
+      "frame tick 1998"
+     ],
+     "3000": "ended at 2516: [19, 0]",
+     "4000": "ended at 2516: [19, 0]"
+    },
+    "orders_ended_short": {
+     "alive_at_end": 0,
+     "died_after_stopping": 0,
+     "total": 0,
+     "basis": "fallback: still for stuck_ticks, no target, not within 75 wu of orders.point, no enemy in notice",
+     "stuck_ticks": 200,
+     "units": []
+    },
+    "still200": {
+     "ever_still200_notarget": {
+      "A": 14,
+      "B": 10
+     },
+     "still200_open_at_last_living_frame": {
+      "A": 13,
+      "B": 0
+     },
+     "still200_open_and_alive_at_end": {
+      "A": 13,
+      "B": 0
+     },
+     "lab_idle_units_at_end": {
+      "total": 13,
+      "arrived": 0,
+      "behind": 2,
+      "front": 11
+     },
+     "orders": {
+      "attacker": "B",
+      "mode": "hold_and_attack",
+      "point": [
+       1369.61,
+       2000.0
+      ]
+     }
+    }
+   },
+   {
+    "clip": "L-0073-control-then.mp4",
+    "poster": "L-0073-control-then-poster.jpg",
+    "layout": "L-0073",
+    "set": "L-0073-control",
+    "kind": "control twin",
+    "version": "then",
+    "version_note": "engine 4fa618ce7 (stage 3 approval), its own lab",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea",
+    "sha": "4fa618ce78349fcc077ce552753131e737ae2cea",
+    "seed": 10,
+    "snapshot_every_ticks": 6,
+    "winner": "A",
+    "survivors_A_B": [
+     22,
+     0
+    ],
+    "last_tick": 2156,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 361,
+    "fight_frames": 361,
+    "size_bytes": 754366,
+    "duration_s": 18.05,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "7a004d40d760710af24fb8d71fbd517628e7b714539c6667dbb2e6435c06fae5",
+    "poster_sha256": "2012a49d71363d69c45438526c12eb6122df91e093d387a006a90f240cbc6dda",
+    "camera_box": [
+     620.0,
+     1566.2,
+     1421.31,
+     2434.28
+    ],
+    "label": {
+     "first": "then  tick 0",
+     "last": "then  tick 2156"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-control-then/L-0073-control-s10-every6.fight.json",
+     "sha256": "014b69cc23a1d3f4b7844a64d063afc1ea49c096c3f98b2ce545508760a49d72",
+     "size_bytes": 2493390
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/drv/rec_ctl.py /home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea/docs/northstar/research/layer_dynamics/catalogue/L-0073.toml 10 6 /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-control-then /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-L-0073-control-then  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=620.0,1566.2,1421.31,2434.28 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,359)'\"'\"':text='\"'\"'then  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,360)'\"'\"':text='\"'\"'then  tick 2156                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0073-control-then.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name L-0073-control-then --version then --fight <fight> --box 620.0,1566.2,1421.31,2434.28 --max-mb 8",
+    "survivors_over_time": {
+     "500": [
+      23,
+      16,
+      "frame tick 498"
+     ],
+     "1000": [
+      22,
+      9,
+      "frame tick 996"
+     ],
+     "2000": [
+      22,
+      2,
+      "frame tick 1998"
+     ],
+     "3000": "ended at 2156: [22, 0]",
+     "4000": "ended at 2156: [22, 0]"
+    },
+    "orders_ended_short": {
+     "alive_at_end": 0,
+     "died_after_stopping": 0,
+     "total": 0,
+     "basis": "fallback: still for stuck_ticks, no target, not within 75 wu of orders.point, no enemy in notice",
+     "stuck_ticks": 200,
+     "units": []
+    },
+    "still200": {
+     "ever_still200_notarget": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_at_last_living_frame": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_and_alive_at_end": {
+      "A": 0,
+      "B": 0
+     },
+     "lab_idle_units_at_end": {
+      "total": 0,
+      "arrived": 0,
+      "behind": 0,
+      "front": 0
+     },
+     "orders": {
+      "mode": "hold_and_attack",
+      "point": [
+       1369.61,
+       2000.0
+      ],
+      "attacker": "B"
+     }
+    }
+   },
+   {
+    "clip": "L-0073-control-now.mp4",
+    "poster": "L-0073-control-now-poster.jpg",
+    "layout": "L-0073",
+    "set": "L-0073-control",
+    "kind": "control twin",
+    "version": "now",
+    "version_note": "engine 893a5af7f, before the side-step",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "sha": "893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "seed": 10,
+    "snapshot_every_ticks": 6,
+    "winner": "A",
+    "survivors_A_B": [
+     13,
+     0
+    ],
+    "last_tick": 4395,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 734,
+    "fight_frames": 734,
+    "size_bytes": 1216529,
+    "duration_s": 36.7,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "0edbc9890303f4979f91991610043d27a86c94651685595ffb003c8736026f9f",
+    "poster_sha256": "6edc47a24522a92b44354a32cbe4360fdcf767ab899b6ac7fb393fbd6b7668d0",
+    "camera_box": [
+     620.0,
+     1566.2,
+     1421.31,
+     2434.28
+    ],
+    "label": {
+     "first": "now  tick 0",
+     "last": "now  tick 4395"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-control-now/L-0073-control-s10-every6.fight.json",
+     "sha256": "6f8195182679d070b84ecc3af6cca0ee485a0f124e89ed25bf9138047b998f3e",
+     "size_bytes": 5650795
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/drv/rec_ctl.py /home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91/docs/northstar/research/layer_dynamics/catalogue/L-0073.toml 10 6 /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-control-now /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-L-0073-control-now  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91 PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=620.0,1566.2,1421.31,2434.28 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,732)'\"'\"':text='\"'\"'now  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,733)'\"'\"':text='\"'\"'now  tick 4395                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0073-control-now.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name L-0073-control-now --version now --fight <fight> --box 620.0,1566.2,1421.31,2434.28 --max-mb 8",
+    "survivors_over_time": {
+     "500": [
+      23,
+      19,
+      "frame tick 498"
+     ],
+     "1000": [
+      21,
+      17,
+      "frame tick 996"
+     ],
+     "2000": [
+      17,
+      11,
+      "frame tick 1998"
+     ],
+     "3000": [
+      14,
+      2,
+      "frame tick 3000"
+     ],
+     "4000": [
+      13,
+      1,
+      "frame tick 3996"
+     ]
+    },
+    "orders_ended_short": {
+     "alive_at_end": 0,
+     "died_after_stopping": 0,
+     "total": 0,
+     "basis": "fallback: still for stuck_ticks, no target, not within 75 wu of orders.point, no enemy in notice",
+     "stuck_ticks": 200,
+     "units": []
+    },
+    "still200": {
+     "ever_still200_notarget": {
+      "A": 13,
+      "B": 12
+     },
+     "still200_open_at_last_living_frame": {
+      "A": 11,
+      "B": 0
+     },
+     "still200_open_and_alive_at_end": {
+      "A": 11,
+      "B": 0
+     },
+     "lab_idle_units_at_end": {
+      "total": 11,
+      "arrived": 0,
+      "behind": 3,
+      "front": 8
+     },
+     "orders": {
+      "mode": "hold_and_attack",
+      "point": [
+       1369.61,
+       2000.0
+      ],
+      "attacker": "B"
+     }
+    }
+   },
+   {
+    "clip": "L-0073-control-fix.mp4",
+    "poster": "L-0073-control-fix-poster.jpg",
+    "layout": "L-0073",
+    "set": "L-0073-control",
+    "kind": "control twin",
+    "version": "fix",
+    "version_note": "origin/main caa79b7ff (side-step landed; for walkers equal to now apart from the removed give-up)",
+    "tree": "/home/westopoli/Projects/om-wt/land-ledger",
+    "sha": "caa79b7ff6553cc4aee37bce70824443f1437f9b",
+    "seed": 10,
+    "snapshot_every_ticks": 6,
+    "winner": "A",
+    "survivors_A_B": [
+     13,
+     0
+    ],
+    "last_tick": 4395,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 734,
+    "fight_frames": 734,
+    "size_bytes": 1224042,
+    "duration_s": 36.7,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "185abf1417982eea3888a48f0543c0eb83e8c437c125a0173ba33115ea986717",
+    "poster_sha256": "009047a111d225dc47aa95bc966f550ff49bfe3dcfc2c8f71c87ea03a7f980fa",
+    "camera_box": [
+     620.0,
+     1566.2,
+     1421.31,
+     2434.28
+    ],
+    "label": {
+     "first": "fix  tick 0",
+     "last": "fix  tick 4395"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-control-fix/L-0073-control-s10-every6.fight.json",
+     "sha256": "4034dbda5154e564717d6b75865d3df87311b1f6dec6801a1361a5065b85f0e8",
+     "size_bytes": 5650795
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/drv/rec_ctl.py /home/westopoli/Projects/om-wt/land-ledger/docs/northstar/research/layer_dynamics/catalogue/L-0073.toml 10 6 /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0073-control-fix /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-L-0073-control-fix  # cwd=/home/westopoli/Projects/om-wt/land-ledger PYTHONPATH=/home/westopoli/Projects/om-wt/land-ledger",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=620.0,1566.2,1421.31,2434.28 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,732)'\"'\"':text='\"'\"'fix  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,733)'\"'\"':text='\"'\"'fix  tick 4395                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0073-control-fix.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name L-0073-control-fix --version fix --fight <fight> --box 620.0,1566.2,1421.31,2434.28 --max-mb 8",
+    "survivors_over_time": {
+     "500": [
+      23,
+      19,
+      "frame tick 498"
+     ],
+     "1000": [
+      21,
+      17,
+      "frame tick 996"
+     ],
+     "2000": [
+      17,
+      11,
+      "frame tick 1998"
+     ],
+     "3000": [
+      14,
+      2,
+      "frame tick 3000"
+     ],
+     "4000": [
+      13,
+      1,
+      "frame tick 3996"
+     ]
+    },
+    "orders_ended_short": {
+     "alive_at_end": 0,
+     "died_after_stopping": 0,
+     "total": 0,
+     "basis": "fallback: still for stuck_ticks, no target, not within 75 wu of orders.point, no enemy in notice",
+     "stuck_ticks": 200,
+     "units": []
+    },
+    "still200": {
+     "ever_still200_notarget": {
+      "A": 13,
+      "B": 12
+     },
+     "still200_open_at_last_living_frame": {
+      "A": 11,
+      "B": 0
+     },
+     "still200_open_and_alive_at_end": {
+      "A": 11,
+      "B": 0
+     },
+     "lab_idle_units_at_end": {
+      "total": 11,
+      "arrived": 0,
+      "behind": 3,
+      "front": 8
+     },
+     "orders": {
+      "mode": "hold_and_attack",
+      "point": [
+       1369.61,
+       2000.0
+      ],
+      "attacker": "B"
+     }
+    }
+   },
+   {
+    "clip": "L-0039-control-then.mp4",
+    "poster": "L-0039-control-then-poster.jpg",
+    "layout": "L-0039",
+    "set": "L-0039-control",
+    "kind": "control twin",
+    "version": "then",
+    "version_note": "engine 4fa618ce7 (stage 3 approval), its own lab",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea",
+    "sha": "4fa618ce78349fcc077ce552753131e737ae2cea",
+    "seed": 10,
+    "snapshot_every_ticks": 6,
+    "winner": "A",
+    "survivors_A_B": [
+     3,
+     0
+    ],
+    "last_tick": 2606,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 436,
+    "fight_frames": 436,
+    "size_bytes": 540132,
+    "duration_s": 21.8,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "e580f45393fb75c4110a1c089d30d1fd32c405126b921a4436a3c2119decc713",
+    "poster_sha256": "532a0a683884a770585021bfdb6647bacb19aef61712ee6a346556a8b3e3cdf7",
+    "camera_box": [
+     960.0,
+     1920.37,
+     2290.0,
+     2091.95
+    ],
+    "label": {
+     "first": "then  tick 0",
+     "last": "then  tick 2606"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0039-control-then/L-0039-control-s10-every6.fight.json",
+     "sha256": "f7d6f2824bf70a4380c4d24314b6e7587939d68f23fbf4e6a2a16e779e1b0094",
+     "size_bytes": 1014360
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/drv/rec_ctl.py /home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea/docs/northstar/research/layer_dynamics/catalogue/L-0039.toml 10 6 /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0039-control-then /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-L-0039-control-then  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=960.0,1920.37,2290.0,2091.95 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,434)'\"'\"':text='\"'\"'then  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,435)'\"'\"':text='\"'\"'then  tick 2606                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0039-control-then.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name L-0039-control-then --version then --fight <fight> --box 960.0,1920.37,2290.0,2091.95 --max-mb 8",
+    "survivors_over_time": {
+     "500": [
+      7,
+      7,
+      "frame tick 498"
+     ],
+     "1000": [
+      5,
+      5,
+      "frame tick 996"
+     ],
+     "2000": [
+      3,
+      3,
+      "frame tick 1998"
+     ],
+     "3000": "ended at 2606: [3, 0]",
+     "4000": "ended at 2606: [3, 0]"
+    },
+    "orders_ended_short": {
+     "alive_at_end": 0,
+     "died_after_stopping": 0,
+     "total": 0,
+     "basis": "fallback: still for stuck_ticks, no target, not within 75 wu of orders.point, no enemy in notice",
+     "stuck_ticks": 200,
+     "units": []
+    },
+    "still200": {
+     "ever_still200_notarget": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_at_last_living_frame": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_and_alive_at_end": {
+      "A": 0,
+      "B": 0
+     },
+     "lab_idle_units_at_end": {
+      "total": 0,
+      "arrived": 0,
+      "behind": 0,
+      "front": 0
+     },
+     "orders": {
+      "mode": "both_same_point",
+      "point": [
+       1625.0,
+       2000.0
+      ],
+      "attacker": null
+     }
+    }
+   },
+   {
+    "clip": "L-0039-control-now.mp4",
+    "poster": "L-0039-control-now-poster.jpg",
+    "layout": "L-0039",
+    "set": "L-0039-control",
+    "kind": "control twin",
+    "version": "now",
+    "version_note": "engine 893a5af7f, before the side-step",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "sha": "893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "seed": 10,
+    "snapshot_every_ticks": 6,
+    "winner": "B",
+    "survivors_A_B": [
+     0,
+     5
+    ],
+    "last_tick": 2352,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 393,
+    "fight_frames": 393,
+    "size_bytes": 661555,
+    "duration_s": 19.65,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "c5be510008f04fb33641893a434e793cc25babda60bada085020c8fe2a15651c",
+    "poster_sha256": "3afc1ad501dd1f270067f0c59162fd8d0317be49d9333d85afb56906f163a19c",
+    "camera_box": [
+     960.0,
+     1920.37,
+     2290.0,
+     2091.95
+    ],
+    "label": {
+     "first": "now  tick 0",
+     "last": "now  tick 2352"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0039-control-now/L-0039-control-s10-every6.fight.json",
+     "sha256": "a3f3e1284f04124e069ca0c27dd19389a4879d6acb2b2b4e6c1c772d5f543f94",
+     "size_bytes": 1015563
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/drv/rec_ctl.py /home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91/docs/northstar/research/layer_dynamics/catalogue/L-0039.toml 10 6 /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0039-control-now /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-L-0039-control-now  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91 PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=960.0,1920.37,2290.0,2091.95 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,392)'\"'\"':text='\"'\"'now  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0039-control-now.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name L-0039-control-now --version now --fight <fight> --box 960.0,1920.37,2290.0,2091.95 --max-mb 8",
+    "survivors_over_time": {
+     "500": [
+      7,
+      8,
+      "frame tick 498"
+     ],
+     "1000": [
+      4,
+      7,
+      "frame tick 996"
+     ],
+     "2000": [
+      1,
+      5,
+      "frame tick 1998"
+     ],
+     "3000": "ended at 2352: [0, 5]",
+     "4000": "ended at 2352: [0, 5]"
+    },
+    "orders_ended_short": {
+     "alive_at_end": 0,
+     "died_after_stopping": 0,
+     "total": 0,
+     "basis": "fallback: still for stuck_ticks, no target, not within 75 wu of orders.point, no enemy in notice",
+     "stuck_ticks": 200,
+     "units": []
+    },
+    "still200": {
+     "ever_still200_notarget": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_at_last_living_frame": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_and_alive_at_end": {
+      "A": 0,
+      "B": 0
+     },
+     "lab_idle_units_at_end": {
+      "total": 0,
+      "arrived": 0,
+      "behind": 0,
+      "front": 0
+     },
+     "orders": {
+      "mode": "both_same_point",
+      "point": [
+       1625.0,
+       2000.0
+      ],
+      "attacker": null
+     }
+    }
+   },
+   {
+    "clip": "L-0039-control-fix.mp4",
+    "poster": "L-0039-control-fix-poster.jpg",
+    "layout": "L-0039",
+    "set": "L-0039-control",
+    "kind": "control twin",
+    "version": "fix",
+    "version_note": "origin/main caa79b7ff (side-step landed; for walkers equal to now apart from the removed give-up)",
+    "tree": "/home/westopoli/Projects/om-wt/land-ledger",
+    "sha": "caa79b7ff6553cc4aee37bce70824443f1437f9b",
+    "seed": 10,
+    "snapshot_every_ticks": 6,
+    "winner": "B",
+    "survivors_A_B": [
+     0,
+     5
+    ],
+    "last_tick": 2352,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 393,
+    "fight_frames": 393,
+    "size_bytes": 662867,
+    "duration_s": 19.65,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "f5fc7b4d5308e25682717e72eb4e58b03aeef6bbce9d1dd0635c8369066531ec",
+    "poster_sha256": "ddef23e0eb495f824a652fb0d2c2dae3f52337f082dc53a59a4e526eb1b2e7d3",
+    "camera_box": [
+     960.0,
+     1920.37,
+     2290.0,
+     2091.95
+    ],
+    "label": {
+     "first": "fix  tick 0",
+     "last": "fix  tick 2352"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0039-control-fix/L-0039-control-s10-every6.fight.json",
+     "sha256": "07384b66fb3a0e2665b9338681458f16f103eac8c7bc826e1857d2f4460efb00",
+     "size_bytes": 1015563
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/drv/rec_ctl.py /home/westopoli/Projects/om-wt/land-ledger/docs/northstar/research/layer_dynamics/catalogue/L-0039.toml 10 6 /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/L-0039-control-fix /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-L-0039-control-fix  # cwd=/home/westopoli/Projects/om-wt/land-ledger PYTHONPATH=/home/westopoli/Projects/om-wt/land-ledger",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=960.0,1920.37,2290.0,2091.95 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,392)'\"'\"':text='\"'\"'fix  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/L-0039-control-fix.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name L-0039-control-fix --version fix --fight <fight> --box 960.0,1920.37,2290.0,2091.95 --max-mb 8",
+    "survivors_over_time": {
+     "500": [
+      7,
+      8,
+      "frame tick 498"
+     ],
+     "1000": [
+      4,
+      7,
+      "frame tick 996"
+     ],
+     "2000": [
+      1,
+      5,
+      "frame tick 1998"
+     ],
+     "3000": "ended at 2352: [0, 5]",
+     "4000": "ended at 2352: [0, 5]"
+    },
+    "orders_ended_short": {
+     "alive_at_end": 0,
+     "died_after_stopping": 0,
+     "total": 0,
+     "basis": "fallback: still for stuck_ticks, no target, not within 75 wu of orders.point, no enemy in notice",
+     "stuck_ticks": 200,
+     "units": []
+    },
+    "still200": {
+     "ever_still200_notarget": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_at_last_living_frame": {
+      "A": 0,
+      "B": 0
+     },
+     "still200_open_and_alive_at_end": {
+      "A": 0,
+      "B": 0
+     },
+     "lab_idle_units_at_end": {
+      "total": 0,
+      "arrived": 0,
+      "behind": 0,
+      "front": 0
+     },
+     "orders": {
+      "mode": "both_same_point",
+      "point": [
+       1625.0,
+       2000.0
+      ],
+      "attacker": null
+     }
+    }
+   },
+   {
+    "clip": "SIT-0104-approved.mp4",
+    "poster": "SIT-0104-approved-poster.jpg",
+    "layout": "L-0104",
+    "set": "SIT-0104",
+    "kind": "situation L-0104",
+    "version": "approved",
+    "version_note": "engine 4fa618ce7 (approved), its own lab",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea",
+    "sha": "4fa618ce78349fcc077ce552753131e737ae2cea",
+    "seed": 1,
+    "snapshot_every_ticks": 2,
+    "winner": "A",
+    "survivors_A_B": [
+     24,
+     0
+    ],
+    "last_tick": 2954,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 1478,
+    "fight_frames": 1478,
+    "size_bytes": 2813859,
+    "duration_s": 73.9,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "7ab1fc236f108aefa859fb11c4ba08ea5c69f1d271a1fce1b8c3d11bde30f962",
+    "poster_sha256": "568a527813359faa95efbf08974509c585734b30542b29aedac0f9a42442e69d",
+    "camera_box": [
+     940.0,
+     1666.27,
+     3060.0,
+     2345.29
+    ],
+    "label": {
+     "first": "approved  tick 0",
+     "last": "approved  tick 2954"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/SIT-0104-approved/L-0104-s1-every2.fight.json",
+     "sha256": "58292979548c6c0379810865732a35d727bd7e9131b0f0e0b10180c5d153d19a",
+     "size_bytes": 13661888
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/drv/rec_then.py SIT-0104 1 2 /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/SIT-0104-approved /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-SIT-0104-approved  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-4fa618ce78349fcc077ce552753131e737ae2cea",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=940.0,1666.27,3060.0,2345.29 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,1477)'\"'\"':text='\"'\"'approved  tick %{eif\\:0+2*(n-0)\\:d}                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/SIT-0104-approved.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name SIT-0104-approved --version approved --fight <fight> --box 940.0,1666.27,3060.0,2345.29 --max-mb 8"
+   },
+   {
+    "clip": "SIT-0104-today.mp4",
+    "poster": "SIT-0104-today-poster.jpg",
+    "layout": "L-0104",
+    "set": "SIT-0104",
+    "kind": "situation L-0104",
+    "version": "today",
+    "version_note": "engine 893a5af7f, before the side-step",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "sha": "893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "seed": 1,
+    "snapshot_every_ticks": 2,
+    "winner": "A",
+    "survivors_A_B": [
+     10,
+     0
+    ],
+    "last_tick": 6254,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 3128,
+    "fight_frames": 3128,
+    "size_bytes": 3582168,
+    "duration_s": 156.4,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "51c5a4b2683f24d6c92ebbc94cc0cdd8fa927a4467165bdaac69f7f71d961510",
+    "poster_sha256": "31cf8b8b55c81a9125094940e7187e92a93c5e9700b7362a332510873284e5c6",
+    "camera_box": [
+     940.0,
+     1666.27,
+     3060.0,
+     2345.29
+    ],
+    "label": {
+     "first": "today  tick 0",
+     "last": "today  tick 6254"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/SIT-0104-today/L-0104-s1-every2.fight.json",
+     "sha256": "655fecedeb4d409ba21c617d00f1101466f20f5f1b76f3a017842a4eb10ad0ec",
+     "size_bytes": 57831650
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/land-ledger/scripts/skilllab/arena/clip_record.py --seed 1 --every 2 --out /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/SIT-0104-today --work /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-SIT-0104-today --situation SIT-0104  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91 PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/iso-run1/scratch/tree-893a5af7fc54de5bb238a5fabb528e2ddf70ed91",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=940.0,1666.27,3060.0,2345.29 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,3127)'\"'\"':text='\"'\"'today  tick %{eif\\:0+2*(n-0)\\:d}                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/SIT-0104-today.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name SIT-0104-today --version today --fight <fight> --box 940.0,1666.27,3060.0,2345.29 --max-mb 8"
+   },
+   {
+    "clip": "SIT-0104-v1.mp4",
+    "poster": "SIT-0104-v1-poster.jpg",
+    "layout": "L-0104",
+    "set": "SIT-0104",
+    "kind": "situation L-0104",
+    "version": "v1",
+    "version_note": "V1: give-up removed (r6-advance/t-a, no git; diff over V1 for logging only: r6-advance/diffs/log_over_v1.diff)",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-a",
+    "sha": null,
+    "seed": 1,
+    "snapshot_every_ticks": 2,
+    "winner": "A",
+    "survivors_A_B": [
+     14,
+     0
+    ],
+    "last_tick": 5275,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 2639,
+    "fight_frames": 2639,
+    "size_bytes": 3394586,
+    "duration_s": 131.95,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "00cf56091e9e3123b22a273511665fc603572e243473b927eddf6419646f71ee",
+    "poster_sha256": "bf120a6d5a507f56eb6c22649b5178f2699e3db928eaced3b183fa047ab89571",
+    "camera_box": [
+     940.0,
+     1666.27,
+     3060.0,
+     2345.29
+    ],
+    "label": {
+     "first": "v1  tick 0",
+     "last": "v1  tick 5275"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/SIT-0104-v1/L-0104-s1-every2.fight.json",
+     "sha256": "5c9171dfc5ddaad5f8b879ad8efe40ed636875b37278e7a03f560d336d0fe390",
+     "size_bytes": 48825375
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/land-ledger/scripts/skilllab/arena/clip_record.py --seed 1 --every 2 --out /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/SIT-0104-v1 --work /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-SIT-0104-v1 --situation SIT-0104  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-a PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-a",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=940.0,1666.27,3060.0,2345.29 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,2637)'\"'\"':text='\"'\"'v1  tick %{eif\\:0+2*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,2638)'\"'\"':text='\"'\"'v1  tick 5275                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/SIT-0104-v1.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name SIT-0104-v1 --version v1 --fight <fight> --box 940.0,1666.27,3060.0,2345.29 --max-mb 8"
+   },
+   {
+    "clip": "SIT-0104-A.mp4",
+    "poster": "SIT-0104-A-poster.jpg",
+    "layout": "L-0104",
+    "set": "SIT-0104",
+    "kind": "situation L-0104",
+    "version": "A",
+    "version_note": "A: the side-step (old rule: 7-point sweep, group mates and idle friends do not block, committed side; r6-advance/t-A, diff over t-a: r6-advance/diffs/A.diff)",
+    "tree": "/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-A",
+    "sha": null,
+    "seed": 1,
+    "snapshot_every_ticks": 2,
+    "winner": "B",
+    "survivors_A_B": [
+     0,
+     2
+    ],
+    "last_tick": 10128,
+    "end_kind": "wipe",
+    "capped": false,
+    "frames": 5065,
+    "fight_frames": 5065,
+    "size_bytes": 4318314,
+    "duration_s": 253.25,
+    "size_px": [
+     1600,
+     900
+    ],
+    "codec": "h264",
+    "fps": 20,
+    "video_sha256": "9d2b4bfcdb1771b67f0988d4830f95a87ca5adfec386d47e0b15d16d23da5c31",
+    "poster_sha256": "72308ab46314f6b74d83d1e87bb5291b3ffa1442659117d190ca78d51558fa59",
+    "camera_box": [
+     940.0,
+     1666.27,
+     3060.0,
+     2345.29
+    ],
+    "label": {
+     "first": "A  tick 0",
+     "last": "A  tick 10128"
+    },
+    "fight_file": {
+     "file": "/home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/SIT-0104-A/L-0104-s1-every2.fight.json",
+     "sha256": "8132de026f20a2548002aeb79aa457046655d72b8774b906c0f85776b4beb1af",
+     "size_bytes": 93626174
+    },
+    "record_command": "/home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -P /home/westopoli/Projects/om-wt/land-ledger/scripts/skilllab/arena/clip_record.py --seed 1 --every 2 --out /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/rec/SIT-0104-A --work /home/westopoli/Projects/om-wt/engine-rules-baseline/dec-s3/work/rec-SIT-0104-A --situation SIT-0104  # cwd=/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-A PYTHONPATH=/home/westopoli/Projects/om-wt/engine-rules-baseline/r6-advance/t-A",
+    "render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=940.0,1666.27,3060.0,2345.29 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/land-ledger --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+    "encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,5064)'\"'\"':text='\"'\"'A  tick %{eif\\:0+2*(n-0)\\:d}                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/SIT-0104-A.mp4",
+    "clip_cli": "python -m scripts.skilllab.arena.clip --out clips --name SIT-0104-A --version A --fight <fight> --box 940.0,1666.27,3060.0,2345.29 --max-mb 8"
+   }
+  ]
+ }
+}

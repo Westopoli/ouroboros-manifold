@@ -125,6 +125,7 @@ class Engine:
             "om_unit_alive": ([V, u32], i),
             "om_unit_get_target": ([V, u32], u32),
             "om_unit_get_facing": ([V, u32], d),
+            "om_unit_set_facing": ([V, u32, d], None),
             "om_unit_get_unit_type": ([V, u32], c.c_int32),
             "om_unit_transition_progress": ([V, u32], d),
             "om_tactical_category_multiplier": ([V, i, i], d),
@@ -326,14 +327,18 @@ class Engine:
     def step(self, w):
         self._lib.om_tactical_step(w)
 
-    def fire_attackers(self, w):
-        """Ids of the units that fired (tactical event kind 0, csrc/unit.c OM_TAC_EV_FIRE) in the last `step`; read it right after the step."""
+    def fire_events(self, w):
+        """[(attacker id, target id)] for every shot (tactical event kind 0, csrc/unit.c OM_TAC_EV_FIRE) of the last `step`, in event order; read it right after the step."""
         kind, a, b, t = ctypes.c_int32(), ctypes.c_uint32(), ctypes.c_int32(), ctypes.c_uint64()
-        out = set()
+        out = []
         for n in range(self._lib.om_tactical_event_count(w)):
             if self._lib.om_tactical_event_get_at(w, n, ctypes.byref(kind), ctypes.byref(a), ctypes.byref(b), ctypes.byref(t)) == 0 and kind.value == 0:
-                out.add(a.value)
+                out.append((a.value, b.value))
         return out
+
+    def fire_attackers(self, w):
+        """Ids of the units that fired in the last `step`; read it right after the step. See also: fire_events."""
+        return {a for a, _ in self.fire_events(w)}
 
     def unit_hp(self, w, u):
         return self._lib.om_unit_get_hp(w, u)
@@ -383,6 +388,10 @@ class Engine:
 
     def unit_facing(self, w, u):
         return float(self._lib.om_unit_get_facing(w, int(u)))
+
+    @_bumps
+    def set_facing(self, w, u, radians):
+        self._lib.om_unit_set_facing(w, int(u), float(radians))
 
     def unit_type(self, w, u):
         return int(self._lib.om_unit_get_unit_type(w, int(u)))

@@ -1,0 +1,219 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Lab Stage 5 Layout Sampler</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column. Summary and the asks first, then how to read a clip, then the clips grouped by requirement, then what works, what does not, decisions, checks. */
+:root {
+  --bg: #f3f5f6; --panel: #ffffff; --fg: #1b2329; --muted: #5b6871; --line: #d5dde2;
+  --accent: #0f7c86; --warn: #a15c00; --warn-bg: #fff3e0; --ok: #1f7a46; --ask-bg: #e6f4ee;
+  --front: #6b7780; --side: #c96a00; --rear: #c62828; --climb: #8a7a00;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --warn: #f0b060; --warn-bg: #2b2215; --ok: #6fd09a; --ask-bg: #15291f;
+  --front: #c9d2d8; --side: #ff9a3d; --rear: #ff6b6b; --climb: #e6d44a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --warn: #f0b060; --warn-bg: #2b2215; --ok: #6fd09a; --ask-bg: #15291f;
+  --front: #c9d2d8; --side: #ff9a3d; --rear: #ff6b6b; --climb: #e6d44a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 56px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 20px; font-weight: 600; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; font-weight: 600; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+ul, ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 70ch; }
+code { font-family: var(--mono); font-size: 14px; overflow-wrap: anywhere; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.ask { border-left: 4px solid var(--ok); background: var(--ask-bg); }
+.gaps { border-left: 4px solid var(--warn); background: var(--warn-bg); }
+.small { font-size: 14px; color: var(--muted); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 6px; display: block; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font: 500 12px var(--mono); padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.req { font: 600 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.scroll { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th { font-weight: 600; color: var(--muted); }
+.k-front { color: var(--front); font-weight: 600; } .k-side { color: var(--side); font-weight: 600; } .k-rear { color: var(--rear); font-weight: 600; } .k-climb { color: var(--climb); font-weight: 600; }
+a { color: var(--accent); }
+a:focus-visible, video:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:8px">
+  <div class="eyebrow">Ouroboros Manifold &middot; simulation LAB staircase &middot; lab stage 5 sampler &middot; 2026-11-27</div>
+  <h1>Every kind of layout, with the lab stage 5 rules on</h1>
+  <p>You asked to see a sampling of every type of layout under lab stage 5, including the cover, the traps and a regular choke. Eleven clips below, one or two per kind, each a real lab fight at seed 1 with facing and the 90 degree firing arc switched on. The slope is L-0084 as you redrew it today.</p>
+</header>
+
+<section class="card">
+  <h2>The short version</h2>
+  <ul>
+    <li><b>Five kinds give your expected winner:</b> the chokepoint, the city, the vantage, the redrawn slope and the held open-field fight.</li>
+    <li><b>Three do not, and did not before lab stage 5 either:</b> the cover layout (blue wins, you predicted red) and both traps (red wins, you predicted blue). The traps still show units walking past enemies: the lock fix is being built on its own branch and is not in these clips.</li>
+    <li><b>Lab stage 5 changed one winner:</b> the big open fight L-0054, 128 against 128 with nobody holding. Red won with 17 left before; blue wins with 17 left now. It is a mirror fight, so there is no better position to explain either result. I have not traced it.</li>
+    <li><b>Everywhere else lab stage 5 moved the result by a survivor or a few dozen ticks at most.</b></li>
+    <li><b>Flank route and objective have no approved layout.</b> The two clips at the bottom are L-0067, where nobody walks a flank, and my drafted objective ring.</li>
+  </ul>
+</section>
+
+<section class="card gaps">
+  <h2>Problems the recording turned up</h2>
+  <ul>
+    <li><b>One shot left just outside the arc</b> in the second trap (L-0083): 45.09 degrees off the unit's front against a limit of 45. Either the engine and the checker measure the angle at slightly different moments, or the engine let one through. Not traced yet.</li>
+    <li><b>Units standing inside each other</b> were flagged in the chokepoint, both traps and the big open fight. The same flags appear with lab stage 5 off, so it is the known overlap problem, not new.</li>
+    <li><b>Look problems:</b> the arc outlines tangle when units crowd; a counter at the top of some clips overlaps the label.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>How to read a clip</h2>
+  <ul>
+    <li>The white triangle on a unit is its front; the thin outline fanning from it is its firing arc.</li>
+    <li>A ring flashes on a unit when it is hit: <span class="k-front">white on its front</span>, <span class="k-side">orange on its side</span>, <span class="k-rear">red on its rear</span>. The running count is at the top left.</li>
+    <li>One second of clip is 120 ticks, six times game speed. Every fight here ends in a wipe.</li>
+  </ul>
+</section>
+<section class="card">
+  <div class="req">Cover</div>
+  <h2>L-0039: cover</h2>
+  <p>Eight against eight around three cover blocks. Sight rules on. You predicted red, at 25 percent for blue.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/cover-L0039-poster.jpg" src="clips/cover-L0039.mp4"></video>
+    <div class="tags"><span class="tag">8 v 8</span><span class="tag">sight on</span><span class="tag">19 s</span></div>
+    <figcaption class="small">Blue wins with 3 left at tick 2213. <b>Does not match your prediction.</b> Same result with lab stage 5 off. Hits on blue: 294 front, 18 side, none rear.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">Trap</div>
+  <h2>L-0080 and L-0083: the traps</h2>
+  <p>Red moves out of the walls box; blue's three forces hold and are released together when red reaches the centre. Sight rules on. You predicted blue at 75 percent. These run on the current engine, before the lock fix.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/trap-L0080-poster.jpg" src="clips/trap-L0080.mp4"></video>
+    <div class="tags"><span class="tag">16 blue v 32 red</span><span class="tag">sight on</span><span class="tag">19 s</span></div>
+    <figcaption class="small">Red wins with 20 left at tick 2221. <b>Does not match your prediction.</b> With lab stage 5 off red had 21 left. Hits on blue: 1249 front, 53 side, none rear.</figcaption>
+  </figure>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/trap-L0083-poster.jpg" src="clips/trap-L0083.mp4"></video>
+    <div class="tags"><span class="tag">24 blue v 48 red</span><span class="tag">sight on</span><span class="tag">15 s</span></div>
+    <figcaption class="small">Red wins with 39 left at tick 1824. <b>Does not match your prediction.</b> With lab stage 5 off red had 38 left. Hits on blue: 1713 front, 287 side, none rear. This is the fight with the one shot just outside the arc.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">Chokepoint</div>
+  <h2>L-0055: a regular choke</h2>
+  <p>Blue holds in an arc behind a gap in a wall; red comes through it. You predicted blue at 98 percent.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/chokepoint-L0055-poster.jpg" src="clips/chokepoint-L0055.mp4"></video>
+    <div class="tags"><span class="tag">24 v 24</span><span class="tag">sight off</span><span class="tag">16 s</span></div>
+    <figcaption class="small">Blue wins with 19 left at tick 1934. Matches your prediction. Lab stage 5 ends it 29 ticks sooner, same survivors. Hits on blue: 636, all front.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">Slope</div>
+  <h2>L-0084: the slope, as you redrew it</h2>
+  <p>Blue holds the top of a ramp in an arc, moved 120 wu closer to the ramp top on 2026-11-27 so its Wardens and Vanguards reach it. Red climbs. Sight rules on. You predicted blue at 60 percent.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/slope-L0084-poster.jpg" src="clips/slope-L0084.mp4"></video>
+    <div class="tags"><span class="tag">40 blue v 56 red</span><span class="tag">sight on</span><span class="tag">16 s</span></div>
+    <figcaption class="small">Blue wins with 30 of 40 left at tick 1927. Matches your prediction. Before the redraw blue kept 12. Unchanged by lab stage 5. Hits on blue: 267, all front; red dies on the ramp.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">Vantage</div>
+  <h2>L-0061: high ground</h2>
+  <p>Blue holds the height. Sight rules on. You predicted blue at 98 percent.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/vantage-L0061-poster.jpg" src="clips/vantage-L0061.mp4"></video>
+    <div class="tags"><span class="tag">24 v 24</span><span class="tag">sight on</span><span class="tag">12 s</span></div>
+    <figcaption class="small">Blue wins with 23 left at tick 1418. Matches your prediction. Lab stage 5 changes it by 3 ticks. Hits on blue: 373, all front.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">City</div>
+  <h2>L-0073: city blocks</h2>
+  <p>Blue holds among the blocks. You predicted blue at 75 percent.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/city-L0073-poster.jpg" src="clips/city-L0073.mp4"></video>
+    <div class="tags"><span class="tag">24 v 24</span><span class="tag">sight off</span><span class="tag">21 s</span></div>
+    <figcaption class="small">Blue wins with 19 left at tick 2490. Matches your prediction. Lab stage 5 ends it 26 ticks sooner. Hits on blue: 568, all front.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">Open field</div>
+  <h2>A held arc, and a big mirror fight</h2>
+  <p>First a three-ring arc holding against a block (SIT-0105). Then L-0054, 128 against 128 with both sides attack-moving to one point.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/open-sit0105-poster.jpg" src="clips/open-sit0105.mp4"></video>
+    <div class="tags"><span class="tag">SIT-0105</span><span class="tag">24 v 24</span><span class="tag">sight off</span><span class="tag">9 s</span></div>
+    <figcaption class="small">Blue wins with 21 left at tick 1111. Matches your prediction. Unchanged by lab stage 5. Hits on blue: 329 front, 20 side.</figcaption>
+  </figure>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/open-L0054-poster.jpg" src="clips/open-L0054.mp4"></video>
+    <div class="tags"><span class="tag">L-0054</span><span class="tag">128 v 128, nobody holds</span><span class="tag">sight off</span><span class="tag">54 s</span></div>
+    <figcaption class="small">Blue wins with 17 left at tick 6431. <b>Lab stage 5 flipped this one:</b> with it off, red won with 17 left at tick 6408. The record expects red. Hits on blue: 6465 front, 1326 side, 18 rear, the most side hits of any fight here.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">No approved layout of this kind</div>
+  <h2>Flank route and objective</h2>
+  <p>Neither kind has a layout on your approved list. These two were recorded for the lab stage 5 page.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/flank-L0067-poster.jpg" src="clips/flank-L0067.mp4"></video>
+    <div class="tags"><span class="tag">L-0067 flank route</span><span class="tag">24 v 24</span><span class="tag">12 s</span></div>
+    <figcaption class="small">Blue wins with 20 left at tick 1415. All 774 hits on blue land on its front: nobody walks a flank route.</figcaption>
+  </figure>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/objective-ring-poster.jpg" src="clips/objective-ring.mp4"></video>
+    <div class="tags"><span class="tag">objective ring, my draft</span><span class="tag">red in two groups</span><span class="tag">22 s</span></div>
+    <figcaption class="small">Red wins with 2 left at tick 2570. Drafted from your words; yours to redraw.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <h2>All eleven at a glance</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>Kind</th><th>Layout</th><th>Blue v red</th><th>You predicted</th><th>Winner, left</th><th>Matches</th><th>Changed by lab stage 5</th></tr>
+    <tr><td>Cover</td><td>L-0039</td><td>8 v 8</td><td>red</td><td>blue, 3</td><td>no</td><td>no</td></tr>
+    <tr><td>Trap</td><td>L-0080</td><td>16 v 32</td><td>blue 75%</td><td>red, 20</td><td>no</td><td>one survivor</td></tr>
+    <tr><td>Trap</td><td>L-0083</td><td>24 v 48</td><td>blue 75%</td><td>red, 39</td><td>no</td><td>one survivor</td></tr>
+    <tr><td>Chokepoint</td><td>L-0055</td><td>24 v 24</td><td>blue 98%</td><td>blue, 19</td><td>yes</td><td>29 ticks</td></tr>
+    <tr><td>Slope</td><td>L-0084, redrawn</td><td>40 v 56</td><td>blue 60%</td><td>blue, 30</td><td>yes</td><td>no</td></tr>
+    <tr><td>Vantage</td><td>L-0061</td><td>24 v 24</td><td>blue 98%</td><td>blue, 23</td><td>yes</td><td>3 ticks</td></tr>
+    <tr><td>City</td><td>L-0073</td><td>24 v 24</td><td>blue 75%</td><td>blue, 19</td><td>yes</td><td>26 ticks</td></tr>
+    <tr><td>Open field</td><td>SIT-0105</td><td>24 v 24</td><td>blue</td><td>blue, 21</td><td>yes</td><td>no</td></tr>
+    <tr><td>Open field</td><td>L-0054</td><td>128 v 128</td><td>red</td><td>blue, 17</td><td>no</td><td><b>winner flipped</b></td></tr>
+    <tr><td>Flank route</td><td>L-0067</td><td>24 v 24</td><td>not on the list</td><td>blue, 20</td><td>-</td><td>-</td></tr>
+    <tr><td>Objective</td><td>draft</td><td>-</td><td>not on the list</td><td>red, 2</td><td>-</td><td>-</td></tr>
+  </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>What I checked, and what I could not</h2>
+  <ul>
+    <li><b>By numbers:</b> each fight was recorded twice (every tick for the figures, every sixth for the clip) and the two agree. Each clip's fingerprint matches its record.</li>
+    <li><b>By eye:</b> I looked at one still frame from four clips (cover, first trap, chokepoint, city). The ground, the units, the arcs and the counters draw as they should.</li>
+    <li><b>Not checked:</b> I did not watch any clip play through and did not look at the other seven at all.</li>
+  </ul>
+</section>
+
+<p class="small">Recorded on the lab stage 5 branch before the lock fix; the slope clip is the redrawn L-0084. Seed 1 throughout. Clips and facts: <code>~/Projects/om-wt/lab5-sampler/</code>.</p>
+
+</div>

@@ -2,7 +2,7 @@
 `<name>.mp4` + `<name>-poster.jpg` + `<name>.facts.json`.
 
 CLI: python -m scripts.skilllab.arena.clip --out DIR --name NAME [--version LABEL] (--layout L.toml | --situation SIT-NNNN | --fight F.fight.json)
-     [--seed N --every K] [--tree DIR] [--box x0,y0,x1,y1] [--box-with FIGHT]... [--max-mb 9] [--chunk 500] [--work DIR] [--keep-work]
+     [--seed N --every K] [--sight on] [--facing on [--arc-deg N] [--slope-up-div V]] [--tree DIR] [--box x0,y0,x1,y1] [--box-with FIGHT]... [--max-mb 9] [--chunk 500] [--work DIR] [--keep-work]
      [--godot PATH] [--ffmpeg PATH] [--ffprobe PATH]
 Steps: record the fight (clip_record.py, in the engine tree named), cut it into chunks of 500 frames, render each chunk with the fight_replay scene under xvfb (one camera
 for every chunk and every clip of a set: OM_FIT_EXTRA), encode H.264 yuv420p +faststart 20 fps width 1600 with the real tick burned top-left, the least crf that fits the
@@ -222,15 +222,23 @@ def _run(cmd, what: str, **kw) -> subprocess.CompletedProcess:
 
 # ---------------------------------------------------------------- record
 
-def _record_argv(layout, situation, seed, every, out_dir, work_dir) -> list:
+def _record_argv(layout, situation, seed, every, out_dir, work_dir, flags=()) -> list:
     argv = [sys.executable, "-P", str(RECORDER)]
     argv += ["--layout", str(layout)] if layout else ["--situation", situation, "--work", str(work_dir)]
-    return argv + ["--seed", str(seed), "--every", str(every), "--out", str(out_dir)]
+    return argv + ["--seed", str(seed), "--every", str(every), *flags, "--out", str(out_dir)]
 
 
-def record_fight(*, layout=None, situation=None, seed, every, out_dir, tree=None, work_dir=None) -> Path:
+def _record_flags(a) -> list:
+    """The recorder's lab switches (sight, H-091 facing, arc and slope divisor) that `a` sets away from the defaults, so a default clip's record command is as before."""
+    flags = ["--sight", a.sight] if a.sight != "off" else []
+    if a.facing == "on":
+        flags += ["--facing", "on"] + (["--arc-deg", str(a.arc_deg)] if a.arc_deg is not None else []) + (["--slope-up-div", repr(a.slope_up_div)] if a.slope_up_div is not None else [])
+    return flags
+
+
+def record_fight(*, layout=None, situation=None, seed, every, out_dir, tree=None, work_dir=None, flags=()) -> Path:
     """Run the fight of `layout` (a TOML) or `situation` ("SIT-NNNN", converted into `work_dir`) in the engine tree `tree` (default: this repo) and write
-    `<id>-s<seed>-every<K>.fight.json`, the bytes closeup writes, into `out_dir`. A layout the lab rejects is Rejected."""
+    `<id>-s<seed>-every<K>.fight.json`, the bytes closeup writes, into `out_dir`. A layout the lab rejects is Rejected. `flags` are `_record_flags`."""
     tree = Path(tree) if tree else REPO
     if not tree.is_dir():
         raise BadInput("engine tree %s is not a directory" % tree)
@@ -239,7 +247,7 @@ def record_fight(*, layout=None, situation=None, seed, every, out_dir, tree=None
     if situation is not None and work_dir is None:
         work_dir = Path(tempfile.mkdtemp(prefix="clip-sit-"))
     env = dict(os.environ, PYTHONPATH=str(tree))
-    r = subprocess.run(_record_argv(layout, situation, seed, every, out_dir, work_dir), cwd=str(tree), env=env, capture_output=True, text=True)
+    r = subprocess.run(_record_argv(layout, situation, seed, every, out_dir, work_dir, flags), cwd=str(tree), env=env, capture_output=True, text=True)
     rejects = [ln for ln in r.stdout.splitlines() if ln.startswith("REJECT")]
     if r.returncode == 2 and rejects:
         raise Rejected(rejects)
@@ -434,6 +442,10 @@ def _parser() -> argparse.ArgumentParser:
     src.add_argument("--fight", type=Path)
     ap.add_argument("--seed", type=int)
     ap.add_argument("--every", type=_positive(int), help="a frame every K ticks")
+    ap.add_argument("--sight", choices=("off", "on"), default="off", help="the lab's stage 4 switch for --layout / --situation")
+    ap.add_argument("--facing", choices=("off", "on"), default="off", help="H-091 stage 5 for --layout / --situation: on sets facing at spawn and the firing arc (run.py)")
+    ap.add_argument("--arc-deg", type=int, help="the firing arc in degrees (with --facing on; run.py's default 90)")
+    ap.add_argument("--slope-up-div", type=float, help="OM_TP_SLOPE_UP_DIV for the fight (with --facing on; the engine's 1.1 without it)")
     ap.add_argument("--tree", type=Path, help="engine tree for --layout / --situation (default: this repo)")
     ap.add_argument("--box", type=_box_arg, help="extra camera extent x0,y0,x1,y1")
     ap.add_argument("--box-with", type=Path, action="append", default=[], help="a fight whose positions the camera also holds (repeatable)")
@@ -467,11 +479,11 @@ def _make(a) -> None:
             if a.layout and not a.layout.is_file():
                 raise BadInput("layout %s is not a file" % a.layout)
             t0 = time.monotonic()
-            fight = record_fight(layout=a.layout, situation=a.situation, seed=a.seed, every=a.every, out_dir=work / "fight", tree=tree, work_dir=work / "sit")
+            fight = record_fight(layout=a.layout, situation=a.situation, seed=a.seed, every=a.every, out_dir=work / "fight", tree=tree, work_dir=work / "sit", flags=_record_flags(a))
             times["record_s"] = round(time.monotonic() - t0, 1)
             kind, fight_file = ("layout" if a.layout else "situation"), fight.name
             sha = _git_head(tree)
-            record_cmd = shlex.join(["python", *_record_argv(a.layout and a.layout.resolve(), a.situation, a.seed, a.every, work / "fight", work / "sit")[1:]])
+            record_cmd = shlex.join(["python", *_record_argv(a.layout and a.layout.resolve(), a.situation, a.seed, a.every, work / "fight", work / "sit", _record_flags(a))[1:]])
         scan = _scan(fight)
         pos_box = scan["box"]
         camera = union_box(pos_box, *([a.box] if a.box else []), *(position_box(p) for p in a.box_with))
@@ -525,8 +537,12 @@ def main(argv=None) -> int:
     if a.fight:
         if a.seed is not None or a.every is not None or a.tree:
             ap.error("--seed, --every and --tree are for --layout and --situation, not --fight")
+        if a.sight != "off" or a.facing != "off" or a.arc_deg is not None or a.slope_up_div is not None:
+            ap.error("--sight, --facing, --arc-deg and --slope-up-div are for --layout and --situation, not --fight")
     elif a.seed is None or a.every is None:
         ap.error("--layout and --situation need --seed and --every")
+    if a.facing != "on" and (a.arc_deg is not None or a.slope_up_div is not None):
+        ap.error("--arc-deg and --slope-up-div need --facing on")
     try:
         _make(a)
     except Rejected as e:

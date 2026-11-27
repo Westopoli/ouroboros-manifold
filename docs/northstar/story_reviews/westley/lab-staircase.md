@@ -1,6 +1,12 @@
 <!-- Westley's copy (2026-11-05; moved from docs/northstar/plans/2026-10-31-lab-staircase.md). Stage status lives in ROADMAP.md section 1; each stage is one cascade plan Westley asks a Fable chat for, run by a Sonnet chat with /manager-mode. -->
 # The simulation lab, rebuilt as a staircase: one verified step at a time
 
+This is the LAB staircase: its stages are written "lab stage N". A bare "stage N" from Westley means a stage of this file. The beta's stages are "beta BN" in `beta-staircase.md` (naming rule, CLAUDE.md, 2026-11-26).
+
+## The lab order rule (standing; enforced by the lab, Westley 2026-11-25)
+
+Every lab layout follows one of two order rules (DEC-lab-amove-rule-2026-11-01): **R1** both sides move: every unit of both sides is attack-moved onto the **same exact point**; **R2** one side holds without orders and the other attack-moves every unit onto the holder's centre of mass. The layout names which (`orders` key); Westley names any exception per layout when authoring it. The lab refuses a layout that breaks the rule and says so loudly (DEC-lab-same-order-point-2026-11-25). Westley, 2026-11-25: "if both teams are moving the order position/location needs to be on the same exact spot for both teams. That rule should be clear in memory and doucmentation. The simulation lab needs to enforce that rule for every layout and fail loudly if it doesn't." Memory: `feedback-lab-same-order-point`.
+
 ## Context
 
 Westley, 2026-10-31: "I've been asking for a lot of deliverables ... there has been no verified result because we've been stretching too far ... without a verifiable checkpoint, it's hard for me to discern where we're drifting." The lab today is 51 code files (8,767 lines), 190 test files, one batch ever run (2026-10-08), chart never seen. It was built all at once against the whole question (every layer skill, every condition, every headcount) and no step of it has passed his eyes.
@@ -85,6 +91,8 @@ H-031 piece two (portal screen proof), H-038 part 2 (first scene drawn whatever 
 - Adds: `set_cone` arcs from the layout (`facing` is already in the schema), `transition_progress` shown while climbing, band changes in the frame (`layer`).
 - Layouts: flank_route (the ridge), slope top versus foot, objective ring.
 - Done when: he sees a flank hit a side and the climb slow the attacker.
+
+Status 2026-11-27: APPROVED by Westley the same day, once L-0084 was redrawn (DEC-lab-stage5-approved-2026-11-27, DEC-L0084-redraw-2026-11-27: blue's arc 120 wu closer to the ramp top; blue now keeps 30 of 40); landed on main at his word. Built overnight on branch `s/lab-stage5` (story H-091). The firing arc (E-13 R-100-04) is in the engine, off by default; the lab has `--facing on`. Findings: a flank lands (hits marked front, side, rear) but costs the flanked side only a turn delay of about 12 ticks; the climb at the engine's 1.1 is 7 percent slower and cannot be seen. Page A-011; report `docs/reports/2026-11-26-lab-stage5-overnight.md`. Open with him, not blocking: what a flank costs, the climb number, reach from height, per-category arc widths. Sampler of every layout kind under the stage 5 rules: page A-012.
 
 ### Stage 6: where positioning stops deciding (the scan)
 

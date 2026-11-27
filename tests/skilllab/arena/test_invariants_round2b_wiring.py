@@ -60,13 +60,13 @@ def at(mon, rule, tick, unit=None):
 
 
 def test_control_the_monitor_runs_the_three_fights_to_the_measured_ends():
-    """Control (green today and after, unless the engine changes): L-0061 seed 1 1415 ticks, L-0084 seed 1 1987, the cover fixture 957; sight on suspends nothing. Proves the fights below are the
+    """Control (green today and after, unless the engine changes): L-0061 seed 1 1415 ticks, L-0084 seed 1 1927, the cover fixture 957; sight on suspends nothing. Proves the fights below are the
     ones the premises were dumped on. Re-dumped 2026-11-12 on the Round 3 tip (d70c8d47; Test-defect: dumped before the Round 3 engine fixes): was 2234 / 3718 / 1086 on 7ba38983. L-0061: 2234 -> 2025
     at fix 3 (8f825d59) -> 2136 at fix 2 (94da7493); L-0084: 3718 -> 3923 at fix 1 (d70c8d47); cover: 1086 -> 847 at fix 2 -> 801 on the Round 4 tip 6d3d7635 (R-097-10: an idle unit steps aside for a mover of its own side; first different tick 575; Test-defect: dumped
     before it). Re-pinned 2026-11-17 on the Round 5 fourth-pass tip (Test-defect: the lengths were the fights before the notice distance of R-087-04): 2136 -> 1415, 3923 -> 1955, 801 -> 957; the lab checker
-    reports no violation of any rule on any of the three. Re-pinned 2026-11-18 on the Round 6 tip (Test-defect: R-096-02, an order kept through the pause after the unit's own shot, 66fbc1ee9; L-0084 first different tick 812, unit 71 keeps its destination): 1955 -> 1987; L-0061 and the cover fixture keep their lengths, none reports a violation."""
+    reports no violation of any rule on any of the three. Re-pinned 2026-11-18 on the Round 6 tip (Test-defect: R-096-02, an order kept through the pause after the unit's own shot, 66fbc1ee9; L-0084 first different tick 812, unit 71 keeps its destination): 1955 -> 1987; L-0061 and the cover fixture keep their lengths, none reports a violation. Re-pinned 2026-11-27 (Test-defect: Westley redrew L-0084 on 2026-11-27 (blue's arc 120 wu closer); the pinned length was the old drawing's): L-0084 1987 -> 1927, the others unchanged."""
     got = [(played(n)[0].tick, played(n)[0].suspended) for n in ("L-0061", "L-0084", "cover")]
-    assert got == [(1415, {}), (1987, {}), (957, {})]
+    assert got == [(1415, {}), (1927, {}), (957, {})]
 
 
 def test_R_096_08_a_guard_dropping_a_target_beyond_radius_plus_range_by_slant_is_not_an_r_087_03_report_L0061():

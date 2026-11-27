@@ -1,0 +1,1378 @@
+{
+ "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+ "clips": [
+  {
+   "name": "flank-pinned-arc90",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/pinned_flank.toml",
+   "layout_id": "L-9407",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [
+    "flank-pinned-arc360"
+   ],
+   "camera_box": [
+    960.0,
+    1924.91,
+    2240.0,
+    2139.05
+   ],
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    13
+   ],
+   "last_tick": 914,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 813,
+   "frames": 154,
+   "duration_s": 7.7,
+   "bytes": 311395,
+   "sha256": "9bfc5282cfd7d5e1e64f34ad0a524ecdc15050db7b72f46f8194e6fb5ed98a89",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 154
+   },
+   "poster": {
+    "file": "flank-pinned-arc90-poster.jpg",
+    "sha256": "cdded2bf4d2d774e42f241c7aeb3a457a14778b23f7e77cc965118af16bc5937"
+   },
+   "label_first": "flank-pinned-arc90  tick 0",
+   "label_last": "flank-pinned-arc90  tick 914",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/pinned_flank.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/pinned_flank.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name flank-pinned-arc90 --fight <every-6 fight file> --box-with <flank-pinned-arc360 every-6 file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=960.0,1924.91,2240.0,2139.05 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,152)'\"'\"':text='\"'\"'flank-pinned-arc90  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,153)'\"'\"':text='\"'\"'flank-pinned-arc90  tick 914                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/flank-pinned-arc90.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 307,
+    "rear": 233,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 1,
+    "rear": 171,
+    "side": null
+   },
+   "first_hit_any_tick": 1,
+   "distinct_ticks_rear_hit_on_holder": 175,
+   "distinct_ticks_side_or_rear_hit_on_holder": 175,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 4,
+    "answered": 4,
+    "median": 22.5,
+    "max": 23
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   }
+  },
+  {
+   "name": "flank-pinned-arc360",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/pinned_flank.toml",
+   "layout_id": "L-9407",
+   "flags": "--facing on --arc-deg 360 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [
+    "flank-pinned-arc90"
+   ],
+   "camera_box": [
+    960.0,
+    1924.91,
+    2240.0,
+    2139.05
+   ],
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    13
+   ],
+   "last_tick": 914,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 813,
+   "frames": 154,
+   "duration_s": 7.7,
+   "bytes": 374733,
+   "sha256": "2f6bc2ae5f4ea6da909c53cac36ac35ae5d826b5923bf383a59b39c5b56d246a",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 154
+   },
+   "poster": {
+    "file": "flank-pinned-arc360-poster.jpg",
+    "sha256": "46f94f5adf9af9ce1eaed25200b823c2a15e1381bd12128158015427bab80cf3"
+   },
+   "label_first": "flank-pinned-arc360  tick 0",
+   "label_last": "flank-pinned-arc360  tick 914",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/pinned_flank.toml --seed 1 --every 6 --sight off --facing on --arc-deg 360 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/pinned_flank.toml --seed 1 --every 1 --sight off --facing on --arc-deg 360 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name flank-pinned-arc360 --fight <every-6 fight file> --box-with <flank-pinned-arc90 every-6 file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=960.0,1924.91,2240.0,2139.05 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,152)'\"'\"':text='\"'\"'flank-pinned-arc360  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,153)'\"'\"':text='\"'\"'flank-pinned-arc360  tick 914                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/flank-pinned-arc360.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 307,
+    "rear": 233,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 1,
+    "rear": 171,
+    "side": null
+   },
+   "first_hit_any_tick": 1,
+   "distinct_ticks_rear_hit_on_holder": 175,
+   "distinct_ticks_side_or_rear_hit_on_holder": 175,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 4,
+    "answered": 4,
+    "median": 22.5,
+    "max": 23
+   },
+   "arc_check": {
+    "arc_deg": 360,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 360,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   }
+  },
+  {
+   "name": "front-arc90",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/front.toml",
+   "layout_id": "L-9401",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [],
+   "camera_box": [
+    1980.0,
+    1940.0,
+    2240.0,
+    2060.0
+   ],
+   "winner": "A",
+   "survivors_A_B": [
+    3,
+    0
+   ],
+   "last_tick": 2404,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 1001,
+   "frames": 402,
+   "duration_s": 20.1,
+   "bytes": 914955,
+   "sha256": "60cc9e85f50b1da0fbef322f229b01aef54d34e00a1ff1baecbf137ba256c115",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 402
+   },
+   "poster": {
+    "file": "front-arc90-poster.jpg",
+    "sha256": "a3a4f3f237c8a50428407b1f35094aa0e6406c12e9dd532cc095782c00656344"
+   },
+   "label_first": "front-arc90  tick 0",
+   "label_last": "front-arc90  tick 2404",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/front.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/front.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name front-arc90 --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1980.0,1940.0,2240.0,2060.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,400)'\"'\"':text='\"'\"'front-arc90  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,401)'\"'\"':text='\"'\"'front-arc90  tick 2404                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/front-arc90.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 461,
+    "rear": 0,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 1,
+    "rear": null,
+    "side": null
+   },
+   "first_hit_any_tick": 1,
+   "distinct_ticks_rear_hit_on_holder": 0,
+   "distinct_ticks_side_or_rear_hit_on_holder": 0,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 0,
+    "answered": 0,
+    "median": null,
+    "max": null
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   }
+  },
+  {
+   "name": "side-arc90",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/side.toml",
+   "layout_id": "L-9402",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [],
+   "camera_box": [
+    1940.0,
+    1760.0,
+    2060.0,
+    2060.0
+   ],
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    2
+   ],
+   "last_tick": 2690,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 991,
+   "frames": 450,
+   "duration_s": 22.5,
+   "bytes": 680604,
+   "sha256": "a96756c5681acd95d50f899a9c001a95611284e883778482d8575ea9bf3c60d8",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 450
+   },
+   "poster": {
+    "file": "side-arc90-poster.jpg",
+    "sha256": "c5529e3ecb512b0ad074143e5c929b27a37e51e0e4d095fd93b8bce831c23c0a"
+   },
+   "label_first": "side-arc90  tick 0",
+   "label_last": "side-arc90  tick 2690",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/side.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/side.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name side-arc90 --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1940.0,1760.0,2060.0,2060.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,448)'\"'\"':text='\"'\"'side-arc90  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,449)'\"'\"':text='\"'\"'side-arc90  tick 2690                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/side-arc90.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 530,
+    "rear": 0,
+    "side": 8
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 25,
+    "rear": null,
+    "side": 1
+   },
+   "first_hit_any_tick": 1,
+   "distinct_ticks_rear_hit_on_holder": 0,
+   "distinct_ticks_side_or_rear_hit_on_holder": 4,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 2,
+    "answered": 2,
+    "median": 5.0,
+    "max": 5
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   }
+  },
+  {
+   "name": "rear-arc90",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/rear.toml",
+   "layout_id": "L-9403",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [
+    "rear-arc360",
+    "rear-arc60"
+   ],
+   "camera_box": [
+    1760.0,
+    1940.0,
+    2020.0,
+    2060.0
+   ],
+   "winner": "A",
+   "survivors_A_B": [
+    4,
+    0
+   ],
+   "last_tick": 2391,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 978,
+   "frames": 400,
+   "duration_s": 20.0,
+   "bytes": 1054923,
+   "sha256": "ce8c846cf82be82bc51c49f4827b77a972734580fc65c19e43208b7019120a3a",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 400
+   },
+   "poster": {
+    "file": "rear-arc90-poster.jpg",
+    "sha256": "20e7ee81f65925da8958ee9417e19718d2558324637bcaa954824b585f760b92"
+   },
+   "label_first": "rear-arc90  tick 0",
+   "label_last": "rear-arc90  tick 2391",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/rear.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/rear.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name rear-arc90 --fight <every-6 fight file> --box-with <rear-arc360 every-6 file> --box-with <rear-arc60 every-6 file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1760.0,1940.0,2020.0,2060.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,398)'\"'\"':text='\"'\"'rear-arc90  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,399)'\"'\"':text='\"'\"'rear-arc90  tick 2391                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/rear-arc90.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 432,
+    "rear": 8,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 25,
+    "rear": 1,
+    "side": null
+   },
+   "first_hit_any_tick": 1,
+   "distinct_ticks_rear_hit_on_holder": 4,
+   "distinct_ticks_side_or_rear_hit_on_holder": 4,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 4,
+    "answered": 4,
+    "median": 12.0,
+    "max": 13
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   }
+  },
+  {
+   "name": "rear-arc360",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/rear.toml",
+   "layout_id": "L-9403",
+   "flags": "--facing on --arc-deg 360 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [
+    "rear-arc90",
+    "rear-arc60"
+   ],
+   "camera_box": [
+    1760.0,
+    1940.0,
+    2020.0,
+    2060.0
+   ],
+   "winner": "A",
+   "survivors_A_B": [
+    3,
+    0
+   ],
+   "last_tick": 2377,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 968,
+   "frames": 398,
+   "duration_s": 19.9,
+   "bytes": 962541,
+   "sha256": "9070f93c1158aa2d3011a46b7166fec525ac9f5d14269c88b7c5c8a29b6d0a4a",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 398
+   },
+   "poster": {
+    "file": "rear-arc360-poster.jpg",
+    "sha256": "54a2d7fbe8a6c46577c428994503c593bf06255bdda15a9f9d9586072d4b4478"
+   },
+   "label_first": "rear-arc360  tick 0",
+   "label_last": "rear-arc360  tick 2377",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/rear.toml --seed 1 --every 6 --sight off --facing on --arc-deg 360 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/rear.toml --seed 1 --every 1 --sight off --facing on --arc-deg 360 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name rear-arc360 --fight <every-6 fight file> --box-with <rear-arc90 every-6 file> --box-with <rear-arc60 every-6 file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1760.0,1940.0,2020.0,2060.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,396)'\"'\"':text='\"'\"'rear-arc360  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,397)'\"'\"':text='\"'\"'rear-arc360  tick 2377                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/rear-arc360.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 423,
+    "rear": 8,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 25,
+    "rear": 1,
+    "side": null
+   },
+   "first_hit_any_tick": 1,
+   "distinct_ticks_rear_hit_on_holder": 4,
+   "distinct_ticks_side_or_rear_hit_on_holder": 4,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 5,
+    "answered": 5,
+    "median": 23,
+    "max": 23
+   },
+   "arc_check": {
+    "arc_deg": 360,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 360,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   }
+  },
+  {
+   "name": "rear-arc60",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/rear.toml",
+   "layout_id": "L-9403",
+   "flags": "--facing on --arc-deg 60 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [
+    "rear-arc90",
+    "rear-arc360"
+   ],
+   "camera_box": [
+    1760.0,
+    1940.0,
+    2020.0,
+    2060.0
+   ],
+   "winner": "A",
+   "survivors_A_B": [
+    4,
+    0
+   ],
+   "last_tick": 2391,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 977,
+   "frames": 400,
+   "duration_s": 20.0,
+   "bytes": 983046,
+   "sha256": "9a1a08226b7c0b01523ac575bbf61322364ce2f3953682a4f578180e1ad8bb08",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 400
+   },
+   "poster": {
+    "file": "rear-arc60-poster.jpg",
+    "sha256": "0fd35720aecda2301c3101252732e498d5c2fa140b7a7675bb6920b867e6dcdc"
+   },
+   "label_first": "rear-arc60  tick 0",
+   "label_last": "rear-arc60  tick 2391",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/rear.toml --seed 1 --every 6 --sight off --facing on --arc-deg 60 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/rear.toml --seed 1 --every 1 --sight off --facing on --arc-deg 60 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name rear-arc60 --fight <every-6 fight file> --box-with <rear-arc90 every-6 file> --box-with <rear-arc360 every-6 file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1760.0,1940.0,2020.0,2060.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,398)'\"'\"':text='\"'\"'rear-arc60  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,399)'\"'\"':text='\"'\"'rear-arc60  tick 2391                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/rear-arc60.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 432,
+    "rear": 8,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 25,
+    "rear": 1,
+    "side": null
+   },
+   "first_hit_any_tick": 1,
+   "distinct_ticks_rear_hit_on_holder": 4,
+   "distinct_ticks_side_or_rear_hit_on_holder": 4,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 4,
+    "answered": 4,
+    "median": 14.0,
+    "max": 15
+   },
+   "arc_check": {
+    "arc_deg": 60,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 60,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   }
+  },
+  {
+   "name": "climb-flat",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/climb_flat.toml",
+   "layout_id": "L-9404",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [
+    "climb-slope",
+    "climb-slope-div2"
+   ],
+   "camera_box": [
+    1000.0,
+    1914.1,
+    2740.0,
+    2177.17
+   ],
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    6
+   ],
+   "last_tick": 2189,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 772,
+   "frames": 366,
+   "duration_s": 18.3,
+   "bytes": 669148,
+   "sha256": "c241eb26402bc8a1f14e055f9c461df930a05902e97d478466d24e032c55012a",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 366
+   },
+   "poster": {
+    "file": "climb-flat-poster.jpg",
+    "sha256": "708f0082d30b5852df1dbdc3c1174107c90623aae4b43e0932c5c790736afa7d"
+   },
+   "label_first": "climb-flat  tick 0",
+   "label_last": "climb-flat  tick 2189",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/climb_flat.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/climb_flat.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name climb-flat --fight <every-6 fight file> --box-with <climb-slope every-6 file> --box-with <climb-slope-div2 every-6 file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1000.0,1914.1,2740.0,2177.17 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,364)'\"'\"':text='\"'\"'climb-flat  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,365)'\"'\"':text='\"'\"'climb-flat  tick 2189                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/climb-flat.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 536,
+    "rear": 0,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 338,
+    "rear": null,
+    "side": null
+   },
+   "first_hit_any_tick": 338,
+   "distinct_ticks_rear_hit_on_holder": 0,
+   "distinct_ticks_side_or_rear_hit_on_holder": 0,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 0,
+    "answered": 0,
+    "median": null,
+    "max": null
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   },
+   "climb": {
+    "first_contact_tick": 338,
+    "slope_up_div": 1.1,
+    "per_attacker": {}
+   },
+   "attacker_mean_speed_to_first_contact": {
+    "9": {
+     "mean_speed_to_first_contact": 3.999992450705042,
+     "ticks": 338
+    },
+    "10": {
+     "mean_speed_to_first_contact": 4.000000591701184,
+     "ticks": 338
+    },
+    "11": {
+     "mean_speed_to_first_contact": 4.000015106933899,
+     "ticks": 338
+    },
+    "12": {
+     "mean_speed_to_first_contact": 3.999991373286733,
+     "ticks": 338
+    },
+    "13": {
+     "mean_speed_to_first_contact": 4.0,
+     "ticks": 338
+    },
+    "14": {
+     "mean_speed_to_first_contact": 3.988177250261574,
+     "ticks": 338
+    },
+    "15": {
+     "mean_speed_to_first_contact": 3.9881656804733727,
+     "ticks": 338
+    },
+    "16": {
+     "mean_speed_to_first_contact": 3.9881521609037796,
+     "ticks": 338
+    }
+   }
+  },
+  {
+   "name": "climb-slope",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/climb_slope.toml",
+   "layout_id": "L-9405",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [
+    "climb-flat",
+    "climb-slope-div2"
+   ],
+   "camera_box": [
+    1000.0,
+    1914.1,
+    2740.0,
+    2177.17
+   ],
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    4
+   ],
+   "last_tick": 2517,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 810,
+   "frames": 421,
+   "duration_s": 21.05,
+   "bytes": 818962,
+   "sha256": "669cd6d246ac16e35a45245fd075abf737e9939cdb102a86cc1056ca8bdb4ffb",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 421
+   },
+   "poster": {
+    "file": "climb-slope-poster.jpg",
+    "sha256": "8432d7a930f32fbee0046e7578c5e7a595aa2e134b6f13f9798083c3a3024227"
+   },
+   "label_first": "climb-slope  tick 0",
+   "label_last": "climb-slope  tick 2517",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/climb_slope.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/climb_slope.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name climb-slope --fight <every-6 fight file> --box-with <climb-flat every-6 file> --box-with <climb-slope-div2 every-6 file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1000.0,1914.1,2740.0,2177.17 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,419)'\"'\"':text='\"'\"'climb-slope  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,420)'\"'\"':text='\"'\"'climb-slope  tick 2517                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/climb-slope.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 536,
+    "rear": 0,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 346,
+    "rear": null,
+    "side": null
+   },
+   "first_hit_any_tick": 346,
+   "distinct_ticks_rear_hit_on_holder": 0,
+   "distinct_ticks_side_or_rear_hit_on_holder": 0,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 0,
+    "answered": 0,
+    "median": null,
+    "max": null
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   },
+   "climb": {
+    "first_contact_tick": 346,
+    "slope_up_div": 1.1,
+    "per_attacker": {
+     "9": {
+      "ticks_on_slope": 163,
+      "speed_slope": 3.6720252030644187,
+      "speed_flat": 3.9900719599654786,
+      "ratio": 0.9202904709257896
+     },
+     "10": {
+      "ticks_on_slope": 164,
+      "speed_slope": 3.6659148836177535,
+      "speed_flat": 3.824156521223001,
+      "ratio": 0.9586205123333601
+     },
+     "11": {
+      "ticks_on_slope": 164,
+      "speed_slope": 3.6659148836177535,
+      "speed_flat": 3.824156521223001,
+      "ratio": 0.9586205123333601
+     },
+     "12": {
+      "ticks_on_slope": 163,
+      "speed_slope": 3.6720252030644187,
+      "speed_flat": 3.9900719599654786,
+      "ratio": 0.9202904709257896
+     },
+     "13": {
+      "ticks_on_slope": 162,
+      "speed_slope": 3.7025311860555594,
+      "speed_flat": 4.119628771507513,
+      "ratio": 0.8987535992716832
+     },
+     "14": {
+      "ticks_on_slope": 163,
+      "speed_slope": 3.6851541918417885,
+      "speed_flat": 3.9425253971897587,
+      "ratio": 0.9347192016742809
+     },
+     "15": {
+      "ticks_on_slope": 163,
+      "speed_slope": 3.6851541918417885,
+      "speed_flat": 3.9425253971897587,
+      "ratio": 0.9347192016742809
+     },
+     "16": {
+      "ticks_on_slope": 162,
+      "speed_slope": 3.7025311860555594,
+      "speed_flat": 4.119628771507513,
+      "ratio": 0.8987535992716832
+     }
+    },
+    "ratio_min": 0.8987535992716832,
+    "ratio_max": 0.9586205123333601
+   },
+   "attacker_mean_speed_to_first_contact": {
+    "9": {
+     "mean_speed_to_first_contact": 3.8404702343741586,
+     "ticks": 346
+    },
+    "10": {
+     "mean_speed_to_first_contact": 3.7486435962344533,
+     "ticks": 346
+    },
+    "11": {
+     "mean_speed_to_first_contact": 3.7486435962344533,
+     "ticks": 346
+    },
+    "12": {
+     "mean_speed_to_first_contact": 3.8404702343741586,
+     "ticks": 346
+    },
+    "13": {
+     "mean_speed_to_first_contact": 3.916042357173996,
+     "ticks": 346
+    },
+    "14": {
+     "mean_speed_to_first_contact": 3.82393605375983,
+     "ticks": 346
+    },
+    "15": {
+     "mean_speed_to_first_contact": 3.821826227170235,
+     "ticks": 346
+    },
+    "16": {
+     "mean_speed_to_first_contact": 3.9044816635323776,
+     "ticks": 346
+    }
+   }
+  },
+  {
+   "name": "climb-slope-div2",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/climb_slope.toml",
+   "layout_id": "L-9405",
+   "flags": "--facing on --arc-deg 90 --slope-up-div 2.0 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [
+    "climb-flat",
+    "climb-slope"
+   ],
+   "camera_box": [
+    1000.0,
+    1914.1,
+    2740.0,
+    2177.17
+   ],
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    5
+   ],
+   "last_tick": 2666,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 819,
+   "frames": 446,
+   "duration_s": 22.3,
+   "bytes": 910969,
+   "sha256": "3c049cb8ba066d40ae73de36f546a806a5eea75124d3fa98903a6faea022a6aa",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 446
+   },
+   "poster": {
+    "file": "climb-slope-div2-poster.jpg",
+    "sha256": "a00797d02229b98519d85a483b7ddd578a0078e79e3446127167be4557c90e14"
+   },
+   "label_first": "climb-slope-div2  tick 0",
+   "label_last": "climb-slope-div2  tick 2666",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/climb_slope.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --slope-up-div 2.0 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/climb_slope.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --slope-up-div 2.0 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name climb-slope-div2 --fight <every-6 fight file> --box-with <climb-flat every-6 file> --box-with <climb-slope every-6 file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1000.0,1914.1,2740.0,2177.17 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,444)'\"'\"':text='\"'\"'climb-slope-div2  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,445)'\"'\"':text='\"'\"'climb-slope-div2  tick 2666                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/climb-slope-div2.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 536,
+    "rear": 0,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 451,
+    "rear": null,
+    "side": null
+   },
+   "first_hit_any_tick": 451,
+   "distinct_ticks_rear_hit_on_holder": 0,
+   "distinct_ticks_side_or_rear_hit_on_holder": 0,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 0,
+    "answered": 0,
+    "median": null,
+    "max": null
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 2.0
+   },
+   "climb": {
+    "first_contact_tick": 451,
+    "slope_up_div": 2.0,
+    "per_attacker": {
+     "9": {
+      "ticks_on_slope": 281,
+      "speed_slope": 2.131802537898818,
+      "speed_flat": 3.9557785975783517,
+      "ratio": 0.5389084564044774
+     },
+     "10": {
+      "ticks_on_slope": 286,
+      "speed_slope": 2.099315309361275,
+      "speed_flat": 3.7427865648252223,
+      "ratio": 0.560896346345442
+     },
+     "11": {
+      "ticks_on_slope": 293,
+      "speed_slope": 2.051316244132843,
+      "speed_flat": 3.7427865648252223,
+      "ratio": 0.5480719267860881
+     },
+     "12": {
+      "ticks_on_slope": 281,
+      "speed_slope": 2.131802537898818,
+      "speed_flat": 3.9557785975783517,
+      "ratio": 0.5389084564044774
+     },
+     "13": {
+      "ticks_on_slope": 268,
+      "speed_slope": 2.2387753365081617,
+      "speed_flat": 4.119628771507513,
+      "ratio": 0.5434410381809518
+     },
+     "14": {
+      "ticks_on_slope": 275,
+      "speed_slope": 2.1783800812206113,
+      "speed_flat": 3.9375104510805152,
+      "ratio": 0.553237917279135
+     },
+     "15": {
+      "ticks_on_slope": 275,
+      "speed_slope": 2.178380081220611,
+      "speed_flat": 3.9375104510805152,
+      "ratio": 0.5532379172791348
+     },
+     "16": {
+      "ticks_on_slope": 268,
+      "speed_slope": 2.2387753365081617,
+      "speed_flat": 4.119628771507513,
+      "ratio": 0.5434410381809518
+     }
+    },
+    "ratio_min": 0.5389084564044774,
+    "ratio_max": 0.560896346345442
+   },
+   "attacker_mean_speed_to_first_contact": {
+    "9": {
+     "mean_speed_to_first_contact": 2.818645953261499,
+     "ticks": 451
+    },
+    "10": {
+     "mean_speed_to_first_contact": 2.7323841820391155,
+     "ticks": 451
+    },
+    "11": {
+     "mean_speed_to_first_contact": 2.7323841820391155,
+     "ticks": 451
+    },
+    "12": {
+     "mean_speed_to_first_contact": 2.818645953261499,
+     "ticks": 451
+    },
+    "13": {
+     "mean_speed_to_first_contact": 2.995858965909955,
+     "ticks": 451
+    },
+    "14": {
+     "mean_speed_to_first_contact": 2.865978443718835,
+     "ticks": 451
+    },
+    "15": {
+     "mean_speed_to_first_contact": 2.865978443718835,
+     "ticks": 451
+    },
+    "16": {
+     "mean_speed_to_first_contact": 2.986989786309068,
+     "ticks": 451
+    }
+   }
+  },
+  {
+   "name": "bands-L0084-sight",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/catalogue/L-0084.toml",
+   "layout_id": "L-0084",
+   "flags": "--facing on --arc-deg 90 --sight on",
+   "seed": 1,
+   "lab_sha": "b68fb79f6dbf451a96e478023db7d398c9c137c5",
+   "shared_camera_with": [],
+   "camera_box": [
+    1020.0,
+    1710.0,
+    2609.77,
+    2247.0
+   ],
+   "winner": "A",
+   "survivors_A_B": [
+    30,
+    0
+   ],
+   "last_tick": 1927,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 1307,
+   "frames": 323,
+   "duration_s": 16.15,
+   "bytes": 3572674,
+   "sha256": "81b5f16f6d95a74d1341b0abadae753b51fb7a06e91ea6b384cf2b659ace6fec",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 323
+   },
+   "poster": {
+    "file": "bands-L0084-sight-poster.jpg",
+    "sha256": "0d0a06e9e6b7498a1c71b422dbd7e6967feb82b7922d481e5d8cdad2cd1b8cad"
+   },
+   "label_first": "bands-L0084-sight  tick 0",
+   "label_last": "bands-L0084-sight  tick 1927",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-l84 && PYTHONPATH=. /home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0084.toml --seed 1 --every 6 --sight on --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-l84 && PYTHONPATH=. /home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0084.toml --seed 1 --every 1 --sight on --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-l84 && PYTHONPATH=. /home/westopoli/Projects/ouroboros-manifold/.venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name bands-L0084-sight --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1020.0,1710.0,2609.77,2247.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-l84 --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,321)'\"'\"':text='\"'\"'bands-L0084-sight  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,322)'\"'\"':text='\"'\"'bands-L0084-sight  tick 1927                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/bands-L0084-sight.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 267,
+    "side": 0,
+    "rear": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 357,
+    "side": null,
+    "rear": null
+   },
+   "first_hit_any_tick": 231,
+   "distinct_ticks_rear_hit_on_holder": 0,
+   "distinct_ticks_side_or_rear_hit_on_holder": 0,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 0,
+    "answered": 0,
+    "median": null,
+    "max": null
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   },
+   "layout_note": "L-0084 as redrawn by Westley on 2026-11-27 (blue's arc 120 wu closer to the top of the ramp), lab tree /home/westopoli/Projects/om-wt/lab5-l84 (branch s/lab5-l84)",
+   "hits_on_attackers": {
+    "front": 948,
+    "side": 92,
+    "rear": 0
+   },
+   "shots_by_side": {
+    "A": 1040,
+    "B": 267
+   }
+  },
+  {
+   "name": "bands-L0084-sight-before",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/catalogue/L-0084.toml",
+   "layout_id": "L-0084",
+   "flags": "--facing on --arc-deg 90 --sight on",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [],
+   "camera_box": [
+    1020.0,
+    1710.0,
+    2729.77,
+    2247.0
+   ],
+   "winner": "A",
+   "survivors_A_B": [
+    12,
+    0
+   ],
+   "last_tick": 1987,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 1064,
+   "frames": 333,
+   "duration_s": 16.65,
+   "bytes": 3469081,
+   "sha256": "a929bae159ebb2fedb09efbdbcc87f5ceccf2cd3760915a3fd10c7ec984ce169",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 333
+   },
+   "poster": {
+    "file": "bands-L0084-sight-before-poster.jpg",
+    "sha256": "e4b7ec912bfed474b477763b4655b36f9d5450df58f2cd4707d4ca55a2eed011"
+   },
+   "label_first": "bands-L0084-sight  tick 0",
+   "label_last": "bands-L0084-sight  tick 1987",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0084.toml --seed 1 --every 6 --sight on --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0084.toml --seed 1 --every 1 --sight on --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name bands-L0084-sight --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1020.0,1710.0,2729.77,2247.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,331)'\"'\"':text='\"'\"'bands-L0084-sight  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,332)'\"'\"':text='\"'\"'bands-L0084-sight  tick 1987                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/bands-L0084-sight.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 364,
+    "rear": 0,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 385,
+    "rear": null,
+    "side": null
+   },
+   "first_hit_any_tick": 266,
+   "distinct_ticks_rear_hit_on_holder": 0,
+   "distinct_ticks_side_or_rear_hit_on_holder": 0,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 0,
+    "answered": 0,
+    "median": null,
+    "max": null
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   },
+   "note": "the clip before Westley's redraw of L-0084 (2026-11-27): blue's arc as first drawn; kept for comparison. Files: bands-L0084-sight-before.mp4, -before-poster.jpg, -before.facts.json, fights/bands-L0084-sight-before/. The mp4 itself carries the label bands-L0084-sight."
+  },
+  {
+   "name": "flank-L0067",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/catalogue/L-0067.toml",
+   "layout_id": "L-0067",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [],
+   "camera_box": [
+    1700.67,
+    1799.07,
+    2299.33,
+    2200.93
+   ],
+   "winner": "A",
+   "survivors_A_B": [
+    20,
+    0
+   ],
+   "last_tick": 1415,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 1971,
+   "frames": 237,
+   "duration_s": 11.85,
+   "bytes": 831221,
+   "sha256": "426d99f38a9a52e5431753c82beb31676b62dcd351317e5e47d99a08f1df5a7f",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 237
+   },
+   "poster": {
+    "file": "flank-L0067-poster.jpg",
+    "sha256": "aeb834014f2b3969e9fb7fc570f7ce78d481869c4d79df36cb6fd989cf7e832a"
+   },
+   "label_first": "flank-L0067  tick 0",
+   "label_last": "flank-L0067  tick 1415",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0067.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0067.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name flank-L0067 --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1700.67,1799.07,2299.33,2200.93 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,235)'\"'\"':text='\"'\"'flank-L0067  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,236)'\"'\"':text='\"'\"'flank-L0067  tick 1415                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/flank-L0067.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 774,
+    "rear": 0,
+    "side": 0
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 1,
+    "rear": null,
+    "side": null
+   },
+   "first_hit_any_tick": 1,
+   "distinct_ticks_rear_hit_on_holder": 0,
+   "distinct_ticks_side_or_rear_hit_on_holder": 0,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 0,
+    "answered": 0,
+    "median": null,
+    "max": null
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   }
+  },
+  {
+   "name": "objective-ring",
+   "scene_or_layout": "docs/northstar/research/layer_dynamics/arena/stage5/objective_ring.toml",
+   "layout_id": "L-9406",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "seed": 1,
+   "lab_sha": "1aa2711007a19b0380320406e999e0cead92558c",
+   "shared_camera_with": [],
+   "camera_box": [
+    1762.24,
+    1762.24,
+    2172.94,
+    2178.59
+   ],
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    2
+   ],
+   "last_tick": 2570,
+   "end_kind": "wipe",
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end": true,
+   "hits_every6_equals_every1": true,
+   "hits_total": 998,
+   "frames": 430,
+   "duration_s": 21.5,
+   "bytes": 778297,
+   "sha256": "1562d057faf4b14bc8f1179d5e93ead29dc12d366729772a0053e26cc75c11af",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 430
+   },
+   "poster": {
+    "file": "objective-ring-poster.jpg",
+    "sha256": "c4f2f26955dd1a7002c57f90fbcd04c717f0bac38feebd57021373a7b712ab7f"
+   },
+   "label_first": "objective-ring  tick 0",
+   "label_last": "objective-ring  tick 2570",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/objective_ring.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/arena/stage5/objective_ring.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. .venv/bin/python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-clips --name objective-ring --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1762.24,1762.24,2172.94,2178.59 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,428)'\"'\"':text='\"'\"'objective-ring  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,429)'\"'\"':text='\"'\"'objective-ring  tick 2570                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/objective-ring.mp4",
+   "holder_side": "A",
+   "hits_on_holder": {
+    "front": 527,
+    "rear": 4,
+    "side": 5
+   },
+   "first_hit_on_holder_by_class": {
+    "front": 2,
+    "rear": 1,
+    "side": 1
+   },
+   "first_hit_any_tick": 1,
+   "distinct_ticks_rear_hit_on_holder": 4,
+   "distinct_ticks_side_or_rear_hit_on_holder": 8,
+   "answer_delay": {
+    "units_whose_first_hit_is_side_or_rear": 3,
+    "answered": 3,
+    "median": 11,
+    "max": 17
+   },
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "stage5": {
+    "arc_deg": 90,
+    "front_deg": 45,
+    "rear_deg": 135,
+    "slope_up_div": 1.1
+   }
+  }
+ ],
+ "lab_sha_note": "every clip but bands-L0084-sight was recorded at lab_sha; bands-L0084-sight at its own lab_sha, in its entry (redrawn L-0084, 2026-11-27)"
+}

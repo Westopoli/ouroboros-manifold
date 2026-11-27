@@ -2497,6 +2497,19 @@ int om_move_moved_own_power(const om_world *w, uint32_t unit_id, uint64_t tick) 
     return mu && mu->in_use && tick != 0 && mu->moved_own_tick == tick;
 }
 
+/* Internal, not in the header (om_internal.h): R-100-04, the firing arc. 1 when the direction (dx, dy) from the unit lies within half of arc_deg
+ * of the facing the unit had at the START of this tick (prev_facing, set before the face pass turns it), 0 when it lies beyond; a direction of
+ * length zero and a unit with no movement row count as inside. The bearing is om_atan2, the face pass's own, so a unit turned fully onto its
+ * target is exactly on it; half the arc is inside, to 1e-9 rad (OM_ARC_EDGE_EPS). Reads through om_move_get, never om_move_touch.
+ * See also: om_tac_fire_pass in csrc/unit.c, which withholds the shot of a unit this returns 0 for; om_move_face_pass, which turns it. */
+#define OM_ARC_EDGE_EPS 1e-9
+int om_move_target_in_arc(const om_world *w, uint32_t unit_id, double dx, double dy, double arc_deg) {
+    const om_move_state *ms = w ? (const om_move_state *)w->move_state : NULL;
+    const om_move_unit *mu = ms ? om_move_get((om_move_state *)ms, unit_id) : NULL;
+    if (!mu || !mu->in_use || (dx == 0.0 && dy == 0.0)) return 1;
+    return fabs(om_wrap_pi(om_atan2(dy, dx) - mu->prev_facing)) <= arc_deg * 0.5 * (OM_PI / 180.0) + OM_ARC_EDGE_EPS;
+}
+
 /* Internal, not in the header (om_internal.h): the stored walk route of a unit. Returns route_n (0 without a movement
  * row or a stored route), writes route_i, and fills min(route_n, cap) interleaved (x, y) pairs: slot 0 is the unit's
  * own position (the planner's point 0, not stored), slots 1 .. route_n - 1 the stored points. Reads through

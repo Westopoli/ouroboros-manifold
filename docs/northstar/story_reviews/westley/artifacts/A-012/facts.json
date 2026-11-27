@@ -1,0 +1,1461 @@
+{
+ "lab_sha": "1aa271100",
+ "lab_sha_full": "1aa2711007a19b0380320406e999e0cead92558c",
+ "note": "side A is the layout's `defender` where it names one; seed 1; facing on arc 90 clips every 6 ticks, measures every tick; facing_off is every-tick only",
+ "clips": [
+  {
+   "name": "cover-L0039",
+   "layout": "L-0039",
+   "kind": "cover",
+   "layout_file": "/home/westopoli/Projects/om-wt/lab5-fin/docs/northstar/research/layer_dynamics/catalogue/L-0039.toml",
+   "headcounts": {
+    "A": 8,
+    "B": 8
+   },
+   "roles": {
+    "A": {
+     "Vanguard": 3,
+     "Interceptor": 3,
+     "Bombard": 2
+    },
+    "B": {
+     "Bastion": 3,
+     "Warden": 3,
+     "Bombard": 2
+    }
+   },
+   "orders": {
+    "attacker": null,
+    "guard": false,
+    "mode": "both_same_point",
+    "point": [
+     1625.0,
+     2000.0
+    ]
+   },
+   "orders_key": "both_same_point",
+   "flags": "--facing on --arc-deg 90 --sight on",
+   "sight": "on",
+   "seed": 1,
+   "lab_sha": "1aa271100",
+   "lab_sha_full": "1aa2711007a19b0380320406e999e0cead92558c",
+   "his_expected_winner": "B",
+   "his_predict_rate_for_A": 0.25,
+   "winner": "A",
+   "survivors_A_B": [
+    3,
+    0
+   ],
+   "last_tick": 2213,
+   "end_kind": "wipe",
+   "capped": false,
+   "agrees_with_his_expected_winner": "no",
+   "hits_received_by_class": {
+    "A": {
+     "front": 294,
+     "rear": 0,
+     "side": 18
+    },
+    "B": {
+     "front": 269,
+     "rear": 0,
+     "side": 0
+    }
+   },
+   "hits_total": 581,
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "lab_checker": {
+    "printed_invalid": false,
+    "rules": [],
+    "first_20_kept_in_fight_file": null
+   },
+   "facing_off": {
+    "winner": "A",
+    "survivors_A_B": [
+     3,
+     0
+    ],
+    "last_tick": 2213,
+    "end_kind": "wipe",
+    "lab_checker_rules": [],
+    "record_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0039.toml --seed 1 --every 1 --sight on --facing off --out <dir>"
+   },
+   "changed_by_stage5": {
+    "last_tick": false,
+    "survivors": false,
+    "winner": false
+   },
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end_and_hits": true,
+   "hits_every6": 581,
+   "frames": 370,
+   "frame_every_ticks": 6,
+   "duration_s": 18.5,
+   "bytes": 998970,
+   "sha256": "8da0e038137fc2028491eb22f282020b8b8d572c281bc2331c2dd78c30b4b242",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 370
+   },
+   "poster": {
+    "file": "cover-L0039-poster.jpg",
+    "sha256": "d8f4b34d312a3e0f4e0aa578d3fca286106472e78d8c31059c9876da920a01c6"
+   },
+   "camera_box": [
+    960.0,
+    1920.64,
+    2290.0,
+    2083.5
+   ],
+   "label_first": "L-0039 cover  tick 0",
+   "label_last": "L-0039 cover  tick 2213",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0039.toml --seed 1 --every 6 --sight on --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0039.toml --seed 1 --every 1 --sight on --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-sampler --name cover-L0039 --version 'L-0039 cover' --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=960.0,1920.64,2290.0,2083.5 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,368)'\"'\"':text='\"'\"'L-0039 cover  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,369)'\"'\"':text='\"'\"'L-0039 cover  tick 2213                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/cover-L0039.mp4"
+  },
+  {
+   "name": "trap-L0080",
+   "layout": "L-0080",
+   "kind": "trap",
+   "layout_file": "/home/westopoli/Projects/om-wt/lab5-fin/docs/northstar/research/layer_dynamics/catalogue/L-0080.toml",
+   "headcounts": {
+    "A": 16,
+    "B": 32
+   },
+   "roles": {
+    "A": {
+     "Vanguard": 8,
+     "Warden": 8
+    },
+    "B": {
+     "Vanguard": 11,
+     "Raider": 11,
+     "Interceptor": 10
+    }
+   },
+   "orders": {
+    "attacker": null,
+    "groups": [
+     {
+      "group": "hill_w",
+      "order": "hold",
+      "release": {
+       "point": [
+        2000.0,
+        2898.25
+       ],
+       "radius": 300.0
+      },
+      "released_at": 131,
+      "side": "A",
+      "to": "enemy_centroid",
+      "units": [
+       1,
+       2,
+       3,
+       4
+      ]
+     },
+     {
+      "group": "hill_e",
+      "order": "hold",
+      "release": {
+       "point": [
+        2000.0,
+        2898.25
+       ],
+       "radius": 300.0
+      },
+      "released_at": 131,
+      "side": "A",
+      "to": "enemy_centroid",
+      "units": [
+       5,
+       6,
+       7,
+       8
+      ]
+     },
+     {
+      "group": "arc",
+      "order": "hold",
+      "release": {
+       "point": [
+        2000.0,
+        2898.25
+       ],
+       "radius": 300.0
+      },
+      "released_at": 131,
+      "side": "A",
+      "to": "enemy_centroid",
+      "units": [
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ]
+     },
+     {
+      "group": "red",
+      "order": "attack_move",
+      "release": null,
+      "released_at": null,
+      "side": "B",
+      "to": [
+       2000.0,
+       2898.25
+      ],
+      "units": [
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24,
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38,
+       39,
+       40,
+       41,
+       42,
+       43,
+       44,
+       45,
+       46,
+       47,
+       48
+      ]
+     }
+    ],
+    "guard": true,
+    "mode": "groups",
+    "point": [
+     2000.0,
+     2898.25
+    ]
+   },
+   "orders_key": "groups",
+   "flags": "--facing on --arc-deg 90 --sight on",
+   "sight": "on",
+   "seed": 1,
+   "lab_sha": "1aa271100",
+   "lab_sha_full": "1aa2711007a19b0380320406e999e0cead92558c",
+   "his_expected_winner": "A",
+   "his_predict_rate_for_A": 0.75,
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    20
+   ],
+   "last_tick": 2221,
+   "end_kind": "wipe",
+   "capped": false,
+   "agrees_with_his_expected_winner": "no",
+   "hits_received_by_class": {
+    "A": {
+     "front": 1249,
+     "rear": 0,
+     "side": 53
+    },
+    "B": {
+     "front": 294,
+     "rear": 89,
+     "side": 235
+    }
+   },
+   "hits_total": 1920,
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "lab_checker": {
+    "printed_invalid": true,
+    "rules": [
+     "R-097-05"
+    ],
+    "first_20_kept_in_fight_file": [
+     {
+      "detail": "29 and 42 stand 23.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 1005,
+      "unit": 29
+     },
+     {
+      "detail": "31 and 37 stand 26.8 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 1202,
+      "unit": 31
+     },
+     {
+      "detail": "29 and 36 stand 21.9 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 1525,
+      "unit": 29
+     },
+     {
+      "detail": "42 and 47 stand 27.8 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 1550,
+      "unit": 42
+     },
+     {
+      "detail": "2 and 4 stand 19.5 wu apart on one slope (layers 1 and 0), under 30 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 1739,
+      "unit": 2
+     }
+    ]
+   },
+   "facing_off": {
+    "winner": "B",
+    "survivors_A_B": [
+     0,
+     21
+    ],
+    "last_tick": 2296,
+    "end_kind": "wipe",
+    "lab_checker_rules": [
+     "R-097-05"
+    ],
+    "record_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0080.toml --seed 1 --every 1 --sight on --facing off --out <dir>"
+   },
+   "changed_by_stage5": {
+    "last_tick": true,
+    "survivors": true,
+    "winner": false
+   },
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end_and_hits": true,
+   "hits_every6": 1920,
+   "frames": 372,
+   "frame_every_ticks": 6,
+   "duration_s": 18.6,
+   "bytes": 2737658,
+   "sha256": "0bb20fbf120ab34e40d1d30b5e25236738b486e6c00d981f55e0012ce128e63c",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 372
+   },
+   "poster": {
+    "file": "trap-L0080-poster.jpg",
+    "sha256": "40902ac95ed0e5dc9f7177b8dd36af88cbf2b0d83c55aacb9a92169e2ae5eda3"
+   },
+   "camera_box": [
+    1130.0,
+    1850.0,
+    2870.0,
+    3199.75
+   ],
+   "label_first": "L-0080 trap  tick 0",
+   "label_last": "L-0080 trap  tick 2221",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0080.toml --seed 1 --every 6 --sight on --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0080.toml --seed 1 --every 1 --sight on --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-sampler --name trap-L0080 --version 'L-0080 trap' --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1130.0,1850.0,2870.0,3199.75 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,370)'\"'\"':text='\"'\"'L-0080 trap  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,371)'\"'\"':text='\"'\"'L-0080 trap  tick 2221                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/trap-L0080.mp4"
+  },
+  {
+   "name": "trap-L0083",
+   "layout": "L-0083",
+   "kind": "trap",
+   "layout_file": "/home/westopoli/Projects/om-wt/lab5-fin/docs/northstar/research/layer_dynamics/catalogue/L-0083.toml",
+   "headcounts": {
+    "A": 24,
+    "B": 48
+   },
+   "roles": {
+    "A": {
+     "Vanguard": 13,
+     "Warden": 11
+    },
+    "B": {
+     "Vanguard": 16,
+     "Raider": 16,
+     "Interceptor": 16
+    }
+   },
+   "orders": {
+    "attacker": null,
+    "groups": [
+     {
+      "group": "hill_w",
+      "order": "hold",
+      "release": {
+       "point": [
+        1997.86,
+        2898.02
+       ],
+       "radius": 300.0
+      },
+      "released_at": 126,
+      "side": "A",
+      "to": "enemy_centroid",
+      "units": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ]
+     },
+     {
+      "group": "hill_e",
+      "order": "hold",
+      "release": {
+       "point": [
+        1997.86,
+        2898.02
+       ],
+       "radius": 300.0
+      },
+      "released_at": 126,
+      "side": "A",
+      "to": "enemy_centroid",
+      "units": [
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "group": "arc",
+      "order": "hold",
+      "release": {
+       "point": [
+        1997.86,
+        2898.02
+       ],
+       "radius": 300.0
+      },
+      "released_at": 126,
+      "side": "A",
+      "to": "enemy_centroid",
+      "units": [
+       16,
+       17,
+       18,
+       19,
+       20,
+       21,
+       22,
+       23,
+       24
+      ]
+     },
+     {
+      "group": "red",
+      "order": "attack_move",
+      "release": null,
+      "released_at": null,
+      "side": "B",
+      "to": [
+       1997.86,
+       2898.02
+      ],
+      "units": [
+       25,
+       26,
+       27,
+       28,
+       29,
+       30,
+       31,
+       32,
+       33,
+       34,
+       35,
+       36,
+       37,
+       38,
+       39,
+       40,
+       41,
+       42,
+       43,
+       44,
+       45,
+       46,
+       47,
+       48,
+       49,
+       50,
+       51,
+       52,
+       53,
+       54,
+       55,
+       56,
+       57,
+       58,
+       59,
+       60,
+       61,
+       62,
+       63,
+       64,
+       65,
+       66,
+       67,
+       68,
+       69,
+       70,
+       71,
+       72
+      ]
+     }
+    ],
+    "guard": true,
+    "mode": "groups",
+    "point": [
+     1997.86,
+     2898.02
+    ]
+   },
+   "orders_key": "groups",
+   "flags": "--facing on --arc-deg 90 --sight on",
+   "sight": "on",
+   "seed": 1,
+   "lab_sha": "1aa271100",
+   "lab_sha_full": "1aa2711007a19b0380320406e999e0cead92558c",
+   "his_expected_winner": "A",
+   "his_predict_rate_for_A": 0.75,
+   "winner": "B",
+   "survivors_A_B": [
+    0,
+    39
+   ],
+   "last_tick": 1824,
+   "end_kind": "wipe",
+   "capped": false,
+   "agrees_with_his_expected_winner": "no",
+   "hits_received_by_class": {
+    "A": {
+     "front": 1713,
+     "rear": 0,
+     "side": 287
+    },
+    "B": {
+     "front": 370,
+     "rear": 48,
+     "side": 291
+    }
+   },
+   "hits_total": 2709,
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [
+     {
+      "angle_deg": 45.09,
+      "detail": "unit 37 fired at unit 6 on tick 1671 with the target 45.09 degrees from its facing, outside the half arc of 45.0 degrees",
+      "rule": "R-100-04",
+      "target": 6,
+      "tick": 1671,
+      "unit": 37
+     }
+    ],
+    "verdict": "FAIL",
+    "violations": 1
+   },
+   "lab_checker": {
+    "printed_invalid": true,
+    "rules": [
+     "R-097-05"
+    ],
+    "first_20_kept_in_fight_file": [
+     {
+      "detail": "51 and 65 stand 19.8 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 837,
+      "unit": 51
+     },
+     {
+      "detail": "35 and 50 stand 27.0 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 856,
+      "unit": 35
+     },
+     {
+      "detail": "35 and 42 stand 25.1 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 856,
+      "unit": 35
+     },
+     {
+      "detail": "35 and 42 stand 27.0 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 865,
+      "unit": 35
+     },
+     {
+      "detail": "57 and 64 stand 25.2 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 924,
+      "unit": 57
+     },
+     {
+      "detail": "34 and 56 stand 16.9 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 926,
+      "unit": 34
+     },
+     {
+      "detail": "48 and 56 stand 22.0 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 928,
+      "unit": 48
+     },
+     {
+      "detail": "56 and 66 stand 7.2 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 929,
+      "unit": 56
+     },
+     {
+      "detail": "42 and 56 stand 17.1 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 933,
+      "unit": 42
+     },
+     {
+      "detail": "48 and 56 stand 25.9 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 934,
+      "unit": 48
+     },
+     {
+      "detail": "5 and 7 stand 27.7 wu apart on one slope (layers 0 and 1), under 30 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 986,
+      "unit": 5
+     },
+     {
+      "detail": "42 and 47 stand 27.6 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 994,
+      "unit": 42
+     },
+     {
+      "detail": "34 and 59 stand 25.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 1711,
+      "unit": 34
+     }
+    ]
+   },
+   "facing_off": {
+    "winner": "B",
+    "survivors_A_B": [
+     0,
+     38
+    ],
+    "last_tick": 1811,
+    "end_kind": "wipe",
+    "lab_checker_rules": [
+     "R-097-05"
+    ],
+    "record_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0083.toml --seed 1 --every 1 --sight on --facing off --out <dir>"
+   },
+   "changed_by_stage5": {
+    "last_tick": true,
+    "survivors": true,
+    "winner": false
+   },
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end_and_hits": true,
+   "hits_every6": 2709,
+   "frames": 305,
+   "frame_every_ticks": 6,
+   "duration_s": 15.25,
+   "bytes": 3286272,
+   "sha256": "c2f006cac09b6828d2aec88900a6b6d3aa015334a2efd6b6f8acb8f9ab27bbcf",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 305
+   },
+   "poster": {
+    "file": "trap-L0083-poster.jpg",
+    "sha256": "25d73e21c86ec9e574b82829cf30d7414538cc511d147be22f7e677933c94d8e"
+   },
+   "camera_box": [
+    1110.0,
+    1830.0,
+    2890.0,
+    3200.0
+   ],
+   "label_first": "L-0083 trap  tick 0",
+   "label_last": "L-0083 trap  tick 1824",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0083.toml --seed 1 --every 6 --sight on --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0083.toml --seed 1 --every 1 --sight on --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-sampler --name trap-L0083 --version 'L-0083 trap' --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1110.0,1830.0,2890.0,3200.0 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,304)'\"'\"':text='\"'\"'L-0083 trap  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/trap-L0083.mp4"
+  },
+  {
+   "name": "vantage-L0061",
+   "layout": "L-0061",
+   "kind": "vantage",
+   "layout_file": "/home/westopoli/Projects/om-wt/lab5-fin/docs/northstar/research/layer_dynamics/catalogue/L-0061.toml",
+   "headcounts": {
+    "A": 24,
+    "B": 24
+   },
+   "roles": {
+    "A": {
+     "Vanguard": 12,
+     "Warden": 12
+    },
+    "B": {
+     "Vanguard": 8,
+     "Raider": 8,
+     "Interceptor": 8
+    }
+   },
+   "orders": {
+    "attacker": "B",
+    "guard": true,
+    "mode": "hold_and_attack",
+    "point": [
+     1403.94,
+     2000.0
+    ]
+   },
+   "orders_key": "hold_and_attack",
+   "flags": "--facing on --arc-deg 90 --sight on",
+   "sight": "on",
+   "seed": 1,
+   "lab_sha": "1aa271100",
+   "lab_sha_full": "1aa2711007a19b0380320406e999e0cead92558c",
+   "his_expected_winner": "A",
+   "his_predict_rate_for_A": 0.98,
+   "winner": "A",
+   "survivors_A_B": [
+    23,
+    0
+   ],
+   "last_tick": 1418,
+   "end_kind": "wipe",
+   "capped": false,
+   "agrees_with_his_expected_winner": "yes",
+   "hits_received_by_class": {
+    "A": {
+     "front": 373,
+     "rear": 0,
+     "side": 0
+    },
+    "B": {
+     "front": 1128,
+     "rear": 0,
+     "side": 89
+    }
+   },
+   "hits_total": 1590,
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "lab_checker": {
+    "printed_invalid": false,
+    "rules": [],
+    "first_20_kept_in_fight_file": null
+   },
+   "facing_off": {
+    "winner": "A",
+    "survivors_A_B": [
+     23,
+     0
+    ],
+    "last_tick": 1415,
+    "end_kind": "wipe",
+    "lab_checker_rules": [],
+    "record_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0061.toml --seed 1 --every 1 --sight on --facing off --out <dir>"
+   },
+   "changed_by_stage5": {
+    "last_tick": true,
+    "survivors": false,
+    "winner": false
+   },
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end_and_hits": true,
+   "hits_every6": 1590,
+   "frames": 238,
+   "frame_every_ticks": 6,
+   "duration_s": 11.9,
+   "bytes": 1409841,
+   "sha256": "f545e12f824412bd721002b58a6bae36a36b8803048320c1185b457e49b771c6",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 238
+   },
+   "poster": {
+    "file": "vantage-L0061-poster.jpg",
+    "sha256": "8b33e133f846cc59b405532fd8667e10f098861d252063cebbb7369198b7547a"
+   },
+   "camera_box": [
+    620.0,
+    1794.93,
+    1479.47,
+    2205.07
+   ],
+   "label_first": "L-0061 vantage  tick 0",
+   "label_last": "L-0061 vantage  tick 1418",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0061.toml --seed 1 --every 6 --sight on --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0061.toml --seed 1 --every 1 --sight on --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-sampler --name vantage-L0061 --version 'L-0061 vantage' --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=620.0,1794.93,1479.47,2205.07 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,236)'\"'\"':text='\"'\"'L-0061 vantage  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,237)'\"'\"':text='\"'\"'L-0061 vantage  tick 1418                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/vantage-L0061.mp4"
+  },
+  {
+   "name": "chokepoint-L0055",
+   "layout": "L-0055",
+   "kind": "chokepoint",
+   "layout_file": "/home/westopoli/Projects/om-wt/lab5-fin/docs/northstar/research/layer_dynamics/catalogue/L-0055.toml",
+   "headcounts": {
+    "A": 24,
+    "B": 24
+   },
+   "roles": {
+    "A": {
+     "Vanguard": 12,
+     "Warden": 12
+    },
+    "B": {
+     "Vanguard": 8,
+     "Raider": 8,
+     "Interceptor": 8
+    }
+   },
+   "orders": {
+    "attacker": "B",
+    "mode": "hold_and_attack",
+    "point": [
+     2335.83,
+     2000.0
+    ]
+   },
+   "orders_key": "hold_and_attack",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "sight": "off",
+   "seed": 1,
+   "lab_sha": "1aa271100",
+   "lab_sha_full": "1aa2711007a19b0380320406e999e0cead92558c",
+   "his_expected_winner": "A",
+   "his_predict_rate_for_A": 0.98,
+   "winner": "A",
+   "survivors_A_B": [
+    19,
+    0
+   ],
+   "last_tick": 1934,
+   "end_kind": "wipe",
+   "capped": false,
+   "agrees_with_his_expected_winner": "yes",
+   "hits_received_by_class": {
+    "A": {
+     "front": 636,
+     "rear": 0,
+     "side": 0
+    },
+    "B": {
+     "front": 1071,
+     "rear": 0,
+     "side": 152
+    }
+   },
+   "hits_total": 1859,
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "lab_checker": {
+    "printed_invalid": true,
+    "rules": [
+     "R-097-05"
+    ],
+    "first_20_kept_in_fight_file": [
+     {
+      "detail": "36 and 41 stand 25.6 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 337,
+      "unit": 36
+     }
+    ]
+   },
+   "facing_off": {
+    "winner": "A",
+    "survivors_A_B": [
+     19,
+     0
+    ],
+    "last_tick": 1963,
+    "end_kind": "wipe",
+    "lab_checker_rules": [
+     "R-097-05"
+    ],
+    "record_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0055.toml --seed 1 --every 1 --sight off --facing off --out <dir>"
+   },
+   "changed_by_stage5": {
+    "last_tick": true,
+    "survivors": false,
+    "winner": false
+   },
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end_and_hits": true,
+   "hits_every6": 1859,
+   "frames": 324,
+   "frame_every_ticks": 6,
+   "duration_s": 16.2,
+   "bytes": 1069302,
+   "sha256": "0573539f08147e59788c544a703c82a70730c3103b081d6727947cd7710b5aae",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 324
+   },
+   "poster": {
+    "file": "chokepoint-L0055-poster.jpg",
+    "sha256": "cb33d565d308e271a44de164f04b438c4940d09af6c03d63516b4d59d9e601e3"
+   },
+   "camera_box": [
+    1020.0,
+    1800.38,
+    2389.31,
+    2199.62
+   ],
+   "label_first": "L-0055 chokepoint  tick 0",
+   "label_last": "L-0055 chokepoint  tick 1934",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0055.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0055.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-sampler --name chokepoint-L0055 --version 'L-0055 chokepoint' --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1020.0,1800.38,2389.31,2199.62 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,322)'\"'\"':text='\"'\"'L-0055 chokepoint  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,323)'\"'\"':text='\"'\"'L-0055 chokepoint  tick 1934                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/chokepoint-L0055.mp4"
+  },
+  {
+   "name": "city-L0073",
+   "layout": "L-0073",
+   "kind": "city",
+   "layout_file": "/home/westopoli/Projects/om-wt/lab5-fin/docs/northstar/research/layer_dynamics/catalogue/L-0073.toml",
+   "headcounts": {
+    "A": 24,
+    "B": 24
+   },
+   "roles": {
+    "A": {
+     "Vanguard": 12,
+     "Warden": 12
+    },
+    "B": {
+     "Vanguard": 8,
+     "Raider": 8,
+     "Interceptor": 8
+    }
+   },
+   "orders": {
+    "attacker": "B",
+    "mode": "hold_and_attack",
+    "point": [
+     1369.61,
+     2000.0
+    ]
+   },
+   "orders_key": "hold_and_attack",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "sight": "off",
+   "seed": 1,
+   "lab_sha": "1aa271100",
+   "lab_sha_full": "1aa2711007a19b0380320406e999e0cead92558c",
+   "his_expected_winner": "A",
+   "his_predict_rate_for_A": 0.75,
+   "winner": "A",
+   "survivors_A_B": [
+    19,
+    0
+   ],
+   "last_tick": 2490,
+   "end_kind": "wipe",
+   "capped": false,
+   "agrees_with_his_expected_winner": "yes",
+   "hits_received_by_class": {
+    "A": {
+     "front": 568,
+     "rear": 0,
+     "side": 0
+    },
+    "B": {
+     "front": 1277,
+     "rear": 0,
+     "side": 24
+    }
+   },
+   "hits_total": 1869,
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "lab_checker": {
+    "printed_invalid": false,
+    "rules": [],
+    "first_20_kept_in_fight_file": null
+   },
+   "facing_off": {
+    "winner": "A",
+    "survivors_A_B": [
+     19,
+     0
+    ],
+    "last_tick": 2516,
+    "end_kind": "wipe",
+    "lab_checker_rules": [],
+    "record_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0073.toml --seed 1 --every 1 --sight off --facing off --out <dir>"
+   },
+   "changed_by_stage5": {
+    "last_tick": true,
+    "survivors": false,
+    "winner": false
+   },
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end_and_hits": true,
+   "hits_every6": 1869,
+   "frames": 416,
+   "frame_every_ticks": 6,
+   "duration_s": 20.8,
+   "bytes": 1682149,
+   "sha256": "e66b93ef0c44c530f7c7b9b4a9a58edb42afcb7cea1019b9ed631c00d019a814",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 416
+   },
+   "poster": {
+    "file": "city-L0073-poster.jpg",
+    "sha256": "0ce3186b7af32279716296f2a6874a981b46c382c4e04b1620d8eafec84a74ca"
+   },
+   "camera_box": [
+    620.0,
+    1569.1,
+    1409.23,
+    2430.9
+   ],
+   "label_first": "L-0073 city  tick 0",
+   "label_last": "L-0073 city  tick 2490",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0073.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0073.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-sampler --name city-L0073 --version 'L-0073 city' --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=620.0,1569.1,1409.23,2430.9 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,415)'\"'\"':text='\"'\"'L-0073 city  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/city-L0073.mp4"
+  },
+  {
+   "name": "open-sit0105",
+   "layout": "L-0105 (situation SIT-0105)",
+   "kind": "open field",
+   "layout_file": "situations/SIT-0105-open_field.md",
+   "headcounts": {
+    "A": 24,
+    "B": 24
+   },
+   "roles": {
+    "A": {
+     "Vanguard": 8,
+     "Warden": 8,
+     "Bombard": 8
+    },
+    "B": {
+     "Vanguard": 24
+    }
+   },
+   "orders": {
+    "attacker": "B",
+    "mode": "hold_and_attack",
+    "point": [
+     1839.46,
+     2004.07
+    ]
+   },
+   "orders_key": "hold_and_attack",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "sight": "off",
+   "seed": 1,
+   "lab_sha": "1aa271100",
+   "lab_sha_full": "1aa2711007a19b0380320406e999e0cead92558c",
+   "his_expected_winner": "A",
+   "his_predict_rate_for_A": null,
+   "winner": "A",
+   "survivors_A_B": [
+    21,
+    0
+   ],
+   "last_tick": 1111,
+   "end_kind": "wipe",
+   "capped": false,
+   "agrees_with_his_expected_winner": "yes",
+   "hits_received_by_class": {
+    "A": {
+     "front": 329,
+     "rear": 0,
+     "side": 20
+    },
+    "B": {
+     "front": 585,
+     "rear": 0,
+     "side": 7
+    }
+   },
+   "hits_total": 941,
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "lab_checker": {
+    "printed_invalid": false,
+    "rules": [],
+    "first_20_kept_in_fight_file": null
+   },
+   "facing_off": {
+    "winner": "A",
+    "survivors_A_B": [
+     21,
+     0
+    ],
+    "last_tick": 1111,
+    "end_kind": "wipe",
+    "lab_checker_rules": [],
+    "record_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --situation SIT-0105 --work <empty dir> --seed 1 --every 1 --sight off --facing off --out <dir>"
+   },
+   "changed_by_stage5": {
+    "last_tick": false,
+    "survivors": false,
+    "winner": false
+   },
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end_and_hits": true,
+   "hits_every6": 941,
+   "frames": 187,
+   "frame_every_ticks": 6,
+   "duration_s": 9.35,
+   "bytes": 1206215,
+   "sha256": "848654e160c6439a7695e6aa29694e1466937e6aed30191d7982bf10b2152a84",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 187
+   },
+   "poster": {
+    "file": "open-sit0105-poster.jpg",
+    "sha256": "a1152ca5cdc4699b04176219c13a4c7fd270ffbf914ef3ad52783e6b16c71884"
+   },
+   "camera_box": [
+    1758.16,
+    1708.36,
+    3280.0,
+    2204.16
+   ],
+   "label_first": "SIT-0105 open field  tick 0",
+   "label_last": "SIT-0105 open field  tick 1111",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --situation SIT-0105 --work <empty dir> --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --situation SIT-0105 --work <empty dir> --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-sampler --name open-sit0105 --version 'SIT-0105 open field' --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=1758.16,1708.36,3280.0,2204.16 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,185)'\"'\"':text='\"'\"'SIT-0105 open field  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,186)'\"'\"':text='\"'\"'SIT-0105 open field  tick 1111                              '\"'\"'' -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/open-sit0105.mp4"
+  },
+  {
+   "name": "open-L0054",
+   "layout": "L-0054",
+   "kind": "open field",
+   "layout_file": "/home/westopoli/Projects/om-wt/lab5-fin/docs/northstar/research/layer_dynamics/catalogue/L-0054.toml",
+   "headcounts": {
+    "A": 128,
+    "B": 128
+   },
+   "roles": {
+    "A": {
+     "Vanguard": 128
+    },
+    "B": {
+     "Vanguard": 128
+    }
+   },
+   "orders": {
+    "attacker": null,
+    "mode": "both_same_point",
+    "point": [
+     2000.0,
+     2000.0
+    ]
+   },
+   "orders_key": "both_same_point",
+   "flags": "--facing on --arc-deg 90 --sight off",
+   "sight": "off",
+   "seed": 1,
+   "lab_sha": "1aa271100",
+   "lab_sha_full": "1aa2711007a19b0380320406e999e0cead92558c",
+   "his_expected_winner": "B",
+   "his_predict_rate_for_A": null,
+   "winner": "A",
+   "survivors_A_B": [
+    17,
+    0
+   ],
+   "last_tick": 6431,
+   "end_kind": "wipe",
+   "capped": false,
+   "agrees_with_his_expected_winner": "no",
+   "hits_received_by_class": {
+    "A": {
+     "front": 6465,
+     "rear": 18,
+     "side": 1326
+    },
+    "B": {
+     "front": 6634,
+     "rear": 112,
+     "side": 1868
+    }
+   },
+   "hits_total": 16423,
+   "arc_check": {
+    "arc_deg": 90,
+    "first": [],
+    "verdict": "pass",
+    "violations": 0
+   },
+   "lab_checker": {
+    "printed_invalid": true,
+    "rules": [
+     "R-097-05"
+    ],
+    "first_20_kept_in_fight_file": [
+     {
+      "detail": "15 and 16 stand 27.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 302,
+      "unit": 15
+     },
+     {
+      "detail": "143 and 144 stand 27.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 302,
+      "unit": 143
+     },
+     {
+      "detail": "6 and 27 stand 27.9 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 318,
+      "unit": 6
+     },
+     {
+      "detail": "134 and 155 stand 27.9 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 318,
+      "unit": 134
+     },
+     {
+      "detail": "18 and 30 stand 27.5 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 320,
+      "unit": 18
+     },
+     {
+      "detail": "146 and 158 stand 27.5 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 320,
+      "unit": 146
+     },
+     {
+      "detail": "26 and 39 stand 26.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 322,
+      "unit": 26
+     },
+     {
+      "detail": "154 and 167 stand 26.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 322,
+      "unit": 154
+     },
+     {
+      "detail": "11 and 31 stand 27.6 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 323,
+      "unit": 11
+     },
+     {
+      "detail": "139 and 159 stand 27.6 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 323,
+      "unit": 139
+     },
+     {
+      "detail": "39 and 65 stand 27.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 324,
+      "unit": 39
+     },
+     {
+      "detail": "167 and 193 stand 27.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 324,
+      "unit": 167
+     },
+     {
+      "detail": "30 and 42 stand 26.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 327,
+      "unit": 30
+     },
+     {
+      "detail": "158 and 170 stand 26.7 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 327,
+      "unit": 158
+     },
+     {
+      "detail": "9 and 29 stand 26.3 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 330,
+      "unit": 9
+     },
+     {
+      "detail": "137 and 157 stand 26.3 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 330,
+      "unit": 137
+     },
+     {
+      "detail": "16 and 28 stand 24.1 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 331,
+      "unit": 16
+     },
+     {
+      "detail": "144 and 156 stand 24.1 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 331,
+      "unit": 144
+     },
+     {
+      "detail": "55 and 56 stand 26.8 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 337,
+      "unit": 55
+     },
+     {
+      "detail": "183 and 184 stand 26.8 wu apart on layer 0, under 28 wu after the collision pass",
+      "rule": "R-097-05",
+      "tick": 337,
+      "unit": 183
+     }
+    ]
+   },
+   "facing_off": {
+    "winner": "B",
+    "survivors_A_B": [
+     0,
+     17
+    ],
+    "last_tick": 6408,
+    "end_kind": "wipe",
+    "lab_checker_rules": [
+     "R-097-05"
+    ],
+    "record_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0054.toml --seed 1 --every 1 --sight off --facing off --out <dir>"
+   },
+   "changed_by_stage5": {
+    "last_tick": true,
+    "survivors": true,
+    "winner": true
+   },
+   "every6_and_every1_agree_on_winner_survivors_last_tick_end_and_hits": true,
+   "hits_every6": 16423,
+   "frames": 1073,
+   "frame_every_ticks": 6,
+   "duration_s": 53.65,
+   "bytes": 7441044,
+   "sha256": "1c8d8a5b386c1cd10aacbf0e1e06e0eaa5aad85c3d361596af8d162a94fc14a3",
+   "ffprobe": {
+    "codec": "h264",
+    "pix_fmt": "yuv420p",
+    "width": 1600,
+    "height": 900,
+    "fps": "20/1",
+    "decoded_frames": 1073
+   },
+   "poster": {
+    "file": "open-L0054-poster.jpg",
+    "sha256": "66a2cc55dcf111b75d7136c31f4f8200179926cd8cdcc65d95ece8261d847d6d"
+   },
+   "camera_box": [
+    400.0,
+    1263.51,
+    3600.0,
+    2738.44
+   ],
+   "label_first": "L-0054 open field  tick 0",
+   "label_last": "L-0054 open field  tick 6431",
+   "record_command_every6_clip": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0054.toml --seed 1 --every 6 --sight off --facing on --arc-deg 90 --out <dir>",
+   "record_command_every1_measures": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip_record --layout docs/northstar/research/layer_dynamics/catalogue/L-0054.toml --seed 1 --every 1 --sight off --facing on --arc-deg 90 --out <dir>",
+   "render_command": "cd /home/westopoli/Projects/om-wt/lab5-fin && PYTHONPATH=. python -m scripts.skilllab.arena.clip --out /home/westopoli/Projects/om-wt/lab5-sampler --name open-L0054 --version 'L-0054 open field' --fight <every-6 fight file> --max-mb 8",
+   "pipeline_render_command": "OM_FIGHT=<work>/chunks/chunk-000.fight.json OM_SHOT_OUT=<work>/shots/c000 OM_FIT_EXTRA=400.0,1263.51,3600.0,2738.44 xvfb-run -a -s '-screen 0 1920x1080x24' '~/.local/bin/godot.real' --path /home/westopoli/Projects/om-wt/lab5-fin --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1920x1080 --fixed-fps 30 res://scenes/proto/fight_replay/fight_replay.tscn",
+   "pipeline_encode_command": "/usr/bin/ffmpeg -y -hide_banner -loglevel error -framerate 20 -i <work>/enc/seq/f%05d.png -vf 'scale=1600:-2:flags=lanczos,format=yuv420p,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'between(n,0,1071)'\"'\"':text='\"'\"'L-0054 open field  tick %{eif\\:0+6*(n-0)\\:d}                              '\"'\"',drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:fontsize=26:fontcolor=white:box=1:boxcolor=black@0.9:boxborderw=6:x=20:y=8:enable='\"'\"'eq(n,1072)'\"'\"':text='\"'\"'L-0054 open field  tick 6431                              '\"'\"'' -c:v libx264 -preset medium -crf 27 -pix_fmt yuv420p -movflags +faststart -r 20 <work>/open-L0054.mp4"
+  }
+ ]
+}
