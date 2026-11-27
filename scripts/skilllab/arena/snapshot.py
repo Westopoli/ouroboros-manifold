@@ -27,6 +27,9 @@ _RESULT = {"winner": str, "survivors": list, "ticks": int, "capped": bool, "pred
 _ORDERS = {"mode": str, "point": list, "attacker": "side_or_null"}
 _ORDER_MODES = ("both_same_point", "hold_and_attack", "groups")   # "groups": the stage 4 fix F3 per-group orders (groups.py)
 _ENDS = ("wipe", "silence", "cap", "apart")   # "apart" (round6.md L5): quiet, a shot was fired, every order finished, no two enemies within notice; it carries result.nearest_enemy_wu
+_STAGE5 = {"arc_deg": "num", "slope_up_div": "num", "front_deg": "num", "rear_deg": "num"}   # H-091 (R-091-09): the top-level table of a `--facing on` fight
+_HIT = {"a": int, "v": int, "tick": int, "off_deg": "num", "cls": str}   # H-091 (R-091-11): one shot in a frame's `hits`
+_HIT_CLASSES = ("front", "side", "rear")
 _VIOLATION = {"rule": str, "tick": int, "unit": int, "detail": str}   # F0 (scripts/skilllab/invariants.py): one broken rule, written under `violations`
 
 
@@ -75,8 +78,10 @@ def validate(doc: dict) -> list[str]:
     if v2 and "ranges" in doc:
         top = dict(top, ranges=dict)   # H-053: optional {role: range wu}, om-fight-2 only
     if v2:
-        top = dict(top, **{k: t for k, t in (("landscape", str), ("movement_kind", int), ("sights", dict), ("built_features", list), ("violations", list), ("invalid", bool)) if k in doc})   # H-063, H-088 (sights), stage 4 fix F2 (built_features), F0 2026-11-08 (violations, invalid): optional, om-fight-2 only
+        top = dict(top, **{k: t for k, t in (("landscape", str), ("movement_kind", int), ("sights", dict), ("built_features", list), ("violations", list), ("invalid", bool), ("stage5", dict)) if k in doc})   # H-063, H-088 (sights), stage 4 fix F2 (built_features), F0 2026-11-08 (violations, invalid), H-091 (stage5): optional, om-fight-2 only
     _check_keys(doc, top, "", out)
+    if v2 and isinstance(doc.get("stage5"), dict):
+        _check_keys(doc["stage5"], _STAGE5, "stage5", out)
     if v2 and isinstance(doc.get("violations"), list):
         for i, viol in enumerate(doc["violations"]):
             if not isinstance(viol, dict):
@@ -113,9 +118,15 @@ def validate(doc: dict) -> list[str]:
             if not isinstance(frame, dict):
                 out.append(f"bad type {where}")
                 continue
-            ok = _check_keys(frame, dict(_FRAME, blocked=list) if v2 and "blocked" in frame else _FRAME, where, out)   # H-063: optional, unit ids
+            ok = _check_keys(frame, dict(_FRAME, **{k: list for k in ("blocked", "hits") if v2 and k in frame}), where, out)   # H-063: `blocked` optional, unit ids; H-091: `hits` optional
             if v2 and isinstance(frame.get("blocked"), list) and not all(_kind_ok(b, int) for b in frame["blocked"]):
                 out.append(f"bad type {where}.blocked (want a list of unit ids)")
+            if v2 and isinstance(frame.get("hits"), list):
+                for k, shot in enumerate(frame["hits"]):
+                    if not isinstance(shot, dict):
+                        out.append(f"bad type {where}.hits[{k}]")
+                    elif _check_keys(shot, _HIT, f"{where}.hits[{k}]", out) and shot["cls"] not in _HIT_CLASSES:
+                        out.append(f"{where}.hits[{k}].cls is not front, side or rear")
             if _kind_ok(frame.get("tick"), int):
                 ticks.append(frame["tick"])
             if isinstance(frame.get("alive"), list):
@@ -129,7 +140,7 @@ def validate(doc: dict) -> list[str]:
                 if not isinstance(unit, dict):
                     out.append(f"bad type {uwhere}")
                     continue
-                _check_keys(unit, dict(_UNIT, **{k: t for k, t in (("seen", list), ("fired", bool)) if v2 and k in unit}), uwhere, out)   # H-088: optional ids of the living enemies the unit sees; replay-firing-lines: optional `fired`
+                _check_keys(unit, dict(_UNIT, **{k: t for k, t in (("seen", list), ("fired", bool), ("climbing", "num")) if v2 and k in unit}), uwhere, out)   # H-088: optional ids of the living enemies the unit sees; replay-firing-lines: optional `fired`; H-091: optional `climbing`
                 if v2 and isinstance(unit.get("seen"), list) and not all(_kind_ok(e, int) for e in unit["seen"]):
                     out.append(f"bad type {uwhere}.seen (want a list of unit ids)")
                 if unit.get("side") not in ("A", "B") and "side" in unit:
