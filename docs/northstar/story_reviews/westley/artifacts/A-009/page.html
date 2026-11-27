@@ -1,0 +1,518 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Decision Session 2026-11-25</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: orientation strip, the eight decisions at a glance, Part 1 renderings (what differs from your predictions, the L-0073 twin, other changes), Part 2 the eight decisions in unblock order. */
+:root {
+  --bg: #f3f5f6; --panel: #ffffff; --fg: #1b2329; --muted: #5b6871; --line: #d5dde2;
+  --accent: #0f7c86; --blue: #2459c9; --red: #c23a2b; --warn: #a15c00; --warn-bg: #fff3e0; --ok: #1f7a46; --rec-bg: #e6f4ee;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --blue: #7ea2f2; --red: #f08070; --warn: #f0b060; --warn-bg: #2b2215; --ok: #6fd09a; --rec-bg: #15291f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --blue: #7ea2f2; --red: #f08070; --warn: #f0b060; --warn-bg: #2b2215; --ok: #6fd09a; --rec-bg: #15291f; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 56px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 26px; }
+h1 { font-size: 27px; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 21px; font-weight: 600; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; font-weight: 600; margin: 0; text-wrap: balance; }
+h4 { font-size: 12px; font-weight: 500; margin: 0; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; max-width: 88ch; }
+a { color: var(--accent); }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+code, .mono { font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.small { font-size: 13px; color: var(--muted); }
+.stack { display: grid; gap: 12px; min-width: 0; }
+.lead { border-left: 4px solid var(--accent); }
+.blocked { border-left: 4px solid var(--warn); background: var(--warn-bg); }
+.rec { border-left: 4px solid var(--ok); background: var(--rec-bg); }
+.blocked, .rec { border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; }
+.opt { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; background: var(--bg); }
+.opt dl { margin: 0; display: grid; gap: 6px; }
+.opt dt { font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.opt dd { margin: 0 0 4px; font-size: 14px; }
+.tag { display: inline-block; font: 500 11px var(--mono); letter-spacing: .04em; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.tag.go { border-color: var(--ok); color: var(--ok); }
+.tag.warn { border-color: var(--warn); color: var(--warn); }
+.pill { display: inline-block; font: 600 12px var(--mono); padding: 1px 8px; border-radius: 4px; color: var(--panel); }
+.pill.A { background: var(--blue); } .pill.B { background: var(--red); } .pill.draw { background: var(--muted); }
+.tablewrap { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; font-size: 12.5px; white-space: nowrap; }
+tr.mis td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+.glance td:first-child { font-family: var(--mono); width: 2.2em; }
+nav.jump { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+.clipset { display: grid; gap: 10px; min-width: 0; }
+.cliprow { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; align-content: start; }
+figcaption { display: grid; gap: 2px; font-size: 13.5px; }
+figcaption b { font-weight: 600; }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 6px; display: block; }
+.transport { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+button { font: 500 13px var(--sans); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 5px 11px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button[aria-pressed="true"] { background: var(--accent); color: var(--panel); border-color: var(--accent); }
+details > summary { cursor: pointer; font-weight: 500; }
+ul, ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 88ch; }
+hr { border: 0; border-top: 1px solid var(--line); width: 100%; margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+
+<header class="stack">
+  <div class="eyebrow">Ouroboros Manifold &middot; decision session &middot; 2026-11-25</div>
+  <h1>Eight decisions and the pictures behind them</h1>
+  <p>Part 1 shows the fights that differ from what you predicted or changed under the new movement, each as three or four synced clips. Part 2 has the eight decisions waiting on you, in the order that frees the most work first. Each decision says what is blocked, what each choice builds and changes, the risks, what you would see afterward, and what I recommend. Nothing here changes code and nothing was landed for this page.</p>
+  <nav class="jump" aria-label="Jump to a section">
+    <a href="#glance">At a glance</a><a href="#p1">Part 1: renderings</a><a href="#mismatch">1a Predictions that differ</a><a href="#twin">1b The L-0073 twin</a><a href="#other">1c Other changes</a><a href="#p2">Part 2: decisions</a><a href="#d1">1</a><a href="#d2">2</a><a href="#d3">3</a><a href="#d4">4</a><a href="#d5">5</a><a href="#d6">6</a><a href="#d7">7</a><a href="#d8">8</a><a href="#facts">Versions and sources</a>
+  </nav>
+</header>
+
+<section id="glance" class="card lead">
+  <h2>The eight decisions at a glance</h2>
+  <p class="small">Ordered by how much work each one frees. "Blocked" is what cannot move until you answer. "Recommend" is my pick, with the reasons under each decision.</p>
+  <div class="tablewrap"><table class="glance">
+    <thead><tr><th>#</th><th>Decision</th><th>Blocked until you answer</th><th>Recommend</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><a href="#d1">Seven red lab checks</a>: four only need new numbers, three ask whether a boxed-in attack-mover under unseen fire should move away</td><td>Every landing that runs the lab suite; the nightly sweep stays red</td><td>Keep walking, re-measure the four, exempt units boxed in by their own fighters</td></tr>
+      <tr><td>2</td><td><a href="#d2">Walker side-step</a>: go or hold</td><td>The beta ground-era movement stage (B5), final walker numbers for stages 3 and 4, the unbuilt isolation arms</td><td>Go as a viewing only: build the prototype, show clips, land nothing until you approve</td></tr>
+      <tr><td>3</td><td><a href="#d3">Stage 4 sign-off</a></td><td>Stages 5, 6 and 7 of the lab staircase (one stage at a time)</td><td>Sign off the sight rules now; keep the three prediction mismatches open as a game-balance story</td></tr>
+      <tr><td>4</td><td><a href="#d4">Q-087-10</a>: firing spot or goal for an attack-mover with a wall in the line</td><td>The E-11 combat epic (open flag, not built), the L-0055 question, the wall part of the fire-blocking checker</td><td>Rewrite the doc to the code: keep walking the goal</td></tr>
+      <tr><td>5</td><td><a href="#d5">Overlap rule</a> for stacked units</td><td>The regression command (exits red on eight accepted rows), the rig's overlap judge</td><td>Keep the 30 wu rule, flag only standing overlap: under 15 wu for more than 3 ticks fails; the cap exception stays</td></tr>
+      <tr><td>6</td><td><a href="#d6">Look-rig numbers</a>: frozen window, position tolerance, 15 wu radius, does a fire-rule violation block a landing</td><td>Turning the look-judge rig on as a gate and in the nightly sweep</td><td>Frozen window 24 frames, median-and-p90 position test, 15 wu radius, violation blocks only for the lab checker</td></tr>
+      <tr><td>7</td><td><a href="#d7">Fire-blocking build</a>: lab checker and Godot enforcement</td><td>Anything but a unit test guarding "units never block fire"</td><td>Build the lab checker and docs lint now; Godot lint after your answers to 4 and 6</td></tr>
+      <tr><td>8</td><td><a href="#d8">Mac trackpad walk on B1</a></td><td>Closing the Mac box on B1 and the first Mac proof of the new movement</td><td>Do it once now, about ten minutes</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<hr>
+<section id="p1" class="stack">
+  <div class="eyebrow">Part 1</div>
+  <h2>Renderings</h2>
+  <p>Every clip pair or trio uses one camera box for all versions of a layout, one frame per 6 ticks, and the label top-left says which engine it is. Versions: <b>then</b> is the engine you approved on 2026-11-05; <b>now</b> is main before the side-step landed; <b>fix</b> is main today. Walker fights (stages 3 and 4) have no side-step, so <b>now</b> and <b>fix</b> differ only where the give-up removal matters. Results read "survivors A:B"; A is blue, B is red. All walker runs use seed 10 (the lab's seed 1). The play buttons start all clips of a set together.</p>
+  <div class="card">
+    <h3>How to read a prediction row</h3>
+    <p>Your predictions are recorded in the approved-fights file (DEC-stage3-layouts and DEC-stage4-layouts, 2026-11-05) as "this side wins about this share of seeds". One seed cannot prove or disprove a share. It does show when a layout lands on the wrong side in every engine version, which is what the 75% trap layouts do below. The seed scan that would show the real share is not built yet.</p>
+  </div>
+</section>
+
+<section id="mismatch" class="stack">
+  <h2>1a. Layouts whose result differs from your prediction</h2>
+  <div class="card">
+    <div class="tablewrap"><table>
+      <thead><tr><th>Layout</th><th>Your prediction</th><th>then (2026-11-05)</th><th>now (before side-step)</th><th>fix (today)</th><th>Reading</th></tr></thead>
+      <tbody>
+        <tr class="mis"><td>S3 L-0039 (cover)</td><td><span class="pill B">B</span> about 75%</td><td><span class="pill draw">draw</span> 8:8 at the 12,000 tick cap</td><td><span class="pill A">A</span> 2:0 t3081</td><td><span class="pill A">A</span> 2:0 t3081</td><td>Differs now. The old engine ended in a draw at the cap, which your rule calls a lab bug. Cause not traced to one rule.</td></tr>
+        <tr class="mis"><td>S4 L-0039 (cover, sight on)</td><td><span class="pill B">B</span> about 75%</td><td><span class="pill draw">draw</span> 5:8 at the cap</td><td><span class="pill A">A</span> 3:0 t2213</td><td><span class="pill A">A</span> 3:0 t2213</td><td>Same pattern as stage 3. Differs now.</td></tr>
+        <tr class="mis"><td>S4 L-0080 (trap)</td><td><span class="pill A">A</span> about 75%</td><td><span class="pill B">B</span> 0:19 t2235</td><td><span class="pill B">B</span> 0:25 t1540</td><td><span class="pill B">B</span> 0:21 t2296</td><td>Red wins in every version, including your approved one. Never matched; not drift.</td></tr>
+        <tr class="mis"><td>S4 L-0083 (trap)</td><td><span class="pill A">A</span> about 75%</td><td><span class="pill B">B</span> 0:36 t1691</td><td><span class="pill B">B</span> 0:39 t1823</td><td><span class="pill B">B</span> 0:38 t1811</td><td>Same: red in every version. Overlaps: 3 pairs under 15 wu in "now", none in "fix".</td></tr>
+        <tr><td>S3 L-0084 (choke)</td><td><span class="pill A">A</span> about 60%</td><td><span class="pill B">B</span> 0:6 t2268</td><td><span class="pill A">A</span> 18:0 t2097</td><td><span class="pill A">A</span> 18:0 t2097</td><td>Old engine differed; today matches your prediction.</td></tr>
+        <tr><td>S3 L-0073 (city)</td><td><span class="pill A">A</span> about 75%</td><td><span class="pill A">A</span> 17:0 t6175</td><td><span class="pill A">A</span> 19:0 t2516</td><td><span class="pill A">A</span> 19:0 t2516</td><td>Matches. Its feature-free twin is in 1b.</td></tr>
+        <tr><td>S3 L-0055 (wall)</td><td><span class="pill A">A</span> about 98%</td><td><span class="pill A">A</span> 21:0 t3394</td><td><span class="pill A">A</span> 19:0 t1963</td><td><span class="pill A">A</span> 19:0 t1963</td><td>Matches. Your L-0055 question is answered in 1c.</td></tr>
+        <tr><td>S4 L-0061 (vantage)</td><td><span class="pill A">A</span></td><td colspan="3">A 23:0 t1415 today and before the side-step</td><td>Matches.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">Rows with an orange edge differ from your prediction today. The three trap and cover rows are the ones to look at. Their clips are below; each set has then, now and fix.</p>
+  </div>
+
+  <div class="card clipset" data-set="s4_L0080"></div>
+  <div class="card clipset" data-set="s4_L0083"></div>
+  <div class="card clipset" data-set="s4_L0039"></div>
+  <div class="card clipset" data-set="s3_L0039"></div>
+
+  <div class="card">
+    <h3>What the checks found in those fights</h3>
+    <ul>
+      <li><b>Who fires first.</b> L-0080: A at tick 129, B at 139 (then); both later in now and fix (A 164, B 178). L-0083: A 117 and B 127 (then); A 159 and B 170 (now, fix). L-0039 with sight on: A 149 and B 80 (then); A 94 and B 92 (now, fix). The stage 4 question you asked ("who saw whom first") reads straight from these clips and from the per-frame sight lists in each fight file.</li>
+      <li><b>A unit standing still under fire it cannot see.</b> It first happens at tick 223 in L-0080 (unit 23, shot by unit 6), tick 228 in L-0083 (unit 52 by unit 6) and tick 94 in L-0039 (unit 11 by unit 7), in now and fix. The then runs show none. This is the behaviour behind decision 1.</li>
+      <li><b>Overlaps.</b> L-0083 under the pre-side-step engine had three pairs closer than 15 wu: units 35 and 69 at ticks 504 to 507, 47 and 71 at 827 to 830, 35 and 60 at 845 to 861. Today there are none. The 2026-11-05 engine had ten short ones among units 1 to 15 at ticks 243 to 293.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="twin" class="stack">
+  <h2>1b. The L-0073 twin that doubled in length</h2>
+  <div class="card lead">
+    <h3>Short answer</h3>
+    <p>The twin is the city layout with its buildings removed. It went from tick 2156 (A wins 22:0) to tick 4395 (A wins 13:0). Most of that doubling is traced and was intended. The Round 5 change of 2026-11-17 (commit <code>3bc0a7095</code>) made a unit take targets only inside its own notice distance, never inside the whole sight radius. The rule is DEC-targeting-sc2-2026-11-17, confirmed as "not drift" on 2026-11-18. Before it, all 24 blue holders saw red at 550 wu on tick 1, walked up, and every one had a target by tick 30. After it, blue stays put until red is inside its notice distance. Red arrives in one column, the front nine to eleven stop at about 300 to shoot, and the twelve behind them stand outside their own notice distance with an order and no target (five Raiders, six Interceptors, one Vanguard, standing from tick 85 to 128, shuffling forward in pulses). Red then loses about 2.6 HP per tick where it used to lose 5.8, and only about 14 blue units fire. That is the slow trickle.</p>
+    <p><b>Still unexplained:</b> the last 744 ticks. The Round 6 engine-rule change E1 (<code>66fbc1ee9</code>) moved the end from 3651 to 4395. Its own text says it only touches a walker paused by its own shot. The first tick that differs is 159, where two blue Wardens keep a destination about 10 wu away. The structure stays the same (same twelve units standing, same slow duel), so the extra 744 is the tail of that duel. I did not revert E1 alone, so I cannot show it as the cause or as noise. The seed argument has no effect on this twin, so there is no noise estimate either.</p>
+    <p><b>The "seven orders ended short".</b> They are not give-ups and not no-route clears. Six are blue units whose target died; the order cleared two to eight ticks after the kill, at their weapon range. One is a red Raider arriving 36 wu from its point. The lab's own "ended short" measure gives zero for all three versions on the clips below, so the number comes from a looser measure.</p>
+  </div>
+  <div class="card">
+    <h3>The twin across the commits</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Commit</th><th>What it is</th><th>Result (survivors A:B)</th></tr></thead>
+      <tbody>
+        <tr><td><code>4fa618ce7</code></td><td>your 2026-11-05 approval</td><td>A 22:0 t2156</td></tr>
+        <tr><td><code>008329d71</code> to <code>94da74934</code></td><td>five small commits</td><td>t1957 to t2551, A wins every time</td></tr>
+        <tr><td><code>3bc0a7095</code></td><td>Round 5: acquire inside notice distance only</td><td>A 14:0 t3666 (<b>+1709</b>)</td></tr>
+        <tr><td><code>fd342241c</code></td><td>small</td><td>A 14:0 t3651</td></tr>
+        <tr><td><code>66fbc1ee9</code></td><td>Round 6 E1</td><td>A 13:0 t4395 (<b>+744</b>, untraced)</td></tr>
+        <tr><td>to today <code>caa79b7ff</code></td><td>nothing changes after E1; today's trace is byte-identical to E1's</td><td>A 13:0 t4395</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">Numbers over time (clip run): tick 1000 then 22:9, now 21:17; tick 2000 then 22:2, now 17:11; tick 3000 then ended, now 14:2; tick 4000 then ended, now 13:1. Blue holders with no target and no order in the tail: 0% then, 55% now (units 318 to 553 wu from the nearest enemy, idle, not jammed). Verdict: Round 5 part is intended; the E1 part is unclear.</p>
+  </div>
+  <div class="card clipset" data-set="s3_L0073_ctl"></div>
+  <details class="card">
+    <summary>The same layout with its buildings (L-0073): matches your 75% prediction in all three versions</summary>
+    <div class="clipset" data-set="s3_L0073"></div>
+  </details>
+  <div class="card clipset" data-set="s3_L0039_ctl"></div>
+</section>
+
+<section id="other" class="stack">
+  <h2>1c. Other fights that changed winner or regressed</h2>
+  <div class="card">
+    <h3>The sixteen standing regression rows, before and after the side-step</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Row</th><th>Kind</th><th>Expected</th><th>Before</th><th>After</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr class="mis"><td>S1 L-0054</td><td>flyer</td><td>draw</td><td>apart 14:22 t10860</td><td>B 0:17 t6408</td><td>winner appears; accepted</td></tr>
+        <tr><td>S2 SIT-0101</td><td>flyer</td><td>B</td><td>B 0:32 t586</td><td>B 0:28 t640</td><td>same winner</td></tr>
+        <tr><td>S2 SIT-0103</td><td>flyer</td><td>B</td><td>B 0:7 t3046</td><td>B 0:7 t3525</td><td>same winner</td></tr>
+        <tr class="mis"><td>S2 SIT-0104</td><td>flyer</td><td>A</td><td>A 10:0 t6254</td><td>B 0:2 t10128</td><td><b>winner flipped and the fight is long</b></td></tr>
+        <tr><td>S2 SIT-0105</td><td>flyer</td><td>A</td><td>A 24:0 t1048</td><td>A 21:0 t1111</td><td>same winner</td></tr>
+        <tr class="mis"><td>S2 SIT-0106</td><td>flyer</td><td>A</td><td>A 5:0 t2543</td><td>B 0:13 t2301</td><td>winner flipped; you approved this clip</td></tr>
+        <tr><td>S2 SIT-0107</td><td>flyer</td><td>B</td><td>B 0:19 t1788</td><td>B 0:20 t1418</td><td>same winner</td></tr>
+        <tr><td>S2 SIT-0108</td><td>flyer</td><td>draw</td><td>0:0 t5438</td><td>0:0 t5365</td><td>mutual wipe both times</td></tr>
+        <tr><td>S3 L-0055, L-0073, L-0084</td><td>walker</td><td>A</td><td colspan="2">identical before and after</td><td>unchanged</td></tr>
+        <tr class="mis"><td>S3 L-0039</td><td>walker</td><td>B</td><td colspan="2">A 2:0 t3081 before and after</td><td>unchanged; differs from prediction</td></tr>
+        <tr><td>S4 L-0061</td><td>walker</td><td>A</td><td colspan="2">A 23:0 t1415 before and after</td><td>unchanged</td></tr>
+        <tr class="mis"><td>S4 L-0080</td><td>walker</td><td>A</td><td>B 0:25 t1540</td><td>B 0:21 t2296</td><td>give-up removal; rows not re-pinned, as you said</td></tr>
+        <tr class="mis"><td>S4 L-0083</td><td>walker</td><td>A</td><td>B 0:39 t1823</td><td>B 0:38 t1811</td><td>same</td></tr>
+        <tr class="mis"><td>S4 L-0039</td><td>walker</td><td>B</td><td colspan="2">A 3:0 t2213 before and after</td><td>unchanged; differs from prediction</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">You said to accept every flyer change automatically, and I did. SIT-0106 and L-0054 were the clips you approved on the movement page (<a href="https://claude.ai/artifact/8YJhVNwQnRo7FCuXYSS6RG" target="_blank" rel="noopener">A-003</a>). SIT-0104 is the one whose size of change surprised me, shown next.</p>
+  </div>
+  <div class="card clipset" data-set="sit0104"></div>
+  <div class="card lead">
+    <h3>Your L-0055 question: "does the side-step take priority over shooting?"</h3>
+    <p>No. L-0055 gives the same result in "now" and "fix" (A 19:0 at tick 1963), so the side-step did not touch it. What you saw is red units that keep walking forward while already in range. The wall in the chokepoint blocks their line, and units do not block fire: only cover, walls and ground do (DEC-units-never-block-fire-2026-11-25). A unit whose line is blocked by a wall releases that target and walks on toward its goal. The rule text (R-087-09) says it steps to a firing spot instead. That mismatch is decision 4. The three clips below are the stage 3 L-0055 fight in all three versions.</p>
+  </div>
+  <div class="card clipset" data-set="s3_L0055"></div>
+  <div class="card clipset" data-set="s3_L0084"></div>
+</section>
+
+<hr>
+<section id="p2" class="stack">
+  <div class="eyebrow">Part 2</div>
+  <h2>The eight decisions</h2>
+  <p>Ordered by what each one frees. Decisions 1, 2 and 3 free the most. Every option lists what I would build, what changes in the game or the lab, the risks, and what you would see once it is done.</p>
+</section>
+
+<section id="d1" class="card stack">
+  <div class="eyebrow">Decision 1 &middot; frees every landing</div>
+  <h2>Seven lab checks are red on main</h2>
+  <h3>The question in plain words</h3>
+  <p>When the side-step landed, seven checks in the simulation lab started failing. Four of them only pin numbers measured on the old fights (a unit's id, a tick, a fight length) and need re-measuring with the same rule. They need no ruling from you. Three are one question: <b>a unit that is attack-moving, not yet arrived, boxed in by its own fighters, and hit by shooters it cannot see. Does it step away like an idle unit, or keep trying to walk to its goal?</b></p>
+  <p>Evidence from L-0080 (fix run): red unit 46 stands still from tick 268 to 560 with an order and no target. Its own units 33, 39 and 40 stand 30 to 32 wu away. A blue unit on the hill 290 wu away hits it every 24 ticks until its health drops from 325 to 201, then it gets a target at tick 561 and dies at 692. Red unit 33 stands from tick 569 to 886, hit 28 times by four hill shooters 290 to 345 wu away, never fires and dies at 887. Nobody tells either of them to move away. A third check (L-0045, a unit standing 51 ticks over a 40 tick limit) looks like the queue on a narrow ramp you already accepted (DEC-slope-collision-2026-11-17).</p>
+  <div class="blocked"><h4>Blocked until you decide</h4><p>Any landing whose gate runs the lab suite either carries seven known reds or cannot go green. The nightly sweep of main stays red. The look rig's stage 4 stand-still check cannot be turned on as a blocker until the rule says what a boxed-in unit is allowed to do.</p></div>
+  <div class="opts">
+    <div class="opt"><h3>A. Keep walking <span class="tag go">current behaviour</span></h3><dl>
+      <dt>What I would build</dt><dd>Nothing in the game. Re-measure the four pinned checks on the new fights. For the three, add to the rule text and the checks one exemption: a unit boxed in by its own engaged units is not "standing in unseen fire without a reason".</dd>
+      <dt>What changes</dt><dd>Lab checks and the R-087-01 sentence only. L-0080 plays exactly as in the clip.</dd>
+      <dt>Risks</dt><dd>Units like 33 can die without firing a shot. That is the stuck-behind-the-firing-line case you called expected on 2026-11-19 and a nit-pick on 2026-11-24. The exemption threshold is yours to set.</dd>
+      <dt>You would see</dt><dd>The lab suite green, and one added sentence in R-087-01.</dd></dl></div>
+    <div class="opt"><h3>B. Move away</h3><dl>
+      <dt>What I would build</dt><dd>Extend the 200 wu move-away of R-087-01 to blocked attack-movers. Units 46 and 33 would step about 200 wu east, roughly 490 wu from the hill shooters and out of their range.</dd>
+      <dt>What changes</dt><dd>L-0080 and every fight with hill shooters or unseen fire changes; unit 33 would not die at tick 887, so winners can move. Walker rows need new pins. The rule needs a second answer: after the step, does the unit resume its goal, hold, or walk back into the same box?</dd>
+      <dt>Risks</dt><dd>A move-away is a step away from the order. You ruled that an attack-move is never abandoned, and on 2026-11-17 you ruled against a unit that moved away 57 times. A resume brings the repeat moves back; a hold looks like stopping, which you called game-breaking.</dd>
+      <dt>You would see</dt><dd>New L-0080 clips and a table of moved rows, one more review round.</dd></dl></div>
+    <div class="opt"><h3>C. Step away only after waiting</h3><dl>
+      <dt>What I would build</dt><dd>Like B, but only after a boxed-in unit has stood under unseen fire for a number of ticks that you name.</dd>
+      <dt>What changes</dt><dd>Same fights as B, fewer of them. Adds one new number that you own.</dd>
+      <dt>Risks</dt><dd>A new tuned constant, and a hold or resume question remains.</dd>
+      <dt>You would see</dt><dd>As B.</dd></dl></div>
+  </div>
+  <div class="rec"><h4>Recommendation: A</h4><p>Your rulings point the same way. An attack-move is followed through; the stuck-behind is a nit-pick, and the stopping is the game-breaker. Units 46 and 33 never stop their order, they are blocked by their own fighters, and 46 starts shooting at tick 561. Option B adds the very thing you ruled against. Do the four mechanical re-measures in the same commit as the exemption, each as a test-defect commit that names this decision. The L-0045 check I would loosen on the ramp queue you accepted, by adding the ramp to its list of allowed stands.</p></div>
+</section>
+
+<section id="d2" class="card stack">
+  <div class="eyebrow">Decision 2 &middot; frees the beta movement stage</div>
+  <h2>Walker side-step: go or hold</h2>
+  <h3>The question in plain words</h3>
+  <p>Flying units now side-step around blockers the way you approved on the movement page. Walking units (the lab's stage 3 and 4 fights and the beta's ground era) do not; they use the straight line and stop short of friends. You said "not yet" until the drift was explained. It is explained: nothing regressed, and the changes were intended (the Round 5 notice-distance rule above). Go means: give walkers the same side-step as flyers.</p>
+  <p>What the evidence says about the jam: in the L-0073 twin, twelve red walkers stand 200 or more ticks with an order and no target, about 270 to 350 wu from blue. They shuffle forward in pulses and all leave the standing state by tick 2261. That is stuck-behind, not stopping, so it is the nit-pick, not the game-breaker. In a flat test, standing is about seventy times higher than on the approved engine. In stage 4, L-0080 now has sixteen units standing without an order at the end (eleven behind, three in front, two arrived), which was zero before.</p>
+  <div class="blocked"><h4>Blocked until you decide</h4><p>The beta's movement stage B5 (its ground era is walkers), the final numbers for the walker rows of stages 3 and 4, and the isolation arms that run roles and pairs on walker movement. Running them before this answer risks doing them twice.</p></div>
+  <div class="opts">
+    <div class="opt"><h3>A. Hold</h3><dl>
+      <dt>What I would build</dt><dd>Nothing. Walkers keep today's movement.</dd>
+      <dt>What changes</dt><dd>Nothing. B5 is played with walkers as they are.</dd>
+      <dt>Risks</dt><dd>The jam stays in beta play. You said "the units are getting too stuck from what I remember", so you may notice it in B5.</dd>
+      <dt>You would see</dt><dd>No new pictures.</dd></dl></div>
+    <div class="opt"><h3>B. Go and land</h3><dl>
+      <dt>What I would build</dt><dd>The walker version of the side-step (probe skip of group mates and idle friends, committed side, six-angle sweep) in new files behind the frozen header, wiring last. A scratch prototype exists, read-only.</dd>
+      <dt>What changes</dt><dd>Every walker fight moves; the walker rows of the approved-fights file are re-pinned (your accept-all ruling applies to flyers, so I would ask again); save format may bump.</dd>
+      <dt>Risks</dt><dd>One more change to walkers right after Round 5 and the side-step; untested against your eye.</dd>
+      <dt>You would see</dt><dd>A landing report with a before/after table of the walker rows.</dd></dl></div>
+    <div class="opt"><h3>C. Go as a viewing first <span class="tag go">recommended</span></h3><dl>
+      <dt>What I would build</dt><dd>Build the prototype properly in a worktree, render the four walker fights that matter (L-0073 twin, L-0080, L-0083, L-0039) as then, today and prototype clips, with the standing-unit counts. Land nothing.</dd>
+      <dt>What changes</dt><dd>Nothing on main until you approve the clips.</dd>
+      <dt>Risks</dt><dd>One extra review round, and the prototype may cost a few hundred thousand tokens of builder time for a result you reject.</dd>
+      <dt>You would see</dt><dd>A new artifact page like this one, with the stuck count beside each clip.</dd></dl></div>
+  </div>
+  <div class="rec"><h4>Recommendation: C</h4><p>You asked for walkers to get a side-step "but not yet", and the investigation you required before it is done. C is that next step without committing you. Hold would leave the jam to be found in B5 play; landing without a viewing repeats what you stopped on 2026-11-24, a change you had not seen. If you want the lowest cost, A is defensible because the standing units are stuck-behind and not stopped.</p></div>
+</section>
+
+<section id="d3" class="card stack">
+  <div class="eyebrow">Decision 3 &middot; frees stages 5 to 7</div>
+  <h2>Stage 4 (sight) sign-off</h2>
+  <h3>The question in plain words</h3>
+  <p>Stage 4 is built and landed. You approved its layouts on 2026-11-05 but never signed off its results. The lab staircase says it is done when you "watch a vantage fight and a trap and agree who saw whom first". The clips in Part 1a show the traps and the cover fight. Three predictions do not hold today: both traps (A about 75%, red wins in every engine version including the one you approved) and the cover fight L-0039 (B about 75%, A wins today, a draw at the cap before). The vantage fight L-0061 does match.</p>
+  <div class="blocked"><h4>Blocked until you decide</h4><p>Stage 5 (facing, arcs, height bands), stage 6 (the scan) and stage 7 (objectives and space). The method builds one stage at a time, each ending in something you look at.</p></div>
+  <div class="opts">
+    <div class="opt"><h3>A. Sign off, change the three predictions</h3><dl>
+      <dt>What I would build</dt><dd>Record the sign-off; rewrite the expected winners of L-0080, L-0083 and L-0039 to what the clips show.</dd>
+      <dt>What changes</dt><dd>Three rows in the approved-fights file.</dd>
+      <dt>Risks</dt><dd>Your own predictions were the design intent. Rewriting them to match the engine hides a possible game-balance problem.</dd>
+      <dt>You would see</dt><dd>The rows turn green in the regression command.</dd></dl></div>
+    <div class="opt"><h3>B. Sign off the sight rules; keep the three predictions open <span class="tag go">recommended</span></h3><dl>
+      <dt>What I would build</dt><dd>Record the sign-off for the sight behaviour (who sees whom first, guard hold, vantage reach). Leave the three predictions as known mismatches, and log one game-balance story: "the trap layouts favour the attacker in every engine version". Your lab rule says a role or layout that looks wrong becomes a game story, not a lab fix.</dd>
+      <dt>What changes</dt><dd>One decision row, one story file, nothing in the sim.</dd>
+      <dt>Risks</dt><dd>The three rows stay marked as mismatches in the regression output until the story is done.</dd>
+      <dt>You would see</dt><dd>Stage 5 plan from me next.</dd></dl></div>
+    <div class="opt"><h3>C. Hold until decision 2 settles</h3><dl>
+      <dt>What I would build</dt><dd>Nothing yet.</dd>
+      <dt>What changes</dt><dd>If walkers later get the side-step, the three stage 4 fights change again.</dd>
+      <dt>Risks</dt><dd>Stages 5 to 7 wait on a viewing and a possible build.</dd>
+      <dt>You would see</dt><dd>Nothing until decision 2 is answered.</dd></dl></div>
+  </div>
+  <div class="rec"><h4>Recommendation: B</h4><p>The sight rules and the movement are separate things. Who sees whom first does not depend on how a unit walks around a friend, and the traps lose for the same reason in the engine you approved. B unblocks stage 5 now and keeps the real question (do these layouts do what you designed) as a visible story. If you pick C in decision 2, the sight sign-off still stands; only the three mismatch rows are re-checked.</p></div>
+</section>
+
+<section id="d4" class="card stack">
+  <div class="eyebrow">Decision 4 &middot; frees the combat epic</div>
+  <h2>Q-087-10: firing spot or goal for an attack-mover with a wall in the line</h2>
+  <h3>The question in plain words</h3>
+  <p>An attack-moving unit sees an enemy, but a wall, cover or the ground blocks its line. The bible (R-087-09) says it walks to a spot where it can shoot, as an idle unit does. The code releases that target and walks on toward its goal, which is what the L-0055 clip shows: red units walking forward in range while the chokepoint wall blocks them. Which is right? Units never block fire in either case; only cover, walls and ground do.</p>
+  <div class="blocked"><h4>Blocked until you decide</h4><p>The combat epic E-11 carries an open flag, so it cannot be built further. The L-0055 question stays open. The wall rule inside the fire-blocking checker (decision 7) has no agreed meaning. Stage 3 rows with walls cannot be signed as final.</p></div>
+  <div class="opts">
+    <div class="opt"><h3>A. Rewrite the doc to the code <span class="tag go">recommended</span></h3><dl>
+      <dt>What I would build</dt><dd>Docs only: R-087-09 says idle units and guards walk to a firing spot, and an attack-mover releases the blocked target and keeps walking its goal.</dd>
+      <dt>What changes</dt><dd>One rule sentence and the Q-087-10 row closed. No fight moves.</dd>
+      <dt>Risks</dt><dd>A column marching past a wall corner may walk into fire without answering until the line clears. That matches your 2026-11-19 reading that choke fights punish the side moving through.</dd>
+      <dt>You would see</dt><dd>Nothing new in play; L-0055 stays as in the clips.</dd></dl></div>
+    <div class="opt"><h3>B. Build the firing-spot walk for attack-movers</h3><dl>
+      <dt>What I would build</dt><dd>In <code>csrc/unit.c</code> (about line 2656), when an attack-mover's target is blocked by a wall, step to a firing spot first. New code in its own file behind the existing header; wiring last.</dd>
+      <dt>What changes</dt><dd>Every fight with walls: L-0055, the choke and city layouts, stage 3 and 4 rows. Winners can move.</dd>
+      <dt>Risks</dt><dd>A unit hunting for a spot can look like stopping, which you called game-breaking, and it competes with the committed detour of the side-step. It lands right after two movement changes.</dd>
+      <dt>You would see</dt><dd>New L-0055 and choke clips and a moved-rows table.</dd></dl></div>
+  </div>
+  <div class="rec"><h4>Recommendation: A</h4><p>You ruled that an attack-move is never abandoned, and the current code is the version you approved by watching. B changes the order's path while the movement is still settling and risks the stopping look. Keep it as a revisit: if a played scene shows attackers marching past a shooter they could reach, reopen it with that scene.</p></div>
+</section>
+
+<section id="d5" class="card stack">
+  <div class="eyebrow">Decision 5 &middot; frees the regression command</div>
+  <h2>The overlap rule for stacked units</h2>
+  <h3>The question in plain words</h3>
+  <p>The rule (R-097-05) says two units on the same layer are pushed apart until 30 wu apart, over at most 3 passes per tick, and the check allows a miss when the cap is hit. In the 128 against 128 open fight about 145 same-side pairs stand closer than 28 for more than 3 ticks, and the closest is 0.3 apart for 15 ticks. Your look files of 2026-11-19 show three kinds: a walker passing through a standing one, a unit wedged in a gap in the second rank, and an idle unit squeezed between friends. What counts as too much overlap, and what should the checker do about it?</p>
+  <div class="blocked"><h4>Blocked until you decide</h4><p>The regression command exits red on eight accepted rows, every one of them the R-097-05 checker line (L-0054, L-0055, L-0084, L-0080, L-0083 and the L-0073, L-0080 and L-0083 twins). The rig's overlap judge needs a number to fail on.</p></div>
+  <div class="opts">
+    <div class="opt"><h3>A. Hold the 30 wu rule hard</h3><dl>
+      <dt>What I would build</dt><dd>Raise the collision passes until no pair is under 30 (twelve passes resolved the 20-unit case in Q-101-02). The checker keeps flagging every miss.</dd>
+      <dt>What changes</dt><dd>Every fight changes slightly; all golden hashes re-pin; the engine costs more per tick.</dd>
+      <dt>Risks</dt><dd>You accepted the cap of 3 and a 0.25 wu residual before. This reopens a closed ruling and moves every walker row.</dd>
+      <dt>You would see</dt><dd>Zero overlaps, regression green, all rows re-pinned.</dd></dl></div>
+    <div class="opt"><h3>B. Flag only standing overlap <span class="tag go">recommended</span></h3><dl>
+      <dt>What I would build</dt><dd>No engine change. The checker fails a pair only when it stays under 15 wu (half a body) for more than 3 ticks; brief crossings in transit and the 30 wu rule's cap exception pass and are counted, not failed.</dd>
+      <dt>What changes</dt><dd>The checker and the regression exit code. The eight rows turn green or name the true standing cases.</dd>
+      <dt>Risks</dt><dd>Some squeezing stays in the game, and you have not ruled that this is acceptable; this option asks you to.</dd>
+      <dt>You would see</dt><dd>A table of remaining standing-overlap pairs, by fight, and the regression command exiting clean.</dd></dl></div>
+    <div class="opt"><h3>C. Make idle friends yield, keep the rest as is</h3><dl>
+      <dt>What I would build</dt><dd>Let idle own units step aside for a moving friend, so the "idle squeezed between friends" kind goes. The other two kinds are not touched.</dd>
+      <dt>What changes</dt><dd>Fights with idle crowds; R-097-10 already says idle units yield, so some of it may be a bug.</dd>
+      <dt>Risks</dt><dd>It goes into the engine and moves rows right after the side-step.</dd>
+      <dt>You would see</dt><dd>New clips of the third kind.</dd></dl></div>
+  </div>
+  <div class="rec"><h4>Recommendation: B</h4><p>It fixes the red regression command at the checker, not the engine, and uses the same 15 wu radius the rig already measures. L-0083 shows the direction of travel: today it has no pair under 15 wu while the previous engine had three, so the side-step is already shrinking the problem. Keep A and C as follow-ups if the standing-overlap table shows real cases.</p></div>
+</section>
+
+<section id="d6" class="card stack">
+  <div class="eyebrow">Decision 6 &middot; frees the look-judge rig</div>
+  <h2>Look-rig numbers: four settings that are yours</h2>
+  <h3>The question in plain words</h3>
+  <p>The rig that watches fights for you has four numbers only you can set. It already treats "a judge may add a FAIL but never a PASS" and a false-pass limit of zero as yours.</p>
+  <ul>
+    <li><b>Frozen-picture window.</b> How many identical frames count as the game freezing. The draft is 5 frames. In L-0039 there are 19 identical frames while Bombards reload, which is not a freeze.</li>
+    <li><b>Position tolerance.</b> How far a drawn unit may sit from the engine's position. The draft is 2 px. Applied to the worst single unit it fails on rounding and glyph centres; the median and the 90th percentile pass.</li>
+    <li><b>The 15 wu unit-on-line radius.</b> How close to the shot line a unit counts as "on" it for the units-never-block-fire check. It is also the overlap radius in decision 5.</li>
+    <li><b>Does a fire-rule violation block a landing?</b> That is, does a shot refused because a unit stands on the line stop the landing, or only report.</li>
+  </ul>
+  <div class="blocked"><h4>Blocked until you decide</h4><p>Switching the rig on as a gate and in the nightly sweep. Until then its verdicts are advisory and nobody can rely on its PASS.</p></div>
+  <div class="opts">
+    <div class="opt"><h3>A. My numbers <span class="tag go">recommended</span></h3><dl>
+      <dt>What I would build</dt><dd>Frozen window 24 frames (the longest healthy standstill I have measured, 19 in L-0039, plus 5), to be revisited when a longer one turns up. Position pass test: median at your 2 px; the 90th-percentile limit comes from the next pilot run, which I show you before you fix it. Radius 15 wu, the same as overlap. The checker for units-never-block-fire blocks a landing; the Godot-side lint only reports at first.</dd>
+      <dt>What changes</dt><dd>Config in the rig's tolerance file and the checker; no sim change.</dd>
+      <dt>Risks</dt><dd>A window that is too long hides a short real freeze. The 24 frames cover about 144 ticks at the lab's cadence.</dd>
+      <dt>You would see</dt><dd>The rig's pilot page re-run with the numbers, showing which fights fail and why.</dd></dl></div>
+    <div class="opt"><h3>B. Keep all drafts</h3><dl>
+      <dt>What I would build</dt><dd>Nothing: 5 frames, 2 px per unit, 15 wu, no blocking.</dd>
+      <dt>What changes</dt><dd>Nothing.</dd>
+      <dt>Risks</dt><dd>False FAILs on reload fights and rounding, so the rig cannot be trusted as a gate.</dd>
+      <dt>You would see</dt><dd>The same pilot noise you saw before.</dd></dl></div>
+    <div class="opt"><h3>C. You name each number</h3><dl>
+      <dt>What I would build</dt><dd>I wait for four numbers from you.</dd>
+      <dt>What changes</dt><dd>Whatever you pick.</dd>
+      <dt>Risks</dt><dd>Slowest; you set them without the pilot table.</dd>
+      <dt>You would see</dt><dd>As A, with your values.</dd></dl></div>
+  </div>
+  <div class="rec"><h4>Recommendation: A</h4><p>The numbers are measured, not guessed: the 19 comes from L-0039, the radius is already in use. Answer decision 5 first, since A reuses its 15 wu. Because the rig may only add FAILs, the cost of a wrong window is a false alarm, never a false pass, which is the one thing your zero limit forbids.</p></div>
+</section>
+
+<section id="d7" class="card stack">
+  <div class="eyebrow">Decision 7 &middot; frees enforcement of "units never block fire"</div>
+  <h2>Fire-blocking build: lab checker and Godot enforcement</h2>
+  <h3>The question in plain words</h3>
+  <p>The rule is now in the docs and pinned by one sim test. The spec on main (FB1 to FB8) adds a lab predicate that fails any fight where a shot is refused because a unit stands on the line, a lint for the Godot client, a transport test, a desktop play check and a docs lint. The rule drifted for months once because nothing outside the sim watched it. Build now?</p>
+  <div class="blocked"><h4>Blocked until you decide</h4><p>Anything beyond the one sim test guarding the rule. The wall part of the checker depends on decision 4 and its radius on decision 6.</p></div>
+  <div class="opts">
+    <div class="opt"><h3>A. Build everything</h3><dl>
+      <dt>What I would build</dt><dd>FB1 to FB8: lab predicate, Godot lint, transport test, desktop play, docs lint. A cascade of engineers, tests first.</dd>
+      <dt>What changes</dt><dd>New test and checker files; the Godot lint touches no game scene. No contract change.</dd>
+      <dt>Risks</dt><dd>It fixes meaning before 4 and 6 are answered; some pieces would be rebuilt.</dd>
+      <dt>You would see</dt><dd>A landing report and one played scene.</dd></dl></div>
+    <div class="opt"><h3>B. Lab checker and docs lint now, Godot after 4 and 6 <span class="tag go">recommended</span></h3><dl>
+      <dt>What I would build</dt><dd>The lab predicate (units on the line never refuse a shot) and the docs lint now. The Godot lint, transport test and desktop play wait for your answers.</dd>
+      <dt>What changes</dt><dd>Lab checker only; cheap.</dd>
+      <dt>Risks</dt><dd>The Godot side stays unguarded for a while; the unit test still covers the sim.</dd>
+      <dt>You would see</dt><dd>The checker running over the stage 1 to 4 fights and reporting zero violations.</dd></dl></div>
+    <div class="opt"><h3>C. Wait</h3><dl>
+      <dt>What I would build</dt><dd>Nothing.</dd>
+      <dt>What changes</dt><dd>Nothing.</dd>
+      <dt>Risks</dt><dd>A repeat of the drift, undetected.</dd>
+      <dt>You would see</dt><dd>Nothing.</dd></dl></div>
+  </div>
+  <div class="rec"><h4>Recommendation: B</h4><p>Most of the value is the lab predicate, because it runs on every fight. The Godot pieces guard code you are about to touch less than the movement. Whether a violation blocks a landing is covered under decision 6; I recommend it blocks for the lab checker.</p></div>
+</section>
+
+<section id="d8" class="card stack">
+  <div class="eyebrow">Decision 8 &middot; frees the Mac box on B1</div>
+  <h2>Mac trackpad walk on B1</h2>
+  <h3>The question in plain words</h3>
+  <p>B1 (the approved screens) was found on your Mac to have no pan or zoom (W8). The fix landed (<code>459c524d</code>). It waits on <code>scripts/play_mac.sh --check</code> and you walking the galaxy view and a deployed mission with the trackpad. The side-step landing also changed the engine the Mac build runs, with a new save format (14), and nobody has played that on the Mac.</p>
+  <div class="blocked"><h4>Blocked until you decide</h4><p>Closing W8 and the Mac box on B1, and the first Mac proof of the new movement. Nothing else waits on it; B2 is waiting on your layout-engine work.</p></div>
+  <div class="opts">
+    <div class="opt"><h3>A. Do it now <span class="tag go">recommended</span></h3><dl>
+      <dt>What I would build</dt><dd>Nothing. You run the check and walk it, about ten minutes.</dd>
+      <dt>What changes</dt><dd>W8 closes, or reopens with a reason.</dd>
+      <dt>Risks</dt><dd>The Mac needs the new pipe built first.</dd>
+      <dt>You would see</dt><dd>The galaxy view, a mission, units moving with the side-step.</dd></dl></div>
+    <div class="opt"><h3>B. Fold into the B2 proof</h3><dl>
+      <dt>What I would build</dt><dd>Nothing now.</dd>
+      <dt>What changes</dt><dd>One Mac session instead of two.</dd>
+      <dt>Risks</dt><dd>B2 is blocked on the layout engine, so this could wait weeks, and a Mac-only fault would be found late.</dd>
+      <dt>You would see</dt><dd>Nothing yet.</dd></dl></div>
+    <div class="opt"><h3>C. Declare Linux-first</h3><dl>
+      <dt>What I would build</dt><dd>Nothing; the Mac proof moves to the end of the beta.</dd>
+      <dt>What changes</dt><dd>W8 stays "fixed, not walked".</dd>
+      <dt>Risks</dt><dd>A faulty Mac build discovered at the end.</dd>
+      <dt>You would see</dt><dd>Nothing.</dd></dl></div>
+  </div>
+  <div class="rec"><h4>Recommendation: A</h4><p>It is the cheapest decision on the page, and it is the first time the Mac meets the new engine. Do it before B5 hands you a build.</p></div>
+</section>
+
+<hr>
+<section id="facts" class="card stack">
+  <h2>Versions and sources</h2>
+  <ul>
+    <li><b>then</b> = commit <code>4fa618ce7</code> engine, with main's scripts. <b>now</b> = <code>893a5af7f</code>, main before the side-step. <b>fix</b> = <code>caa79b7ff</code>, main today. For SIT-0104: approved, today (before the side-step), V1 (give-up removed only) and A (the side-step).</li>
+    <li>Walker clips: seed 10; stage 4 clips recorded with sight on; SIT-0104 at one frame per 2 ticks, everything else one frame per 6.</li>
+    <li>Earlier pages: movement clips <a href="https://claude.ai/artifact/8YJhVNwQnRo7FCuXYSS6RG" target="_blank" rel="noopener">A-003</a>, stage 3 isolation <a href="https://claude.ai/artifact/T9MkEXQXGsckkgsAsp8sLz" target="_blank" rel="noopener">A-004</a>. This page is recorded in the artifact ledger.</li>
+    <li>Reports in the repo: <code>docs/reports/2026-11-24-movement-sidestep-landing.md</code>, <code>docs/reports/2026-11-24-movement-sidestep-tests.md</code>, the fire-blocking spec <code>docs/northstar/plans/fire-blocking-2026-11-25/spec.md</code>, your look files <code>docs/northstar/story_reviews/westley/look_2026-11-19/README.md</code>.</li>
+    <li>Not measured: a seed scan for any share prediction; the walker prototype's clips; the Mac build.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+(function () {
+  var S = function (src) { return { src: src, poster: src.replace(/\.mp4$/, "-poster.jpg") }; };
+  var sets = {
+    s4_L0080: { title: "Stage 4 trap L-0080, three versions", note: "Prediction: A (blue) wins about 75%. Red (B) wins in all three. This is the fight with the unit standing under unseen fire at tick 223.", items: [
+      ["then", "2026-11-05 engine", "B wins 0:19 at tick 2235", "s4/L-0080-then.mp4"],
+      ["now", "before the side-step", "B wins 0:25 at tick 1540", "s4/L-0080-now.mp4"],
+      ["fix", "main today", "B wins 0:21 at tick 2296", "s4/L-0080-fix.mp4"] ] },
+    s4_L0083: { title: "Stage 4 trap L-0083, three versions", note: "Prediction: A wins about 75%. Red wins in all three. Watch for units stacked on each other in the middle clip.", items: [
+      ["then", "2026-11-05 engine", "B wins 0:36 at tick 1691", "s4/L-0083-then.mp4"],
+      ["now", "before the side-step", "B wins 0:39 at tick 1823; three pairs under 15 wu", "s4/L-0083-now.mp4"],
+      ["fix", "main today", "B wins 0:38 at tick 1811; no pair under 15 wu", "s4/L-0083-fix.mp4"] ] },
+    s4_L0039: { title: "Stage 4 cover fight L-0039 (sight on), three versions", note: "Prediction: B wins about 75%. The old engine ended in a draw at the 12,000 tick cap; now and today A wins.", items: [
+      ["then", "2026-11-05 engine", "draw 5:8 at the cap", "s4/L-0039-then.mp4"],
+      ["now", "before the side-step", "A wins 3:0 at tick 2213", "s4/L-0039-now.mp4"],
+      ["fix", "main today", "A wins 3:0 at tick 2213", "s4/L-0039-fix.mp4"] ] },
+    s3_L0039: { title: "Stage 3 cover fight L-0039, three versions", note: "Prediction: B wins about 75%. Draw at the cap on the old engine; A wins now and today.", items: [
+      ["then", "2026-11-05 engine", "draw 8:8 at the cap", "s3/L-0039-then.mp4"],
+      ["now", "before the side-step", "A wins 2:0 at tick 3081", "s3/L-0039-now.mp4"],
+      ["fix", "main today", "A wins 2:0 at tick 3081", "s3/L-0039-fix.mp4"] ] },
+    s3_L0073_ctl: { title: "The L-0073 twin (city layout with its buildings removed), three versions", note: "then ends at tick 2156; now and fix at 4395. Watch the twelve red units that stop short of the front in the middle and right clips.", items: [
+      ["then", "2026-11-05 engine", "A wins 22:0 at tick 2156", "s3/L-0073-control-then.mp4"],
+      ["now", "before the side-step", "A wins 13:0 at tick 4395", "s3/L-0073-control-now.mp4"],
+      ["fix", "main today", "A wins 13:0 at tick 4395 (identical to now)", "s3/L-0073-control-fix.mp4"] ] },
+    s3_L0073: { title: "L-0073 with buildings, three versions", note: "Prediction: A wins about 75%. All three match.", items: [
+      ["then", "2026-11-05 engine", "A wins 17:0 at tick 6175", "s3/L-0073-then.mp4"],
+      ["now", "before the side-step", "A wins 19:0 at tick 2516", "s3/L-0073-now.mp4"],
+      ["fix", "main today", "A wins 19:0 at tick 2516", "s3/L-0073-fix.mp4"] ] },
+    s3_L0039_ctl: { title: "The L-0039 twin (cover removed), three versions", note: "The winner flipped between the old engine and now: A wins 3:0, then B wins 0:5. Cause not traced.", items: [
+      ["then", "2026-11-05 engine", "A wins 3:0 at tick 2606", "s3/L-0039-control-then.mp4"],
+      ["now", "before the side-step", "B wins 0:5 at tick 2352", "s3/L-0039-control-now.mp4"],
+      ["fix", "main today", "B wins 0:5 at tick 2352", "s3/L-0039-control-fix.mp4"] ] },
+    sit0104: { title: "SIT-0104 (stage 2 flyer fight), four versions", note: "Expected A. Approved A wins 24:0 at tick 2954; today (before the side-step) A 10:0 at 6254; with the give-up removed only, A 14:0 at 5275; with the side-step, B wins 0:2 at tick 10128, about three and a half times as long as the approved fight.", items: [
+      ["approved", "your approval", "A wins 24:0 at tick 2954", "s2/SIT-0104-approved.mp4"],
+      ["today", "before the side-step", "A wins 10:0 at tick 6254", "s2/SIT-0104-today.mp4"],
+      ["V1", "give-up removed only", "A wins 14:0 at tick 5275", "s2/SIT-0104-v1.mp4"],
+      ["A", "the side-step (main today)", "B wins 0:2 at tick 10128", "s2/SIT-0104-A.mp4"] ] },
+    s3_L0055: { title: "Stage 3 wall fight L-0055, three versions", note: "Prediction: A wins about 98%. Matches. Look for red units walking forward in range while the wall blocks their line (decision 4).", items: [
+      ["then", "2026-11-05 engine", "A wins 21:0 at tick 3394", "s3/L-0055-then.mp4"],
+      ["now", "before the side-step", "A wins 19:0 at tick 1963", "s3/L-0055-now.mp4"],
+      ["fix", "main today", "A wins 19:0 at tick 1963", "s3/L-0055-fix.mp4"] ] },
+    s3_L0084: { title: "Stage 3 choke fight L-0084, three versions", note: "Prediction: A wins about 60%. The old engine had B win; now and today A wins as you predicted.", items: [
+      ["then", "2026-11-05 engine", "B wins 0:6 at tick 2268", "s3/L-0084-then.mp4"],
+      ["now", "before the side-step", "A wins 18:0 at tick 2097", "s3/L-0084-now.mp4"],
+      ["fix", "main today", "A wins 18:0 at tick 2097", "s3/L-0084-fix.mp4"] ] }
+  };
+  function esc(t) { var d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+  function build(root) {
+    var def = sets[root.getAttribute("data-set")];
+    if (!def) { return; }
+    var html = "<h3>" + esc(def.title) + "</h3><p class=\"small\">" + esc(def.note) + "</p>" +
+      "<div class=\"transport\"><button type=\"button\" data-act=\"play\">Play all</button><button type=\"button\" data-act=\"pause\">Pause all</button><button type=\"button\" data-act=\"restart\">Restart</button>" +
+      "<span class=\"small\">Speed</span><button type=\"button\" data-rate=\"1\" aria-pressed=\"true\">1x</button><button type=\"button\" data-rate=\"2\" aria-pressed=\"false\">2x</button><button type=\"button\" data-rate=\"4\" aria-pressed=\"false\">4x</button></div>" +
+      "<div class=\"cliprow\">";
+    def.items.forEach(function (it) {
+      var p = S(it[3]);
+      html += "<figure><video preload=\"metadata\" playsinline muted controls poster=\"" + p.poster + "\" src=\"" + p.src + "\"></video>" +
+        "<figcaption><b>" + esc(it[0]) + " &middot; " + esc(it[1]) + "</b><span>" + esc(it[2]) + "</span></figcaption></figure>";
+    });
+    html += "</div>";
+    root.innerHTML = html;
+    var vids = function () { return Array.prototype.slice.call(root.querySelectorAll("video")); };
+    root.addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) { return; }
+      var act = b.getAttribute("data-act");
+      if (act === "play") { vids().forEach(function (v) { var r = v.play(); if (r && r.catch) { r.catch(function () {}); } }); }
+      else if (act === "pause") { vids().forEach(function (v) { v.pause(); }); }
+      else if (act === "restart") { vids().forEach(function (v) { v.currentTime = 0; }); }
+      else if (b.getAttribute("data-rate")) {
+        var rate = parseFloat(b.getAttribute("data-rate"));
+        vids().forEach(function (v) { v.playbackRate = rate; });
+        Array.prototype.forEach.call(root.querySelectorAll("button[data-rate]"), function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      }
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".clipset[data-set]"), build);
+})();
+</script>

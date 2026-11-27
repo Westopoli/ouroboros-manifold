@@ -1,0 +1,169 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Beta Stage B5 Clips</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column. Summary and the three asks first, then the eight clips in watching order, then how to play it and the fine print. */
+:root {
+  --bg: #f3f5f6; --panel: #ffffff; --fg: #1b2329; --muted: #5b6871; --line: #d5dde2;
+  --accent: #0f7c86; --warn: #a15c00; --warn-bg: #fff3e0; --ok: #1f7a46; --ask-bg: #e6f4ee;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --warn: #f0b060; --warn-bg: #2b2215; --ok: #6fd09a; --ask-bg: #15291f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --warn: #f0b060; --warn-bg: #2b2215; --ok: #6fd09a; --ask-bg: #15291f; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 56px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 20px; font-weight: 600; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; font-weight: 600; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+ul, ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 70ch; }
+code { font-family: var(--mono); font-size: 14px; overflow-wrap: anywhere; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.ask { border-left: 4px solid var(--ok); background: var(--ask-bg); }
+.gaps { border-left: 4px solid var(--warn); background: var(--warn-bg); }
+.small { font-size: 14px; color: var(--muted); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 6px; display: block; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font: 500 12px var(--mono); padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.steps li { font-size: 15px; }
+a { color: var(--accent); }
+a:focus-visible, video:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+hr { border: 0; border-top: 1px solid var(--line); width: 100%; margin: 0; }
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:8px">
+  <div class="eyebrow">Ouroboros Manifold &middot; beta staircase &middot; 2026-11-26</div>
+  <h1>Beta stage B5: one role, in groups</h1>
+  <p>Built overnight. Eight clips of the real game below. Nobody has watched them yet, including me: they were checked by the positions the game reports while recording, so you are the first eyes on them.</p>
+</header>
+
+<section class="card ask">
+  <h2>Three things I need from you</h2>
+  <ol>
+    <li><b>Yes or no on the pipe contract change (H-089).</b> The link between the game and the simulation had no way to start a field with one role and no enemy. I added two commands to it. They add; they change nothing that existed. It is a change to a frozen contract, written up first as its own story, and yours to veto.</li>
+    <li><b>Your verdict after watching.</b> What looks right, what looks wrong.</li>
+    <li><b>Whether to merge.</b> Everything is on the branch <code>s/B5-one-role-groups</code>. Nothing is on main and nothing was pushed.</li>
+  </ol>
+</section>
+
+<section class="card">
+  <h2>What was built</h2>
+  <ul>
+    <li><b>The stage.</b> On mission preparation you pick a ground, press DEPLOY FORCES, and a group of 16 or 32 Vanguards stands on a field with no enemy.</li>
+    <li><b>Orders.</b> Click or drag a box to select. Right-click to move. Press A, then click, to attack-move.</li>
+    <li><b>What you see.</b> 3D box bodies, the facing triangles you approved, a small mark on the ground at each unit's own slot, and a camera that zooms with the wheel and pans with the arrow keys or the screen edge.</li>
+    <li><b>The movement is the engine's,</b> over the real pipe. The stage holds no movement rule of its own, so your rulings (keep walking, the lock, a walker side-step) need no change here when they reach the engine.</li>
+    <li><b>Five stand-in grounds,</b> because stages B2 to B4 are not built: open ground, a hill, a wall with one gap, and city blocks with streets (16 units and 32 units). Units cannot walk through the walls or buildings and they climb the hill.</li>
+    <li><b>The B1 placeholder you approved is untouched.</b> It is still what <code>default</code> gives you.</li>
+  </ul>
+  <p class="small">In every recorded play every unit reached its place on every order, and no unit was ever inside a wall or a building.</p>
+</section>
+
+<section class="card gaps">
+  <h2>Known gaps</h2>
+  <ul>
+    <li>You have not played it. The stage counts as Seen only when you press F5 and walk it. The Mac was not tried.</li>
+    <li>The grounds are stand-ins, not the real layouts of B2 to B4.</li>
+    <li>Sending one unit alone shoves its idle neighbours aside (one moved 76 wu) and they do not walk back. Watch for it at the end of each play clip.</li>
+    <li>Walkers have no side-step, so the group queues and funnels at the gap.</li>
+    <li>Attack-move looks the same as move, because there is no enemy.</li>
+    <li>The distance dim is barely visible on a field this small.</li>
+    <li>There is no way back from the stage to the menu.</li>
+    <li>The close-up gap clip starts on an empty opening for about 15 seconds before the group arrives.</li>
+  </ul>
+</section>
+
+<hr>
+<h2>The clips</h2>
+<p class="small">Each play clip runs the same script: a box is dragged round the whole group, the group is sent across the ground, then attack-moved to another far point, then one unit is picked and sent off alone. All clips run at the game's own speed.</p>
+
+<figure class="card">
+  <h3>1. From start-up to the field</h3>
+  <div class="tags"><span class="tag">hill ground</span><span class="tag">16 units</span><span class="tag">no orders</span><span class="tag">20 s</span></div>
+  <video controls playsinline preload="metadata" poster="clips/b5-flow-poster.jpg" src="clips/b5-flow.mp4"></video>
+  <figcaption>The game starts, the menus are walked, the hill ground is picked in the variant picker, DEPLOY FORCES is pressed, and the field appears with the group standing on it.</figcaption>
+</figure>
+
+<figure class="card">
+  <h3>2. Open ground</h3>
+  <div class="tags"><span class="tag">flat ground</span><span class="tag">16 units</span><span class="tag">move, attack-move, one unit alone</span><span class="tag">about 2 min</span></div>
+  <video controls playsinline preload="metadata" poster="clips/b5-flat-16-poster.jpg" src="clips/b5-flat-16.mp4"></video>
+  <figcaption>Box-select, then a move across the field. Attack-move to another far point. Last, one unit is sent off alone. All 16 arrived on both group orders.</figcaption>
+</figure>
+
+<figure class="card">
+  <h3>3. The hill</h3>
+  <div class="tags"><span class="tag">hill ground</span><span class="tag">16 units</span><span class="tag">move up, move on, attack-move, one unit alone</span><span class="tag">about 2 min</span></div>
+  <video controls playsinline preload="metadata" poster="clips/b5-hill-16-poster.jpg" src="clips/b5-hill-16.mp4"></video>
+  <figcaption>The group is sent onto the raised ground and climbs it, then sent on beyond it and comes down. An attack-move follows on the low ground, and one unit is sent back up the hill alone. All 16 arrived on all three group orders.</figcaption>
+</figure>
+
+<figure class="card">
+  <h3>4. The gap</h3>
+  <div class="tags"><span class="tag">wall with one opening</span><span class="tag">16 units</span><span class="tag">move through, attack-move, one unit alone</span><span class="tag">about 2 min</span></div>
+  <video controls playsinline preload="metadata" poster="clips/b5-gap-16-poster.jpg" src="clips/b5-gap-16.mp4"></video>
+  <figcaption>The group is sent to the far side of the wall and funnels through the one opening. Then an attack-move, then one unit alone. All 16 crossed and arrived; none touched the wall.</figcaption>
+</figure>
+
+<figure class="card">
+  <h3>5. The gap, close up</h3>
+  <div class="tags"><span class="tag">wall with one opening</span><span class="tag">16 units</span><span class="tag">same orders, camera zoomed in</span><span class="tag">70 s</span></div>
+  <video controls playsinline preload="metadata" poster="clips/b5-gap-close-poster.jpg" src="clips/b5-gap-close.mp4"></video>
+  <figcaption>The same play with the camera low over the opening, so the boxes, facing triangles and slot marks are large. The opening is empty for about the first 15 seconds.</figcaption>
+</figure>
+
+<figure class="card">
+  <h3>6. The streets</h3>
+  <div class="tags"><span class="tag">city blocks</span><span class="tag">16 units</span><span class="tag">move round a corner, attack-move, one unit alone</span><span class="tag">about 2.5 min</span></div>
+  <video controls playsinline preload="metadata" poster="clips/b5-street-16-poster.jpg" src="clips/b5-street-16.mp4"></video>
+  <figcaption>The group is sent to a far corner of the city, so it has to leave its own street and turn between the buildings. Then an attack-move, then one unit alone. All 16 arrived; none entered a building.</figcaption>
+</figure>
+
+<figure class="card">
+  <h3>7. The streets, 32 units</h3>
+  <div class="tags"><span class="tag">city blocks</span><span class="tag">32 units</span><span class="tag">move round a corner, attack-move, one unit alone</span><span class="tag">about 2.5 min</span></div>
+  <video controls playsinline preload="metadata" poster="clips/b5-street-32-poster.jpg" src="clips/b5-street-32.mp4"></video>
+  <figcaption>The same play with a group twice the size. All 32 arrived on both group orders.</figcaption>
+</figure>
+
+<figure class="card">
+  <h3>8. A street corner, close up</h3>
+  <div class="tags"><span class="tag">city blocks</span><span class="tag">16 units</span><span class="tag">same orders, camera zoomed in</span><span class="tag">95 s</span></div>
+  <video controls playsinline preload="metadata" poster="clips/b5-street-close-poster.jpg" src="clips/b5-street-close.mp4"></video>
+  <figcaption>The camera sits low over the junction the group turns at.</figcaption>
+</figure>
+
+<hr>
+<section class="card">
+  <h2>To play it yourself (Linux box)</h2>
+  <ol class="steps">
+    <li><code>cd ~/Projects/om-wt/b5</code> and run <code>scripts/setup_editor.sh</code>. It builds the pipe with the two new commands.</li>
+    <li>Open <code>project.godot</code> there in Godot and press F5.</li>
+    <li>NEW CAMPAIGN, a mission, then on mission preparation pick <code>hill-16</code>, <code>gap-16</code> or <code>street-16</code> in the variant picker and press DEPLOY FORCES.</li>
+    <li>Drag a box round the group, right-click somewhere far, then press A and left-click somewhere else.</li>
+  </ol>
+</section>
+
+<section class="card">
+  <h2>Decisions I made alone</h2>
+  <ul>
+    <li>Changing the frozen pipe contract with two additions, not faking "no enemy" by hiding a mission's 221 other units and its enemy.</li>
+    <li>Stand-in grounds behind one seam, so B2 to B4 can replace them without touching the stage.</li>
+    <li>A new scene for B5; B1 stays as you approved it.</li>
+    <li>Slot marks are read from the simulation, not worked out by the game.</li>
+    <li>A camera rule (zoom and pan) that the staircase row does not list.</li>
+  </ul>
+  <p class="small">All 17 decisions, with the options and the reasons, are in the decisions log on the branch: <code>docs/northstar/plans/b5-one-role-groups-2026-11-25/decisions-log.md</code>. The full morning report is <code>docs/reports/2026-11-26-b5-overnight.md</code>.</p>
+</section>
+
+</div>
