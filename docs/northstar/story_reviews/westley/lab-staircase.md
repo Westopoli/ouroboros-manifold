@@ -88,6 +88,8 @@ H-031 piece two (portal screen proof), H-038 part 2 (first scene drawn whatever 
 - Layouts: flank_route (the ridge), slope top versus foot, objective ring.
 - Done when: he sees a flank hit a side and the climb slow the attacker.
 
+Status 2026-11-27: built on branch `s/lab-stage5` (story H-091), not merged, not Seen. The firing arc (E-13 R-100-04) is in the engine, off by default; the lab has `--facing on`. Findings: a flank lands (hits marked front, side, rear) but costs the flanked side only a turn delay of about 12 ticks; the climb at the engine's 1.1 is 7 percent slower and cannot be seen. Page A-011; report `docs/reports/2026-11-26-lab-stage5-overnight.md`. Waits on his rulings: what a flank costs, the climb number, reach from height, per-category arc widths.
+
 ### Stage 6: where positioning stops deciding (the scan)
 
 "For each layout I approved, scale the headcounts until the better position loses, and show me the break-even on one diagram with arrows at the evidence."
