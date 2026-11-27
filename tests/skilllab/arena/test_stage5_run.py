@@ -113,7 +113,7 @@ def test_R_091_07_facing_off_ignores_arc_deg_and_adds_nothing(tmp_path, monkeypa
     base = fx.fight(lay, tmp_path / "base", 1)[1]
     seen = spy_arc(monkeypatch)
     doc = ok(fx.fight(lay, tmp_path / "off", 1, "--facing", "off", "--arc-deg", "60"), "run.py --facing off --arc-deg 60")
-    assert json.dumps(doc, sort_keys=True) == json.dumps(base, sort_keys=True)
+    assert json.dumps(dict(doc, layout_path="pinned"), sort_keys=True) == json.dumps(dict(base, layout_path="pinned"), sort_keys=True)   # the two layouts are written in different directories: `layout_path` is the one key that differs
     assert "stage5" not in doc and not any("climbing" in u for f in doc["frames"] for u in f["units"]) and not any("hits" in f for f in doc["frames"])
     assert set(seen) == {360.0} and len(seen) == doc["result"]["ticks"], "the arc parameter left 360 with facing off: %s" % sorted(set(seen))
 
