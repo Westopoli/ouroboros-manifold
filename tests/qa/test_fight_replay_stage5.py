@@ -158,7 +158,7 @@ def test_control_stage5_fixture_is_a_valid_fight_and_the_scene_opens_it_with_the
 def test_r_091_18_one_arc_wedge_per_living_unit_centred_on_its_facing_the_files_arc_deg_wide(s5):
     """R-091-18: "Given a fight file with a `stage5` key, Then the replay draws one arc wedge per living unit (centred on its facing, the file's `arc_deg` wide, as long as that
     role's range) and `qa_state().arcs` lists `{id, facing, arc_deg}` for each". Every frame: `arcs` has one entry per living unit with the unit's facing in that frame (unit 1's
-    facing changes each frame) and the file's `arc_deg` (120, not the 90 default). The wedge's length is not in qa_state (gap)."""
+    facing changes each frame) and the file's `arc_deg` (120, not the 90 default). The wedge's length is asserted on the drawn geometry (`drawn5`) below."""
     got = {i: _arcs(s5["frames"][i]["qa"]) for i in range(FRAMES)}
     assert got == {i: _want_arcs(DOC, i) for i in range(FRAMES)}, "qa_state().arcs per frame: %r" % {i: s5["frames"][i]["qa"].get("arcs") for i in range(FRAMES)}
 
@@ -194,7 +194,7 @@ def test_r_091_18_the_wedges_are_drawn_by_the_new_file_replay_arcs_gd():
 def test_r_091_19_hit_marks_list_every_hit_entry_of_the_frame_on_its_victim_with_its_class(s5):
     """R-091-19: "For every entry of the frame's `hits`, a mark is drawn on the victim in the class's colour (front white, side orange, rear red) for that frame; `qa_state().hit_marks`
     lists `{v, cls}`". Frame 0: none; frame 1: (1 front), (2 side); frame 2: none (the marks of frame 1 are not carried); frame 3: (3 rear), (3 front), (6 side), the victim 3
-    twice, once per entry. The colours are not in qa_state (a look)."""
+    twice, once per entry. The colours are asserted on the drawn marks (`drawn5`) below."""
     want = {i: sorted((v, c) for a, v, t, d, c in HITS[i]) for i in range(FRAMES)}
     got = {i: (sorted((e.get("v"), e.get("cls")) for e in q["hit_marks"]) if isinstance(q.get("hit_marks"), list) else None)
            for i, q in ((i, s5["frames"][i]["qa"]) for i in range(FRAMES))}
@@ -228,7 +228,7 @@ def test_r_091_19_the_tick_line_text_is_unchanged_with_a_stage5_file(s5):
 def test_r_091_20_climbing_units_lists_a_unit_exactly_when_its_climbing_is_strictly_between_0_and_1(s5):
     """R-091-20: "A unit whose `climbing` is strictly between 0 and 1 shows a bar above its glyph filled to that fraction; `qa_state().climbing_units` lists `{id, climbing}`". Every
     frame: frame 0 none; frame 1 only unit 1 at 0.5 (unit 3 at exactly 1.0 is not listed); frame 2 units 1 (0.5) and 2 (0.25); frame 3 none (unit 1 at exactly 1.0, the top). The
-    bar's fill is not in qa_state (a look)."""
+    bar's fill is asserted on the drawn bar (`drawn5`) below."""
     want = {i: sorted((u, c) for u, c in CLIMB[i].items() if 0.0 < c < 1.0) for i in range(FRAMES)}
     got = {i: (sorted((e.get("id"), round(float(e.get("climbing", -1.0)), 4)) for e in q["climbing_units"]) if isinstance(q.get("climbing_units"), list) else None)
            for i, q in ((i, s5["frames"][i]["qa"]) for i in range(FRAMES))}
@@ -240,7 +240,7 @@ def test_r_091_20_climbing_units_lists_a_unit_exactly_when_its_climbing_is_stric
 def test_r_091_21_band_marks_list_every_living_unit_with_its_layer_on_every_frame(s5):
     """R-091-21: "Every living unit carries a small mark in its band's colour from `layer` (band 0 and band 1 differ) ... `qa_state().band_marks` lists `{id, layer}`". Every frame:
     one entry per living unit (8, 8, 8, then 7 with unit 4 dead) with the unit's layer in that frame: units 3 and 7 on layer 1 throughout, unit 2 on layer 0 then layer 1 from frame 2.
-    The colours are not in qa_state (a look)."""
+    The colours are asserted on the drawn marks (`drawn5`) below."""
     want = {i: sorted((u["id"], u["layer"]) for u in living(DOC, i)) for i in range(FRAMES)}
     got = {i: (sorted((e.get("id"), e.get("layer")) for e in q["band_marks"]) if isinstance(q.get("band_marks"), list) else None)
            for i, q in ((i, s5["frames"][i]["qa"]) for i in range(FRAMES))}
@@ -317,99 +317,6 @@ def test_r_091_19_each_hit_mark_is_drawn_in_its_classs_colour(s5):
         assert sorted((h["v"], h["cls"]) for h in marks) == sorted((v, c) for a, v, t, d, c in HITS[i]), "frame %d: drawn hit marks %r" % (i, marks)
         for h in marks:
             assert max(abs(a - b) for a, b in zip(_rgb(h["colour"]), HIT_RGB[h["cls"]])) <= 1, "frame %d: %s hit on %d drawn %s" % (i, h["cls"], h["v"], h["colour"])
-
-
-def test_r_091_20_climbing_units_lists_a_unit_exactly_when_its_climbing_is_strictly_between_0_and_1(s5):
-    """R-091-20: "A unit whose `climbing` is strictly between 0 and 1 shows a bar above its glyph filled to that fraction; `qa_state().climbing_units` lists `{id, climbing}`". Every
-    frame: frame 0 none; frame 1 only unit 1 at 0.5 (unit 3 at exactly 1.0 is not listed); frame 2 units 1 (0.5) and 2 (0.25); frame 3 none (unit 1 at exactly 1.0, the top). The
-    bar's fill is not in qa_state (a look)."""
-    want = {i: sorted((u, c) for u, c in CLIMB[i].items() if 0.0 < c < 1.0) for i in range(FRAMES)}
-    got = {i: (sorted((e.get("id"), round(float(e.get("climbing", -1.0)), 4)) for e in q["climbing_units"]) if isinstance(q.get("climbing_units"), list) else None)
-           for i, q in ((i, s5["frames"][i]["qa"]) for i in range(FRAMES))}
-    assert got == want, "qa_state().climbing_units per frame: %r" % {i: s5["frames"][i]["qa"].get("climbing_units") for i in range(FRAMES)}
-
-
-# ---------------------------------------------------------------- R-091-21 band marks and legend
-
-def test_r_091_21_band_marks_list_every_living_unit_with_its_layer_on_every_frame(s5):
-    """R-091-21: "Every living unit carries a small mark in its band's colour from `layer` (band 0 and band 1 differ) ... `qa_state().band_marks` lists `{id, layer}`". Every frame:
-    one entry per living unit (8, 8, 8, then 7 with unit 4 dead) with the unit's layer in that frame: units 3 and 7 on layer 1 throughout, unit 2 on layer 0 then layer 1 from frame 2.
-    The colours are not in qa_state (a look)."""
-    want = {i: sorted((u["id"], u["layer"]) for u in living(DOC, i)) for i in range(FRAMES)}
-    got = {i: (sorted((e.get("id"), e.get("layer")) for e in q["band_marks"]) if isinstance(q.get("band_marks"), list) else None)
-           for i, q in ((i, s5["frames"][i]["qa"]) for i in range(FRAMES))}
-    assert got == want, "qa_state().band_marks per frame: %r" % {i: s5["frames"][i]["qa"].get("band_marks") for i in range(FRAMES)}
-
-
-LEGEND_WORDS = {"arc": r"\barc\b", "front": r"\bfront\b", "side": r"\bside\b", "rear": r"\brear\b", "climb": r"\bclimb", "band": r"\bbands?\b"}
-
-
-def _legend_words(lines: list[str]) -> dict:
-    """{word: Labels naming it} over the Label texts that are not the totals line."""
-    rows = [t for t in lines if not TOTALS.fullmatch(t)]
-    return {w: [t for t in rows if re.search(p, t, re.I)] for w, p in LEGEND_WORDS.items()}
-
-
-def test_r_091_21_the_legend_gains_rows_for_the_arc_the_three_hit_colours_the_climb_bar_and_the_bands(s5):
-    """R-091-21: "the legend gains rows for the arc, the three hit colours, the climb bar and the bands". The story gives no row text, so each of the words arc, front, side, rear,
-    climb and band is looked for (as a word, any case) in a Label text other than the totals line; with the stage 5 key every word is in some Label."""
-    found = _legend_words(s5["frames"][0]["lines"])
-    assert [w for w, rows in found.items() if not rows] == [], "no legend Label names %s; Label texts: %s" % ([w for w, r in found.items() if not r], s5["frames"][0]["lines"])
-
-
-def test_r_091_21_control_the_legend_of_a_file_without_the_stage5_key_has_none_of_those_rows(nokey):
-    """CONTROL for the legend test (green today and must stay green): the same words are in no Label of the file without the `stage5` key, so the rows above are the new ones and
-    not words the old legend already holds."""
-    found = _legend_words(nokey["frames"][0]["lines"])
-    assert {w: rows for w, rows in found.items() if rows} == {}, "the old legend already names %s" % found
-
-
-# ---------------------------------------------------------------- R-091-22 key C
-
-def test_r_091_22_key_c_switches_the_wedges_off_and_on_and_the_default_is_on(s5):
-    """R-091-22: "Key C switches the wedges off and on; the default is on." Frame 1, reached by two Left steps from frame 3: wedges on (8 entries in `arcs`, the default, and the file's
-    facings); after key C `arcs` is `[]` and the other new keys (hit_marks, climbing_units, band_marks) are unchanged; after key C again the 8 wedges are back."""
-    on = _arcs(s5["back"]["qa"])
-    off = s5["c_off"]["qa"].get("arcs")
-    again = _arcs(s5["c_on"]["qa"])
-    assert (on, off, again) == (_want_arcs(DOC, 1), [], _want_arcs(DOC, 1)), "arcs: default %r, after C %r, after C again %r" % (
-        s5["back"]["qa"].get("arcs"), off, s5["c_on"]["qa"].get("arcs"))
-    for k in ("hit_marks", "climbing_units", "band_marks"):
-        assert s5["c_off"]["qa"].get(k) == s5["back"]["qa"].get(k) is not None, "key C changed or lacks %s" % k
-
-
-# ---------------------------------------------------------------- what is drawn (qa_state().drawn5, read back from the drawn geometry)
-
-ROLE_OF = {i: ["Vanguard", "Vanguard", "Raider", "Raider"][(i - 1) % 4] for i in range(1, 9)}
-HIT_RGB = {"front": (255, 255, 255), "side": (255, 128, 0), "rear": (255, 0, 0)}  # the story: front white, side orange, rear red
-
-
-def _drawn(s5, i: int, key: str) -> list:
-    d = s5["frames"][i]["qa"].get("drawn5")
-    assert isinstance(d, dict) and isinstance(d.get(key), list), "frame %d: qa_state().drawn5 is %r" % (i, d)
-    return d[key]
-
-
-def _rgb(html: str) -> tuple:
-    return tuple(int(html[k:k + 2], 16) for k in (0, 2, 4))
-
-
-def test_r_091_18_each_wedge_is_as_long_as_its_roles_range_and_the_files_arc_deg_wide(s5):
-    """R-091-18, "the file's `arc_deg` wide, as long as that role's range": on every frame the drawn wedge of each living unit is `ranges[role]` long (250 Vanguard, 150 Raider)
-    and spans the file's 120 degrees, measured on the polyline drawn, not read from the file."""
-    for i in range(FRAMES):
-        got = sorted((w["id"], round(w["length"], 3), round(w["span_deg"], 3)) for w in _drawn(s5, i, "wedges"))
-        want = sorted((u["id"], DOC["ranges"][ROLE_OF[u["id"]]], ARC_DEG) for u in living(DOC, i))
-        assert got == want, "frame %d: drawn wedges %r" % (i, got)
-
-
-def test_r_091_19_each_hit_mark_is_drawn_in_its_classs_colour(s5):
-    """R-091-19, "in the class's colour (front white, side orange, rear red)": on every frame each hit entry is drawn once, on its victim, in the colour of its class
-    (a channel may differ by 1 from the story's value in the colour's text)."""
-    for i in range(FRAMES):
-        got = sorted((h["v"], h["cls"], tuple(min(abs(a - b), 2) for a, b in zip(_rgb(h["colour"]), HIT_RGB[h["cls"]]))) for h in _drawn(s5, i, "hits"))
-        want = sorted((v, c, (0, 0, 0)) for a, v, t, d, c in HITS[i])
-        assert [(v, c, tuple(0 if x < 2 else x for x in e)) for v, c, e in got] == want, "frame %d: drawn hit marks %r" % (i, _drawn(s5, i, "hits"))
 
 
 def test_r_091_20_the_climb_bar_is_filled_to_the_units_climbing_fraction(s5):
