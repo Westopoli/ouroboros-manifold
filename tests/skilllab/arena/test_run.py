@@ -58,7 +58,8 @@ ALLOWED = {"scripts.skilllab.engine", "scripts.skilllab.fight", "scripts.skillla
            "scripts.skilllab.arena.rate",
            "scripts.skilllab.arena.features",
            "scripts.skilllab.invariants",   # Test-defect (F0 engine rule fixes, 2026-11-08): run.fight runs the whole-run rule checker, a new module behind run.py
-           "scripts.skilllab.arena.snap", "scripts.skilllab.arena.hills", "scripts.skilllab.arena.groups"}   # stage 4 fixes (2026-11-06): snap, hills, groups are new files behind run.py; rate: H-053 Interfaces 1, run.py --seeds calls rate.rate; features: H-063 Files list, layout features to engine blocking calls
+           "scripts.skilllab.arena.snap", "scripts.skilllab.arena.hills", "scripts.skilllab.arena.groups",
+           "scripts.skilllab.arena.stage5"}   # Test-defect (H-091, lab stage 5, 2026-11-26): stage5 is a new file behind run.py (the stage 5 computations of `--facing on`, as snap, hills and groups were); stage 4 fixes (2026-11-06): snap, hills, groups are new files behind run.py; rate: H-053 Interfaces 1, run.py --seeds calls rate.rate; features: H-063 Files list, layout features to engine blocking calls
 
 # The trim report's "Not needed for that answer" paragraph names these as prose; each is mapped here to the module that holds it (mapping by the Architect's
 # words, one comment per row). The ALLOWED check above is the strict one and covers all of these; this list only gives the failure a name.
