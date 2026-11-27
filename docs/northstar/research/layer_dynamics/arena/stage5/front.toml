@@ -1,0 +1,134 @@
+# DRAFT. Architect-made probe, not a catalogue layout: it is not in catalogue/ or approved.toml, and Westley redraws it (he authors layouts).
+# Lab stage 5 probe (docs/stories/H-091.md R-091-16, R-091-17), run with --facing on.
+# Isolates: the direction of attack, and nothing else. Side A holds 8 Vanguards (2 ranks of 4, 40 wu apart) at (2000, 2000) facing east; side B is the same block of 8, its front
+# rank 200 wu from the holder's centre, attack-moving onto the holder's centre of mass (order rule R2). Here the attack comes from the east (the holder's front).
+# front, side and rear differ only by the block turned 0, 90 and 180 degrees about the holder's centre. North is -y.
+
+id = "L-9401"
+situation = "open_field"
+landscape = "small_flat"
+seed = 1
+predict = "B"
+predict_why = "Probe, no prediction of his: the blocks are equal; side B (the attacker) is guessed because it fires first at 200 wu."
+verdict = ""
+feedback = ""
+defender = ""
+orders = "hold:A"
+
+[side_a]
+headcount = 8
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 1940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 1980.0
+y = 2060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 1940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2020.0
+y = 2060.0
+facing = 0.0
+layer = 0
+
+[side_b]
+headcount = 8
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2200.0
+y = 1940.0
+facing = -3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2200.0
+y = 1980.0
+facing = -3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2200.0
+y = 2020.0
+facing = -3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2200.0
+y = 2060.0
+facing = -3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2240.0
+y = 1940.0
+facing = -3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2240.0
+y = 1980.0
+facing = -3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2240.0
+y = 2020.0
+facing = -3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2240.0
+y = 2060.0
+facing = -3.1416
+layer = 0
