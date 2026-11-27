@@ -68,6 +68,7 @@ var _feature_layer: Node3D  # H-063: the layout's features, drawn once through t
 var _stage5 := false  # lab-stage5: the fight file has a top-level `stage5` key; every mark below is drawn only then
 var _arcs_on := true  # key C: the arc wedges (lab-stage5)
 var _hit_totals: Array = []  # lab-stage5: [front, side, rear] after each frame
+var _drawn5 := {}  # lab-stage5: what _draw_stage5 put on the overlay for the shown frame, read back from the drawn geometry (qa_state().drawn5)
 var _hud_stage5: Label  # lab-stage5: `front N  side N  rear N`, a line of its own below the rate label
 var _rate_a = null  # H-053: rate_a from <layout id>.rate.json beside the fight file, null when there is none
 
@@ -411,7 +412,7 @@ func qa_state() -> Dictionary:
 			"seen_counts": _seen_counts(frame)}
 	if _stage5:
 		state.merge({"arcs": _wedges(frame), "hit_marks": Arcs.hit_marks_state(frame), "climbing_units": Arcs.climbing_state(frame), "band_marks": Arcs.band_state(frame),
-				"hud_stage5": _hud_stage5.text, "arcs_on": _arcs_on})
+				"hud_stage5": _hud_stage5.text, "arcs_on": _arcs_on, "drawn5": _drawn5})
 	return state
 
 
@@ -424,14 +425,19 @@ func _wedges(frame: Dictionary) -> Array:
 func _draw_stage5(frame: Dictionary, by_id: Dictionary) -> void:
 	var ranges: Dictionary = _fight.get("ranges", {})
 	var radius := GroundUnits.BODY_RADIUS_WU * _glyph_k
+	_drawn5 = {"wedges": [], "hits": [], "bars": [], "bands": []}
 	if _arcs_on:
 		for e in _wedges(frame):
 			var u: Dictionary = by_id[e["id"]]
 			var c: Color = SIDE_COLOURS[u["side"]]
 			var pts := PackedVector3Array()
-			for p in Arcs.wedge_points(Vector2(float(u["x"]), float(u["y"])), float(e["facing"]), float(e["arc_deg"]), float(ranges.get(u["role"], 0.0))):
+			var flat := Arcs.wedge_points(Vector2(float(u["x"]), float(u["y"])), float(e["facing"]), float(e["arc_deg"]), float(ranges.get(u["role"], 0.0)))
+			for p in flat:
 				pts.append(_at(p.x, p.y, LIFT_WU))
 			_overlay.add_child(_line(pts, Color(c.r, c.g, c.b, Arcs.WEDGE_ALPHA)))
+			var a := flat[1] - flat[0]  # first and last arc points, from the wedge's apex
+			var b := flat[flat.size() - 2] - flat[0]
+			_drawn5["wedges"].append({"id": int(e["id"]), "length": a.length(), "span_deg": rad_to_deg(absf(a.angle_to(b)))})
 	var seen := {}  # victim id -> hit marks already drawn on it this frame
 	for h in frame.get("hits", []):
 		var v: Dictionary = by_id[int(h["v"])]
@@ -440,21 +446,29 @@ func _draw_stage5(frame: Dictionary, by_id: Dictionary) -> void:
 		var ring := PackedVector3Array()
 		for p in Arcs.hit_ring(Vector2(float(v["x"]), float(v["y"])), radius, k):
 			ring.append(_at(p.x, p.y, GLYPH_LIFT_WU))
-		_overlay.add_child(_line(ring, Arcs.HIT_COLOURS[String(h["cls"])]))
+		var hit_colour: Color = Arcs.HIT_COLOURS[String(h["cls"])]
+		_overlay.add_child(_line(ring, hit_colour))
+		_drawn5["hits"].append({"v": int(h["v"]), "cls": String(h["cls"]), "colour": hit_colour.to_html(false)})
 	for e in Arcs.climbing_state(frame):
 		var u: Dictionary = by_id[e["id"]]
 		var centre := Vector2(float(u["x"]), float(u["y"]))
+		var widths: Array = []
 		for part in [[1.0, Arcs.BAR_BACK], [float(e["climbing"]), Arcs.BAR_FILL]]:
 			var rect := PackedVector3Array()
-			for p in Arcs.bar_rect(centre, radius, part[0]):
+			var flat := Arcs.bar_rect(centre, radius, part[0])
+			for p in flat:
 				rect.append(_at(p.x, p.y, GLYPH_LIFT_WU))
 			_overlay.add_child(Arcs.fill_mesh(rect, part[1]))
+			widths.append(flat[1].x - flat[0].x)
+		_drawn5["bars"].append({"id": int(e["id"]), "fill": widths[1] / widths[0]})
 	for e in Arcs.band_state(frame):
 		var u: Dictionary = by_id[e["id"]]
 		var disc := PackedVector3Array()
 		for p in Arcs.band_disc(Vector2(float(u["x"]), float(u["y"])), radius):
 			disc.append(_at(p.x, p.y, GLYPH_LIFT_WU))
-		_overlay.add_child(Arcs.fill_mesh(disc, Arcs.band_colour(int(e["layer"]))))
+		var band_colour := Arcs.band_colour(int(e["layer"]))
+		_overlay.add_child(Arcs.fill_mesh(disc, band_colour))
+		_drawn5["bands"].append({"id": int(e["id"]), "colour": band_colour.to_html(false)})
 
 
 ## The layout shot's `features` entry: {kind, x, y} per feature drawn.
