@@ -430,13 +430,14 @@ def test_an_engine_whose_epoch_is_not_an_int_is_never_cached():
 READ_ONLY = {"type_id", "type_stats", "profile_reach", "visible_enemies", "seen_by_sight", "can_see", "unit_hp", "unit_pos",
              "unit_destination", "unit_layer", "unit_alive", "unit_target", "unit_facing", "unit_type", "transition_progress",
              "category_multiplier", "can_engage", "param_id", "get_param", "can_shoot", "terrain_band_at", "terrain_walkable_at",
-             "terrain_dump_bands", "terrain_walk_mask", "terrain_slope_at", "movement_kind"}
+             "terrain_dump_bands", "terrain_walk_mask", "terrain_slope_at", "movement_kind",
+             "fire_attackers", "fire_events"}   # Test-defect (H-091, 2026-11-26): the shot-event readers; fire_attackers was never classified
 # new_world and free_world are mutators: a freed world's address can be handed to the next world, so a cache keyed on (engine, world
 # address, epoch) would otherwise answer for the dead world.
 MUTATORS = {"new_world", "free_world", "register_unit_type", "set_reach", "set_cone", "disable_abilities", "spawn", "ping", "set_layer",
             "set_emission", "set_ping_params", "order_attack_move", "order_move", "order_group_move", "order_guard", "clear_orders",
             "step", "set_param", "add_blocker", "set_canvas", "block_rect", "add_cover", "terrain_generate", "set_era_kind",
-            "set_movement_kind", "terrain_set_heights"}
+            "set_movement_kind", "terrain_set_heights", "set_facing"}
 STATS = {"category": 1, "role": "x", "max_hp": 10.0, "base_damage": 1.0, "attack_interval": 1.0, "attack_range": 100.0, "speed": 1.0,
          "sensor_radius": 1.0, "layer_transition_time": 1.0, "aoe_radius": 0.0, "ability_id": 0}
 CALLS = {   # one valid call per public method: name -> f(engine)
@@ -465,6 +466,7 @@ CALLS = {   # one valid call per public method: name -> f(engine)
     "add_cover": lambda e: e.add_cover(W, 1.0, 1.0, 5.0, 1), "terrain_generate": lambda e: e.terrain_generate(W, 1, 100.0),
     "set_era_kind": lambda e: e.set_era_kind(W, 1), "set_movement_kind": lambda e: e.set_movement_kind(W, 0, 1),
     "terrain_set_heights": lambda e: e.terrain_set_heights(W, [0], 1, 1),
+    "fire_attackers": lambda e: e.fire_attackers(W), "fire_events": lambda e: e.fire_events(W), "set_facing": lambda e: e.set_facing(W, 1, 0.5),
 }
 
 
