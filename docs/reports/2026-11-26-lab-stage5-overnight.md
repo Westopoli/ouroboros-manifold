@@ -2,7 +2,7 @@
 
 Staircase: the simulation LAB. File: `docs/northstar/story_reviews/westley/lab-staircase.md`. Stage: "Stage 5: facing, arcs and height bands". Not the beta.
 
-For Westley. Plain words first. Page with the clips: https://claude.ai/artifact/Pcxn1WbaGdkEvfnxZtBtQM (ledger row A-011). Plan and decisions log: `docs/northstar/plans/lab-stage5-2026-11-26/`. Story: `docs/stories/H-091.md`. Branch `s/lab-stage5`; nothing merged, nothing pushed; beta B5 untouched.
+For Westley. Plain words first. Page with the clips: https://claude.ai/artifact/Pcxn1WbaGdkEvfnxZtBtQM (ledger row A-011). Plan and decisions log: `docs/northstar/plans/lab-stage5-2026-11-26/`. Story: `docs/stories/H-091.md`. Branch `s/lab-stage5`; nothing merged, nothing pushed; beta B5 untouched. The branch also contains the docs-only branch `s/artifact-a009` (the ledger rows for pages A-009 and A-010 and his rulings of 2026-11-25), merged in so the ledger's ids stay in sequence; merging lab stage 5 to main lands those docs too.
 
 ## In one paragraph
 
