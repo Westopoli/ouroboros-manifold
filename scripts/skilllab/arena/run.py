@@ -1,7 +1,7 @@
 """The arena runner: one layout, one seed, one fight, written down as a `fight.json` (spec: docs/stories/H-040.md "Part 2: arena runner";
 file format: docs/stories/H-039.md, scripts/skilllab/arena/snapshot.py).
 
-CLI: python3 -m scripts.skilllab.arena.run --layout <toml> --seed <int> --out <dir> [--seeds N] [--sight off|on] [--control-dir D] [--control ground|sight] [--facing off|on] [--arc-deg N] [--cap-seconds 600]
+CLI: python3 -m scripts.skilllab.arena.run --layout <toml> --seed <int> --out <dir> [--seeds N] [--sight off|on] [--control-dir D] [--control ground|sight] [--facing off|on] [--arc-deg N] [--slope-up-div V] [--cap-seconds 600]
 H-053: `--seeds N` runs seeds S..S+N-1 from `--seed S`, one fight file each, then writes `<id>.rate.json` beside them (rate.py; the layout's `predict_rate`
 is required). Layout key `orders_point` = [x, y] replaces the midpoint for both_same_point. Both sides wiped on the same tick is winner "none".
 Stage 1 floor (DEC-lab-stage1-floor-2026-10-31): sight off (`OM_TP_TARGET_BY_SIGHT` 0, csrc/unit.c:1175), no defender, no guard, fight cap
@@ -29,7 +29,8 @@ Layout `orders = "groups"` gives per-group orders with an optional release trigg
 `--sight off` is unchanged (stages 1 to 3 reproduce byte for byte).
 H-091 (stage 5, facing and arcs; scripts/skilllab/arena/stage5.py): `--facing on` with `--arc-deg N` (default 90, used only with facing on) sets each unit's facing at spawn (the layout's, else toward the enemy's
 centre of mass for a holder and toward the orders point for the rest; R-091-08), sets `OM_TP_FIRING_ARC_DEG` to N for the fight (R-100-04), and the file gains the top-level `stage5` (R-091-09), per-unit
-`climbing` (R-091-10) and per-frame `hits` (R-091-11). `--facing off` (the default) writes every byte as before. See also: SNAPSHOT.md."""
+`climbing` (R-091-10) and per-frame `hits` (R-091-11). `--slope-up-div V` (R-091-24, only with `--facing on`; a usage error otherwise) sets `OM_TP_SLOPE_UP_DIV` to V for the fight and writes V in
+`stage5.slope_up_div` (the engine's own 1.1 without it). `--facing off` (the default) writes every byte as before. See also: SNAPSHOT.md."""
 import argparse
 import json
 import math
@@ -237,11 +238,11 @@ def control_twin(layout, layout_path, control_dir):
     return twin, toml_path
 
 
-def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY, arc_deg=None):
+def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY, arc_deg=None, slope_up_div=None):
     """Run one fight; returns (frames by tick, last tick, end, orders block). Frames are kept every `every` ticks (BASE_EVERY; closeup.py passes its K) and at the last tick,
     then chosen by `snapshot.frame_ticks` once the last tick is known (closeup.py keeps them all). `sight` "off" is stage 3's rule set; "on" is stage 4's (module docstring); "control" is stage 4's with
     targeting by sight off (`--control sight`). Under "on" the orders block gains `guard` and a `stage4` entry ({first_seen, sights}) that `_document` removes and writes.
-    `arc_deg` None is facing off; a number is `--facing on` (module docstring, H-091): the orders block then gains a `stage5` entry that `_document` removes and writes, and every frame has `hits`."""
+    `arc_deg` None is facing off; a number is `--facing on` (module docstring, H-091): the orders block then gains a `stage5` entry that `_document` removes and writes, and every frame has `hits`; `slope_up_div` (only with `arc_deg`) sets `OM_TP_SLOPE_UP_DIV` for the fight (R-091-24)."""
     engine = Engine()
     w = engine.new_world(seed)
     stage4 = sight != "off"
@@ -250,6 +251,8 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY, arc_deg=None):
         facing = arc_deg is not None
         if facing:
             engine.set_param(w, engine.param_id(stage5.ARC_PARAM), arc_deg)
+            if slope_up_div is not None:
+                engine.set_param(w, engine.param_id(stage5.SLOPE_PARAM), slope_up_div)
         if sight != "on":
             engine.set_param(w, engine.param_id("OM_TP_TARGET_BY_SIGHT"), 0)
         preset = presets()[layout["landscape"]]
@@ -464,6 +467,7 @@ def main(argv=None):
                     help="ground: the twin with `features` emptied (H-063); sight: the same fight with targeting by sight off, every layout (H-088, needs --sight on)")
     ap.add_argument("--facing", choices=("off", "on"), default="off", help="H-091 stage 5: on sets facing at spawn and the firing arc, and writes `stage5`, `climbing` and `hits`")
     ap.add_argument("--arc-deg", type=int, default=ARC_DEG_DEFAULT, help="the firing arc in degrees, %d to %d (used only with --facing on)" % (ARC_DEG_MIN, ARC_DEG_MAX))
+    ap.add_argument("--slope-up-div", type=float, help="H-091 R-091-24, with --facing on: OM_TP_SLOPE_UP_DIV for the fight (the engine's 1.1 without it)")
     ap.add_argument("--cap-seconds", type=int, default=snapshot.CAP_SECONDS)
     ap.add_argument("--allow-invalid", action="store_true", help="exit 0 although a fight broke a rule of scripts/skilllab/invariants.py (the INVALID lines and the flag in the file stay)")
     args = ap.parse_args(argv)
@@ -471,6 +475,8 @@ def main(argv=None):
         ap.error("--control sight needs --sight on")
     if args.facing == "on" and not ARC_DEG_MIN <= args.arc_deg <= ARC_DEG_MAX:
         ap.error("--arc-deg must be %d to %d" % (ARC_DEG_MIN, ARC_DEG_MAX))
+    if args.slope_up_div is not None and args.facing != "on":
+        ap.error("--slope-up-div needs --facing on")
     with open(args.layout, "rb") as f:
         layout = tomllib.load(f)
     broken = check_layout(layout, presets(), rules())
@@ -507,18 +513,18 @@ def main(argv=None):
             print("SUSPENDED %s %s %s" % (name, rule, switch), file=sys.stderr)   # F0: a check this run cannot judge is said, never passed in silence (stderr: stdout is pinned by the stage tests)
     arc = args.arc_deg if args.facing == "on" else None
     for seed in range(args.seed, args.seed + count):
-        frames, last, end, orders = fight(layout, seed, args.sight, args.cap_seconds, arc_deg=arc)
+        frames, last, end, orders = fight(layout, seed, args.sight, args.cap_seconds, arc_deg=arc, slope_up_div=args.slope_up_div)
         doc = _document(layout, args.layout, seed, args.sight, frames, last, end, orders)
         snapshot.write(doc, args.out / ("%s-s%d.fight.json" % (layout["id"], seed)))
         invalid = report_invalid(layout["id"], doc) or invalid
         if args.control_dir and args.control == "sight":
             args.control_dir.mkdir(parents=True, exist_ok=True)
-            control = _document(layout, args.layout, seed, "control", *fight(layout, seed, "control", args.cap_seconds, arc_deg=arc))
+            control = _document(layout, args.layout, seed, "control", *fight(layout, seed, "control", args.cap_seconds, arc_deg=arc, slope_up_div=args.slope_up_div))
             snapshot.write(control, args.control_dir / ("%s-control-s%d.fight.json" % (layout["id"], seed)))
             invalid = report_invalid(layout["id"] + "-control", control) or invalid
         elif args.control_dir and features.bound(layout):
             twin, twin_path = control_twin(layout, args.layout, args.control_dir)
-            control = _document(twin, twin_path, seed, args.sight, *fight(twin, seed, args.sight, args.cap_seconds, arc_deg=arc))
+            control = _document(twin, twin_path, seed, args.sight, *fight(twin, seed, args.sight, args.cap_seconds, arc_deg=arc, slope_up_div=args.slope_up_div))
             snapshot.write(control, args.control_dir / ("%s-control-s%d.fight.json" % (layout["id"], seed)))
             invalid = report_invalid(layout["id"] + "-control", control) or invalid
         fights.append(snapshot.read(args.out / ("%s-s%d.fight.json" % (layout["id"], seed))))
