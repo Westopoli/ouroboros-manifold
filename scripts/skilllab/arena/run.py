@@ -1,7 +1,7 @@
 """The arena runner: one layout, one seed, one fight, written down as a `fight.json` (spec: docs/stories/H-040.md "Part 2: arena runner";
 file format: docs/stories/H-039.md, scripts/skilllab/arena/snapshot.py).
 
-CLI: python3 -m scripts.skilllab.arena.run --layout <toml> --seed <int> --out <dir> [--seeds N] [--sight off|on] [--control-dir D] [--control ground|sight] [--cap-seconds 600]
+CLI: python3 -m scripts.skilllab.arena.run --layout <toml> --seed <int> --out <dir> [--seeds N] [--sight off|on] [--control-dir D] [--control ground|sight] [--facing off|on] [--arc-deg N] [--cap-seconds 600]
 H-053: `--seeds N` runs seeds S..S+N-1 from `--seed S`, one fight file each, then writes `<id>.rate.json` beside them (rate.py; the layout's `predict_rate`
 is required). Layout key `orders_point` = [x, y] replaces the midpoint for both_same_point. Both sides wiped on the same tick is winner "none".
 Stage 1 floor (DEC-lab-stage1-floor-2026-10-31): sight off (`OM_TP_TARGET_BY_SIGHT` 0, csrc/unit.c:1175), no defender, no guard, fight cap
@@ -15,7 +15,7 @@ H-063 (stage 3, the ground pushes back): the layout's features go to the engine 
 reach their destination is REJECTed `REJECT <id> R8 unreachable: side_b unit 2` (exit 2); a layout with features writes a per-frame `blocked` list (unit ids that
 stood still more than BLOCKED_SECONDS with a destination and no target; SNAPSHOT.md). `--control-dir D` also writes the control twin, the same layout with `features` emptied
 and `movement` "walk" (`control_twin`: D/<id>-control.toml and .json), as D/<id>-control-s<n>.fight.json; its units walk on a canvas, so it differs from the main fight by the ground only.
-Known gap: `Engine.spawn` takes no facing and engine.py does not bind `om_unit_set_facing`, so the layout's per-row `facing` is not applied; units
+Known gap: `Engine.spawn` takes no facing, so with `--facing off` (H-091 below) the layout's per-row `facing` is not applied; units
 start at the engine default and attack-move turns them toward the enemy.
 H-088 (stage 4, sight): `--sight on` is the stage 4 rule set (docs/stories/H-088.md): targeting by sight left on (R-093-02), ground era (`set_era_kind` 1), a canvas, every role
 walks, reach 0 up 1 down for every role (DRAFT-stage4-reach-down), the holder of `hold:A` / `hold:B` on `order_guard` (R-096-08). The fight file then carries per-unit `seen`,
@@ -26,7 +26,10 @@ Stage 4 fixes (docs/reports/2026-11-06-stage4-fix-plan.md, H-088 follow-up): und
 snapped to the 100 wu grid (snap.py; one `SNAPPED <id> <kind> authored ... built ...` line per feature, and `built_features` in the fight file) and each `vantage` as terrain
 (hills.py), so a unit's starting layer is the ground's: `REJECT <id> G1 layer: side_a unit 0 ...` when the layout's `layer` column disagrees (a runner-local rule, not in rules.toml).
 Layout `orders = "groups"` gives per-group orders with an optional release trigger (groups.py; `orders.groups` in the fight file); `REJECT <id> G2 groups: ...` for a malformed layout.
-`--sight off` is unchanged (stages 1 to 3 reproduce byte for byte)."""
+`--sight off` is unchanged (stages 1 to 3 reproduce byte for byte).
+H-091 (stage 5, facing and arcs; scripts/skilllab/arena/stage5.py): `--facing on` with `--arc-deg N` (default 90, used only with facing on) sets each unit's facing at spawn (the layout's, else toward the enemy's
+centre of mass for a holder and toward the orders point for the rest; R-091-08), sets `OM_TP_FIRING_ARC_DEG` to N for the fight (R-100-04), and the file gains the top-level `stage5` (R-091-09), per-unit
+`climbing` (R-091-10) and per-frame `hits` (R-091-11). `--facing off` (the default) writes every byte as before. See also: SNAPSHOT.md."""
 import argparse
 import json
 import math
@@ -36,7 +39,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from scripts.skilllab import invariants
-from scripts.skilllab.arena import features, groups, hills, snap, snapshot
+from scripts.skilllab.arena import features, groups, hills, snap, snapshot, stage5
 from scripts.skilllab.arena.rate import rate
 from scripts.skilllab.catalogue.produce import _roster_ranges, check_layout, dump_toml, presets, rules
 from scripts.skilllab.engine import Engine
@@ -53,6 +56,8 @@ REACH_RULE = "R8"                       # catalogue/rules.toml
 MOVED_WU = 5.0                          # a living unit displaced more than this over the window is not silent
 RESULTS_HEAD = "| id | a:b | predict | winner | survivors | ticks | agree | blocked |\n|---|---|---|---|---|---|---|---|\n"
 SIGHT_RESULTS_HEAD = "| id | a:b | predict | winner | survivors | ticks | agree | blocked | first seen A | first seen B |\n|---|---|---|---|---|---|---|---|---|---|\n"   # H-088, --sight on
+ARC_DEG_DEFAULT = 90                    # H-091 DRAFT-stage5-arc-deg
+ARC_DEG_MIN, ARC_DEG_MAX = 10, 360      # R-091-06: the parameter's range
 REACH_UP, REACH_DOWN = 0, 1             # H-088 DRAFT-stage4-reach-down: levels a unit can fire up and down under --sight on
 
 
@@ -95,10 +100,12 @@ def _apart(engine, w, living, sides):
     return True
 
 
-def _frame(engine, w, tick, rows, blocked=None, seen=False, fired=()):
+def _frame(engine, w, tick, rows, blocked=None, seen=False, fired=(), slopes=None, hits=None):
     """One frame: every spawned unit (dead ones stay), sorted by id; rows is [(unit id, side letter, role)]; `blocked` (H-063) is written when not None;
     `seen` (H-088) adds to each unit the sorted ids of the living enemies it sees (`engine.can_see`), [] for a dead unit; `fired` is the set of unit ids that fired
-    since the previous captured frame (replay-firing-lines): each row says whether its unit, alive here, is in it."""
+    since the previous captured frame (replay-firing-lines): each row says whether its unit, alive here, is in it.
+    `slopes` (H-091, `--facing on`: the layout's slope features, [] when it has none) adds to each unit `climbing` (stage5.climbing; 0.0 for a dead unit); `hits` (the same switch)
+    is written as the frame's `hits`, the shots since the previous captured frame."""
     units = []
     living = {uid: side for uid, side, _ in rows if engine.unit_alive(w, uid)}
     for uid, side, role in rows:
@@ -110,9 +117,13 @@ def _frame(engine, w, tick, rows, blocked=None, seen=False, fired=()):
                       "alive": alive, "target": target if target else None, "fired": alive and uid in fired})
         if seen:
             units[-1]["seen"] = [e for e, s in sorted(living.items()) if s != side and engine.can_see(w, uid, e)] if alive else []
+        if slopes is not None:
+            units[-1]["climbing"] = stage5.climbing(slopes, x, y) if alive else 0.0
     frame = {"tick": tick, "alive": [sum(1 for u in units if u["alive"] and u["side"] == s) for s in "AB"], "units": units}
     if blocked is not None:
         frame["blocked"] = blocked
+    if hits is not None:
+        frame["hits"] = hits
     return frame
 
 
@@ -226,15 +237,19 @@ def control_twin(layout, layout_path, control_dir):
     return twin, toml_path
 
 
-def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
+def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY, arc_deg=None):
     """Run one fight; returns (frames by tick, last tick, end, orders block). Frames are kept every `every` ticks (BASE_EVERY; closeup.py passes its K) and at the last tick,
     then chosen by `snapshot.frame_ticks` once the last tick is known (closeup.py keeps them all). `sight` "off" is stage 3's rule set; "on" is stage 4's (module docstring); "control" is stage 4's with
-    targeting by sight off (`--control sight`). Under "on" the orders block gains `guard` and a `stage4` entry ({first_seen, sights}) that `_document` removes and writes."""
+    targeting by sight off (`--control sight`). Under "on" the orders block gains `guard` and a `stage4` entry ({first_seen, sights}) that `_document` removes and writes.
+    `arc_deg` None is facing off; a number is `--facing on` (module docstring, H-091): the orders block then gains a `stage5` entry that `_document` removes and writes, and every frame has `hits`."""
     engine = Engine()
     w = engine.new_world(seed)
     stage4 = sight != "off"
     try:
         engine.disable_abilities(w)
+        facing = arc_deg is not None
+        if facing:
+            engine.set_param(w, engine.param_id(stage5.ARC_PARAM), arc_deg)
         if sight != "on":
             engine.set_param(w, engine.param_id("OM_TP_TARGET_BY_SIGHT"), 0)
         preset = presets()[layout["landscape"]]
@@ -281,6 +296,12 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
             raise ValueError("orders %r is not both_same_point, hold:A or hold:B" % (orders,))
         if stage4:
             doc_orders["guard"] = groups.guarded(layout, True) if orders == "groups" else orders != "both_same_point"
+        if facing:
+            for ids_of, faces in zip((ids[0], ids[1]), stage5.spawn_facing(layout, [centre[0], centre[1]], point, orders)):
+                for uid, radians in zip(ids_of, faces):
+                    engine.set_facing(w, uid, radians)
+            doc_orders["stage5"] = stage5.block(engine, w, arc_deg)
+        slopes = features.slopes(layout) if facing else None
         first_seen = {"A": None, "B": None}   # H-088, --sight on: the first sampled tick at which that side's living units see a living enemy
 
         def sample_seen(at):
@@ -296,21 +317,25 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
 
         monitor = invariants.Monitor(engine, w, preset["width"], preset["height"], sight)   # F0: every rule the checker knows, judged after each step; see doc["violations"]
         seen = sight == "on"
-        frames = {0: _frame(engine, w, 0, rows, [] if ground else None, seen)}
+        frames = {0: _frame(engine, w, 0, rows, [] if ground else None, seen, slopes=slopes, hits=[] if facing else None)}
         if seen:
             sample_seen(0)
         cap = cap_seconds * TICKS_PER_SECOND
         everyone = [u for f in ids for u in ids[f]]
         hp = {u: engine.unit_hp(w, u) for u in everyone}
         fired = set()   # attackers of fire events since the last captured frame; a thinned file keeps what the frame had when captured
+        hits = []       # H-091, `--facing on`: the shots since the last captured frame (stage5.hit); `_document` moves them into the frames a thinned file keeps
         side_of = {u: f for f in ids for u in ids[f]}
         last_shot, history = 0, {0: {u: engine.unit_pos(w, u) for u in everyone}}
         tick, end = 0, "cap"
         while tick < cap:
             engine.step(w)
             monitor.after_step()
-            fired |= engine.fire_attackers(w)
+            shots = engine.fire_events(w)
+            fired |= {a for a, _ in shots}
             tick += 1
+            if facing:
+                hits += [stage5.hit(engine, w, tick, a, v) for a, v in shots]
             if group_state:
                 groups.tick(engine, w, group_state, ids, tick)
                 for g in group_state:
@@ -328,8 +353,9 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
                     if uid not in still or (x - still[uid][0]) ** 2 + (y - still[uid][1]) ** 2 > STILL_WU * STILL_WU:
                         still[uid] = (x, y, tick)
             if tick % every == 0 or tick == cap:
-                frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen, fired)
+                frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen, fired, slopes, hits if facing else None)
                 fired = set()
+                hits = []
             if seen and tick % CHECK_EVERY == 0:
                 sample_seen(tick)
             if min(sum(1 for u in ids[f] if engine.unit_alive(w, u)) for f in ids) == 0:
@@ -345,7 +371,7 @@ def fight(layout, seed, sight, cap_seconds, every=BASE_EVERY):
                         end = "apart"   # round6.md L5
                     break
         if tick not in frames:
-            frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen, fired)
+            frames[tick] = _frame(engine, w, tick, rows, blocked_now(tick) if ground else None, seen, fired, slopes, hits if facing else None)
         if seen:
             sights = {r: engine.type_stats(w, types[r][0])["sensor_radius"] for r in sorted(types)}
             doc_orders["stage4"] = {"first_seen": first_seen, "sights": sights}
@@ -363,10 +389,12 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders, dense
     `dense_every` (closeup.py): keep every frame given, in tick order, and write it as `snapshot_every`, instead of thinning to snapshot.MAX_FRAMES."""
     orders = dict(orders)
     stage4 = orders.pop("stage4", None)
+    stage5_block = orders.pop("stage5", None)   # H-091: fight()'s `--facing on` table
     checked = orders.pop("invariants", None)   # F0: fight()'s verdict of the checker
     orders.pop("reported_rules", None)   # the whole list of rules, for regression._play; the document keeps only `violations`
     ticks = snapshot.frame_ticks(last, TICKS_PER_SECOND) if dense_every is None else sorted(frames)
     every = dense_every or (ticks[1] - ticks[0] if len(ticks) > 2 else BASE_EVERY)
+    frames_out = stage5.regroup(frames, ticks) if stage5_block else [frames[t] for t in ticks]   # a thinned `--facing on` file keeps every shot in the frame that follows it
     survivors = frames[last]["alive"]
     a, b = survivors
     stall = end == "silence" and a > 0 and b > 0
@@ -379,7 +407,7 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders, dense
     roles = {u["role"] for u in frames[0]["units"]}
     walks = features.bound(layout) or layout.get("movement") == "walk" or sight != "off"   # as fight(): the units walk (`ground`, the control twin, any stage 4 fight)
     doc = {"schema": snapshot.SCHEMA_V2, "ranges": {r: roster[r] for r in sorted(roles)}, "layout_id": layout["id"], "layout_path": shown, "landscape": layout["landscape"], "seed": seed, "tick_rate": TICKS_PER_SECOND,
-            "snapshot_every": every, "sight": "off" if sight == "control" else sight, "orders": orders, "frames": [frames[t] for t in ticks],
+            "snapshot_every": every, "sight": "off" if sight == "control" else sight, "orders": orders, "frames": frames_out,
             "result": {"winner": winner, "survivors": survivors, "ticks": last, "capped": end == "cap", "end": end, "stall": stall,
                        "predict": layout["predict"],
                        "agree": winner == layout["predict"]}}
@@ -393,6 +421,8 @@ def _document(layout, layout_path, seed, sight, frames, last, end, orders, dense
     if stage4:
         doc["sights"] = stage4["sights"]
         doc["result"]["first_seen"] = stage4["first_seen"]
+    if stage5_block:
+        doc["stage5"] = stage5_block
     if checked:
         doc.update(checked)   # `violations` (the first 20) and `invalid`, only when a rule was broken
     return doc
@@ -432,11 +462,15 @@ def main(argv=None):
     ap.add_argument("--control-dir", type=Path, help="also run each seed as the control and write <id>-control-s<n>.fight.json here (H-063; --control picks which)")
     ap.add_argument("--control", choices=("ground", "sight"), default="ground",
                     help="ground: the twin with `features` emptied (H-063); sight: the same fight with targeting by sight off, every layout (H-088, needs --sight on)")
+    ap.add_argument("--facing", choices=("off", "on"), default="off", help="H-091 stage 5: on sets facing at spawn and the firing arc, and writes `stage5`, `climbing` and `hits`")
+    ap.add_argument("--arc-deg", type=int, default=ARC_DEG_DEFAULT, help="the firing arc in degrees, %d to %d (used only with --facing on)" % (ARC_DEG_MIN, ARC_DEG_MAX))
     ap.add_argument("--cap-seconds", type=int, default=snapshot.CAP_SECONDS)
     ap.add_argument("--allow-invalid", action="store_true", help="exit 0 although a fight broke a rule of scripts/skilllab/invariants.py (the INVALID lines and the flag in the file stay)")
     args = ap.parse_args(argv)
     if args.control == "sight" and args.sight == "off":
         ap.error("--control sight needs --sight on")
+    if args.facing == "on" and not ARC_DEG_MIN <= args.arc_deg <= ARC_DEG_MAX:
+        ap.error("--arc-deg must be %d to %d" % (ARC_DEG_MIN, ARC_DEG_MAX))
     with open(args.layout, "rb") as f:
         layout = tomllib.load(f)
     broken = check_layout(layout, presets(), rules())
@@ -471,19 +505,20 @@ def main(argv=None):
     for name, sight in runs:
         for rule, switch in sorted(invariants.suspended_for(sight).items()):
             print("SUSPENDED %s %s %s" % (name, rule, switch), file=sys.stderr)   # F0: a check this run cannot judge is said, never passed in silence (stderr: stdout is pinned by the stage tests)
+    arc = args.arc_deg if args.facing == "on" else None
     for seed in range(args.seed, args.seed + count):
-        frames, last, end, orders = fight(layout, seed, args.sight, args.cap_seconds)
+        frames, last, end, orders = fight(layout, seed, args.sight, args.cap_seconds, arc_deg=arc)
         doc = _document(layout, args.layout, seed, args.sight, frames, last, end, orders)
         snapshot.write(doc, args.out / ("%s-s%d.fight.json" % (layout["id"], seed)))
         invalid = report_invalid(layout["id"], doc) or invalid
         if args.control_dir and args.control == "sight":
             args.control_dir.mkdir(parents=True, exist_ok=True)
-            control = _document(layout, args.layout, seed, "control", *fight(layout, seed, "control", args.cap_seconds))
+            control = _document(layout, args.layout, seed, "control", *fight(layout, seed, "control", args.cap_seconds, arc_deg=arc))
             snapshot.write(control, args.control_dir / ("%s-control-s%d.fight.json" % (layout["id"], seed)))
             invalid = report_invalid(layout["id"] + "-control", control) or invalid
         elif args.control_dir and features.bound(layout):
             twin, twin_path = control_twin(layout, args.layout, args.control_dir)
-            control = _document(twin, twin_path, seed, args.sight, *fight(twin, seed, args.sight, args.cap_seconds))
+            control = _document(twin, twin_path, seed, args.sight, *fight(twin, seed, args.sight, args.cap_seconds, arc_deg=arc))
             snapshot.write(control, args.control_dir / ("%s-control-s%d.fight.json" % (layout["id"], seed)))
             invalid = report_invalid(layout["id"] + "-control", control) or invalid
         fights.append(snapshot.read(args.out / ("%s-s%d.fight.json" % (layout["id"], seed))))

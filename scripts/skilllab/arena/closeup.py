@@ -1,10 +1,12 @@
 """Closeup: the arena runner's fight with a frame every K ticks, to watch it like a video (spec: docs/stories/H-088.md; Westley's request 2026-11-07).
 
-CLI: python3 -m scripts.skilllab.arena.closeup --layout <toml> --seed <int> --sight off|on|control --every-ticks K --out <dir> [--from-tick A --to-tick B]
+CLI: python3 -m scripts.skilllab.arena.closeup --layout <toml> --seed <int> --sight off|on|control --every-ticks K --out <dir> [--from-tick A --to-tick B] [--facing off|on] [--arc-deg N]
 It runs the fight `run.py` runs (`run.fight`, `run._document`; `--sight control` is `run.py --sight on --control sight`'s control file: stage 4 with targeting by sight off)
 and keeps a frame at tick 0, K, 2K ... and the last tick, with no thinning to snapshot.MAX_FRAMES. With `--from-tick A` and/or `--to-tick B` only frames with
 A <= tick <= B are written (tick 0 is then not forced). One file, `<id>[-control]-s<seed>-every<K>.fight.json`, `snapshot_every` K, `result` the normal runner's.
 The file has more frames than `snapshot.validate` accepts: it is for the replay (scenes/proto/fight_replay, OM_FPS), not for `snapshot.read` or the page (SNAPSHOT.md).
+H-091: `--facing on` and `--arc-deg N` are run.py's (facing set at spawn, the firing arc, and `stage5`, `climbing` and `hits` in the file); with `--facing on` every shot is in the `hits` of the frame
+that holds its tick, so an every-tick file lists each shot in its own frame. This is the writer of every-tick and every-6-ticks stage 5 files (clip.py and clip_record.py record sight off only).
 Exit 0 with a FIGHT line, 2 for REJECT lines or a bad K, 1 when the window holds no frame (nothing is written)."""
 import argparse
 import json
@@ -13,7 +15,7 @@ import tomllib
 from pathlib import Path
 
 from scripts.skilllab.arena import groups, snap, snapshot
-from scripts.skilllab.arena.run import fight, _document, layer_mismatch, unreachable, REACH_RULE
+from scripts.skilllab.arena.run import ARC_DEG_DEFAULT, ARC_DEG_MAX, ARC_DEG_MIN, fight, _document, layer_mismatch, unreachable, REACH_RULE
 from scripts.skilllab.catalogue.produce import check_layout, presets, rules
 
 
@@ -23,12 +25,16 @@ def main(argv=None):
     ap.add_argument("--seed", required=True, type=int)
     ap.add_argument("--sight", choices=("off", "on", "control"), default="off")
     ap.add_argument("--every-ticks", required=True, type=int, help="a frame every K ticks (20 ticks a second), K >= 1")
+    ap.add_argument("--facing", choices=("off", "on"), default="off", help="H-091 stage 5, as run.py")
+    ap.add_argument("--arc-deg", type=int, default=ARC_DEG_DEFAULT, help="the firing arc in degrees, %d to %d (used only with --facing on)" % (ARC_DEG_MIN, ARC_DEG_MAX))
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--from-tick", type=int, help="keep frames from this tick on (tick 0 is not forced)")
     ap.add_argument("--to-tick", type=int, help="keep frames up to this tick")
     args = ap.parse_args(argv)
     if args.every_ticks < 1:
         ap.error("--every-ticks must be at least 1")
+    if args.facing == "on" and not ARC_DEG_MIN <= args.arc_deg <= ARC_DEG_MAX:
+        ap.error("--arc-deg must be %d to %d" % (ARC_DEG_MIN, ARC_DEG_MAX))
     if args.from_tick is not None and args.to_tick is not None and args.from_tick > args.to_tick:
         ap.error("--from-tick %d is after --to-tick %d" % (args.from_tick, args.to_tick))
     with open(args.layout, "rb") as f:
@@ -55,7 +61,7 @@ def main(argv=None):
     if ground == "on":
         for line in snap.report(layout):
             print(line)
-    frames, last, end, orders = fight(layout, args.seed, args.sight, snapshot.CAP_SECONDS, args.every_ticks)
+    frames, last, end, orders = fight(layout, args.seed, args.sight, snapshot.CAP_SECONDS, args.every_ticks, args.arc_deg if args.facing == "on" else None)
     doc = _document(layout, args.layout, args.seed, args.sight, frames, last, end, orders, args.every_ticks)
     doc["frames"] = [f for f in doc["frames"]
                      if (args.from_tick is None or f["tick"] >= args.from_tick) and (args.to_tick is None or f["tick"] <= args.to_tick)]

@@ -1,4 +1,4 @@
-# Fight file additions in the arena package (H-063, H-088)
+# Fight file additions in the arena package (H-063, H-088, H-091)
 
 The format is `docs/northstar/research/layer_dynamics/arena/SNAPSHOT.md`; schema name `om-fight-2` unchanged.
 
@@ -34,6 +34,16 @@ More optional keys on `om-fight-2` (`snapshot.validate` rejects each on `om-figh
 `python3 -m scripts.skilllab.arena.closeup --layout <toml> --seed N --sight off|on|control --every-ticks K --out DIR [--from-tick A --to-tick B]` runs the fight `run.py` runs (`--sight control` is the file `run.py --sight on --control sight` writes: stage 4 with targeting by sight off) and keeps a frame at tick 0, K, 2K ... and the last tick, with no thinning to 20 frames. With `--from-tick` and/or `--to-tick` only frames with A <= tick <= B are written (tick 0 is then not forced); a window with no frame writes nothing and exits 1; `K < 1` exits 2. It writes one file, `<id>[-control]-s<seed>-every<K>.fight.json`: the same keys as the normal file, `snapshot_every` K, `result` and every other top-level key equal to the normal run's, and a frame at a tick the normal file also has equal to the normal frame.
 
 A dense file has more than `snapshot.MAX_FRAMES` frames, so `snapshot.validate` and `snapshot.read` reject it and the page (`page.py`) does not take it: it is for the replay alone (`OM_FPS=<frames a second> OM_AUTOPLAY=1`; 20 ticks make a sim second, so K 10 at OM_FPS 2 is real time).
+
+## Stage 5, facing and arcs (H-091)
+
+`run.py --facing on [--arc-deg N]` (and `closeup.py`, the writer of every-tick files, with the same two flags) sets every unit's facing before the first tick (the layout's `facing`; a unit row with none: a holder faces the enemy's centre of mass, every other unit the orders point), sets `OM_TP_FIRING_ARC_DEG` to N (default 90, 10 to 360; used only with `--facing on`) for the whole fight (E-13 R-100-04), and writes three more optional keys on `om-fight-2` (`snapshot.validate` rejects each on `om-fight-1`, accepts each absent or present, and still rejects any other unknown key). `--facing off` (the default) writes none of them and every file is byte-identical to the file before stage 5. A reader treats absent as "not recorded".
+
+- Top-level `stage5`: `{"arc_deg": N, "slope_up_div": V, "front_deg": 45, "rear_deg": 135}`, numbers: the arc, the engine's `OM_TP_SLOPE_UP_DIV` for the fight, and the two angles that divide hits into classes (DRAFT-stage5-front-deg, DRAFT-stage5-rear-deg).
+- Per-unit `climbing` (a number, on every unit row of every frame): 0.0 off a slope and for a dead unit; on a slope, the unit's position along it from the foot (0) to the top (1), computed from the layout's slope feature (its rectangle: x from `x - length / 2` to `x + length / 2`, y within half the `width` of its `y`) and the unit's position (E-01 R-004-06), 4 decimals. The engine's slope record is not the source (on a built ribbon it spans the whole row of cells, the flat ground either side of the ramp too), nor is `transition_progress` (it reads 0 for a walker).
+- Per-frame `hits`: a list of `{"a": attacker id, "v": victim id, "tick": T, "off_deg": D, "cls": "front"|"side"|"rear"}`, one per shot (tactical event kind 0, `Engine.fire_events`) fired after the previous frame up to and including this frame's tick, in firing order. `D` is the angle in degrees (0 to 180, 2 decimals) between the victim's facing and the direction from the victim to the attacker, on the positions and facings the tick ended with; `cls` is `front` up to 45, `rear` from 135, `side` between. Frame 0 has `[]`. A thinned file keeps every shot: the shots of the dropped frames are in the next kept frame, and an entry's own `tick` says when it was fired.
+
+`scripts/skilllab/arena/stage5_measures.py` reads these (hits by class, the delay before a flanked unit answers, the climb's slowdown) and `scripts/skilllab/invariants_r100.py` checks that no shot left outside the arc; neither is part of the checker's rule list (F0, below).
 
 ## Rule checks (F0, engine rule fixes 2026-11-08)
 

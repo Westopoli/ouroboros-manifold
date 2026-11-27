@@ -471,6 +471,8 @@ uint64_t om_move_world_serial(om_world *w);
 uint32_t om_move_route_get(const om_world *w, uint32_t unit_id, uint32_t *route_i, double *pts, uint32_t cap);
 /* F2 (R-087-04): 1 when the unit's own movement step changed its position on that tick (a push does not count); body in csrc/tactical_move.c. */
 int om_move_moved_own_power(const om_world *w, uint32_t unit_id, uint64_t tick);
+/* R-100-04: 1 when the direction (dx, dy) lies within half of arc_deg of the unit's facing at the start of the tick; body in csrc/tactical_move.c, caller csrc/unit.c (the fire pass). */
+int om_move_target_in_arc(const om_world *w, uint32_t unit_id, double dx, double dy, double arc_deg);
 /* F7 (R-087-10): height difference of two layers, wu (band floors from om_terrain_band_heights); 0 with no terrain or on one layer. Body in csrc/terrain.c. */
 double om_terrain_layer_dz(const om_world *w, uint32_t layer_a, uint32_t layer_b);
 /* F5 (R-087-09): om_combat_can_shoot as if unit p0 stood at (x0, y0) on its own layer; body in csrc/tactical_move.c, caller csrc/unit.c (firing-spot search). */

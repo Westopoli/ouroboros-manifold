@@ -2700,6 +2700,16 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     }
 }
 
+/* R-100-04 (E-13): 1 when the unit may shoot t as far as the firing arc goes. At OM_TP_FIRING_ARC_DEG 360 (the default) the answer is 1 before any
+ * geometry is read, so the fire pass is exactly what it was. Below 360 a target farther than half the arc from the unit's facing at the start of
+ * the tick withholds the shot only: the unit keeps its target and the face pass (om_move_face_pass) turns it toward it at its category's rate.
+ * See also: om_move_target_in_arc in csrc/tactical_move.c. */
+static int om_tac_in_arc(om_world *w, const om_unit_row *u, const om_unit_row *t) {
+    const double arc = om_tactical_get_param(w, OM_TP_FIRING_ARC_DEG);
+    if (arc >= 360.0) return 1;
+    return om_move_target_in_arc(w, u->unit_id, t->x - u->x, t->y - u->y, arc);
+}
+
 /* P2 (A178, the Python's order: update_targeting, update_movement, resolve_damage): a shot is decided on the
  * positions after this tick's movement, and every shooter of the tick is chosen before any hit lands. */
 static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
@@ -2716,7 +2726,7 @@ static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
         t = om_registry_find_in(st, u->target_id);
         if (t && t->hp > 0.0 && om_tac_in_range(w, u, t)
             && (u->cooldown >= u->attack_interval * (double)OM_TACTICAL_TICK_RATE - OM_TIE_EPSILON || !u->fired)
-            && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
+            && om_combat_can_shoot(w, u->unit_id, t->unit_id) && om_tac_in_arc(w, u, t)) {
             u->fire_pending = 2;
         }
     }
