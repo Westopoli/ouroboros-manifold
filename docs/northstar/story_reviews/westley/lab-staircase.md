@@ -92,7 +92,7 @@ H-031 piece two (portal screen proof), H-038 part 2 (first scene drawn whatever 
 - Layouts: flank_route (the ridge), slope top versus foot, objective ring.
 - Done when: he sees a flank hit a side and the climb slow the attacker.
 
-Status 2026-11-27: built on branch `s/lab-stage5` (story H-091), not merged, not Seen. The firing arc (E-13 R-100-04) is in the engine, off by default; the lab has `--facing on`. Findings: a flank lands (hits marked front, side, rear) but costs the flanked side only a turn delay of about 12 ticks; the climb at the engine's 1.1 is 7 percent slower and cannot be seen. Page A-011; report `docs/reports/2026-11-26-lab-stage5-overnight.md`. Waits on his rulings: what a flank costs, the climb number, reach from height, per-category arc widths.
+Status 2026-11-27: APPROVED by Westley the same day, once L-0084 was redrawn (DEC-lab-stage5-approved-2026-11-27, DEC-L0084-redraw-2026-11-27: blue's arc 120 wu closer to the ramp top; blue now keeps 30 of 40); landed on main at his word. Built overnight on branch `s/lab-stage5` (story H-091). The firing arc (E-13 R-100-04) is in the engine, off by default; the lab has `--facing on`. Findings: a flank lands (hits marked front, side, rear) but costs the flanked side only a turn delay of about 12 ticks; the climb at the engine's 1.1 is 7 percent slower and cannot be seen. Page A-011; report `docs/reports/2026-11-26-lab-stage5-overnight.md`. Open with him, not blocking: what a flank costs, the climb number, reach from height, per-category arc widths. Sampler of every layout kind under the stage 5 rules: page A-012.
 
 ### Stage 6: where positioning stops deciding (the scan)
 

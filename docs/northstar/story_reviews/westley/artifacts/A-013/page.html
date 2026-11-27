@@ -1,0 +1,256 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Lab Stage 5 Clips</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column. Summary and the asks first, then how to read a clip, then the clips grouped by requirement, then what works, what does not, decisions, checks. */
+:root {
+  --bg: #f3f5f6; --panel: #ffffff; --fg: #1b2329; --muted: #5b6871; --line: #d5dde2;
+  --accent: #0f7c86; --warn: #a15c00; --warn-bg: #fff3e0; --ok: #1f7a46; --ask-bg: #e6f4ee;
+  --front: #6b7780; --side: #c96a00; --rear: #c62828; --climb: #8a7a00;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --warn: #f0b060; --warn-bg: #2b2215; --ok: #6fd09a; --ask-bg: #15291f;
+  --front: #c9d2d8; --side: #ff9a3d; --rear: #ff6b6b; --climb: #e6d44a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12181c; --panel: #1a2227; --fg: #e4eaee; --muted: #93a2ab; --line: #2c373e;
+  --accent: #3fb8c2; --warn: #f0b060; --warn-bg: #2b2215; --ok: #6fd09a; --ask-bg: #15291f;
+  --front: #c9d2d8; --side: #ff9a3d; --rear: #ff6b6b; --climb: #e6d44a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 56px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 20px; font-weight: 600; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; font-weight: 600; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+ul, ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 70ch; }
+code { font-family: var(--mono); font-size: 14px; overflow-wrap: anywhere; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.ask { border-left: 4px solid var(--ok); background: var(--ask-bg); }
+.gaps { border-left: 4px solid var(--warn); background: var(--warn-bg); }
+.small { font-size: 14px; color: var(--muted); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 6px; display: block; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font: 500 12px var(--mono); padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.req { font: 600 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.scroll { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th { font-weight: 600; color: var(--muted); }
+.k-front { color: var(--front); font-weight: 600; } .k-side { color: var(--side); font-weight: 600; } .k-rear { color: var(--rear); font-weight: 600; } .k-climb { color: var(--climb); font-weight: 600; }
+a { color: var(--accent); }
+a:focus-visible, video:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:8px">
+  <div class="eyebrow">Ouroboros Manifold &middot; simulation LAB staircase &middot; lab stage 5 &middot; 2026-11-27</div>
+  <h1>Lab stage 5: facing, arcs and height bands</h1>
+  <p>This is the simulation lab's stage 5, from <code>lab-staircase.md</code>: &ldquo;Units have fronts; fire cones matter; a height band is a slower climb and a longer sight.&rdquo; It is not the beta. Built overnight on its own branch. <b>Update 2026-11-27:</b> you approved lab stage 5 once L-0084 was redrawn; the redrawn slope clip is below, and the asks stay open without blocking.</p>
+</header>
+
+<section class="card">
+  <h2>The short version</h2>
+  <ul>
+    <li><b>Units now have a front that matters.</b> A unit cannot fire at a target outside its firing arc. It keeps the target, turns, then fires. Before tonight facing was decoration: an attack from the front, the side and the rear gave the same fight.</li>
+    <li><b>You can see a flank hit a rear.</b> In the pinned-flank clip, 233 of the 540 hits on the holders land on their rear, over 175 ticks, each marked in red.</li>
+    <li><b>But a flank costs the flanked side almost nothing yet.</b> There is no rule that a hit from behind hurts more, and units turn so fast (a Vanguard turns half round in under a second) that the arc delays its answer by about 12 ticks, a little over half a second. The fights end the same way with the arc on or off.</li>
+    <li><b>The climb is real but too small to see</b> at the engine's own number: 7 percent slower, 8 ticks late to the fight. With a stronger test number (2.0, labelled) the attackers arrive 113 ticks late and you can see it.</li>
+    <li><b>Height gives sight, not reach.</b> High ground sees down and low ground cannot see up. Nothing makes a unit on a height see or shoot farther; that number has never been set.</li>
+  </ul>
+  <p>So the stage is built and measurable, and its done-when is half met: you can see the flank land and the climb slow the attacker in the labelled comparison, but the rules as they stand make neither one decide a fight. That is the finding, and the first two asks below are how it gets settled.</p>
+</section>
+
+<section class="card ask">
+  <h2>What I need from you</h2>
+  <ol>
+    <li><b>What should a flank cost?</b> Today: only the turn delay. Options: (a) leave it; (b) slower turning, so a unit caught facing the wrong way stays exposed longer (uses numbers that already exist, one per category); (c) hits on the side or rear do more damage (a new rule); (d) a unit under fire from behind turns on the nearer threat instead of staying on its front target. I recommend trying (b) in the lab first, as a sweep, then deciding on (c).</li>
+    <li><b>How strong is the climb?</b> The engine's 1.1 is invisible. The 2.0 clip shows a strong one. Pick a number or a range to sweep.</li>
+    <li><b>Should height reach farther?</b> The staircase says &ldquo;a longer sight&rdquo;. Today it is only one-way sight. Say whether a higher band should see or shoot farther, and I will sweep the number.</li>
+    <li><b>Arc widths.</b> Tonight every unit type uses one width (90 degrees in these clips). Your ruling is one per category: Strike wide, Line medium, Siege narrow. That needs three new settings, a contract change of its own. Yes or no to writing it.</li>
+    <li><b>The flank layouts.</b> In your layout L-0067 the attackers never walk a flank route: all 774 hits on the holder land on its front. The probe scenes here are mine, made to isolate one thing each. The layouts are yours to redraw.</li>
+    <li><b>One open check.</b> The speed check for the 2.0 climb fails by a hair for 3 of 8 units (0.553 to 0.561 against a limit of 0.55), because units jostling in the rank blur the measure. The tolerance is yours.</li>
+    <li><b>Whether to merge.</b> Branch <code>s/lab-stage5</code>. It holds one engine change, the firing arc, which is off unless switched on.</li>
+  </ol>
+</section>
+
+<section class="card">
+  <h2>How to read a clip</h2>
+  <ul>
+    <li>Blue holds, red attacks. The white triangle on a unit is its front.</li>
+    <li>The thin outline fanning out from each unit is its <b>firing arc</b>: it can only shoot inside it.</li>
+    <li>A ring flashes on a unit when it is hit: <span class="k-front">white for a hit on its front</span>, <span class="k-side">orange for its side</span>, <span class="k-rear">red for its rear</span>. The running count is at the top left: <code>front N  side N  rear N</code>.</li>
+    <li>A <span class="k-climb">yellow bar</span> above a unit fills as it climbs a slope. The small dot under a unit shows which height band it stands on.</li>
+    <li>The clips run at six times game speed: one second of clip is 120 ticks.</li>
+  </ul>
+  <p class="small">Known look problems: with many units the arc outlines overlap into a tangle; the hit rings are thin; in the pinned and climb clips the units are small in the frame.</p>
+</section>
+
+<section class="card">
+  <div class="req">Requirement: a flank hits a side</div>
+  <h2>The pinned flank</h2>
+  <p>Eight blue hold, facing east. Eight red attack their front. A second eight red arrive behind them 170 ticks later. Blue stays locked on the enemy in front, so the second group fires into blue's backs. Watch for the red rings from about the one and a half second mark.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/flank-pinned-arc90-poster.jpg" src="clips/flank-pinned-arc90.mp4"></video>
+    <div class="tags"><span class="tag">flat ground</span><span class="tag">8 blue hold, 16 red attack-move</span><span class="tag">arc 90</span><span class="tag">8 s</span></div>
+    <figcaption class="small">Red wins with 13 left at tick 914. Hits on blue: 307 front, 233 rear.</figcaption>
+  </figure>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/flank-pinned-arc360-poster.jpg" src="clips/flank-pinned-arc360.mp4"></video>
+    <div class="tags"><span class="tag">same fight</span><span class="tag">arc off (360)</span><span class="tag">8 s</span></div>
+    <figcaption class="small">The same fight with the arc switched off. It is identical, frame for frame: blue never tries to shoot backwards, so the arc changes nothing here. This is ask 1.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">Requirement: front, side, rear</div>
+  <h2>The same attack from three directions</h2>
+  <p>The same eight blue, facing east, attacked by the same eight red from the east (front), the north (side) and the west (rear). Arc 90 in all three. Blue sees red coming and turns before red is in range, so the side and rear hits all land in the first four ticks. Watch the first half second.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/front-arc90-poster.jpg" src="clips/front-arc90.mp4"></video>
+    <div class="tags"><span class="tag">front</span><span class="tag">8 v 8</span><span class="tag">20 s</span></div>
+    <figcaption class="small">Blue wins with 3 left at tick 2404. Hits on blue: 461 front, no side, no rear.</figcaption>
+  </figure>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/side-arc90-poster.jpg" src="clips/side-arc90.mp4"></video>
+    <div class="tags"><span class="tag">side</span><span class="tag">8 v 8</span><span class="tag">23 s</span></div>
+    <figcaption class="small">Red wins with 2 left at tick 2690. Hits on blue: 530 front, 8 side. Red also wins this one with the arc off, so the different winner comes from how the two blocks meet, not from the flank.</figcaption>
+  </figure>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/rear-arc90-poster.jpg" src="clips/rear-arc90.mp4"></video>
+    <div class="tags"><span class="tag">rear</span><span class="tag">8 v 8</span><span class="tag">20 s</span></div>
+    <figcaption class="small">Blue wins with 4 left at tick 2391. Hits on blue: 432 front, 8 rear. Blue's answer to the first rear hit comes 12 ticks later.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">Requirement: arcs</div>
+  <h2>One attack from behind, three arc widths</h2>
+  <p>The rear attack again, with the arc off, at 90 and at 60. The outline on each unit is the arc. The narrower it is, the longer blue must turn before it can answer.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/rear-arc360-poster.jpg" src="clips/rear-arc360.mp4"></video>
+    <div class="tags"><span class="tag">arc off (360)</span><span class="tag">20 s</span></div>
+  </figure>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/rear-arc60-poster.jpg" src="clips/rear-arc60.mp4"></video>
+    <div class="tags"><span class="tag">arc 60</span><span class="tag">20 s</span></div>
+  </figure>
+  <div class="scroll">
+  <table>
+    <tr><th>Arc</th><th>Blue's answer delay, ticks (middle / longest)</th><th>Blue left</th><th>Ends at tick</th></tr>
+    <tr><td>off (360)</td><td>23 / 23</td><td>3</td><td>2377</td></tr>
+    <tr><td>180</td><td>8 / 9</td><td>4</td><td>2387</td></tr>
+    <tr><td>120</td><td>11 / 12</td><td>4</td><td>2391</td></tr>
+    <tr><td>90</td><td>12 / 13</td><td>4</td><td>2391</td></tr>
+    <tr><td>60</td><td>14 / 15</td><td>4</td><td>2391</td></tr>
+  </table>
+  </div>
+  <p class="small">From 180 down to 60 the delay grows as it should, by a few ticks. The arc-off row is the odd one out: 23 ticks, the slowest. With the arc off the unit shoots at whatever it was already aiming at before turning on its attacker. I have not traced that further.</p>
+</section>
+
+<section class="card">
+  <div class="req">Requirement: the climb</div>
+  <h2>The same attack on flat ground and up a slope</h2>
+  <p>Eight red attack eight blue over the same distance. On the slope clips blue stands one band up and red walks the whole ramp first. The orange strip is the ramp and the lighter ground is the upper band. The yellow bar above a red unit fills as it climbs.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/climb-flat-poster.jpg" src="clips/climb-flat.mp4"></video>
+    <div class="tags"><span class="tag">flat</span><span class="tag">8 v 8</span><span class="tag">18 s</span></div>
+    <figcaption class="small">First shots at tick 338. Red wins with 6 left.</figcaption>
+  </figure>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/climb-slope-poster.jpg" src="clips/climb-slope.mp4"></video>
+    <div class="tags"><span class="tag">slope</span><span class="tag">engine's own climb (1.1)</span><span class="tag">21 s</span></div>
+    <figcaption class="small">First shots at tick 346, 8 ticks later than flat. Red climbs at about 93 percent of its flat speed. Red wins with 4 left.</figcaption>
+  </figure>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/climb-slope-div2-poster.jpg" src="clips/climb-slope-div2.mp4"></video>
+    <div class="tags"><span class="tag">slope</span><span class="tag">test number 2.0, not a ruling</span><span class="tag">22 s</span></div>
+    <figcaption class="small">First shots at tick 451, 113 ticks later than flat. Red climbs at about 55 percent of its flat speed. Red wins with 5 left.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">Requirement: height bands</div>
+  <h2>Your slope layout, redrawn, with stage 5 switched on</h2>
+  <p>L-0084 as you redrew it on 2026-11-27 (blue's arc 120 wu closer to the top of the ramp, so its Wardens and Vanguards reach it), with facing, the arc at 90 and the stage 4 sight rules. The orange strip is the ramp, the lighter ground is the upper band. Red climbs in a file while blue's arc fires down.</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/bands-L0084-sight-poster.jpg" src="clips/bands-L0084-sight.mp4"></video>
+    <div class="tags"><span class="tag">L-0084</span><span class="tag">40 blue hold the top, 56 red climb</span><span class="tag">sight on</span><span class="tag">16 s</span></div>
+    <figcaption class="small">Blue wins with 30 of 40 left at tick 1927. Before the redraw it was 12 left at tick 1987. Shots: blue 1040, red 267. Hits on blue: 267, all front. Red dies on the ramp.</figcaption>
+  </figure>
+  <h3>Your flank layout, for comparison</h3>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/flank-L0067-poster.jpg" src="clips/flank-L0067.mp4"></video>
+    <div class="tags"><span class="tag">L-0067</span><span class="tag">24 v 24</span><span class="tag">sight off</span><span class="tag">12 s</span></div>
+    <figcaption class="small">Blue wins with 20 left at tick 1415. All 774 hits on blue land on its front: nobody walks a flank route in this layout. This is ask 5.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <div class="req">Draft, for your redraw</div>
+  <h2>Objective ring</h2>
+  <p>No objective-ring layout existed. This one is drafted from your words: &ldquo;2 groups of units come at two different angles, surrounding blue. Red would be expected to win 80%.&rdquo;</p>
+  <figure>
+    <video controls playsinline preload="metadata" poster="clips/objective-ring-poster.jpg" src="clips/objective-ring.mp4"></video>
+    <div class="tags"><span class="tag">draft</span><span class="tag">red in two groups, two angles</span><span class="tag">22 s</span></div>
+    <figcaption class="small">Red wins with 2 left at tick 2570. Hits on blue: 527 front, 5 side, 4 rear.</figcaption>
+  </figure>
+</section>
+
+<section class="card">
+  <h2>What works</h2>
+  <ul>
+    <li>The firing arc in the engine: outside the arc a unit holds fire, keeps its target, turns at its normal rate, then fires. Switched off, every earlier lab fight is byte for byte what it was.</li>
+    <li>The lab switch <code>--facing on</code>: sets each unit's starting facing, sets the arc, and records for every shot whether it hit a front, a side or a rear, and how far up a slope each unit is.</li>
+    <li>Measures: hits by direction, how long a flanked unit takes to answer, how much a climb slows a unit. A check that no unit ever fired outside its arc passes on every fight here.</li>
+    <li>The replay draws arcs, hit rings, the climb bar and band marks.</li>
+    <li>Seven probe scenes and thirteen clips, each recorded twice (every tick for the numbers, every sixth for the clip) with matching results.</li>
+  </ul>
+</section>
+
+<section class="card gaps">
+  <h2>What does not work, or is not done</h2>
+  <ul>
+    <li><b>A flank does not decide a fight.</b> The marks show it landing; the outcome does not move. See ask 1.</li>
+    <li><b>The climb at the engine's number cannot be seen.</b> See ask 2.</li>
+    <li><b>&ldquo;A longer sight&rdquo; is not built</b> beyond the one-way sight that already existed. See ask 3.</li>
+    <li><b>One arc width for all unit types</b>, not your three. See ask 4.</li>
+    <li><b>The cone-shaped area attack</b> (the staircase names its setting, <code>set_cone</code>) is a different rule and was left alone.</li>
+    <li><b>One check is red</b>, the 2.0 climb speed tolerance. See ask 6.</li>
+    <li><b>Lab stage 4 is still open.</b> The lock change, &ldquo;same exact spot&rdquo;, the trap exceptions and the three open questions were left exactly as they are. When they settle, the clips are re-recorded with one command each; no stage 5 code depends on them.</li>
+    <li>Nothing here is on the approved-fights list.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Decisions I made alone</h2>
+  <ol>
+    <li><b>&ldquo;Fire cones matter&rdquo; was built as the firing arc</b>, your own ruling (&ldquo;add a firing-arc rule to the game&rdquo;), not as the cone-shaped area attack the staircase line names.</li>
+    <li><b>One engine change</b>, the arc, off by default. It touches nothing a stage 4 decision governs: who targets whom, the lock, return fire and orders are unchanged. Keep-walking stands.</li>
+    <li><b>Flank and arc scenes run with sight off</b>, so the unsigned stage 4 sight rules cannot muddy them. Only the L-0084 clip uses sight.</li>
+    <li><b>Added the pinned flank scene</b> after the first measurements showed a lone side or rear attack barely registers.</li>
+    <li><b>Kept the engine's climb number</b> and showed 2.0 beside it as a labelled test, not a ruling.</li>
+    <li><b>Probe scenes are mine</b>, marked as drafts for you to redraw.</li>
+    <li><b>I looked at frames from the clips</b>, as you asked this time.</li>
+  </ol>
+  <p class="small">All twenty, with the options I had: <code>docs/northstar/plans/lab-stage5-2026-11-26/decisions-log.md</code> on the branch.</p>
+</section>
+
+<section class="card">
+  <h2>What I checked, and what I could not</h2>
+  <ul>
+    <li><b>By test:</b> every stage 5 check passes except the one named above. An independent agent re-ran them and broke the code on purpose four times; the checks noticed each time.</li>
+    <li><b>By numbers:</b> every figure on this page was recomputed from the recorded fights by a second agent and agreed. Every clip's length, size and fingerprint match its record.</li>
+    <li><b>By eye:</b> I looked at seven still frames from four clips (pinned flank, rear attack, the 2.0 climb, L-0084). I saw the arcs, a red rear-hit ring with its shot line, the climb bars, the ramp and bands, and the counters. The first climb clips did not draw the ramp; that was fixed and I looked again.</li>
+    <li><b>Not checked:</b> I did not watch any clip play through, and did not look at the front, side, objective-ring, L-0067 or the arc-off and arc-60 clips at all. I have not seen this page on a phone. A machine check for the ring colours could not find them reliably, because the rings are thin; I only confirmed one by eye. Some red units draw in a darker red and I did not trace why.</li>
+  </ul>
+</section>
+
+<p class="small">Branch <code>s/lab-stage5</code>, story <code>docs/stories/H-091.md</code>, plan and decisions in <code>docs/northstar/plans/lab-stage5-2026-11-26/</code>, report <code>docs/reports/2026-11-26-lab-stage5-overnight.md</code>. Seed 1 throughout. Beta B5 was not touched.</p>
+
+</div>
