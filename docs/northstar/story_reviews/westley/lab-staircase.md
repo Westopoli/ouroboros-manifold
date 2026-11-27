@@ -1,6 +1,8 @@
 <!-- Westley's copy (2026-11-05; moved from docs/northstar/plans/2026-10-31-lab-staircase.md). Stage status lives in ROADMAP.md section 1; each stage is one cascade plan Westley asks a Fable chat for, run by a Sonnet chat with /manager-mode. -->
 # The simulation lab, rebuilt as a staircase: one verified step at a time
 
+This is the LAB staircase: its stages are written "lab stage N". A bare "stage N" from Westley means a stage of this file. The beta's stages are "beta BN" in `beta-staircase.md` (naming rule, CLAUDE.md, 2026-11-26).
+
 ## Context
 
 Westley, 2026-10-31: "I've been asking for a lot of deliverables ... there has been no verified result because we've been stretching too far ... without a verifiable checkpoint, it's hard for me to discern where we're drifting." The lab today is 51 code files (8,767 lines), 190 test files, one batch ever run (2026-10-08), chart never seen. It was built all at once against the whole question (every layer skill, every condition, every headcount) and no step of it has passed his eyes.

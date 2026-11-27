@@ -8,6 +8,10 @@ Claude designs and tests; agents build. The simulation is C with the stochastic 
 
 `docs/method/README.md`. Westley's plan prompt names the steps file (`docs/method/story_loop.md`) and says what the plan must do; the cards hold only what every plan shares. Where another document disagrees, `docs/method/` wins. Decisions: Westley answers looks and rule meaning where he has no recorded words; everything else the Architect decides, records in `docs/northstar/story_reviews/westley/decisions.md`, and Westley may veto.
 
+## Two staircases, named in full
+
+There are two staged plans and they are never called just "the staircase" or "stage N". The simulation lab's is `docs/northstar/story_reviews/westley/lab-staircase.md`: write "lab stage N". The beta's is `docs/northstar/story_reviews/westley/beta-staircase.md`: write "beta BN" (B0 to B16). A bare "stage N" from Westley means the LAB. Every plan and every autonomous run opens with one line naming the staircase, the file and the stage's title quoted. If a prompt's file name and its context point to different staircases, stop and confirm, even in an autonomous run (Westley, 2026-11-26, after beta B5 was built in place of lab stage 5; his prompts may come through a voice assistant that names the wrong file).
+
 ## The Bible
 
 `docs/bible/` is the source of truth for what the game is: `game_bible.md` (hub), `stories.md` (catalog), `epics/E-##-*.md` (rules `R-###-##`), `references/`, `algorithms.md`. Open questions live in `docs/northstar/ambiguity_register.md`. Read the hub first, then only the epic you touch.
